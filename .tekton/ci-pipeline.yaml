@@ -2,14 +2,14 @@
 apiVersion: tekton.dev/v1
 kind: Pipeline
 metadata:
-  name: ci-sampleAPP
+  name: ci-fulcrum-ai-toolkit
   labels:
     app.kubernetes.io/version: "0.1"
   annotations:
-    tekton.dev/displayName: "sampleAPP-pipeline"
+    tekton.dev/displayName: "fulcrum-ai-toolkit-pipeline"
 spec:
   description: >-
-    A re-usable pipeline for sampleAPP
+    A re-usable pipeline for fulcrum-ai-toolkit
   params:
     - name: url
     - name: revision

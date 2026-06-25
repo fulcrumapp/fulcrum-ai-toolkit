@@ -2,7 +2,7 @@ apiVersion: skaffold/v4beta11
 kind: Config
 build:
   artifacts:
-    - image: 280296955917.dkr.ecr.us-east-2.amazonaws.com/sampleAPP
+    - image: 280296955917.dkr.ecr.us-east-2.amazonaws.com/fulcrum-ai-toolkit
       docker:
         dockerfile: Dockerfile
   tagPolicy:
@@ -15,26 +15,6 @@ build:
     tryImportMissing: true
     useBuildkit: true
     concurrency: 3
-deploy:
-  helm:
-    releases:
-      - name: sampleCHARTNAME
-        chartPath: charts/sampleCHARTNAME
-        valuesFiles:
-        - ./charts/sampleCHARTNAME/helm_vars/secrets.nonprod.chaos.yaml
-        - ./charts/sampleCHARTNAME/helm_vars/secrets.preview.chaos.yaml
-        - ./charts/sampleCHARTNAME/helm_vars/values.preview.yaml
-        namespace: '{{.USER}}'
-        setValueTemplates:
-          fullnameOverride: sampleCHARTNAME
-          image.repository: "{{.IMAGE_REPO}}"
-          image.tag: "{{.IMAGE_TAG}}"
-          ksvc.image.tag: '{{.IMAGE_TAG}}'
-          ksvc_enabled: false
-          cronjobs.image.tag: '{{.IMAGE_TAG}}'
-          crons_enabled: false
-          previewPrefix: "{{.USER}}"
-        useHelmSecrets: true
 profiles:
   - name: ci
     build:
@@ -53,7 +33,7 @@ profiles:
         #   secret:
         #     secretName: secret-npmrc
       artifacts:
-        - image: 280296955917.dkr.ecr.us-east-2.amazonaws.com/sampleAPP
+        - image: 280296955917.dkr.ecr.us-east-2.amazonaws.com/fulcrum-ai-toolkit
           kaniko:
             dockerfile: Dockerfile
             useNewRun: true

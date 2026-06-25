@@ -52,7 +52,7 @@ git checkout XXXXXX
 tkn-pac create repository
 ```
 
-# sampleAPP
+# fulcrum-ai-toolkit
 
 Update information here for new repository and remove the template
 section above.
@@ -60,10 +60,10 @@ section above.
 A few setup thing:
 
 - If using knative (enableksvc) you will need to update the value of domain to something useful in:
-  - charts/sampleCHARTNAME/values.yaml
-  - charts/sampleCHARTNAME/helm_vars/values.preview.yaml
-  - charts/sampleCHARTNAME/helm_vars/values.production.au.yaml
-  - charts/sampleCHARTNAME/helm_vars/values.production.eu.yaml
+  - charts/fulcrum-ai-toolkit/values.yaml
+  - charts/fulcrum-ai-toolkit/helm_vars/values.preview.yaml
+  - charts/fulcrum-ai-toolkit/helm_vars/values.production.au.yaml
+  - charts/fulcrum-ai-toolkit/helm_vars/values.production.eu.yaml
 
 # Getting started with building Dockerfiles
 
