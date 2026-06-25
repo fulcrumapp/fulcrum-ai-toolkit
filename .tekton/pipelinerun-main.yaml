@@ -2,9 +2,9 @@
 apiVersion: tekton.dev/v1
 kind: PipelineRun
 metadata:
-  name: ci-pipeline-run-main-sampleAPP
+  name: ci-pipeline-run-main-fulcrum-ai-toolkit
   labels:
-    pipeline-run-name: sampleAPP-main
+    pipeline-run-name: fulcrum-ai-toolkit-main
   annotations:
     karpenter.sh/do-not-evict: "true"
     # The event we are targeting as seen from the webhook payload
@@ -107,7 +107,7 @@ spec:
     #           cpu: 2
     #           memory: 2Gi
   pipelineRef:
-    name: ci-sampleAPP
+    name: ci-fulcrum-ai-toolkit
   timeouts:
     pipeline: "1h30m00s"
   workspaces:

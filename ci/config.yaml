@@ -8,12 +8,12 @@
 # PROJECT TYPE CONFIGURATION
 # =============================================================================
 
-# outputType: Defines what type of project this is and determines which pipeline to use
+# outputType: other
 # Values:
 #   - "service" (default): Standard containerized service with Kubernetes deployment
 #   - "npm": Node.js package published to NPM registry with semantic versioning
 #   - "gradle": Java/Kotlin project built with Gradle
-outputType: "service"
+outputType: other
 
 # =============================================================================
 # DEPLOYMENT CONFIGURATION
@@ -69,25 +69,4 @@ test_coverage_dir: ""
 #   2. Comment out this entire section to use all defaults
 #   3. Define specific chart configurations as shown below
 
-charts:
-  # Example chart configuration (replace 'sampleCHARTNAME' with your actual chart name)
-  sampleCHARTNAME:
-    # helm_options: Additional options passed to helm during deployment
-    # Default: Uses cluster-specific default options if empty
-    helm_options: ""
-    
-    # release_clusters: Which clusters to deploy to
-    # Values: 
-    #   - "ALL": Deploy to all production clusters (default)
-    #   - "chaos": Deploy only to chaos (staging) cluster
-    #   - "mongoose": Deploy only to us-east-1 cluster
-    #   - "chaos,ALL": Deploy to chaos AND all production clusters
-    release_clusters: "ALL"
-    
-    # release_name: Name for the Helm release
-    # Default: Uses the chart name if empty
-    release_name: ""
-    
-    # release_namespace: Kubernetes namespace for deployment
-    # Default: "fulcrum-prod" if empty
-    release_namespace: ""
+charts: []

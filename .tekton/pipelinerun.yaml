@@ -2,9 +2,9 @@
 apiVersion: tekton.dev/v1
 kind: PipelineRun
 metadata:
-  name: sampleAPP-pr
+  name: fulcrum-ai-toolkit-pr
   labels:
-    pipeline-run-name: sampleAPP-pr
+    pipeline-run-name: fulcrum-ai-toolkit-pr
   annotations:
     karpenter.sh/do-not-evict: "true"
     # The event we are targeting as seen from the webhook payload
@@ -37,7 +37,7 @@ spec:
     - name: pull_request_url
       value: "{{ body.pull_request.html_url }}"
     - name: pipeline_label_selector
-      value: "pipeline-run-name=sampleAPP-pr,pipelinesascode.tekton.dev/state=started,pipelinesascode.tekton.dev/state!=completed,pipelinesascode.tekton.dev/state!=failed,pipelinesascode.tekton.dev/state!=cancelled,pipelinesascode.tekton.dev/sha!={{ revision }},pipelinesascode.tekton.dev/pull-request=={{ pull_request_number }}"
+      value: "pipeline-run-name=fulcrum-ai-toolkit-pr,pipelinesascode.tekton.dev/state=started,pipelinesascode.tekton.dev/state!=completed,pipelinesascode.tekton.dev/state!=failed,pipelinesascode.tekton.dev/state!=cancelled,pipelinesascode.tekton.dev/sha!={{ revision }},pipelinesascode.tekton.dev/pull-request=={{ pull_request_number }}"
     - name: git_auth_secret
       value: "{{ git_auth_secret }}"
   taskRunTemplate:
@@ -107,7 +107,7 @@ spec:
     #           cpu: 2
     #           memory: 2Gi
   pipelineRef:
-    name: ci-sampleAPP
+    name: ci-fulcrum-ai-toolkit
   timeouts:
     pipeline: "1h30m00s"
   workspaces:
