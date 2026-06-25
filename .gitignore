@@ -1,23 +1,7 @@
-# Any generated helm secrets decrypted file
-*.dec
-# --- Go gitignore template ---
-# Binaries for programs and plugins
-*.exe
-*.exe~
-*.dll
-*.so
-*.dylib
-
-# Test binary, built with `go test -c`
-*.test
-
-# Output of the go coverage tool, specifically when used with LiteIDE
-*.out
-
-# macOS Stuff
+# macOS
 .DS_Store
 *.swp
-*.tgz
-output/
-charts/**/charts/
+
+# Editor
+*.code-workspace
 
