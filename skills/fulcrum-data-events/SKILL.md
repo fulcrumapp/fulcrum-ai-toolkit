@@ -101,6 +101,18 @@ Data events execute with the **record creator's context**, not the viewing user'
 
 Design data events assuming they run in a **least-privilege context**. Do not use data events to implement security controls — use platform permissions.
 
+### Unversioned CDN libraries
+```javascript
+// BAD — "latest" or unversioned URLs break without warning when the library updates
+'<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>'
+'<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/latest/d3.min.js"></script>'
+
+// GOOD — lock to a specific version
+'<script src="https://cdn.jsdelivr.net/npm/chart.js@4.12.0"></script>'
+'<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.9.0/d3.min.js"></script>'
+```
+AI coding assistants love pulling in CDN libraries for charts, dashboards, and widgets. They often use `latest` or unversioned URLs. When the library pushes a breaking update, your tool stops working with no code change on your side. **Always lock CDN references to a specific semver version.** This applies to any external script or stylesheet loaded via CDN in data events, report templates, or app extensions.
+
 ### Monolithic scripts
 A single `script` field holds ALL data events for a form. As complexity grows:
 - Use clear function naming and section comments
@@ -125,3 +137,4 @@ A single `script` field holds ALL data events for a form. As complexity grows:
 - [ ] Data events do not implement security controls (use platform permissions)
 - [ ] Offline behavior is considered — fetch() calls have fallback behavior
 - [ ] Script is organized and readable — functions are named, concerns are grouped
+- [ ] Any CDN library references use locked version numbers — no `latest` or unversioned URLs
