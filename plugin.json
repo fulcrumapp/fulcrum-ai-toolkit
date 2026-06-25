@@ -1,0 +1,16 @@
+{
+  "name": "fulcrum-ai-toolkit",
+  "version": "0.1.0",
+  "description": "AI skills for building apps, data events, reports, and workflows on the Fulcrum platform",
+  "author": "Fulcrum (Spatial Networks)",
+  "license": "MIT",
+  "keywords": [
+    "fulcrum",
+    "field-data",
+    "app-building",
+    "data-events",
+    "environmental",
+    "inspections",
+    "workflows"
+  ]
+}
