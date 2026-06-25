@@ -1,0 +1,4 @@
+# Optional overrides:
+#
+# retention: How many images to retain in the repository (default is 250)
+# retention: 20

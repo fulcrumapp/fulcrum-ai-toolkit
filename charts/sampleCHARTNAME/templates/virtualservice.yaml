@@ -1,0 +1,17 @@
+apiVersion: networking.istio.io/v1
+kind: VirtualService
+metadata:
+  name: sampleCHARTNAME
+spec:
+  gateways:
+  - fulcrum-ops/fulcrum-gateway
+  - mesh
+  hosts:
+  {{- /* We are using tpl here because we want to do a variable replacement based upon
+      overriding values set via the '--set' command, DO not remove tpl as it will cause failures */}}
+  {{- tpl (toYaml .Values.domains) . | nindent 4 }}
+  http:
+  - name: sampleCHARTNAME
+    delegate:
+      name: {{ tpl (include "sampleCHARTNAME.fullname" .) . }}-delegate
+      namespace: {{ .Release.Namespace }}

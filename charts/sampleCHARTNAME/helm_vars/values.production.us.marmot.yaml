@@ -1,0 +1,3 @@
+ksvc:
+  image:
+    registry: 833023401363.dkr.ecr.us-west-2.amazonaws.com

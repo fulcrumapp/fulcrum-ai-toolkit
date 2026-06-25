@@ -1,0 +1,139 @@
+---
+apiVersion: tekton.dev/v1
+kind: PipelineRun
+metadata:
+  name: ci-pipeline-run-main-sampleAPP
+  labels:
+    pipeline-run-name: sampleAPP-main
+  annotations:
+    karpenter.sh/do-not-evict: "true"
+    # The event we are targeting as seen from the webhook payload
+    # this can be an array too, i.e: [pull_request, push]
+    pipelinesascode.tekton.dev/on-event: "[push]"
+
+    # The branch or tag we are targeting (ie: main, refs/tags/*)
+    pipelinesascode.tekton.dev/on-target-branch: "[main]"
+
+    # Fetch the git-clone task from hub, we are able to reference later on it
+    # with taskRef and it will automatically be embedded into our pipeline.
+
+    # How many runs we want to keep.
+    pipelinesascode.tekton.dev/max-keep-runs: "5"
+spec:
+  serviceAccountName: cicd
+  params:
+    - name: url
+      value: "{{ repo_url }}"
+    - name: revision
+      value: "{{ revision }}"
+    - name: repo_name
+      value: "{{ repo_name }}"
+    - name: branch_name
+      value: "{{ source_branch }}"
+    - name: pull_request_number
+      value: ""
+    - name: pull_request_base_ref
+      value: ""
+    - name: pull_request_url
+      value: ""
+    - name: pipeline_label_selector
+      value: ""
+    - name: git_auth_secret
+      value: "{{ git_auth_secret }}"
+  taskRunTemplate:
+    serviceAccountName: cicd
+    # This works.. and only affects build-images
+    podTemplate:
+      nodeSelector:
+        fulcrumapp.io/node-role: iops
+      tolerations:
+      - effect: NoExecute
+        key: role
+        operator: Equal
+        value: iops
+      securityContext:
+        fsGroup: 65532
+        fsGroupChangePolicy: OnRootMismatch
+  taskRunSpecs:
+    - pipelineTaskName: build-images
+      metadata:
+        annotations:
+          karpenter.sh/do-not-evict: "true"
+      stepOverrides:
+        - name: get-skaffold-output-images
+          computeResources:
+            requests:
+              cpu: 1
+              memory: 256Mi
+        - name: build-image
+          computeResources:
+            requests:
+              cpu: 2
+              memory: 13Gi
+        - name: write-digest
+          computeResources:
+            requests:
+              cpu: 1
+              memory: 256Mi
+        - name: digest-to-results
+          computeResources:
+            requests:
+              cpu: 1
+              memory: 256Mi
+    # These are overrides that might not be needed for this app
+    # - pipelineTaskName: unit-test
+    #   metadata:
+    #     annotations:
+    #       karpenter.sh/do-not-evict: "true"
+    #   stepOverrides:
+    #     - name: run-unit-test
+    #       computeResources:
+    #         requests:
+    #           cpu: 2
+    #           memory: 2Gi
+    #     - name: check-test-results
+    #       computeResources:
+    #         requests:
+    #           cpu: 1
+    #           memory: 256Mi
+    # - pipelineTaskName: sonarqube-scanner
+    #   metadata:
+    #     annotations:
+    #       karpenter.sh/do-not-evict: "true"
+    #   stepOverrides:
+    #     - name: sonar-scan
+    #       computeResources:
+    #         requests:
+    #           cpu: 2
+    #           memory: 2Gi
+  pipelineRef:
+    name: ci-sampleAPP
+  timeouts:
+    pipeline: "1h30m00s"
+  workspaces:
+  - name: source
+    volumeClaimTemplate:
+      spec:
+        storageClassName: efs-tekton-sc-dynamic
+        accessModes:
+          - ReadWriteMany
+        resources:
+          requests:
+            storage: 2Gi
+  - name: dockerconfig
+    secret:
+      secretName: docker-credentials
+  - name: scratch
+    volumeClaimTemplate:
+      spec:
+        storageClassName: efs-tekton-sc-dynamic
+        accessModes:
+          - ReadWriteMany
+        resources:
+          requests:
+            storage: 2Gi
+  # This workspace will inject secret to help the git-clone task to be able to
+  # checkout the private repositories
+  - name: basic-auth
+    secret:
+      secretName: "{{ git_auth_secret }}"

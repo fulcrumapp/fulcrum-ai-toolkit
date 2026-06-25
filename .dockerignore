@@ -1,0 +1,10 @@
+
+*.code-workspace
+*.md
+charts/
+ci/
+runbooks/
+tmp/
+**/.git
+*.tgz
+**.swp

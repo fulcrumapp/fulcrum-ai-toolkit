@@ -1,0 +1,638 @@
+---
+apiVersion: tekton.dev/v1
+kind: Pipeline
+metadata:
+  name: ci-sampleAPP
+  labels:
+    app.kubernetes.io/version: "0.1"
+  annotations:
+    tekton.dev/displayName: "sampleAPP-pipeline"
+spec:
+  description: >-
+    A re-usable pipeline for sampleAPP
+  params:
+    - name: url
+    - name: revision
+    - name: repo_name
+    - name: branch_name
+    - name: pull_request_number
+    - name: pull_request_base_ref
+      default: ""
+    - name: pull_request_url
+      default: ""
+    - name: pipeline_label_selector
+    - name: git_auth_secret
+  workspaces:
+    - name: source
+    - name: scratch
+    - name: basic-auth
+    - name: dockerconfig
+  tasks:
+    - name: cancel-previously-running-pipelines
+      taskRef:
+        resolver: cluster
+        params:
+        - name: kind
+          value: task
+        - name: name
+          value: search-and-stop-task
+        - name: namespace
+          value: ci
+      when:
+      - input: "$(params.pull_request_url)"
+        operator: notin
+        values: [""]
+      params:
+        - name: tekton-namespace
+          value: $(context.pipelineRun.namespace)
+        - name: label-selector
+          value: $(params.pipeline_label_selector)
+      workspaces:
+        - name: scratch
+          workspace: scratch    
+    - name: custom-vars
+      taskRef:
+        resolver: cluster
+        params:
+        - name: kind
+          value: task
+        - name: name
+          value: custom-vars
+        - name: namespace
+          value: ci
+      workspaces:
+      - name: source
+        workspace: source
+      params:
+      - name: repo_name
+        value: $(params.repo_name)
+      - name: branch_name
+        value: $(params.branch_name)
+      - name: revision
+        value: $(params.revision)
+      - name: url
+        value: $(params.url)
+      - name: clone_url
+        value: $(params.clone_url)
+      - name: ssh_url
+        value: $(params.ssh_url)
+      - name: pull_request_number
+        value: $(params.pull_request_number)
+      - name: pull_request_url
+        value: $(params.pull_request_url)
+      - name: pull_request_base_ref
+        value: $(params.pull_request_base_ref)
+      - name: unique_run_name
+        value: $(context.pipelineRun.name)
+      - name: GITHUB_TOKEN_SECRET_NAME
+        value: $(params.git_auth_secret)
+      - name: GITHUB_TOKEN_SECRET_KEY
+        value: git-provider-token
+    - name: fetch-repository
+      taskRef:
+        resolver: cluster
+        params:
+        - name: kind
+          value: task
+        - name: name
+          value: git-clone
+        - name: namespace
+          value: ci
+      workspaces:
+        - name: output
+          workspace: source
+        - name: basic-auth
+          workspace: basic-auth
+      params:
+        - name: url
+          value: $(params.url)
+        - name: revision
+          value: $(params.revision)
+        - name: refspec
+          value: "+refs/heads/*:refs/remotes/origin/*"
+        - name: depth
+          value: "1000"
+    - name: config-build
+      taskRef:
+        resolver: cluster
+        params:
+        - name: kind
+          value: task
+        - name: name
+          value: read-config
+        - name: namespace
+          value: ci
+      runAfter:
+      - fetch-repository
+      workspaces:
+      - name: source
+        workspace: source
+      - name: workspace
+        workspace: scratch
+      params:
+      - name: config_file
+        value: "/ci/config.yaml"
+      - name: is_pr
+        value: "$(tasks.custom-vars.results.is_pr)"
+      - name: read-image
+        value: 280296955917.dkr.ecr.us-east-2.amazonaws.com/ci:latest
+      - name: revision
+        value: $(params.revision)
+      - name: ci_secret_push
+        value: "$(tasks.custom-vars.results.ci_secret_push)"
+      - name: ci_secret_pull
+        value: "$(tasks.custom-vars.results.ci_secret_pull)"
+      - name: ci-skaffold-image
+        value: 280296955917.dkr.ecr.us-east-2.amazonaws.com/ci-skaffold:latest
+    - name: create-kaniko-build-secret
+      taskRef:
+        resolver: cluster
+        params:
+        - name: kind
+          value: task
+        - name: name
+          value: kubernetes-actions
+        - name: namespace
+          value: ci
+      when:
+      - input: "$(tasks.config-build.results.build_image)"
+        operator: "in"
+        values: ["True"]
+      workspaces:
+      - name: manifest-dir
+        workspace: scratch
+      params:
+      - name: script
+        value: |
+          #!/usr/bin/bash
+          echo "$(workspaces.manifest-dir.path)"
+          AUTH_FILES_DIRECTORY="$(workspaces.manifest-dir.path)/.auth_files"
+
+          kubectl -n cicd create secret generic $(tasks.custom-vars.results.ci_secret_pull) --from-file=.dockerconfigjson=${AUTH_FILES_DIRECTORY}/docker_config.json --type=kubernetes.io/dockerconfigjson
+          kubectl -n cicd label secret $(tasks.custom-vars.results.ci_secret_pull) pipelinerunname=$(context.pipelineRun.name)
+          kubectl -n cicd create secret generic $(tasks.custom-vars.results.ci_secret_push) --from-file=${AUTH_FILES_DIRECTORY}/docker_config.json
+          kubectl -n cicd label secret $(tasks.custom-vars.results.ci_secret_push) pipelinerunname=$(context.pipelineRun.name)
+      timeout: 20m
+    - name: helm-build-and-publish-from-skaffold
+      taskRef:
+        resolver: cluster
+        params:
+        - name: kind
+          value: task
+        - name: name
+          value: helm-publish
+        - name: namespace
+          value: ci
+      runAfter:
+      - config-build
+      workspaces:
+      - name: source
+        workspace: source
+      - name: scratch
+        workspace: scratch
+      params:
+      - name: config_file
+        value: "skaffold.yaml"
+      - name: app_version
+        value: "$(params.revision)"     
+    - name: build-images
+      taskRef:
+        resolver: cluster
+        params:
+        - name: kind
+          value: task
+        - name: name
+          value: skaffold-build
+        - name: namespace
+          value: ci
+      when:
+      - input: "$(tasks.config-build.results.build_image)"
+        operator: "in"
+        values: ["True"]
+      runAfter:
+      - config-build
+      - create-kaniko-build-secret
+      workspaces:
+      - name: source
+        workspace: shared-data
+      - name: scratch
+        workspace: scratch
+      params:
+      - name: revision
+        value: $(params.revision)
+      - name: build_profiles
+        value: "$(tasks.config-build.results.skaffold_build_profiles)"
+    - name: copy-images-to-all-regions
+      retries: 1
+      runAfter:
+        - build-images
+      when:
+      - input: "$(tasks.custom-vars.results.is_pr)"
+        operator: notin
+        values: ["True"]
+      taskRef:
+        resolver: cluster
+        params:
+        - name: kind
+          value: task
+        - name: name
+          value: skopeo-copy
+        - name: namespace
+          value: ci
+      workspaces:
+        - name: workspace
+          workspace: scratch
+      params:
+        - name: revision
+          value: "$(params.revision)"
+        - name: sourceImages
+          value: $(tasks.config-build.results.images)
+    - name: unit-tests
+      taskRef:
+        resolver: cluster
+        params:
+        - name: kind
+          value: task
+        - name: name
+          value: unit-tests
+        - name: namespace
+          value: ci
+      # If we want lint and unit-tests to run in parallel, we need to have a discussion
+      # around how to handle dependencies required by the two tasks. Right now, in a node
+      # project for example, lint and unit-tests both need to yarn install into the shared
+      # source workspace which causes "interesting" errors if the yarn installs compete
+      # in a weird way. For now, just running the two tasks in series.
+      runAfter:
+      - config-build
+      workspaces:
+      - name: repo
+        workspace: shared-data
+      - name: working-repo
+        workspace: scratch
+      when:
+      - input: "$(tasks.config-build.results.unittest_image)"
+        operator: "notin"
+        values: ["None"]
+      - input: "$(tasks.config-build.results.unittest_command)"
+        operator: "notin"
+        values: ["None"]
+      params:
+      - name: image
+        value: "$(tasks.config-build.results.unittest_image)"
+      - name: command
+        value: "$(tasks.config-build.results.unittest_command)"
+      - name: test_coverage_dir
+        value: "$(tasks.config-build.results.test_coverage_dir)"
+      - name: coverage_file
+        value: "$(tasks.config-build.results.unittest_coverage_file)"        
+    - name: lint
+      taskRef:
+        resolver: cluster
+        params:
+        - name: kind
+          value: task
+        - name: name
+          value: lint
+        - name: namespace
+          value: ci
+      runAfter:
+      - config-build
+      workspaces:
+      - name: repo
+        workspace: shared-data
+      - name: working-repo
+        workspace: scratch
+      params:
+      - name: image
+        value: "$(tasks.config-build.results.lint_image)"
+      - name: command
+        value: "$(tasks.config-build.results.lint_command)"
+      # This WhenExpression can be removed once a majority of repos are using this lint Task
+      when:
+      - input: "$(tasks.config-build.results.lint_image)"
+        operator: "notin"
+        values: ["None"]
+      - input: "$(tasks.config-build.results.lint_command)"
+        operator: "notin"
+        values: ["None"]
+    - name: start-world-event
+      retries: 1
+      taskRef:
+        resolver: cluster
+        params:
+        - name: kind
+          value: task
+        - name: name
+          value: start-world
+        - name: namespace
+          value: ci
+      when:
+      - input: "$(tasks.custom-vars.results.is_pr)"
+        operator: in
+        values: ["True"]
+      runAfter:
+        - helm-build-and-publish-from-skaffold
+        - build-images
+      params:
+      - name: repo_name
+        value: "fulcrumapp/rails"
+      - name: pull_request_number
+        value: "$(params.pull_request_number)"
+      - name: revision
+        value: "$(params.revision)"
+      - name: pull_request_url
+        value: "https://github.com/fulcrumapp/fulcrum/pulls/$(params.pull_request_number)"
+      - name: deploy_charts_with_versions
+        value: "$(tasks.helm-build-and-publish-from-skaffold.results.published_chart_with_versions_a)"
+      - name: world_el
+        value: "http://el-ci-status-listener.ci.svc.cluster.local:8080/ciworld"
+
+    - name: sonarqube-scanner
+      retries: 1
+      taskRef:
+        resolver: cluster
+        params:
+        - name: kind
+          value: task
+        - name: name
+          value: sonnarqube-scanner
+        - name: namespace
+          value: ci
+      runAfter:
+      - config-build
+      - unit-tests
+      when:
+      - input: "$(tasks.config-build.results.run_sonar_scanner)"
+        operator: "in"
+        values: ["True"]
+      workspaces:
+      - name: source-dir
+        workspace: source
+      - name: sonar_cache
+        workspace: sonar_cache
+      params:
+      - name: flags
+        value: "$(tasks.custom-vars.results.sonarqube_flags)"
+      - name: revision
+        value: $(params.revision)
+    - name: wait-for-prod-dependencies
+      runAfter:
+      - helm-build-and-publish-from-skaffold
+      when:
+      - input: "$(tasks.custom-vars.results.is_pr)"
+        operator: notin
+        values: ["True"]
+      - input: "$(tasks.config-build.results.auto_deploy)"
+        operator: in
+        values: ["True"]
+      workspaces:
+      - name: scratch
+        workspace: scratch
+      taskSpec:
+        workspaces:
+        - name: scratch
+        steps:
+        - name: wait-for-lint-to-finish
+          image: 280296955917.dkr.ecr.us-east-2.amazonaws.com/ci-skaffold:latest
+          env:
+          - name: OUTPUT_CHECK_FILE
+            value: $(workspaces.scratch.path)/lint/LINT_OUTPUT_CHECK
+          - name: RUN_COMMAND
+            value: $(tasks.config-build.results.lint_command)
+          script: |
+            #!/bin/bash
+            /app/wait-for-dependencies.sh
+        - name: wait-for-unit-tests-to-finish
+          image: 280296955917.dkr.ecr.us-east-2.amazonaws.com/ci-skaffold:latest
+          env:
+          - name: OUTPUT_CHECK_FILE
+            value: $(workspaces.scratch.path)/unit/UNITTEST_OUTPUT_CHECK
+          - name: RUN_COMMAND
+            value: $(tasks.config-build.results.unittest_command)
+          script: |
+            #!/bin/bash
+            /app/wait-for-dependencies.sh
+    - name: main-deploy
+      taskRef:
+        resolver: cluster
+        params:
+        - name: kind
+          value: task
+        - name: name
+          value: main-deploy
+        - name: namespace
+          value: ci
+      runAfter:
+      - wait-for-prod-dependencies        
+      when:
+      - input: $(tasks.status)
+        operator: in
+        values: ["Succeeded", "Completed"]
+      - input: "$(tasks.custom-vars.results.is_pr)"
+        operator: notin
+        values: ["True"]
+      - input: "$(tasks.config-build.results.auto_deploy)"
+        operator: in
+        values: ["True"]
+      workspaces:
+      - name: scratch
+        workspace: scratch
+      params:
+      - name: deploy_charts_with_versions
+        value: "$(tasks.helm-build-and-publish-from-skaffold.results.published_chart_with_versions_a)"
+      - name: helm_repo_url
+        value: "https://museum.chaos.fulcrum.tools/"
+      - name: gitrevision
+        value: "$(params.revision)"
+      - name: world-el
+        value: "http://el-ci-status-listener.ci.svc.cluster.local:8080/"
+      - name: events-el
+        value: "http://el-ci-status-listener.ci.svc.cluster.local:8080/"
+      - name: deploy-path
+        value: "cideploy"
+      - name: deploy-clusters-path
+        value: "cideploy-cluster"
+      - name: debug
+        value: "false"
+  finally:      
+  - name: clean-up-ci-secrets
+    taskRef:
+      resolver: cluster
+      params:
+      - name: kind
+        value: task
+      - name: name
+        value: kubernetes-actions
+      - name: namespace
+        value: ci
+    when:
+    - input: "$(tasks.config-build.results.build_image)"
+      operator: "in"
+      values: ["True"]
+    workspaces:
+    - name: manifest-dir
+      workspace: scratch
+    params:
+    - name: script
+      value: |
+        #!/usr/bin/bash
+        kubectl -n ci delete secret $(tasks.custom-vars.results.ci_secret_pull)
+        kubectl -n ci delete secret $(tasks.custom-vars.results.ci_secret_push)
+  - name: gh-status-failure
+    when:
+    - input: $(tasks.status)
+      operator: in
+      values: ["Failed"]
+    - input: "$(tasks.custom-vars.results.is_pr)"
+      operator: in
+      values: ["True"]
+    taskRef:
+      resolver: cluster
+      params:
+      - name: kind
+        value: task
+      - name: name
+        value: github-set-status
+      - name: namespace
+        value: ci
+    params:
+    - name: REPO_FULL_NAME
+      value: $(params.repo_full_name)
+    - name: STATE
+      value: "failure"
+    - name: TARGET_URL
+      value: "https://tekton-dashboard.chaos.fulcrum.tools/#/namespaces/cicd/pipelineruns/$(context.pipelineRun.name)"
+    - name: SHA
+      value: $(params.revision)
+    - name: DESCRIPTION
+      value: "Merging is blocked until CI tests pass"
+    - name: CONTEXT
+      value: "Tekton Pipeline"
+    - name: GITHUB_TOKEN_SECRET_NAME
+      value: $(params.git_auth_secret)
+    - name: GITHUB_TOKEN_SECRET_KEY
+      value: git-provider-token
+  - name: gh-status-success
+    when:
+    - input: $(tasks.status)
+      operator: in
+      values: ["Succeeded", "Completed"]
+    - input: "$(tasks.custom-vars.results.is_pr)"
+      operator: in
+      values: ["True"]
+    taskRef:
+      resolver: cluster
+      params:
+      - name: kind
+        value: task
+      - name: name
+        value: github-set-status
+      - name: namespace
+        value: ci
+    params:
+    - name: REPO_FULL_NAME
+      value: $(params.repo_full_name)
+    - name: STATE
+      value: "success"
+    - name: TARGET_URL
+      value: "https://tekton-dashboard.chaos.fulcrum.tools/#/namespaces/cicd/pipelineruns/$(context.pipelineRun.name)"
+    - name: SHA
+      value: $(params.revision)
+    - name: DESCRIPTION
+      value: "CI tests succeeded"
+    - name: CONTEXT
+      value: "Tekton Pipeline"
+    - name: GITHUB_TOKEN_SECRET_NAME
+      value: $(params.git_auth_secret)
+    - name: GITHUB_TOKEN_SECRET_KEY
+      value: git-provider-token
+  - name: copy-files-to-s3
+    workspaces:
+      - name: scratch
+        workspace: scratch
+    params:
+      - name: s3_bucket
+        value: fulcrumapp-ci-files-chaos
+      - name: bucket_path
+        value: "$(tasks.custom-vars.results.s3_path)"
+    taskSpec:
+      workspaces:
+        - name: scratch
+      params:
+        - name: s3_bucket
+        - name: bucket_path
+      steps:
+      - name: copy-files-to-s3
+        image: public.ecr.aws/aws-cli/aws-cli
+        script: |
+          aws s3 cp --recursive $(workspaces.scratch.path)/.s3_output_files s3://$(params.s3_bucket)/$(params.bucket_path)/
+  - name: gh-status-include-link-to-files
+    when:
+    - input: "$(tasks.custom-vars.results.is_pr)"
+      operator: in
+      values: ["True"]
+    taskRef:
+      resolver: cluster
+      params:
+      - name: kind
+        value: task
+      - name: name
+        value: github-set-status
+      - name: namespace
+        value: ci
+    params:
+    - name: REPO_FULL_NAME
+      value: $(params.repo_full_name)
+    - name: STATE
+      value: "success"
+    - name: TARGET_URL
+      value: "https://us-east-2.console.aws.amazon.com/s3/buckets/fulcrumapp-ci-files-chaos?region=us-east-2&bucketType=general&prefix=$(tasks.custom-vars.results.s3_path)/&showversions=false"
+    - name: SHA
+      value: $(params.revision)
+    - name: DESCRIPTION
+      value: "CI files"
+    - name: CONTEXT
+      value: "CI Files"
+    - name: GITHUB_TOKEN_SECRET_NAME
+      value: $(params.git_auth_secret)
+    - name: GITHUB_TOKEN_SECRET_KEY
+      value: git-provider-token
+  - name: send-oncall-alert-for-main-failure
+    when:
+    - input: $(tasks.status)
+      operator: in
+      values: ["Failed"]
+    - input: "$(tasks.custom-vars.results.is_pr)"
+      operator: notin
+      values: ["True"]
+    taskRef:
+      resolver: cluster
+      params:
+      - name: kind
+        value: task
+      - name: name
+        value: send-alert-to-oncall
+      - name: namespace
+        value: ci
+    params:
+    - name: message
+      value: "The CI run for main failed for: $(params.repo_name) and $(params.revision)"
+    - name: pipeline_run_url
+      value: "https://tekton-dashboard.chaos.fulcrum.tools/#/namespaces/cicd/pipelineruns/$(context.pipelineRun.name)"
+    - name: alertName
+      value: "Failed CI run $(params.repo_name)"
+    - name: component
+      value: $(params.repo_name)
+  results:
+  - name: sha
+    description: The commit SHA
+    value: "$(tasks.git-clone.results.commit)"
+  - name: published-charts-and-versions
+    description: Helm chart version
+    value: "$(tasks.helm-build-and-publish-from-skaffold.results.published_chart_with_versions_a)"
+  - name: build-image
+    description: Whether an image was built
+    value: "$(tasks.config-build.results.build_image)"
+  - name: images
+    description: A comma-separated string containing all output image URLs without tags (e.g., "280296955917.dkr.ecr.us-east-2.amazonaws.com/repo-image1,280296955917.dkr.ecr.us-east-2.amazonaws.com/repo-image2")
+    value: "$(tasks.config-build.results.images_string)"
