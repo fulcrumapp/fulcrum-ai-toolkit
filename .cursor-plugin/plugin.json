@@ -1,0 +1,19 @@
+{
+  "name": "fulcrum-ai-toolkit",
+  "version": "0.1.0",
+  "description": "AI skills for building apps, data events, reports, and workflows on the Fulcrum platform",
+  "author": "Fulcrum (Spatial Networks)",
+  "license": "MIT",
+  "interface": {
+    "displayName": "Fulcrum AI Toolkit",
+    "shortDescription": "Build better Fulcrum apps with AI-guided skills",
+    "longDescription": "A collection of AI skills for building field data collection apps on the Fulcrum platform. Covers app design, data events, safety, workflow decomposition, and structured discovery interviews. Built for environmental, construction, utility, and inspection workflows.",
+    "capabilities": [
+      "App design and structure guidance",
+      "Data event patterns and anti-patterns",
+      "Safety section recommendations for field work",
+      "Workflow decomposition for complex apps",
+      "Structured discovery interviews"
+    ]
+  }
+}
