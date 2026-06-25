@@ -1,0 +1,76 @@
+# Default values for sampleAPP.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+replicaCount: 1
+
+image:
+  registry: 280296955917.dkr.ecr.us-east-2.amazonaws.com
+  repository: sampleAPP
+  pullPolicy: IfNotPresent
+  # Overrides the image tag whose default is the chart appVersion.
+  tag: ""
+
+imagePullSecrets: []
+nameOverride: "{{ tpl .Values.ksvc.nameOverride . }}"
+fullnameOverride: ""
+
+crons_enabled: false # Set this value to true to setup cronjobs
+cronjobs:
+  nameOverride: sampleCHARTNAME
+  architectures:
+  - amd64
+  image:
+    registry: 280296955917.dkr.ecr.us-east-2.amazonaws.com
+    repository: sampleAPP
+    pullPolicy: IfNotPresent  
+  crons: []
+  # Below is an example of a cronjob.
+  # The job will run at 12:05 am everyday.
+  # and will run the rake command .. can be updated to whatever the
+  # image allows (bash/ruby/python/etc...).
+  # crons:
+  # - name: clean-old-orgs
+  #   schedule: "5 0 * * *"
+  #   command: "bundle exec rake cleanup:purge_old_orgs[us-east-1,false]"
+  #   envs:
+  #   - name: INLINE_TASKS_ENABLED
+  #     value: "true"
+  #   resources:
+  #     requests:
+  #       cpu: 500m
+  #       memory: 4Gi
+
+domains:
+- sampleCHARTNAME.util.fulcrumapp.com # UPDATE me
+
+ksvc_enabled: false # Set this value to true to setup services
+ksvc:
+  nameOverride: sampleCHARTNAME
+  architectures:
+  - amd64
+  port: 9000 # This is configurable.. Should match the port the process is running on.
+  image:
+    repository: sampleAPP
+    pullPolicy: IfNotPresent
+  resources:
+    requests:
+      cpu: 150m
+      memory: 100Mi
+    limits:
+      memory: 200Mi
+  env:
+  - name: APP
+    value: "sampleCHARTNAME"
+  defaultEnvsFromEnabled: false
+  probes:
+    livenessProbe:
+      httpGet:
+        path: /
+        port: http1
+        httpHeaders:
+        - name: X-B3-Sampled
+          value: "0"
+    readinessProbe:
+      httpGet:
+        path: /    

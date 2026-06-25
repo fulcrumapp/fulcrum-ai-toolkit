@@ -1,0 +1,2 @@
+domains:
+  - "sampleCHARTNAME-{{ .Values.previewPrefix }}.thefulcrum.team"
