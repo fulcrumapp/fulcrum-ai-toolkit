@@ -55,6 +55,8 @@ These skills aren't theoretical — they're distilled from real production work 
 
 - **Digital Transformation Best Practices** — Six practices extracted from PS engagement patterns: process discovery before building, output-first design, decompose by role, iterate don't perfect, change management, governance. These shaped `fulcrum-discovery` and `fulcrum-app-goal`.
 
+- **fulcrum-product-knowledge (SE/PS reference skill)** — A comprehensive platform knowledge base maintained for the Solutions Engineering and Professional Services teams. Covers plans and licensing gates, field type constraints, integration decision frameworks, reporting architecture, GIS limitations, and the full Query API reference. Gap analysis against this source drove the July 2026 updates to `fulcrum-data-events` (LOADFILE, STORAGE, CORS, plan gates), `fulcrum-app-design` (choice value/label distinction, Classification Set constraint, platform limits, predefined vs. ad hoc pattern), and `fulcrum-discovery` (platform boundaries and misconceptions as a pre-build check). Ongoing source for future skills: `fulcrum-report-building`, `fulcrum-app-extensions`, `fulcrum-query-api`, `fulcrum-integration-patterns`, `fulcrum-gis-mapping`.
+
 ### Skill format
 
 Skills follow the [SKILL.md format](https://github.com/Shopify/Shopify-AI-Toolkit): YAML frontmatter (name, description, invocation type) + markdown body. Design principles from [Matt Pocock's skills repo](https://github.com/mattpocock/skills): leading words, completion criteria, progressive disclosure, no-ops pruned.
