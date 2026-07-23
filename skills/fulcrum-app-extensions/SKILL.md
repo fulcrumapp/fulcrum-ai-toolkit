@@ -43,18 +43,24 @@ An app extension is a self-contained HTML file. It communicates with the Fulcrum
   </style>
 </head>
 <body>
-  <div id="app"><!-- extension UI here --></div>
+  <select id="my-select">
+    <option value="">-- choose --</option>
+    <option value="option_a">Option A</option>
+    <option value="option_b">Option B</option>
+  </select>
+  <button id="save-btn">Save</button>
 
   <script>
     // The FS bridge is injected by Fulcrum at runtime
     // It provides access to the record and data events API
 
-    // Read a field value from the record
-    var currentValue = FS.getValue('my_field');
+    // Pre-populate from the current field value
+    var select = document.getElementById('my-select');
+    select.value = FS.getValue('my_field') || '';
 
-    // Write a value back to the record
+    // Write the selected value back to the record on save
     document.getElementById('save-btn').addEventListener('click', function() {
-      FS.setFieldValue('my_field', selectedValue);
+      FS.setFieldValue('my_field', select.value);
       FS.close(); // close the extension panel
     });
   </script>
