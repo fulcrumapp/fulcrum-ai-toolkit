@@ -27,6 +27,15 @@ Before adding fields, resolve the **structural question**: one app or multiple l
 - **Child app(s):** The activity (inspection, visit, observation, work order). Created per event, linked to parent via Record Link field.
 - **Lookup app:** Reference data shared across apps (species lists, equipment catalogs, employee rosters). Read-only from child apps via `LOADRECORDS()`.
 
+### Predefined vs. ad hoc work — a design decision that changes everything
+
+Before designing the linked app pattern, resolve whether field work is **predefined** or **ad hoc**:
+
+- **Predefined:** The crew is inspecting a known set of assets this season (utility poles, permit sites, monitoring stations). Import those assets into the parent app before the crew goes out. The crew opens the app, finds their assigned record, and fills it in — no searching, no typing asset IDs.
+- **Ad hoc:** The crew discovers what they need to record in the field. Use a Record Link lookup so they can find and connect to existing records dynamically.
+
+Getting this wrong is expensive. A predefined workflow built as a lookup forces the crew to search and select at every visit — slow, error-prone, and frustrating. An ad hoc workflow built as pre-imports requires constant data management as the asset list changes.
+
 **Anti-pattern — the monolith:** A single app with 200+ fields, multiple status fields controlling visibility, and data events managing 60+ edge cases. This is the most common failure mode. If you see it, recommend decomposition (see `fulcrum-workflow-decomposition`).
 
 ## Field Type Selection
@@ -47,6 +56,13 @@ Choose the most constrained field type that captures the data. Constrained field
 | Repeating items (line items, specimens, observations) | Repeatable | NOT multiple fields — use a repeatable section |
 | A reference to another record | Record Link | Enables parent-child relationships |
 | A value computed from other fields | Calculation | Keeps derived data consistent |
+
+### Classification Set — one path only
+A Classification Set field captures a hierarchical taxonomy (e.g., CALVEG vegetation types, soil series, species classifications). The field walks the user down a decision tree.
+
+> **Constraint: only one path can be captured per Classification Set field.** The user selects one branch of the hierarchy. If you need to capture multiple species, soil layers, or vegetation types per record, use a repeatable with a Classification Set field inside it — one item per repeatable entry.
+
+This is non-obvious and commonly misunderstood. Don't design around it — design with it.
 
 ### Field naming conventions
 - Use clear, descriptive labels — the field label IS the field prompt in mobile
@@ -74,6 +90,18 @@ A **repeatable** is a nested table within a record — use it for variable-count
 - Always include a label/title field as the first field — it appears in the collapsed repeatable list
 - Photos inside repeatables are powerful — each observation gets its own photos
 - Avoid nesting calculations that reference fields outside the repeatable — use record-level calculations instead
+- **Date field inside a repeatable is a signal** — if a repeatable contains a date field, it often means the list could grow indefinitely over time. That's usually a sign the repeatable should be a linked child app instead, with each entry as its own record with its own lifecycle.
+
+### Platform limits (practical reference)
+
+| Thing | Limit | Notes |
+|-------|-------|-------|
+| Fields per app | 1,400 max | Practical limit is much lower — 80 fields is the design ceiling |
+| Photos per record | ~100 recommended | Performance degrades on mobile above this |
+| Repeatable items per record | ~100 practical | Mobile slows noticeably beyond this |
+| Record Link results | ~100 before UX degrades | Large result sets are slow and hard to navigate in the picker |
+
+These are soft limits — Fulcrum won't stop you at 101 repeatable items — but user experience and performance degrade predictably. Design below these thresholds.
 
 ## Choice Lists
 
@@ -82,6 +110,18 @@ A **repeatable** is a nested table within a record — use it for variable-count
 - **Exhaustive:** Include an "Other" option with a conditional text field when the list might not cover all cases
 - **Ordered logically:** Alphabetical for long lists, frequency-of-use for short lists, severity/chronological when order matters
 - **Consistent casing:** Title Case for short labels, Sentence case for longer descriptions
+
+### Value vs. label — a critical distinction
+Every choice has two parts: a **label** (what the user sees) and a **value** (what gets stored and exported). These are often the same, but they don't have to be — and the difference matters everywhere outside Fulcrum.
+
+> **The label is display-only. The value is the data.**
+
+- Webhook payloads contain values, not labels. An integration receiving `"status": "ntp"` needs to know that maps to "Not to Proceed."
+- Data events use `CHOICEVALUE($field)` to read the stored value, not the displayed label.
+- Reports and exports contain values. If your label says "Approved ✓" but your value is `"approved"`, the export contains `"approved"`.
+- When the label needs to change (e.g., regulatory term update), change the label — not the value. Changing values breaks existing records and integrations.
+
+**Rule:** Set values explicitly during choice list design. Don't accept auto-generated values from labels without reviewing them.
 
 ### When to use a shared choice list vs inline
 - **Shared (managed choice list):** When the same options appear in multiple apps or will be updated centrally (e.g., employee names, equipment types, project phases)
