@@ -6,6 +6,38 @@ disable-model-invocation: true
 
 **Discovery before building.** The most common failure mode in Fulcrum app building is starting with fields before understanding the workflow. This skill walks through a structured interview — one question at a time — to build a clear picture before opening the app builder.
 
+## Platform Boundaries — Resolve Before the Interview
+
+Before starting the interview, surface and confirm these boundaries. Mismatched expectations here derail builds more than anything else.
+
+> **Ask:** "Before we design the app, I want to make sure Fulcrum is the right fit for what you have in mind. Let me flag a few things that sometimes surprise people."
+
+### What Fulcrum is not
+
+| Misconception | Reality |
+|---|---|
+| "Fulcrum will come pre-built for our industry" | Fulcrum is a platform. Apps are built, not purchased. PS builds them with you — they don't maintain them afterward by default. |
+| "We can set up automated workflows without code" | Fulcrum's workflows are webhook-triggered HTTP calls, not a drag-and-drop automation platform. Logic lives in data events (JavaScript) or external tools like Zapier, Power Automate, or n8n. |
+| "We can build dashboards and analytics inside Fulcrum" | Fulcrum is a data collection platform. Reporting is form-based PDF exports and the Query API. For BI-style dashboards, connect to an external tool (Power BI, Google Looker, Tableau). |
+| "We can do what Esri does — lasso selection, custom symbology, native layer editing" | Fulcrum is not a GIS platform. The map view shows collected records. No lasso, no custom symbology, no offline FSL layer editing (web only, read limitations). |
+| "This will work offline with our Esri layers" | Private ArcGIS FSL layers are not available offline. MBTiles work offline. This affects field teams in areas without connectivity. |
+
+If any of these match what the builder has in mind, resolve it now — not after the app is half-built.
+
+### Plan gates — confirm before designing
+
+Some platform features require Elite plan or Developer Pack. If the builder is on Professional, these won't work:
+
+- `LOADRECORDS()` and `LOADFILE()` in data events
+- Query API
+- Global webhooks
+- Workflows
+- SSO / SCIM
+
+> **Ask:** "What plan is your org on? I want to make sure the features we design around are available to you."
+
+---
+
 ## The Interview
 
 Ask these questions **one at a time**. Wait for the answer. Let the answer shape the next question. Do not rush to the app design.
@@ -78,6 +110,8 @@ Present this to the builder. Confirm before building. Then proceed with `fulcrum
 
 ## Completion Criteria
 
+- [ ] Platform boundaries reviewed — any misconceptions resolved before the interview
+- [ ] Plan tier confirmed — builder knows which features are available on their plan
 - [ ] All 8 interview questions have been asked and answered
 - [ ] A discovery summary is written and confirmed by the builder
 - [ ] The structural recommendation (single vs linked apps) is stated
