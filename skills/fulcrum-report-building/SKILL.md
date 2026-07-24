@@ -39,7 +39,7 @@ These are available in every report without any setup:
 
 ## EJS Patterns
 
-EJS uses two tag types. Use them correctly — they produce very different output:
+EJS uses three tag types. Use them correctly — they produce very different output:
 
 ```ejs
 <%= expression %>   <%# Outputs the value — HTML-escaped %>
@@ -90,9 +90,11 @@ The standard report context loads **one record**. `QUERY()` is how you go beyond
 
 ```ejs
 <%# Fetch related records from the same app %>
+<%# Sanitize record values before interpolating into SQL to prevent injection %>
+<% const siteId = (record.getValue('site_id') || '').replace(/[^a-zA-Z0-9_-]/g, ''); %>
 <% const relatedInspections = QUERY(
   `SELECT * FROM "Site Inspections"
-   WHERE site_id = '${record.getValue('site_id')}'
+   WHERE site_id = '${siteId}'
    ORDER BY _created_at DESC`,
   { format: 'json' }
 ); %>
@@ -114,7 +116,7 @@ Repeatable data is in a separate table, joined to the parent by `fulcrum_parent_
 <% const items = QUERY(
   `SELECT r.*
    FROM "Work Orders/line_items" r
-   WHERE r.fulcrum_record_id = '${record.id}'`,
+   WHERE r.fulcrum_parent_id = '${record.id}'`,
   { format: 'json' }
 ); %>
 ```
