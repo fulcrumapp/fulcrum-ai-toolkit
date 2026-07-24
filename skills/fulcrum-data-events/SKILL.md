@@ -7,55 +7,66 @@ A **data event** is JavaScript that runs inside a Fulcrum app in response to rec
 
 ## Event Lifecycle
 
-Data events fire on these events:
+Fulcrum has three families of events. Getting the family right matters — `edit-record` is **not** a field-change event.
 
-| Event | When it fires | Common uses |
-|-------|--------------|-------------|
-| `load-record` | Record opens (new or existing) | Set defaults, load reference data, show/hide fields |
-| `edit-record` | Field value changes | Cascade choices, validate, compute, show/hide |
-| `validate-record` | User taps Save | Block save with validation errors |
-| `save-record` | After successful save | Set status, update timestamps |
-| `load-repeatable` | Repeatable item opens | Set repeatable defaults |
-| `edit-repeatable` | Repeatable field changes | Validate repeatable items |
-| `validate-repeatable` | Repeatable item saved | Block repeatable save |
-| `save-repeatable` | After repeatable save | Aggregate repeatable data to parent |
-| `new-repeatable` | New repeatable item created | Auto-number, set sequence |
-| `remove-repeatable` | Repeatable item deleted | Recalculate aggregates |
+**Record events** — one callback per record lifecycle moment:
+
+| Event | When it fires |
+|-------|--------------|
+| `load-record` | Record editor opens (new *and* existing records) — one-time setup |
+| `new-record` | A new record is created, after `load-record` — new-record-only defaults |
+| `edit-record` | An **existing** record is opened, after `load-record` — fires once, not on every change |
+| `validate-record` | Right before save — call `INVALID('msg')` to block the save (synchronous only) |
+| `save-record` | Immediately before save, after validation — last-second updates (no async) |
+| `change-status` | Record status changes (not on defaults; not when set via `SETSTATUS()`) |
+| `change-geometry` | Record location changes (not when set via `SETLOCATION()`/`SETGEOMETRY()`) |
+
+**Field events** — pass the field data_name as the second argument:
+
+| Event | When it fires |
+|-------|--------------|
+| `change` | A field's value changes — **this is the event for cascading, visibility, and compute** |
+| `click` | A hyperlink field is tapped (used to open app extensions) |
+| `focus` / `blur` | A text/numeric field gains / loses focus |
+
+**Repeatable events** — pass the repeatable field data_name as the second argument: `new-repeatable`, `edit-repeatable`, `save-repeatable`, `validate-repeatable`, `load-repeatable`, `remove-repeatable`. Use these to auto-number, validate, and aggregate repeatable items.
+
+> **`change` does not fire after `SETVALUE()`.** Setting a value programmatically does not re-trigger `change` for that field (it does fire for calculated fields that depend on it). Never rely on a `SETVALUE` to cascade into another `change` handler.
 
 ## Core Patterns
 
 ### Set field values
 ```javascript
-ON('edit-record', function(event) {
-  if (event.field === 'status') {
-    SETVALUE('status_date', new Date());
-    SETVALUE('status_by', USERFULLNAME());
-  }
+ON('change-status', function(event) {
+  SETVALUE('status_date', new Date());
+  SETVALUE('status_by', USERFULLNAME());
 });
 ```
 
 ### Conditional visibility
 ```javascript
-ON('edit-record', function(event) {
+ON('change', 'permit_required', function(event) {
   SETHIDDEN('permit_number', CHOICEVALUE($permit_required) !== 'Yes');
 });
 ```
 
 ### Cascading choices
 ```javascript
-ON('edit-record', function(event) {
-  if (event.field === 'state') {
-    var counties = COUNTIES_BY_STATE[CHOICEVALUE($state)];
-    SETCHOICES('county', counties || []);
-  }
+ON('change', 'state', function(event) {
+  var counties = COUNTIES_BY_STATE[CHOICEVALUE($state)];
+  SETCHOICES('county', counties || []);
 });
 ```
 
 ### Load reference data
+`LOADRECORDS()` takes an **options object** and an **async callback** — it does not return records directly.
 ```javascript
 ON('load-record', function(event) {
-  var records = LOADRECORDS('lookup_app_id', 'record_link_field');
-  // Use loaded records to populate choices or validate
+  LOADRECORDS({ form_id: FORM().id, limit: 200 }, function(error, result) {
+    if (error) { return; }
+    var records = Array.isArray(result) ? result : result.records;
+    // Use loaded records to populate choices or validate
+  });
 });
 ```
 
@@ -79,17 +90,16 @@ Reference Files can be hosted on your own CDN or via Fulcrum's reference file st
 > **Platform Requirement — Elite plan:** `LOADFILE()` requires Elite or Developer Pack. See note above.
 
 ### Session state with STORAGE
-`STORAGE()` provides key-value storage that persists across data event executions within a session. Use it to track "last seen" values, cache expensive lookups, or carry state between events.
+`STORAGE()` returns a storage object with `getItem`, `setItem`, `removeItem`, and `clear` methods — like `localStorage`. Values must be **strings**, so serialize objects with `JSON.stringify`. Use it to cache expensive results or carry state between events.
 
 ```javascript
-// Cache a lookup result so it doesn't fire on every edit
 ON('load-record', function(event) {
-  if (!STORAGE('species_list')) {
-    var list = LOADRECORDS('species_app_id', 'species_link');
-    STORAGE('species_list', JSON.stringify(list));
+  var storage = STORAGE();
+  // Cache an expensive computation so later events can reuse it
+  if (!storage.getItem('baseline')) {
+    storage.setItem('baseline', JSON.stringify(computeBaseline()));
   }
-  var cached = JSON.parse(STORAGE('species_list'));
-  SETCHOICES('species', cached.map(function(r) { return r.common_name; }));
+  var baseline = JSON.parse(storage.getItem('baseline'));
 });
 ```
 
@@ -104,13 +114,25 @@ ON('validate-record', function(event) {
 
 ## Anti-patterns
 
+### SETVALUE fails silently on a wrong data_name
+`SETVALUE('nonexistent_field', x)` does nothing and throws no error — the event fires, the condition matches, `SETVALUE` runs, and the field stays blank. This is the single hardest data-event bug to find. **Verify every data_name against the live form before writing handlers.**
+
+### ALERT() breaks SETVALUE inside a change handler
+`ALERT()` blocks execution; when the user dismisses it, Fulcrum re-renders the form from its backing state and overwrites any value `SETVALUE` set during the same event. Use `ALERT` only as a temporary diagnostic, and remove it before testing the real behavior.
+
+### Reading a value you just set
+`change` does not fire after `SETVALUE`, and a value written with `SETVALUE` is not reliably readable back via `$data_name` in the same handler. When a later step needs a computed value, pass it forward in a variable — don't re-read it from the field mid-handler.
+
 ### Hardcoded IDs
 ```javascript
 // BAD — breaks when app is copied or moved between orgs
 var TEMPLATE_ID = 'abc-123-def';
 
-// GOOD — discover at runtime
-var templates = LOADRECORDS('', 'form_id_field');
+// GOOD — load records at runtime and match by a stable attribute (name)
+LOADRECORDS({ form_id: FORM().id }, function(error, result) {
+  var records = (Array.isArray(result) ? result : result.records) || [];
+  // match by name/type, not a hardcoded ID
+});
 ```
 Hardcoded form IDs, report template IDs, or record IDs make apps non-portable. **Always discover resources at runtime** by querying by name, type, or relationship.
 
@@ -118,7 +140,7 @@ Hardcoded form IDs, report template IDs, or record IDs make apps non-portable. *
 ```javascript
 // BAD — API keys visible to anyone who can view the data event
 var API_KEY = 'sk_live_abc123';
-fetch('https://api.example.com/data?key=' + API_KEY);
+REQUEST({ url: 'https://api.example.com/data?key=' + API_KEY }, handleResponse);
 
 // REALITY — Fulcrum has no secrets management.
 // If your data event needs an API key, the key will be in the code.
@@ -158,7 +180,7 @@ A single `script` field holds ALL data events for a form. As complexity grows:
 
 - **No server execution** — Data events run on-device. No persistent state between sessions.
 - **No module imports** — No `require()`, no `import`. All code is a single script.
-- **No async/await** — `LOADRECORDS()` is synchronous. `fetch()` is available but blocks the UI.
+- **Callback-based async, no async/await** — `REQUEST()` (HTTP) and `LOADRECORDS()` are asynchronous and take a callback `(error, result)`. There is no `async`/`await` and no `fetch()`; `REQUEST()` is the HTTP primitive. `validate-record`, `validate-repeatable`, and `save-record` cannot perform async work.
 - **Single script per form** — All event handlers share one script. Naming collisions are possible.
 - **Mobile offline** — Data events must work offline. `fetch()` calls fail without connectivity. Design for offline-first, enhance when online.
 - **No debugging tools** — No console, no breakpoints in production. Test in the web builder's preview mode.
@@ -166,7 +188,9 @@ A single `script` field holds ALL data events for a form. As complexity grows:
 
 ## Completion Criteria
 
-- [ ] Data events handle the correct lifecycle events (not load-record when edit-record is needed)
+- [ ] Field-change logic uses `ON('change', 'field', …)` — not `edit-record` (which fires once when an existing record opens)
+- [ ] All field data_names verified against the live form — SETVALUE fails silently on a wrong name
+- [ ] `LOADRECORDS()` / `REQUEST()` are treated as async (callback), not synchronous
 - [ ] No hardcoded IDs — all resources discovered at runtime
 - [ ] No secrets in code — or if unavoidable, documented and using least-privileged keys
 - [ ] Data events do not implement security controls (use platform permissions)
