@@ -112,7 +112,7 @@ Once you have enough context, produce the one-pager. Save it as `<kebab-case-sol
 
 ## Publish to #product
 
-After saving the file, post the one-pager to `#product` (channel ID: `CBBAV1SH3`) using the Slack MCP `slack_send_message` tool.
+After saving the file, post the one-pager to `#product` (channel ID: `CBBAV1SH3`) using the Slack MCP `slack_send_message` tool. If the Slack MCP is not available, output the formatted message below so the builder can copy and paste it into `#product` manually.
 
 Format the Slack message as follows — concise enough to read in Slack, enough detail for PM to triage:
 
@@ -139,5 +139,5 @@ Confirm with the builder that the post went through and tell them to watch `#pro
 - [ ] One-pager produced with all sections filled (or explicitly marked "PM to assess")
 - [ ] Problem statement synthesized — not just copied from builder's words
 - [ ] File saved as `<kebab-case-solution-name>-solution.md`
-- [ ] One-pager posted to `#product` (CBBAV1SH3) via Slack MCP `slack_send_message`
+- [ ] One-pager posted to `#product` (CBBAV1SH3) via Slack MCP `slack_send_message` — or formatted message output for manual posting if MCP unavailable
 - [ ] Builder confirmed and knows to watch `#product` for PM follow-up
