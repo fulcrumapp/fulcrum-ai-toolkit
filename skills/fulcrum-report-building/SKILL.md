@@ -119,6 +119,54 @@ Repeatable data is in a separate table, joined to the parent by `fulcrum_parent_
 ); %>
 ```
 
+### QUERY() across linked apps — join on the link table, not on a text field
+
+Every Record Link field gets its own **join table** in the Query API, named
+`"Form Name/record_link_column"`. It holds one row per link: `source_record_id` is the record
+that owns the link, `linked_record_id` is the record it points at.
+
+```ejs
+<%# All archaeological records belonging to this site — joined by record ID %>
+<% const subRecords = QUERY(
+  `SELECT c.*
+   FROM "DPR 523C Archaeological Site" c
+   JOIN "DPR 523C Archaeological Site/site_link" l
+     ON l.source_record_id = c._record_id
+   WHERE l.linked_record_id = '${siteRecordId}'`,
+  { format: 'json' }
+); %>
+```
+
+> **Prefer the link table over matching on a shared text field.** A query like
+> `WHERE site_id = '...'` looks simpler, but it breaks the moment that identifier changes —
+> and business identifiers do change. In cultural resource recording a site carries a
+> temporary ID that is later replaced by a permanent one; every text-matched report would
+> silently return zero rows the day that happens. Record IDs never change.
+
+This is the pattern for assembling a multi-app package (a parent record plus every child
+record across several apps) into one export.
+
+### The 63-byte table name limit — a silent data-loss trap
+
+Postgres caps identifiers at 63 bytes. Query API child and link tables are named
+`"Form Name/column_name"`, so a long app name plus a long column name exceeds it.
+
+**It does not error.** The query resolves to a view that does not exist, and you get an
+empty result or `relation ... does not exist` — so a report renders looking fine, with a
+blank table where the data should be.
+
+```
+✗ 70 bytes  "DPR 523B Building, Structure, and Object Record/resource_attributes_hp"
+✓ 57 bytes  "DPR 523B Building/Structure/Object/resource_attributes_hp"
+```
+
+> **Design rule:** keep app names short enough that `name + "/" + longest_column` stays under
+> 63 bytes. With a 22-character column that means a 40-character app name. Put the full
+> regulatory or customer-facing title in the app **description** and on the printed report,
+> not in the app name.
+
+Worth checking at build time rather than discovering it in a customer's export.
+
 ### APIREQUEST() for non-SQL data
 
 ```ejs
