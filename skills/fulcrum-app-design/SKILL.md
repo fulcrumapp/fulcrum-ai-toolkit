@@ -103,6 +103,86 @@ A **repeatable** is a nested table within a record — use it for variable-count
 
 These are soft limits — Fulcrum won't stop you at 101 repeatable items — but user experience and performance degrade predictably. Design below these thresholds.
 
+## Conditional Visibility — What Can Reference What
+
+Visibility and requirement conditions cannot target arbitrary fields. The rules are enforced
+server-side, and getting them wrong produces a 422 on save — or worse, a field that is
+hidden forever because the rule never evaluates.
+
+### Scope: children may look up, parents may not look down
+
+| Source field | May target | May NOT target |
+|---|---|---|
+| Record level | Other record-level fields | Anything inside a repeatable |
+| Inside a repeatable | Fields in the same repeatable, **and record-level fields** (ancestors), and fields in an enclosing outer repeatable | A **deeper-nested** repeatable, or a **sibling** repeatable |
+
+> **A field inside a repeatable CAN be driven by a field on the parent record.** This is
+> commonly assumed to be impossible and it is not. A repeatable row can hide or show its
+> fields based on a record-level choice — e.g. UTM entry boxes inside a coordinates
+> repeatable, revealed only when the record says coordinates were transcribed by hand.
+
+Sections do **not** create a scope. Only repeatables do.
+
+### Types that can never be a condition target
+
+`Repeatable` · `Section` · `PhotoField` · `VideoField` · `AudioField` · `Label` ·
+`AddressField` · `SignatureField` · `AttachmentField`
+
+You cannot show a field "when a photo exists" with a condition. That needs a data event.
+
+### Operators are restricted by target type
+
+| Target type | Allowed operators |
+|---|---|
+| Record Link | `is_empty`, `is_not_empty` only |
+| Choice, Classification, Yes/No, Status | `equal_to`, `not_equal_to`, `is_empty`, `is_not_empty` |
+| Everything else | the above plus `contains`, `starts_with`, `greater_than`, `less_than` |
+
+> **`equal_to` against a multi-select Choice field means "includes".** It scans the selected
+> values and matches if any one of them equals the condition value. So revealing an "Other —
+> please specify" text box when *one of several* ticked options is "Other" is a single
+> `equal_to` condition, not something that needs `contains`.
+
+## Record Links — Filtering and Defaults
+
+### Filter the picker by the current record's value
+
+A Record Link's `record_conditions` can compare a field on the **linked** app against either a
+static value or **a field on the current record** (`value_field_key`). That second form is the
+one worth knowing:
+
+```
+linked_form_field_key: <project field on the Site app>
+operator:              equal_to
+value_field_key:       <project field on this record>
+```
+
+→ "only offer me Sites belonging to this record's project."
+
+This matters because the Record Link picker degrades past ~100 results. A firm with forty
+projects and hundreds of sites needs the list narrowed, and filtering by a value already on
+the record does it without any data events.
+
+> **Ordering consequence:** the filtering field must be answered *before* the link it filters.
+> If a form learned its project *from* the site it selected, there would be nothing to filter
+> the site picker by. Put the broad link first, the narrow link second.
+
+### `record_defaults` copies — it does not sync
+
+`record_defaults` stamps values from the linked record onto the current record **at selection
+time, once, one-way**. It is not a live reference.
+
+**Use it when** the copied value is meant to be edited afterwards — seeding an authoritative
+record with sensible starting values.
+
+**Do not use it when** the value must stay correct. If the source can change after linking —
+a temporary identifier replaced by a permanent one, a project renamed — every copy made
+beforehand is silently stale.
+
+**Instead:** store the link and read through it at report time. The link holds a record ID,
+which never changes, so the report always sees current values. Where a copy is unavoidable
+(offline display), mark those fields read-only so nobody mistakes a snapshot for live data.
+
 ## Choice Lists
 
 ### Design principles
@@ -122,6 +202,35 @@ Every choice has two parts: a **label** (what the user sees) and a **value** (wh
 - When the label needs to change (e.g., regulatory term update), change the label — not the value. Changing values breaks existing records and integrations.
 
 **Rule:** Set values explicitly during choice list design. Don't accept auto-generated values from labels without reviewing them.
+
+### Coded taxonomies — put the code in the value, the wording in the label
+
+Regulatory and scientific lists usually pair a stable code with mutable wording: `HP16` is
+permanent, "Religious building" is how it happens to be phrased today. If you set both label
+and value to `"HP16 Religious building"`, then correcting a typo in the wording **changes the
+stored value** and orphans every existing record.
+
+| | Label (display) | Value (stored) |
+|---|---|---|
+| Recommended | `HP16 Religious building` | `HP16` |
+| Fragile | `HP16 Religious building` | `HP16 Religious building` |
+
+Trade-off worth naming out loud: exports contain values, so bare codes make a spreadsheet
+compact and stable but less readable. If customers analyse exports directly, either accept
+that or have the report expand codes to labels.
+
+> **Sorting:** choices render in the order you author them — Fulcrum does not sort them. But
+> if customers export to Excel and sort *there*, zero-pad numeric codes (`HP01`, not `HP1`),
+> or `HP10` will sort between `HP1` and `HP2`.
+
+### Commas in choice values
+
+A choice value containing a comma — `"Building, Structure, and Object Record"` — survives the
+API fine, but is split into separate choices by any tool that accepts choices as a
+comma-separated string. That includes some CLI helpers and some org-migration paths.
+
+Always create such lists by passing an **array** of choice objects, and verify the list after
+migrating an app between orgs: read it back and compare the count against the source.
 
 ### When to use a shared choice list vs inline
 - **Shared (managed choice list):** When the same options appear in multiple apps or will be updated centrally (e.g., employee names, equipment types, project phases)
