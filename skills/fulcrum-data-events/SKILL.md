@@ -112,6 +112,60 @@ ON('validate-record', function(event) {
 });
 ```
 
+### Seeding a record created from a link picker
+
+When a Record Link field allows creating records, the child record is born with **nothing**
+from its parent. `record_defaults` copies only FROM the linked record INTO the current one —
+there is no reverse mechanism — and **`default_previous_value` on the link does not pre-fill
+it** in this path (verified on-device).
+
+That matters when the parent holds context the child needs to be findable later. A site
+created from a form's picker with no project attached will not match that form's
+project-filtered picker on the *next* record — it looks like the site vanished.
+
+Remember the value on the device and default it on new records:
+
+```javascript
+var LAST_KEY = 'app.lastProject';
+
+// Record link values may arrive as ['id'] or as [{record_id: 'id'}] — normalise.
+function linkIds(value) {
+  var ids = [];
+  for (var i = 0; i < (value || []).length; i++) {
+    var e = value[i];
+    var id = typeof e === 'string' ? e : e && e.record_id;
+    if (id) { ids.push(id); }
+  }
+  return ids;
+}
+
+ON('new-record', function () {
+  if (linkIds($project_link).length) { return; }   // never override an explicit choice
+  var raw = STORAGE().getItem(LAST_KEY);
+  if (!raw) { return; }
+  var last = JSON.parse(raw);
+  SETVALUE('project_link', [last.id]);             // array of bare id strings
+  SETVALUE('project_name', last.name);
+});
+
+// Remember at SAVE, not on change: fields populated by record_defaults settle outside your
+// control, and a value is not reliably readable straight after it is set.
+ON('save-record', function () {
+  var ids = linkIds($project_link);
+  if (ids.length && $project_name) {
+    STORAGE().setItem(LAST_KEY, JSON.stringify({ id: ids[0], name: $project_name }));
+  }
+});
+```
+
+> **`SETVALUE` on a Record Link takes an array of bare record-id strings** — `['abc-123']`,
+> not `[{record_id: 'abc-123'}]` — even though the API stores the object form. Verified
+> on-device.
+
+Pair this with a tolerant filter on the picker (match the expected value **or** empty), so a
+child created before the script ever ran is still visible. The script keeps the data clean;
+the filter keeps the workflow unbroken when it doesn't.
+
 ## Anti-patterns
 
 ### SETVALUE fails silently on a wrong data_name
