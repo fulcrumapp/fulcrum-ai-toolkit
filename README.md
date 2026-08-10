@@ -20,6 +20,8 @@ npx skills@latest add fulcrumapp/fulcrum-ai-toolkit
 
 | Skill | Description | Type |
 | ------- | ------------- | ------ |
+| `fulcrum-product-knowledge` | Canonical Fulcrum platform capabilities, constraints, plans, integrations, GIS, Query API, and MCP build reference | Model-invoked |
+| `fulcrum-app-builder` | Novice-friendly app discovery, schema approval, MCP build orchestration, and connector-independent handoff | Model-invoked |
 | `fulcrum-app-design` | App structure, field types, linked apps vs single app, repeatables | Model-invoked |
 | `fulcrum-app-goal` | Ensure every app has a clear goal and defined deliverable | Model-invoked |
 | `fulcrum-safety` | Flag missing safety steps in field workflows | Model-invoked |
@@ -34,6 +36,8 @@ npx skills@latest add fulcrumapp/fulcrum-ai-toolkit
 
 Skills are **model-invoked** by default: the agent fires them automatically when building Fulcrum apps. The agent will:
 
+- Use the canonical platform reference for capability, plan, offline, and integration decisions (`fulcrum-product-knowledge`)
+- Guide app discovery, schema approval, and connector-dependent execution (`fulcrum-app-builder`)
 - Check that every app has a clear goal before building (`fulcrum-app-goal`)
 - Select appropriate field types and app structure (`fulcrum-app-design`)
 - Flag missing safety steps in field workflows (`fulcrum-safety`)
@@ -64,6 +68,7 @@ These skills aren't theoretical — they're distilled from real production work 
 - **Digital Transformation Best Practices** — Six practices extracted from PS engagement patterns: process discovery before building, output-first design, decompose by role, iterate don't perfect, change management, governance. These shaped `fulcrum-discovery` and `fulcrum-app-goal`.
 
 - **fulcrum-product-knowledge (SE/PS reference skill)** — A comprehensive platform knowledge base maintained for the Solutions Engineering and Professional Services teams. Covers plans and licensing gates, field type constraints, integration decision frameworks, reporting architecture, GIS limitations, and the full Query API reference. Gap analysis against this source drove the July 2026 updates to `fulcrum-data-events` (LOADFILE, STORAGE, CORS, plan gates), `fulcrum-app-design` (choice value/label distinction, Classification Set constraint, platform limits, predefined vs. ad hoc pattern), and `fulcrum-discovery` (platform boundaries and misconceptions as a pre-build check). Ongoing source for future skills: `fulcrum-report-building`, `fulcrum-app-extensions`, `fulcrum-query-api`, `fulcrum-integration-patterns`, `fulcrum-gis-mapping`.
+- **Corporate Claude Desktop skill packages** — `fulcrum-product-knowledge.skill` and `fulcrum-app-builder.skill` are the source snapshots supplied for this import. Their content is maintained as repository-native copies in `skills/fulcrum-product-knowledge/` and `skills/fulcrum-app-builder/`. The copies remove the corporate `/mnt/skills/organization` dependency, point to the repository-local reference skill, and preserve a connector-independent handoff when no Fulcrum MCP is configured. The repository does not provide a Fulcrum MCP server; live app mutations require a separately configured connector.
 
 ### Skill format
 
