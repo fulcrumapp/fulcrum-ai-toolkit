@@ -45,7 +45,7 @@ Skills are **model-invoked** by default: the agent fires them automatically when
 Two skills are **user-invoked** — run them manually:
 
 - `fulcrum-discovery` — start a new project by interviewing the customer before building
-- `fulcrum-solution-publish` — after building, document what was built and publish a one-pager to `#product` for PM review
+- `fulcrum-solution-publish` — after building, document what was built and publish a one-pager to the configured Product Management channel for PM review
 
 ## Where this comes from
 
