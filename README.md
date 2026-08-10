@@ -25,7 +25,10 @@ npx skills@latest add fulcrumapp/fulcrum-ai-toolkit
 | `fulcrum-safety` | Flag missing safety steps in field workflows | Model-invoked |
 | `fulcrum-data-events` | Data event patterns, anti-patterns, and platform constraints | Model-invoked |
 | `fulcrum-workflow-decomposition` | Break monolithic apps into composable, maintainable pieces | Model-invoked |
+| `fulcrum-app-extensions` | App extension anatomy, FS bridge API, offline support, picker anti-pattern | Model-invoked |
+| `fulcrum-report-building` | Report template authoring — EJS tags, repeatables, parameters, debugging | Model-invoked |
 | `fulcrum-discovery` | Process discovery before building — interview the customer | User-invoked |
+| `fulcrum-solution-publish` | Post-build documentation and PM intake — publish a one-pager to Slack | User-invoked |
 
 ## Usage
 
@@ -36,8 +39,13 @@ Skills are **model-invoked** by default: the agent fires them automatically when
 - Flag missing safety steps in field workflows (`fulcrum-safety`)
 - Apply data event best practices and avoid anti-patterns (`fulcrum-data-events`)
 - Recommend decomposition when apps grow too complex (`fulcrum-workflow-decomposition`)
+- Apply extension best practices and avoid the picker anti-pattern (`fulcrum-app-extensions`)
+- Guide report template authoring with correct EJS patterns and parameter handling (`fulcrum-report-building`)
 
-The `fulcrum-discovery` skill is **user-invoked** — run it manually when starting a new project to interview the customer before building.
+Two skills are **user-invoked** — run them manually:
+
+- `fulcrum-discovery` — start a new project by interviewing the customer before building
+- `fulcrum-solution-publish` — after building, document what was built and publish a one-pager to `#product` for PM review
 
 ## Where this comes from
 
