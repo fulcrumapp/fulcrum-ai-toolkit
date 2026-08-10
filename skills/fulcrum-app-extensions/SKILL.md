@@ -1,11 +1,22 @@
 ---
 name: fulcrum-app-extensions
-description: Use when building, modifying, or reviewing Fulcrum app extensions — custom HTML/CSS/JavaScript UIs embedded inside a record. Covers extension anatomy, data exchange patterns, offline support decisions, extension types, and the picker anti-pattern. Also use when a builder asks about custom field types, embedded UIs, or SVG-based inputs inside Fulcrum records.
+description: Use when building, modifying, or reviewing Fulcrum app extensions — custom HTML/CSS/JavaScript UIs embedded inside a record. Covers extension anatomy, the Fulcrum bridge API, data exchange patterns, offline support decisions, extension types, and the picker anti-pattern. Also use when a builder asks about custom field types, embedded UIs, or SVG-based inputs inside Fulcrum records.
 ---
 
-An **app extension** is a custom HTML/CSS/JavaScript UI that runs inside a Fulcrum record on iOS, Android, and web. It lets you build data collection interfaces that Fulcrum doesn't support natively — custom pickers, embedded charts, SVG area selection, Bluetooth input, complex validation UIs.
+An **app extension** is a custom HTML/CSS/JavaScript UI that runs inside a Fulcrum record on iOS,
+Android, and web. It lets you build data collection interfaces that Fulcrum doesn't support natively
+— custom pickers, embedded charts, SVG area selection, Bluetooth input, complex validation UIs.
 
-Extensions communicate with the Fulcrum record through the data events API bridge. The data lives in standard Fulcrum fields and syncs normally.
+Extensions communicate with the host record through a JavaScript bridge. The data lives in standard
+Fulcrum fields and syncs normally.
+
+> **Provenance of this file (corrected 2026-08-10).** The API below is verified against three
+> independent sources that all agree: Fulcrum's official documentation
+> (`docs.fulcrumapp.com/docs/openextension`), the "App Extensions Patterns" reference app, and
+> live production extensions. A previous version of this skill documented an `FS.getValue` /
+> `FS.setFieldValue` / `FS.close` API — **that API does not exist**: it appears nowhere in Fulcrum's
+> official docs, nor in any working extension. Sections marked *(local convention)* are team
+> practice, not vendor-documented.
 
 ## When to Use an Extension vs. a Data Event
 
@@ -28,154 +39,107 @@ Extensions communicate with the Fulcrum record through the data events API bridg
 | `input` | Device/sensor input (Bluetooth measurements, hardware interfaces) |
 | `integration` | Backend sync or lookup within the record UI |
 
-## Extension Anatomy
+## The Bridge — how the two halves talk
 
-An app extension is a self-contained HTML file. It communicates with the Fulcrum record via a JavaScript bridge object (`FS`) that is injected at runtime.
+An extension is **two pieces**: a Data Events script that opens it, and a self-contained HTML file.
+Data flows **in** through the `data` parameter and **out** through `onMessage`. There is no API for
+the extension to read or write record fields directly — everything goes through this round trip.
+
+### Half 1 — the Data Events script
+
+```javascript
+ON('click', 'some_button', () => {
+  OPENEXTENSION({
+    url:   'attachment://my-extension.html',   // or any https:// address
+    title: 'My Extension',
+    data:  { test_value: $test_value },        // passed IN to the extension
+    onMessage: ({ data }) => {                 // called when the extension sends/finishes
+      SETVALUE('test_value', data.simple_result);
+    }
+  });
+});
+```
+
+`OPENEXTENSION` takes **a single options object** — not `(url, options)`.
+
+### Half 2 — the HTML file
+
+Every extension must include Fulcrum's bootstrap script, which defines `window.Fulcrum`. Copy it
+verbatim from `docs.fulcrumapp.com/docs/openextension` or from an existing working extension; it is
+minified and not meant to be edited.
 
 ```html
 <!DOCTYPE html>
 <html>
-<head>
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <style>
-    /* Keep styles self-contained — no external stylesheets at runtime */
-    body { font-family: sans-serif; margin: 0; padding: 16px; }
-  </style>
-</head>
-<body>
-  <select id="my-select">
-    <option value="">-- choose --</option>
-    <option value="option_a">Option A</option>
-    <option value="option_b">Option B</option>
-  </select>
-  <button id="save-btn">Save</button>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <!-- Fulcrum extension bootstrap — defines window.Fulcrum. Copy verbatim. -->
+    <script type="text/javascript">(()=>{ /* … minified Fulcrum bridge … */ })();</script>
 
-  <script>
-    // The FS bridge is injected by Fulcrum at runtime
-    // It provides access to the record and data events API
+    <script type="text/javascript">
+      // load() fires once the host has handed over the payload.
+      Fulcrum.load(({ data }) => {
+        const button = document.querySelector('button');
+        button.textContent = `Hello ${data.test_value + 1}!`;
 
-    // Pre-populate from the current field value
-    var select = document.getElementById('my-select');
-    select.value = FS.getValue('my_field') || '';
-
-    // Write the selected value back to the record on save
-    document.getElementById('save-btn').addEventListener('click', function() {
-      FS.setFieldValue('my_field', select.value);
-      FS.close(); // close the extension panel
-    });
-  </script>
-</body>
+        button.addEventListener('click', () => {
+          // finish() sends a result back to onMessage AND closes the extension.
+          Fulcrum.finish({ simple_result: data.test_value + 1 });
+        });
+      });
+    </script>
+  </head>
+  <body><button>Hello</button></body>
 </html>
 ```
 
-## Data Exchange — Reading and Writing Record Fields
+### The bridge API, in full
 
-Extensions communicate bidirectionally with the host record:
+| Call | Purpose |
+|------|---------|
+| `Fulcrum.load(cb)` | `cb({data})` fires when the payload is ready. **Entry point — put all setup here.** |
+| `Fulcrum.send(payload)` | Send a result to `onMessage` and leave the extension **open**. |
+| `Fulcrum.send(payload, {close:true})` | Send and close. |
+| `Fulcrum.finish(payload)` | Shorthand for the above — send and close. **Usual exit point.** |
+| `Fulcrum.data` | The raw payload, if you need it outside `load()`. |
+| `Fulcrum.isExtension` | `true` when running inside Fulcrum; useful for browser-testing a page standalone. |
 
-### Reading values into the extension
-
-```javascript
-// Get the current value of a field
-var existingValue = FS.getValue('species_name');
-
-// Get a choice field's selected values
-var selectedChoices = FS.getChoiceValues('habitat_types');
-
-// Get the record's current GPS location
-var location = FS.getLocation(); // { latitude, longitude, accuracy }
-```
-
-### Writing values back to the record
-
-```javascript
-// Set a field value — the primary output mechanism
-FS.setFieldValue('species_name', 'Quercus agrifolia');
-
-// Set multiple fields at once
-FS.setFieldValues({
-  species_name: 'Quercus agrifolia',
-  confidence_level: 'High',
-  identified_at: new Date().toISOString()
-});
-
-// Close the extension panel after writing
-FS.close();
-```
-
-### Triggering from data events (OPENEXTENSION)
-
-The data event that opens an extension is the other half of the bridge. Configure it via `ON('click', ...)` on a trigger field:
-
-```javascript
-// In the form's data events — open the extension when a button field is clicked
-ON('click', 'open_picker_btn', function(event) {
-  OPENEXTENSION('my_extension_reference_file.html', {
-    // Optional: pass context data into the extension
-    currentValue: VALUE('species_name'),
-    mode: 'picker'
-  });
-});
-```
-
-Access the context data inside the extension:
-
-```javascript
-// Inside the extension HTML
-var context = FS.getContext(); // returns the options object passed to OPENEXTENSION
-var currentValue = context.currentValue;
-```
-
-## The Picker Pattern — Read This First
-
-**The picker pattern is the most misunderstood extension type.**
-
-The picker extension REPLACES the native picker UI. It does not augment it. This has one critical implication for field type selection:
-
-> **Do not use a ChoiceField to store a picker extension's result. Use a TextField.**
-
-The ChoiceField has its own picker UI that conflicts with the extension. The correct pattern:
-
-1. **TextField** — stores the selected value (what the extension writes back)
-2. **HyperlinkField** — the trigger button; user taps it to open the extension
-3. `ON('click', ...)` on the HyperlinkField → `OPENEXTENSION(...)` in data events
-4. Extension writes result back to the TextField via `FS.setFieldValue()`
-
-```javascript
-// Data events — opens extension when user taps the hyperlink button
-ON('click', 'open_species_picker', function(event) {
-  OPENEXTENSION('species_picker.html', {
-    currentValue: VALUE('selected_species')
-  });
-});
-```
-
-Getting this wrong means building the extension and the form around the wrong field type — an expensive rework. Lock the field type decision before writing extension code.
+**Reading and writing record fields:** the extension cannot. It receives what the Data Events script
+chose to pass in `data`, and returns a result the Data Events script writes back with `SETVALUE`.
+When you need repeatable rows, pass `VALUE('repeatable_name')` in — it yields
+`[{id, form_values:{…}}, …]` — and write the modified array back in `onMessage`.
 
 ## Offline Support — The Key Design Decision
 
-Whether an extension works offline depends entirely on where its assets are hosted.
+Whether an extension works offline depends entirely on where its assets live.
 
 | Asset location | Offline? | Tradeoff |
 |---------------|----------|----------|
-| Uploaded to Fulcrum Reference Files | **Yes** | Must manage updates; no CDN conveniences |
-| Loaded from a CDN (jsDelivr, cdnjs, unpkg) | **No** | Easy to add libraries; breaks offline |
-| Embedded inline in the HTML file | **Yes** | Larger file size; no external dependencies |
+| Uploaded as a **Reference File**, referenced `attachment://name.html` | **Yes** | Must manage updates manually |
+| Loaded from a CDN (jsDelivr, cdnjs, unpkg) | **No** | Easy libraries; breaks offline |
+| Embedded inline in the HTML file | **Yes** | Larger file; no external dependencies |
 
-**Decision:** If the extension is needed during offline field work, host everything in Reference Files and inline all JavaScript. If the extension is only used in the office (online), CDN libraries are acceptable.
+**Decision:** if the extension is used during offline field work, host it as a Reference File and
+inline all JavaScript and CSS. Fulcrum's own docs state that Reference Files are what makes an
+extension work offline.
 
-**CDN version pinning:** If you use CDN libraries, always lock to a specific semver version. `latest` or unversioned CDN URLs break silently when the library updates.
+⚠️ **Scheme gotcha:** the correct scheme is **`attachment://`** (singular). Fulcrum's own
+documentation prose says `attachments://` in one place — that is a typo; their code sample and every
+working extension use the singular.
+
+**CDN version pinning:** if you do use CDN libraries (online-only extensions), lock to an exact
+version. Unversioned URLs break silently when the library updates.
 
 ```html
-<!-- BAD — will break when chart.js pushes a major update -->
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-
-<!-- GOOD — locked version, predictable behavior -->
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<!-- BAD  --> <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<!-- GOOD --> <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 ```
 
 ## Uploading and Attaching Extensions
 
-The extension HTML file is uploaded as a **Reference File** on the form. When the Fulcrum MCP is available, it can do this directly:
+The extension HTML file is uploaded as a **Reference File** on the form. When the Fulcrum MCP is
+available, it can do this directly:
 
 ```
 Step 1: fulcrum_extensions_generate(pattern="picker", ...)  — generate the code
@@ -183,39 +147,79 @@ Step 2: fulcrum_reference_files_upload(form_id=..., file_content=..., filename="
 Step 3: fulcrum_forms_update(form_id=..., script=<data_event_JS_with_OPENEXTENSION>)
 ```
 
-Or use `fulcrum_extensions_list_patterns` and `fulcrum_extensions_explain(pattern="picker")` to explore available patterns before generating.
+Or use `fulcrum_extensions_list_patterns` and `fulcrum_extensions_explain(pattern="picker")` to
+explore available patterns before generating.
 
 ### Manual UI fallback
 
 When the Fulcrum MCP is unavailable:
 
-1. Save the extension as an `.html` file with all offline-required assets embedded or included as Reference Files.
+1. Save the extension as an `.html` file with all offline-required assets embedded or included as
+   Reference Files.
 2. In Fulcrum, open the target form and upload the file under **Reference Files**.
-3. Add or update the form's data event script with the `OPENEXTENSION()` handler, using the uploaded file's exact filename.
-4. Test the trigger and the write-back behavior in the form preview, then test again on a device if the workflow must work offline.
+3. Add or update the form's data event script with the `OPENEXTENSION()` handler, using the uploaded
+   file's exact filename.
+4. Test the trigger and the write-back behavior in the form preview, then test again on a device if
+   the workflow must work offline.
 
 Do not treat the MCP commands above as prerequisites; they are an automation path only.
 
+### Verifying what is actually live *(local convention)*
+
+Reference Files are form-level storage reached through the **web form builder**; teams have found
+they are not writable through the REST attachments API, so plan on a manual upload per form. Existing
+files can still be **read** back via `GET attachments/<id>`.
+
+Two practical consequences:
+
+- A change to one shared extension used by N forms is **N uploads**. Get it right before iterating.
+- After uploading, download the live copy and compare a checksum against your source. Drift between
+  the repo and what is actually running is otherwise invisible — and an extension that silently
+  disagrees with the record's own calculations is very hard to spot from the outside.
+
 ## Anti-Patterns
 
-### ChoiceField as picker target
-Using a ChoiceField to store the picker extension result causes a conflict between the native picker UI and the extension. Use TextField. See the Picker Pattern section above.
+### ChoiceField as picker target *(local convention)*
+Storing a picker extension's result in a ChoiceField causes the native picker UI to compete with the
+extension. Prefer a **TextField** for free-text results, with a trigger field the user taps.
+**RecordLinkField is a valid and proven target** when the extension picks a record from a linked app
+— that is exactly what Fulcrum's own linked-record pattern does, writing back with
+`SETVALUE('linked_record', selected)`.
 
 ### External assets for offline extensions
-Loading any script, style, or asset from a URL in an extension intended for offline use. If the device has no connection, the asset fails to load silently — the extension may render blank or broken.
+Any script, style, or font fetched from a URL in an extension intended for offline use. With no
+connection the asset fails silently and the extension renders blank or broken.
 
 ### Extension as a data event replacement
-Building an extension for logic that data events handle well (show/hide, cascade, calculate). Extensions add complexity — an app is harder to maintain when logic is split between data events and extension code. Use extensions only when you need a custom UI.
+Building an extension for logic data events already handle (show/hide, cascade, calculate). Splitting
+logic between data events and extension code makes an app harder to maintain. Use extensions only
+when the UI genuinely cannot be built natively.
+
+### Duplicating calculation logic inside the extension
+If a value is computed by a CalculatedField or data event, the extension must not reimplement that
+rule from memory — the copies drift and the extension silently shows different numbers from the
+record. Either display the stored value, or **pass the rule's parameters in via `data`** so one
+implementation is driven by configuration rather than duplicated per region or per form.
+
+### Unbounded payloads
+`data` is serialized across the bridge on every open. Passing a large linked-record list (tens of
+thousands of rows) makes the extension slow to open, worst on older devices. Pass a trimmed
+projection of only the fields the UI needs, and filter client-side.
 
 ### Unbounded extension scope
-An extension that tries to replicate an entire sub-application. Extensions are panels inside a record, not standalone apps. If the extension needs its own database, navigation, or lifecycle, that's a linked child app.
+An extension that tries to replicate an entire sub-application. Extensions are panels inside a
+record. If it needs its own database, navigation, or lifecycle, that's a linked child app.
 
 ## Completion Criteria
 
-- [ ] Field type for picker result is TextField, not ChoiceField — trigger is HyperlinkField
-- [ ] Offline support decision is explicit: Reference Files (offline) vs. CDN (online-only)
-- [ ] All CDN library references use locked semver versions — no `latest` or unversioned URLs
-- [ ] Extension is scoped to a UI problem that native fields can't solve — not a data event replacement
-- [ ] Data flows are documented: what fields the extension reads, what fields it writes back
-- [ ] `OPENEXTENSION()` call in data events passes any needed context to the extension
-- [ ] Extension closes (`FS.close()`) after writing values back to the record
+- [ ] Uses `OPENEXTENSION({url, title, data, onMessage})` — a single options object
+- [ ] HTML includes the Fulcrum bootstrap; all setup runs inside `Fulcrum.load(({data}) => …)`
+- [ ] Exits via `Fulcrum.finish(payload)`; the Data Events `onMessage` writes results with `SETVALUE`
+- [ ] Offline decision is explicit: Reference File + inlined assets (offline) vs CDN (online-only)
+- [ ] `attachment://` (singular) for Reference File URLs
+- [ ] Any CDN reference uses a locked exact version
+- [ ] Picker results land in an appropriate field type — TextField or RecordLinkField, not ChoiceField
+- [ ] No calculation rule is duplicated from a CalculatedField or data event; parameters passed in
+- [ ] `data` payload is a trimmed projection, not whole record sets
+- [ ] Data flows documented: what goes in via `data`, what comes back via `onMessage`
+- [ ] After upload, live copy verified against the repo source by checksum
