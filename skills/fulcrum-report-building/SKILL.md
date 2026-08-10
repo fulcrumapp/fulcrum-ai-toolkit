@@ -238,7 +238,7 @@ A report template is a single EJS file. As it grows:
 
 - [ ] Report type is explicit — PDF (printer output) or HTML (interactive/API)
 - [ ] `QUERY()` is used for any data beyond the single record context — no JSON-stuffing workarounds
-- [ ] No hardcoded API tokens — `api: true` in `APIREQUEST()` or token passed via header
+- [ ] No hardcoded API tokens — use `api: true` for Fulcrum API calls or an authenticated proxy/connector for external services
 - [ ] Photo and signature fields use `PHOTOURL()` / `SIGNATUREURL()` — not raw media IDs
 - [ ] `$params` values are sanitized before use in SQL strings
 - [ ] Template was authored and tested outside the report builder before pasting in

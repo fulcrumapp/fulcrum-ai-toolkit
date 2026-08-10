@@ -1,6 +1,6 @@
 ---
 name: fulcrum-solution-publish
-description: "Guide a Fulcrum builder through documenting a completed solution for Product Management review, then publish a one-pager to the product Slack channel. Use when a builder says things like \"I built something and want PM to review it\", \"I created a solution for a customer\", \"I vibe coded something and need to document it\", \"help me write up what I built\", \"I need to document my work for PM\", or \"how do I get my build promoted.\""
+description: "Guide a Fulcrum builder through documenting a completed solution for Product Management review, then publish a one-pager to the configured Product Management Slack channel. Use when a builder says things like \"I built something and want PM to review it\", \"I created a solution for a customer\", \"I vibe coded something and need to document it\", \"help me write up what I built\", \"I need to document my work for PM\", or \"how do I get my build promoted.\""
 disable-model-invocation: true
 ---
 
