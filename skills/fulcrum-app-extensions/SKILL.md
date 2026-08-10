@@ -175,7 +175,7 @@ Whether an extension works offline depends entirely on where its assets are host
 
 ## Uploading and Attaching Extensions
 
-The extension HTML file is uploaded as a **Reference File** on the form. The Fulcrum MCP can do this directly:
+The extension HTML file is uploaded as a **Reference File** on the form. When the Fulcrum MCP is available, it can do this directly:
 
 ```
 Step 1: fulcrum_extensions_generate(pattern="picker", ...)  — generate the code
@@ -184,6 +184,17 @@ Step 3: fulcrum_forms_update(form_id=..., script=<data_event_JS_with_OPENEXTENSI
 ```
 
 Or use `fulcrum_extensions_list_patterns` and `fulcrum_extensions_explain(pattern="picker")` to explore available patterns before generating.
+
+### Manual UI fallback
+
+When the Fulcrum MCP is unavailable:
+
+1. Save the extension as an `.html` file with all offline-required assets embedded or included as Reference Files.
+2. In Fulcrum, open the target form and upload the file under **Reference Files**.
+3. Add or update the form's data event script with the `OPENEXTENSION()` handler, using the uploaded file's exact filename.
+4. Test the trigger and the write-back behavior in the form preview, then test again on a device if the workflow must work offline.
+
+Do not treat the MCP commands above as prerequisites; they are an automation path only.
 
 ## Anti-Patterns
 

@@ -1,17 +1,18 @@
 ---
 name: fulcrum-solution-publish
-description: Guide a Fulcrum builder through documenting a completed solution for Product Management review, then publish a one-pager to the #product Slack channel. Use when a builder says things like "I built something and want PM to review it", "I created a solution for a customer", "I vibe coded something and need to document it", "help me write up what I built", "I need to document my work for PM", or "how do I get my build promoted."
+description: "Guide a Fulcrum builder through documenting a completed solution for Product Management review, then publish a one-pager to the product Slack channel. Use when a builder says things like \"I built something and want PM to review it\", \"I created a solution for a customer\", \"I vibe coded something and need to document it\", \"help me write up what I built\", \"I need to document my work for PM\", or \"how do I get my build promoted.\""
+disable-model-invocation: true
 ---
 
 # Fulcrum Solution Publish
 
-Guide a Fulcrum builder through documenting what they've built so Product Management can make a categorization and promotion decision — then publish the one-pager to `#product` in Slack.
+Guide a Fulcrum builder through documenting what they've built so Product Management can make a categorization and promotion decision — then publish the one-pager to the configured Product Management channel in Slack.
 
 Builders are typically non-engineers from Professional Services, Customer Success, or partner orgs — they build app extensions, workflows, integrations, reports, or other solutions on the Fulcrum platform, often with AI assistance.
 
 ## Goal
 
-Walk the builder through a short conversation, produce a clean one-pager, and post it to `#product` so PM can categorize and decide whether to promote the work.
+Walk the builder through a short conversation, produce a clean one-pager, and post it to the configured Product Management channel so PM can categorize and decide whether to promote the work.
 
 PM needs to answer:
 1. **Categorize**: Tribe-owned, PS utility, customer-specific, or not promoted?
@@ -110,9 +111,9 @@ Once you have enough context, produce the one-pager. Save it as `<kebab-case-sol
 
 ---
 
-## Publish to #product
+## Publish to Slack
 
-After saving the file, post the one-pager to `#product` (channel ID: `CBBAV1SH3`) using the Slack MCP `slack_send_message` tool. If the Slack MCP is not available, output the formatted message below so the builder can copy and paste it into `#product` manually.
+After saving the file, post the one-pager to the organization's configured Product Management channel using the Slack MCP `slack_send_message` tool. Use the channel name when resolving the destination; do not assume a channel ID is portable across workspaces. If the Slack MCP is not available, output the formatted message below so the builder can copy and paste it into the configured Product Management channel manually.
 
 Format the Slack message as follows — concise enough to read in Slack, enough detail for PM to triage:
 
@@ -129,7 +130,7 @@ Format the Slack message as follows — concise enough to read in Slack, enough 
 Full one-pager saved to workspace. PM review checklist is in the doc.
 ```
 
-Confirm with the builder that the post went through and tell them to watch `#product` for PM follow-up.
+Confirm with the builder that the post went through and tell them to watch the Product Management channel for PM follow-up.
 
 ---
 
@@ -139,5 +140,5 @@ Confirm with the builder that the post went through and tell them to watch `#pro
 - [ ] One-pager produced with all sections filled (or explicitly marked "PM to assess")
 - [ ] Problem statement synthesized — not just copied from builder's words
 - [ ] File saved as `<kebab-case-solution-name>-solution.md`
-- [ ] One-pager posted to `#product` (CBBAV1SH3) via Slack MCP `slack_send_message` — or formatted message output for manual posting if MCP unavailable
-- [ ] Builder confirmed and knows to watch `#product` for PM follow-up
+- [ ] One-pager posted to the configured Product Management channel via Slack MCP `slack_send_message` — or formatted message output for manual posting if MCP unavailable
+- [ ] Builder confirmed and knows to watch the Product Management channel for PM follow-up

@@ -127,7 +127,8 @@ Repeatable data is in a separate table, joined to the parent by `fulcrum_parent_
 <% const assetData = APIREQUEST({
   url: 'https://api.example.com/assets/' + record.getValue('asset_id'),
   method: 'GET',
-  api: true  <%# auto-injects the Fulcrum API token — never hardcode tokens %>
+  // api: true injects the Fulcrum API token — never hardcode tokens
+  api: true
 }); %>
 ```
 
@@ -137,8 +138,12 @@ When a report URL includes query parameters, they arrive in `$params`. This is t
 
 ```ejs
 <%# URL: .../run/template_id?start_date=2024-01-01&end_date=2024-03-31 %>
-<% const startDate = $params.start_date || '2024-01-01'; %>
-<% const endDate = $params.end_date || new Date().toISOString().slice(0, 10); %>
+<% const datePattern = /^\d{4}-\d{2}-\d{2}$/; %>
+<% const requestedStartDate = $params.start_date || ''; %>
+<% const requestedEndDate = $params.end_date || ''; %>
+<% const startDate = datePattern.test(requestedStartDate) ? requestedStartDate : '2024-01-01'; %>
+<% const today = new Date().toISOString().slice(0, 10); %>
+<% const endDate = datePattern.test(requestedEndDate) ? requestedEndDate : today; %>
 
 <% const records = QUERY(
   `SELECT * FROM "Inspections"
@@ -182,7 +187,7 @@ One of the most powerful and underused patterns. A report set to HTML with "raw"
 
 **Common use case:** Workflow webhook fires → calls report endpoint → report runs server-side logic (updates records, calls external API, queries data) → returns JSON. This lets you build lightweight serverless logic inside Fulcrum without any external hosting.
 
-> Full guide: https://fulcrumapp.atlassian.net/wiki/spaces/PS/pages/2120122380
+> Consult your organization's internal report-building guide for platform-specific report settings and deployment details.
 
 ## Anti-Patterns
 
