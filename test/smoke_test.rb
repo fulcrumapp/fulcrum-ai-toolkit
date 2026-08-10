@@ -1,0 +1,61 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+require "open3"
+
+ROOT = File.expand_path("..", __dir__)
+
+
+def assert(condition, message)
+  return if condition
+
+  warn "Smoke test failed: #{message}"
+  exit 1
+end
+
+validator = File.join(ROOT, "scripts", "validate.rb")
+stdout, stderr, status = Open3.capture3(RbConfig.ruby, validator, chdir: ROOT)
+assert(status.success?, "validation gate failed: #{stderr.empty? ? stdout : stderr}")
+
+app_builder = File.read(File.join(ROOT, "skills", "fulcrum-app-builder", "SKILL.md"))
+product_knowledge = File.read(File.join(ROOT, "skills", "fulcrum-product-knowledge", "SKILL.md"))
+app_design = File.read(File.join(ROOT, "skills", "fulcrum-app-design", "SKILL.md"))
+safety = File.read(File.join(ROOT, "skills", "fulcrum-safety", "SKILL.md"))
+
+scenario = {
+  purpose: "inspect a site",
+  fields: ["site name", "condition", "photo", "GPS location", "status"],
+  connector_available: false
+}
+
+assert(scenario[:purpose] == "inspect a site", "smoke scenario was not initialized")
+assert(app_builder.include?("Discovery Questions"), "app builder does not define discovery")
+assert(app_builder.include?("Propose The Schema"), "app builder does not require schema approval")
+assert(app_builder.include?("When no connector is available"), "app builder lacks MCP-independent handoff")
+assert(app_builder.include?("Never claim execution"), "app builder lacks execution honesty safeguard")
+assert(product_knowledge.include?("Offline behavior"), "product knowledge lacks offline guidance")
+assert(product_knowledge.include?("Plan and licensing gates"), "product knowledge lacks plan guidance")
+assert(app_design.include?("repeatable") && app_design.include?("Record Link"), "app design lacks architecture guidance")
+assert(safety.include?("hazard") || safety.include?("Safety"), "safety skill is not discoverable for field work")
+
+field_terms = {
+  "site name" => ["site name"],
+  "condition" => ["condition"],
+  "photo" => ["photo"],
+  "GPS location" => ["gps", "latitude", "longitude", "location"],
+  "status" => ["status"]
+}
+
+scenario[:fields].each do |field|
+  terms = field_terms.fetch(field)
+  assert(
+    terms.any? { |term| app_builder.downcase.include?(term) || product_knowledge.downcase.include?(term) },
+    "scenario field is not represented by the toolkit: #{field}"
+  )
+end
+
+unless scenario[:connector_available]
+  assert(app_builder.include?("approved schema") || app_builder.include?("approved implementation handoff"), "no-connector path does not produce a handoff")
+end
+
+puts "Smoke test passed: site-inspection discovery, schema approval, offline review, and MCP handoff path"

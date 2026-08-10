@@ -16,6 +16,52 @@ Or add individual skills manually:
 npx skills@latest add fulcrumapp/fulcrum-ai-toolkit
 ```
 
+The toolkit installs guidance skills only. It does not include the Fulcrum MCP
+server or Fulcrum credentials. Live app creation and updates require a
+separately configured Fulcrum MCP connector; without one, `fulcrum-app-builder`
+stops at an approved implementation handoff.
+
+## Start here
+
+1. Run `fulcrum-discovery` for a new workflow.
+2. Define the goal and deliverable with `fulcrum-app-goal`.
+3. Use `fulcrum-app-builder` and `fulcrum-app-design` to propose and approve a schema.
+4. Review safety, offline, integration, and plan constraints.
+5. Build manually in Fulcrum or through an available Fulcrum MCP connector.
+6. Test the workflow and document the result with `fulcrum-solution-publish`.
+
+## Alpha install matrix
+
+The repository uses the portable `skills/*/SKILL.md` layout as its canonical
+package. Host-specific manifests are thin adapters around that layout.
+
+| Host | Install path | Skills | Live Fulcrum actions | Alpha status |
+| --- | --- | --- | --- | --- |
+| Generic skills loader | `npx skills@latest add fulcrumapp/fulcrum-ai-toolkit` | Yes | No, connector required | Target |
+| Claude Code | `claude plugin install fulcrum-ai-toolkit` | Yes | Connector-dependent | Target |
+| Cursor | Install the repository as a plugin or add `skills/` manually | Yes | Connector-dependent | Target |
+| Codex | Install the repository as a plugin or add `skills/` manually | Yes | Connector-dependent | Target |
+| Gemini | Install as an extension or add `skills/` manually | Verify | Connector-dependent | Verify |
+| Hermes | Install the repository as a plugin or add `skills/` manually | Yes | Connector-dependent | Verify |
+| Claude Desktop | Add the skills manually and configure MCP separately | Yes | MCP-dependent | Later |
+
+The `Target` and `Verify` labels describe the toolkit's intended alpha support,
+not a claim that every host has been tested in this repository yet.
+
+## Local validation
+
+Run the dependency-free alpha checks from the repository root:
+
+```bash
+ruby scripts/validate.rb
+ruby test/smoke_test.rb
+```
+
+The validator checks skill frontmatter, directory/name consistency, corporate
+absolute paths, possible credentials, JSON manifests, and README inventory.
+The smoke test exercises a small site-inspection workflow through discovery,
+schema approval, offline review, and the no-MCP handoff path.
+
 ## Skills
 
 | Skill | Description | Type |

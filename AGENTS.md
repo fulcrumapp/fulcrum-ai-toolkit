@@ -1,3 +1,5 @@
+# Agent Instructions
+
 <!--
 This is only a starting point for AGENTS.md.
 Customize and add instructions and documentation that will provide context to the agent that is specific to this project.
