@@ -19,7 +19,7 @@ npx skills@latest add fulcrumapp/fulcrum-ai-toolkit
 ## Skills
 
 | Skill | Description | Type |
-|-------|-------------|------|
+| ------- | ------------- | ------ |
 | `fulcrum-app-design` | App structure, field types, linked apps vs single app, repeatables | Model-invoked |
 | `fulcrum-app-goal` | Ensure every app has a clear goal and defined deliverable | Model-invoked |
 | `fulcrum-safety` | Flag missing safety steps in field workflows | Model-invoked |
@@ -74,7 +74,7 @@ Skills follow the [SKILL.md format](https://github.com/Shopify/Shopify-AI-Toolki
 Plugin configs are included for multiple AI platforms:
 
 | Platform | Config |
-|----------|--------|
+| ---------- | -------- |
 | Claude Code | `.claude-plugin/plugin.json` |
 | Cursor | `.cursor-plugin/plugin.json` |
 | Codex | `.codex-plugin/plugin.json` |
