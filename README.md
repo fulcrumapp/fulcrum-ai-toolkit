@@ -28,7 +28,7 @@ stops at an approved implementation handoff.
 3. Use `fulcrum-app-builder` and `fulcrum-app-design` to propose and approve a schema.
 4. Review safety, offline, integration, and plan constraints.
 5. Build manually in Fulcrum or through an available Fulcrum MCP connector.
-6. Test the workflow and document the result with `fulcrum-solution-publish`.
+6. Test the workflow and document the result with `fulcrum-solution-document`.
 
 ## Alpha install matrix
 
@@ -76,7 +76,7 @@ schema approval, offline review, and the no-MCP handoff path.
 | `fulcrum-app-extensions` | App extension anatomy, FS bridge API, offline support, picker anti-pattern | Model-invoked |
 | `fulcrum-report-building` | Report template authoring — EJS tags, repeatables, parameters, debugging | Model-invoked |
 | `fulcrum-discovery` | Process discovery before building — interview the customer | User-invoked |
-| `fulcrum-solution-publish` | Post-build documentation and PM intake — publish a one-pager to Slack | User-invoked |
+| `fulcrum-solution-document` | Post-build documentation, privacy review, and destination-neutral sharing formats | User-invoked |
 
 ## Usage
 
@@ -95,7 +95,7 @@ Skills are **model-invoked** by default: the agent fires them automatically when
 Two skills are **user-invoked** — run them manually:
 
 - `fulcrum-discovery` — start a new project by interviewing the customer before building
-- `fulcrum-solution-publish` — after building, document what was built and publish a one-pager to the configured Product Management channel for PM review
+- `fulcrum-solution-document` — after building, document what was built, review it for privacy, and prepare it for a destination chosen by the user
 
 ## Where this comes from
 

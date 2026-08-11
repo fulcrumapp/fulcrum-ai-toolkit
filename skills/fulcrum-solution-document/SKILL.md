@@ -1,22 +1,22 @@
 ---
-name: fulcrum-solution-publish
-description: "Guide a Fulcrum builder through documenting a completed solution for Product Management review, then publish a one-pager to the configured Product Management Slack channel. Use when a builder says things like \"I built something and want PM to review it\", \"I created a solution for a customer\", \"I vibe coded something and need to document it\", \"help me write up what I built\", \"I need to document my work for PM\", or \"how do I get my build promoted.\""
+name: fulcrum-solution-document
+description: "Guide a Fulcrum builder through documenting a completed app, extension, workflow, report, or integration. Produce a reusable one-pager, review it for privacy and audience suitability, and prepare optional share formats for a destination chosen by the user. Use when someone wants to explain, review, hand off, or share what they built."
 disable-model-invocation: true
 ---
 
-# Fulcrum Solution Publish
+# Fulcrum Solution Document
 
-Guide a Fulcrum builder through documenting what they've built so Product Management can make a categorization and promotion decision — then publish the one-pager to the configured Product Management channel in Slack.
+Guide a Fulcrum builder through documenting what they've built as a reusable, reviewable one-pager. Help them prepare an appropriate share format and destination, but do not publish automatically.
 
 Builders are typically non-engineers from Professional Services, Customer Success, or partner orgs — they build app extensions, workflows, integrations, reports, or other solutions on the Fulcrum platform, often with AI assistance.
 
 ## Goal
 
-Walk the builder through a short conversation, produce a clean one-pager, and post it to the configured Product Management channel so PM can categorize and decide whether to promote the work.
+Walk the builder through a short conversation and produce a clean one-pager that can be reviewed, handed off, or shared with the audience the builder chooses.
 
-PM needs to answer:
-1. **Categorize**: Tribe-owned, PS utility, customer-specific, or not promoted?
-2. **Promote**: Does this scale beyond the original use case?
+The intended reviewer may need to answer:
+1. **Categorize**: Is this reusable, customer-specific, experimental, or ready for ownership?
+2. **Decide next steps**: Does it need testing, hardening, handoff, or broader promotion?
 
 ## How to Run the Session
 
@@ -111,11 +111,26 @@ Once you have enough context, produce the one-pager. Save it as `<kebab-case-sol
 
 ---
 
-## Publish to Slack
+## Prepare For Sharing
 
-After saving the file, post the one-pager to the organization's configured Product Management channel using the Slack MCP `slack_send_message` tool. Use the channel name when resolving the destination; do not assume a channel ID is portable across workspaces. If the Slack MCP is not available, output the formatted message below so the builder can copy and paste it into the configured Product Management channel manually.
+After saving the file, ask who should receive it and what format they need. Offer one or more of these destinations:
 
-Format the Slack message as follows — concise enough to read in Slack, enough detail for PM to triage:
+- Save the Markdown one-pager in the workspace.
+- Produce a concise message for copy-and-paste into Slack, Teams, email, or chat.
+- Draft a GitHub issue, Discussion, or pull request description.
+- Produce a sanitized public or customer-safe version.
+- Create a share bundle containing the Markdown document, short summary, and optional structured metadata.
+
+Only use a Slack, Teams, email, GitHub, or other connector when it is configured in the current environment. Before any external send, complete all of these steps:
+
+1. Show the final draft and intended audience.
+2. Review customer names, screenshots, business impact, implementation details, credentials, and other sensitive information.
+3. Ask the builder to approve the content, redact anything necessary, and confirm the destination.
+4. Send only after explicit approval.
+
+If no connector is available, provide the selected share format for manual copying or attachment. Never imply that a message was sent when the connector is unavailable.
+
+For a chat or email summary, use a concise format such as:
 
 ```
 🔨 *New Builder One-Pager: [Solution Name]*
@@ -127,10 +142,10 @@ Format the Slack message as follows — concise enough to read in Slack, enough 
 *Readiness:* [Builder's readiness assessment]
 *Scale:* [Builder's breadth/utility take]
 
-Full one-pager saved to workspace. PM review checklist is in the doc.
+Full one-pager saved to workspace. Review checklist is in the document.
 ```
 
-Confirm with the builder that the post went through and tell them to watch the Product Management channel for PM follow-up.
+After a connector send, report the destination and result. After a manual handoff, tell the builder exactly what to copy or attach and what follow-up to expect.
 
 ---
 
@@ -140,5 +155,8 @@ Confirm with the builder that the post went through and tell them to watch the P
 - [ ] One-pager produced with all sections filled (or explicitly marked "PM to assess")
 - [ ] Problem statement synthesized — not just copied from builder's words
 - [ ] File saved as `<kebab-case-solution-name>-solution.md`
-- [ ] One-pager posted to the configured Product Management channel via Slack MCP `slack_send_message` — or formatted message output for manual posting if MCP unavailable
-- [ ] Builder confirmed and knows to watch the Product Management channel for PM follow-up
+- [ ] Intended audience and sharing destination confirmed
+- [ ] Privacy review completed and redactions approved
+- [ ] Selected share format prepared for the destination
+- [ ] External send explicitly approved before using a configured connector
+- [ ] Builder knows what was shared, where it went, or what to copy manually

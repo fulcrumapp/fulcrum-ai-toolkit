@@ -18,4 +18,4 @@ hermes plugin install fulcrum-ai-toolkit
 - **fulcrum-app-extensions** — Build custom UIs embedded inside Fulcrum records
 - **fulcrum-report-building** — Author and debug Fulcrum report templates
 - **fulcrum-discovery** — Structured discovery interview before building
-- **fulcrum-solution-publish** — Document completed solutions for Product Management review
+- **fulcrum-solution-document** — Document completed solutions, review privacy, and prepare shareable formats

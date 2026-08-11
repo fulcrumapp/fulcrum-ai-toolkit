@@ -21,6 +21,7 @@ app_builder = File.read(File.join(ROOT, "skills", "fulcrum-app-builder", "SKILL.
 product_knowledge = File.read(File.join(ROOT, "skills", "fulcrum-product-knowledge", "SKILL.md"))
 app_design = File.read(File.join(ROOT, "skills", "fulcrum-app-design", "SKILL.md"))
 safety = File.read(File.join(ROOT, "skills", "fulcrum-safety", "SKILL.md"))
+data_events = File.read(File.join(ROOT, "skills", "fulcrum-data-events", "SKILL.md"))
 
 scenario = {
   purpose: "inspect a site",
@@ -37,6 +38,12 @@ assert(product_knowledge.include?("Offline behavior"), "product knowledge lacks 
 assert(product_knowledge.include?("Plan and licensing gates"), "product knowledge lacks plan guidance")
 assert(app_design.include?("repeatable") && app_design.include?("Record Link"), "app design lacks architecture guidance")
 assert(safety.include?("hazard") || safety.include?("Safety"), "safety skill is not discoverable for field work")
+assert(data_events.include?("ON('change', 'field'"), "data events lacks field-change guidance")
+assert(data_events.include?("LOADRECORDS({") && data_events.include?("function(error, result)"), "data events lacks callback-based LOADRECORDS guidance")
+assert(data_events.include?("var storage = STORAGE()") && data_events.include?("storage.setItem"), "data events lacks object-based storage guidance")
+assert(data_events.include?("REQUEST({") && !data_events.include?("fetch("), "data events uses an obsolete HTTP API")
+assert(!data_events.match?(/LOADRECORDS\('[^']/), "data events contains positional LOADRECORDS guidance")
+assert(!data_events.include?("ON('edit-record', function(event)"), "data events uses edit-record as a field-change handler")
 
 field_terms = {
   "site name" => ["site name"],
