@@ -7,6 +7,8 @@ An **app extension** is a custom HTML/CSS/JavaScript UI that runs inside a Fulcr
 
 Extensions communicate with the Fulcrum record through the data events API bridge. The data lives in standard Fulcrum fields and syncs normally.
 
+> **Provenance:** The bridge API and event flow in this skill follow Fulcrum's documented extension API. Field-type recommendations, offline decisions, and payload-sizing guidance are toolkit conventions unless explicitly attributed.
+
 ## When to Use an Extension vs. a Data Event
 
 | Use a data event when... | Use an app extension when... |
@@ -55,14 +57,16 @@ An app extension has two parts: a Data Event script that opens the extension, an
     // It provides the Fulcrum.load/finish extension API.
 
     // Receive values passed by the Data Event and pre-populate the UI.
+    var select = document.getElementById('my-select');
+
     Fulcrum.load(function(payload) {
-      var select = document.getElementById('my-select');
       select.value = (payload.data && payload.data.current_value) || '';
     });
 
     // Return the selected value to the Data Event.
     document.getElementById('save-btn').addEventListener('click', function() {
-      Fulcrum.finish({ value: select.value });
+      var selectedValue = document.getElementById('my-select').value;
+      Fulcrum.finish({ value: selectedValue });
     });
   </script>
 </body>
@@ -135,14 +139,15 @@ Fulcrum.load(function(message) {
 
 The picker extension REPLACES the native picker UI. It does not augment it. This has one critical implication for field type selection:
 
-> **Do not use a ChoiceField to store a picker extension's result. Use a TextField.**
+> **Do not use a ChoiceField when the extension is replacing the native choice-picker UI. Use a TextField for a free-form selected value or a RecordLinkField when the picker selects a Fulcrum record.**
 
 The ChoiceField has its own picker UI that conflicts with the extension. The correct pattern:
 
-1. **TextField** — stores the selected value (what the extension writes back)
-2. **HyperlinkField** — the trigger button; user taps it to open the extension
-3. `ON('click', ...)` on the HyperlinkField → `OPENEXTENSION(...)` in data events
-4. Extension returns the selected value with `Fulcrum.finish()`; the Data Event writes it back to the TextField.
+1. **TextField** — stores a free-form selected value
+2. **RecordLinkField** — stores a selected Fulcrum record when the picker returns a record link
+3. **HyperlinkField** — the trigger button; user taps it to open the extension
+4. `ON('click', ...)` on the HyperlinkField → `OPENEXTENSION(...)` in data events
+5. Extension returns the selected value with `Fulcrum.finish()`; the Data Event writes it back to the target field.
 
 ```javascript
 // Data events — opens extension when user taps the hyperlink button
@@ -207,7 +212,13 @@ Do not treat the MCP commands above as prerequisites; they are an automation pat
 ## Anti-Patterns
 
 ### ChoiceField as picker target
-Using a ChoiceField to store the picker extension result causes a conflict between the native picker UI and the extension. Use TextField. See the Picker Pattern section above.
+Using a ChoiceField to store the result of an extension that replaces the native choice picker causes a UI conflict. Use a TextField for free-form values or a RecordLinkField for selected Fulcrum records. See the Picker Pattern section above.
+
+### Duplicated calculation logic
+Do not reimplement a CalculatedField or data-event rule inside extension JavaScript. The two implementations can drift and show different values for the same record. Prefer displaying the stored calculated value, or pass the rule's parameters through `data` so one configurable implementation drives the extension.
+
+### Unbounded bridge payloads
+Do not pass an entire `LOADRECORDS()` result through `OPENEXTENSION()` when the collection can be large. Filter before opening the extension and pass only the fields the UI needs. For larger datasets, use a bounded result, search, or pagination strategy appropriate to the workflow.
 
 ### External assets for offline extensions
 Loading any script, style, or asset from a URL in an extension intended for offline use. If the device has no connection, the asset fails to load silently — the extension may render blank or broken.
@@ -220,7 +231,7 @@ An extension that tries to replicate an entire sub-application. Extensions are p
 
 ## Completion Criteria
 
-- [ ] Field type for picker result is TextField, not ChoiceField — trigger is HyperlinkField
+- [ ] Picker target is a TextField for free-form values or a RecordLinkField for selected Fulcrum records — not a conflicting ChoiceField
 - [ ] Offline support decision is explicit: Reference Files (offline) vs. CDN (online-only)
 - [ ] All CDN library references use locked semver versions — no `latest` or unversioned URLs
 - [ ] Extension is scoped to a UI problem that native fields can't solve — not a data event replacement

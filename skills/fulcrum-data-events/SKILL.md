@@ -5,6 +5,8 @@ description: Use when writing, reviewing, or debugging Fulcrum data events (Java
 
 A **data event** is JavaScript that runs inside a Fulcrum app in response to record lifecycle events. It executes on-device (mobile) and in-browser (web) — there is no server. Every data event shares a single `script` field on the form.
 
+> **Provenance:** Event names and function signatures in this skill follow Fulcrum's documented data-events API. Offline recommendations, security cautions, and workflow conventions are toolkit guidance unless explicitly attributed.
+
 ## Event Lifecycle
 
 Fulcrum has several event families. The event family matters: `edit-record` is not a field-change event.
