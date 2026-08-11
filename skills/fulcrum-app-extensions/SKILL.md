@@ -30,7 +30,7 @@ Extensions communicate with the Fulcrum record through the data events API bridg
 
 ## Extension Anatomy
 
-An app extension is a self-contained HTML file. It communicates with the Fulcrum record via a JavaScript bridge object (`FS`) that is injected at runtime.
+An app extension has two parts: a Data Event script that opens the extension, and a custom HTML page that runs in Fulcrum's sandboxed browser panel. The Data Event passes data into the page with `OPENEXTENSION({ ... })`; the page receives it through `Fulcrum.load(...)` and returns results with `Fulcrum.finish(...)`.
 
 ```html
 <!DOCTYPE html>
@@ -51,17 +51,18 @@ An app extension is a self-contained HTML file. It communicates with the Fulcrum
   <button id="save-btn">Save</button>
 
   <script>
-    // The FS bridge is injected by Fulcrum at runtime
-    // It provides access to the record and data events API
+    // Include Fulcrum's extension script as documented by Fulcrum.
+    // It provides the Fulcrum.load/finish extension API.
 
-    // Pre-populate from the current field value
-    var select = document.getElementById('my-select');
-    select.value = FS.getValue('my_field') || '';
+    // Receive values passed by the Data Event and pre-populate the UI.
+    Fulcrum.load(function(payload) {
+      var select = document.getElementById('my-select');
+      select.value = (payload.data && payload.data.current_value) || '';
+    });
 
-    // Write the selected value back to the record on save
+    // Return the selected value to the Data Event.
     document.getElementById('save-btn').addEventListener('click', function() {
-      FS.setFieldValue('my_field', select.value);
-      FS.close(); // close the extension panel
+      Fulcrum.finish({ value: select.value });
     });
   </script>
 </body>
@@ -70,59 +71,62 @@ An app extension is a self-contained HTML file. It communicates with the Fulcrum
 
 ## Data Exchange — Reading and Writing Record Fields
 
-Extensions communicate bidirectionally with the host record:
+Extensions exchange data with the host through the Data Event that opened them. The HTML page receives a plain data object and returns a plain result object; the Data Event remains responsible for reading and writing Fulcrum fields.
 
-### Reading values into the extension
-
-```javascript
-// Get the current value of a field
-var existingValue = FS.getValue('species_name');
-
-// Get a choice field's selected values
-var selectedChoices = FS.getChoiceValues('habitat_types');
-
-// Get the record's current GPS location
-var location = FS.getLocation(); // { latitude, longitude, accuracy }
-```
-
-### Writing values back to the record
+### Passing values into the extension
 
 ```javascript
-// Set a field value — the primary output mechanism
-FS.setFieldValue('species_name', 'Quercus agrifolia');
-
-// Set multiple fields at once
-FS.setFieldValues({
-  species_name: 'Quercus agrifolia',
-  confidence_level: 'High',
-  identified_at: new Date().toISOString()
-});
-
-// Close the extension panel after writing
-FS.close();
-```
-
-### Triggering from data events (OPENEXTENSION)
-
-The data event that opens an extension is the other half of the bridge. Configure it via `ON('click', ...)` on a trigger field:
-
-```javascript
-// In the form's data events — open the extension when a button field is clicked
-ON('click', 'open_picker_btn', function(event) {
-  OPENEXTENSION('my_extension_reference_file.html', {
-    // Optional: pass context data into the extension
-    currentValue: VALUE('species_name'),
-    mode: 'picker'
+// In the form's Data Event script:
+ON('click', 'open_picker_btn', function() {
+  OPENEXTENSION({
+    url: 'attachment://species_picker.html',
+    title: 'Species picker',
+    data: {
+      current_value: VALUE('species_name'),
+      record_id: RECORDID()
+    },
+    onMessage: function(message) {
+      SETVALUE('species_name', message.data.value);
+    }
   });
 });
 ```
 
-Access the context data inside the extension:
+Inside the HTML extension, receive the data with `Fulcrum.load(...)`:
 
 ```javascript
-// Inside the extension HTML
-var context = FS.getContext(); // returns the options object passed to OPENEXTENSION
-var currentValue = context.currentValue;
+Fulcrum.load(function(message) {
+  var currentValue = message.data.current_value;
+  var recordId = message.data.record_id;
+});
+```
+
+### Triggering from data events (OPENEXTENSION)
+
+The Data Event opens the extension with an options object. When the HTML page calls `Fulcrum.finish(data)`, the Data Event's `onMessage` callback receives the result and can write it to form fields:
+
+```javascript
+ON('click', 'open_picker_btn', function() {
+  OPENEXTENSION({
+    url: 'attachment://my_extension_reference_file.html',
+    title: 'My extension',
+    data: {
+      current_value: VALUE('species_name'),
+      mode: 'picker'
+    },
+    onMessage: function(message) {
+      SETVALUE('species_name', message.data.value);
+    }
+  });
+});
+```
+
+Access the context data inside the HTML page:
+
+```javascript
+Fulcrum.load(function(message) {
+  var currentValue = message.data.current_value;
+});
 ```
 
 ## The Picker Pattern — Read This First
@@ -138,13 +142,17 @@ The ChoiceField has its own picker UI that conflicts with the extension. The cor
 1. **TextField** — stores the selected value (what the extension writes back)
 2. **HyperlinkField** — the trigger button; user taps it to open the extension
 3. `ON('click', ...)` on the HyperlinkField → `OPENEXTENSION(...)` in data events
-4. Extension writes result back to the TextField via `FS.setFieldValue()`
+4. Extension returns the selected value with `Fulcrum.finish()`; the Data Event writes it back to the TextField.
 
 ```javascript
 // Data events — opens extension when user taps the hyperlink button
 ON('click', 'open_species_picker', function(event) {
-  OPENEXTENSION('species_picker.html', {
-    currentValue: VALUE('selected_species')
+  OPENEXTENSION({
+    url: 'attachment://species_picker.html',
+    data: { current_value: VALUE('selected_species') },
+    onMessage: function(message) {
+      SETVALUE('selected_species', message.data.value);
+    }
   });
 });
 ```
@@ -218,4 +226,4 @@ An extension that tries to replicate an entire sub-application. Extensions are p
 - [ ] Extension is scoped to a UI problem that native fields can't solve — not a data event replacement
 - [ ] Data flows are documented: what fields the extension reads, what fields it writes back
 - [ ] `OPENEXTENSION()` call in data events passes any needed context to the extension
-- [ ] Extension closes (`FS.close()`) after writing values back to the record
+- [ ] Extension returns results with `Fulcrum.finish()` after the user completes the interaction

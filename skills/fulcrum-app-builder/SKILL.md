@@ -112,4 +112,4 @@ After a build or handoff, summarize:
 
 ## Scope
 
-This skill orchestrates app creation and updates. Defer deep platform questions to `fulcrum-product-knowledge`, discovery to `fulcrum-discovery`, app structure to `fulcrum-app-design`, safety to `fulcrum-safety`, data events to `fulcrum-data-events`, extensions to `fulcrum-app-extensions`, reporting to `fulcrum-report-building`, and post-build promotion to `fulcrum-solution-publish`.
+This skill orchestrates app creation and updates. Defer deep platform questions to `fulcrum-product-knowledge`, discovery to `fulcrum-discovery`, app structure to `fulcrum-app-design`, safety to `fulcrum-safety`, data events to `fulcrum-data-events`, extensions to `fulcrum-app-extensions`, reporting to `fulcrum-report-building`, and post-build documentation and sharing to `fulcrum-solution-document`.
