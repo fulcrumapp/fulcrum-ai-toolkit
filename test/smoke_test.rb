@@ -2,7 +2,7 @@
 # frozen_string_literal: true
 
 require "open3"
-
+require "rbconfig"
 ROOT = File.expand_path("..", __dir__)
 
 
