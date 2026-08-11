@@ -1,7 +1,7 @@
 {
   "name": "fulcrum-ai-toolkit",
   "version": "0.1.0",
-  "description": "AI skills for building Fulcrum apps, extensions, reports, and workflows on the Fulcrum platform. Covers app design, data events, safety, workflow decomposition, app extensions, report building, solution publishing, and discovery interviews for environmental, construction, utility, and inspection workflows.",
+  "description": "AI skills for building Fulcrum apps, extensions, reports, and workflows on the Fulcrum platform. Covers app design, data events, safety, workflow decomposition, app extensions, report building, solution documentation, and discovery interviews for environmental, construction, utility, and inspection workflows.",
   "author": "Fulcrum (Spatial Networks)",
   "license": "MIT"
 }
