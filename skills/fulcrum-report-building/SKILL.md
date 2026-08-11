@@ -5,6 +5,8 @@ description: Use when building, modifying, or debugging Fulcrum report templates
 
 A Fulcrum **report template** is EJS (Embedded JavaScript) that runs server-side inside a headless Chrome instance (Puppeteer). The output is a PDF or HTML page — not a live view. Every report starts from a single record's context and expands from there via `QUERY()`.
 
+> **Provenance:** Report APIs and template behavior should be checked against current Fulcrum documentation. The rendering workflow below is a toolkit convention, not a guarantee of public product support.
+
 ## Report Types
 
 ### Standard PDF
@@ -14,12 +16,6 @@ Pre-built generic output with toggle controls (header, footer, cover page, field
 Unlocks the full EJS code behind the standard report. You can modify the standard template or build from scratch. **This is where report building happens.**
 
 To switch to HTML output: change report type to HTML in settings. This enables the report as a custom UI or backend service.
-
-> **Unlock HTML output:** The HTML output type requires a hidden feature flag. In the browser console, run:
-> ```javascript
-> localStorage.setItem('reportsEnabled', 1);
-> ```
-> Then reload — the HTML option appears in the report type selector.
 
 ## Core Context Objects
 
@@ -168,6 +164,19 @@ When output type is HTML, you can render a form that re-submits to the same repo
 <% } %>
 ```
 
+## Verifying Rendered Output
+
+A report can pass data and text tests while still rendering incorrectly. Text extraction and snapshots may confirm content but miss indentation, column widths, rule positions, clipping, and page breaks.
+
+Use two complementary checks:
+
+1. Render representative PDF and HTML fixtures outside the report builder where possible, then compare extracted text for content regressions.
+2. Inspect rendered geometry for layout regressions. For PDFs, a tool such as PyMuPDF can locate text rectangles with `page.search_for()` and ruled lines or other drawing geometry with `page.get_drawings()`.
+
+Also inspect the template source for processor-sensitive examples. Do not assume HTML comments disable EJS tags or other template markers; test the actual processor used by the report runtime. Keep literal examples outside executable template syntax when possible.
+
+At minimum, verify one short, one long, and one multi-page fixture, plus any layout with tables, ruled lines, images, or repeatable sections.
+
 ## Reports as Backend Services
 
 One of the most powerful and underused patterns. A report set to HTML with "raw" response type acts as a server-side script callable via API.
@@ -242,5 +251,7 @@ A report template is a single EJS file. As it grows:
 - [ ] Photo and signature fields use `PHOTOURL()` / `SIGNATUREURL()` — not raw media IDs
 - [ ] `$params` values are sanitized before use in SQL strings
 - [ ] Template was authored and tested outside the report builder before pasting in
+- [ ] Rendered output was checked for both content and geometry — text comparison alone is insufficient
+- [ ] Representative short, long, and multi-page fixtures were rendered when layout matters
 - [ ] For parameterized reports: `$params` interface is documented at the top of the template
 - [ ] For backend-service reports: `SETCONTENTTYPE()` and `WRITE()` are used for structured output
