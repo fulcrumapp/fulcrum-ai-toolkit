@@ -2,6 +2,11 @@
   "name": "fulcrum-ai-toolkit",
   "version": "0.1.0",
   "description": "AI skills for building apps, data events, reports, and workflows on the Fulcrum platform",
-  "author": "Fulcrum (Spatial Networks)",
+  "author": {
+    "name": "Fulcrum (Spatial Networks)",
+    "email": "engineering@fulcrumapp.com"
+  },
+  "homepage": "https://github.com/fulcrumapp/fulcrum-ai-toolkit",
+  "repository": "https://github.com/fulcrumapp/fulcrum-ai-toolkit",
   "license": "MIT"
 }
