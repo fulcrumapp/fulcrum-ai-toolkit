@@ -15,4 +15,7 @@ hermes plugin install fulcrum-ai-toolkit
 - **fulcrum-data-events** — Write, review, and debug Fulcrum data events (JavaScript)
 - **fulcrum-safety** — Flag missing safety steps in field work apps
 - **fulcrum-workflow-decomposition** — Break monolithic apps into composable pieces
+- **fulcrum-app-extensions** — Build custom UIs embedded inside Fulcrum records
+- **fulcrum-report-building** — Author and debug Fulcrum report templates
 - **fulcrum-discovery** — Structured discovery interview before building
+- **fulcrum-solution-document** — Document completed solutions, review privacy, and prepare shareable formats
