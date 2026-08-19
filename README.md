@@ -16,28 +16,86 @@ Or add individual skills manually:
 npx skills@latest add fulcrumapp/fulcrum-ai-toolkit
 ```
 
+The toolkit installs guidance skills only. It does not include the Fulcrum MCP
+server or Fulcrum credentials. Live app creation and updates require a
+separately configured Fulcrum MCP connector; without one, `fulcrum-app-builder`
+stops at an approved implementation handoff.
+
+## Start here
+
+1. Run `fulcrum-discovery` for a new workflow.
+2. Define the goal and deliverable with `fulcrum-app-goal`.
+3. Use `fulcrum-app-builder` and `fulcrum-app-design` to propose and approve a schema.
+4. Review safety, offline, integration, and plan constraints.
+5. Build manually in Fulcrum or through an available Fulcrum MCP connector.
+6. Test the workflow and document the result with `fulcrum-solution-document`.
+
+## Alpha install matrix
+
+The repository uses the portable `skills/*/SKILL.md` layout as its canonical
+package. Host-specific manifests are thin adapters around that layout.
+
+| Host | Install path | Skills | Live Fulcrum actions | Alpha status |
+| --- | --- | --- | --- | --- |
+| Generic skills loader | `npx skills@latest add fulcrumapp/fulcrum-ai-toolkit` | Yes | No, connector required | Target |
+| Claude Code | `claude plugin install fulcrum-ai-toolkit` | Yes | Connector-dependent | Target |
+| Cursor | Install the repository as a plugin or add `skills/` manually | Yes | Connector-dependent | Target |
+| Codex | Install the repository as a plugin or add `skills/` manually | Yes | Connector-dependent | Target |
+| Gemini | Install as an extension or add `skills/` manually | Verify | Connector-dependent | Verify |
+| Hermes | Install the repository as a plugin or add `skills/` manually | Yes | Connector-dependent | Verify |
+| Claude Desktop | Add the skills manually and configure MCP separately | Yes | MCP-dependent | Later |
+
+The `Target` and `Verify` labels describe the toolkit's intended alpha support,
+not a claim that every host has been tested in this repository yet.
+
+## Local validation
+
+Run the dependency-free alpha checks from the repository root:
+
+```bash
+ruby scripts/validate.rb
+ruby test/smoke_test.rb
+```
+
+The validator checks skill frontmatter, directory/name consistency, corporate
+absolute paths, possible credentials, JSON manifests, and README inventory.
+The smoke test exercises a small site-inspection workflow through discovery,
+schema approval, offline review, and the no-MCP handoff path.
+
 ## Skills
 
 | Skill | Description | Type |
-|-------|-------------|------|
+| ------- | ------------- | ------ |
+| `fulcrum-product-knowledge` | Canonical Fulcrum platform capabilities, constraints, plans, integrations, GIS, Query API, and MCP build reference | Model-invoked |
+| `fulcrum-app-builder` | Novice-friendly app discovery, schema approval, MCP build orchestration, and connector-independent handoff | Model-invoked |
 | `fulcrum-app-design` | App structure, field types, linked apps vs single app, repeatables | Model-invoked |
 | `fulcrum-app-goal` | Ensure every app has a clear goal and defined deliverable | Model-invoked |
 | `fulcrum-safety` | Flag missing safety steps in field workflows | Model-invoked |
 | `fulcrum-data-events` | Data event patterns, anti-patterns, and platform constraints | Model-invoked |
 | `fulcrum-workflow-decomposition` | Break monolithic apps into composable, maintainable pieces | Model-invoked |
+| `fulcrum-app-extensions` | App extension anatomy, FS bridge API, offline support, picker anti-pattern | Model-invoked |
+| `fulcrum-report-building` | Report template authoring — EJS tags, repeatables, parameters, debugging | Model-invoked |
 | `fulcrum-discovery` | Process discovery before building — interview the customer | User-invoked |
+| `fulcrum-solution-document` | Post-build documentation, privacy review, and destination-neutral sharing formats | User-invoked |
 
 ## Usage
 
 Skills are **model-invoked** by default: the agent fires them automatically when building Fulcrum apps. The agent will:
 
+- Use the canonical platform reference for capability, plan, offline, and integration decisions (`fulcrum-product-knowledge`)
+- Guide app discovery, schema approval, and connector-dependent execution (`fulcrum-app-builder`)
 - Check that every app has a clear goal before building (`fulcrum-app-goal`)
 - Select appropriate field types and app structure (`fulcrum-app-design`)
 - Flag missing safety steps in field workflows (`fulcrum-safety`)
 - Apply data event best practices and avoid anti-patterns (`fulcrum-data-events`)
 - Recommend decomposition when apps grow too complex (`fulcrum-workflow-decomposition`)
+- Apply extension best practices and avoid the picker anti-pattern (`fulcrum-app-extensions`)
+- Guide report template authoring with correct EJS patterns and parameter handling (`fulcrum-report-building`)
 
-The `fulcrum-discovery` skill is **user-invoked** — run it manually when starting a new project to interview the customer before building.
+Two skills are **user-invoked** — run them manually:
+
+- `fulcrum-discovery` — start a new project by interviewing the customer before building
+- `fulcrum-solution-document` — after building, document what was built, review it for privacy, and prepare it for a destination chosen by the user
 
 ## Where this comes from
 
@@ -55,6 +113,9 @@ These skills aren't theoretical — they're distilled from real production work 
 
 - **Digital Transformation Best Practices** — Six practices extracted from PS engagement patterns: process discovery before building, output-first design, decompose by role, iterate don't perfect, change management, governance. These shaped `fulcrum-discovery` and `fulcrum-app-goal`.
 
+- **fulcrum-product-knowledge (SE/PS reference skill)** — A comprehensive platform knowledge base maintained for the Solutions Engineering and Professional Services teams. Covers plans and licensing gates, field type constraints, integration decision frameworks, reporting architecture, GIS limitations, and the full Query API reference. Gap analysis against this source drove the July 2026 updates to `fulcrum-data-events` (LOADFILE, STORAGE, CORS, plan gates), `fulcrum-app-design` (choice value/label distinction, Classification Set constraint, platform limits, predefined vs. ad hoc pattern), and `fulcrum-discovery` (platform boundaries and misconceptions as a pre-build check). Ongoing source for future skills: `fulcrum-report-building`, `fulcrum-app-extensions`, `fulcrum-query-api`, `fulcrum-integration-patterns`, `fulcrum-gis-mapping`.
+- **Corporate Claude Desktop skill packages** — `fulcrum-product-knowledge.skill` and `fulcrum-app-builder.skill` are the source snapshots supplied for this import. Their content is maintained as repository-native copies in `skills/fulcrum-product-knowledge/` and `skills/fulcrum-app-builder/`. The copies remove the corporate `/mnt/skills/organization` dependency, point to the repository-local reference skill, and preserve a connector-independent handoff when no Fulcrum MCP is configured. The repository does not provide a Fulcrum MCP server; live app mutations require a separately configured connector.
+
 ### Skill format
 
 Skills follow the [SKILL.md format](https://github.com/Shopify/Shopify-AI-Toolkit): YAML frontmatter (name, description, invocation type) + markdown body. Design principles from [Matt Pocock's skills repo](https://github.com/mattpocock/skills): leading words, completion criteria, progressive disclosure, no-ops pruned.
@@ -64,7 +125,7 @@ Skills follow the [SKILL.md format](https://github.com/Shopify/Shopify-AI-Toolki
 Plugin configs are included for multiple AI platforms:
 
 | Platform | Config |
-|----------|--------|
+| ---------- | -------- |
 | Claude Code | `.claude-plugin/plugin.json` |
 | Cursor | `.cursor-plugin/plugin.json` |
 | Codex | `.codex-plugin/plugin.json` |
