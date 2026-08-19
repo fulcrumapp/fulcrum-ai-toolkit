@@ -217,3 +217,43 @@ Record-level status tracking (defined at the form level, not as a child element)
 | status_field.default_value | string | Default status for new records |
 
 Status values drive workflow visibility, filtering, and can trigger data events via change-status.
+
+---
+
+## API Gotchas — Known Pitfalls
+
+### Required booleans on create AND update
+
+Every field element **MUST** include `required`, `hidden`, and `disabled` as explicit booleans. Omitting them (even though `forms GET` omits false values) causes a 422 on create or update:
+```
+"disabled must be true or false"
+"hidden must be true or false"
+"required must be true or false"
+```
+
+### forms_update requires the full object
+
+`PUT /api/v2/forms/{id}.json` requires the **entire** form object including `name` and all `elements`. Omitting existing elements deletes them. Always GET first, modify, then PUT the full object back.
+
+### RecordLinkField — correct parameter name
+
+The API field is `linked_form_id` (not `form_id` or `record_link_form_id`). Additionally, at least one of `allow_existing_records` or `allow_creating_records` must be `true`:
+
+```json
+{
+  "type": "RecordLinkField",
+  "linked_form_id": "the-form-id",
+  "allow_existing_records": true,
+  "allow_creating_records": false,
+  "allow_updating_records": false,
+  "allow_multiple_records": false
+}
+```
+
+### ChoiceField — multiple selection
+
+To enable multi-select, include `"multiple": true` in the field definition. This property is valid but some tools may silently strip it — always verify it's present in the final payload.
+
+### .json suffix required on all endpoints
+
+Every API endpoint requires the `.json` suffix (e.g., `/api/v2/forms.json`), **except** the attachments resource which rejects it.
