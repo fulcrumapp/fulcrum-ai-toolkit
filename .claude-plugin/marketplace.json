@@ -1,0 +1,22 @@
+{
+  "name": "fulcrum-ai-toolkit",
+  "owner": {
+    "name": "Fulcrum",
+    "url": "https://www.fulcrumapp.com"
+  },
+  "description": "AI skills for building apps, data events, reports, and workflows on the Fulcrum platform",
+  "plugins": [
+    {
+      "name": "fulcrum-ai-toolkit",
+      "source": ".",
+      "description": "AI skills for building apps, data events, reports, and workflows on the Fulcrum platform",
+      "version": "0.1.0",
+      "author": {
+        "name": "Fulcrum"
+      },
+      "homepage": "https://github.com/fulcrumapp/fulcrum-ai-toolkit",
+      "repository": "https://github.com/fulcrumapp/fulcrum-ai-toolkit",
+      "license": "MIT"
+    }
+  ]
+}
