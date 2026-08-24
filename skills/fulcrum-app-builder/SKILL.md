@@ -25,9 +25,26 @@ Always surface relevant limitations:
 - Plan gates can prevent Query API, Workflows, advanced data events, SSO, GIS, or AI features.
 - Deleting a form, choice list, or field can destroy data and requires explicit confirmation.
 
-## Step 2: Discovery Questions
+## Step 2: Discovery
 
-Ask in small conversational batches. Cover:
+**Do not skip this step.** Even when the user's initial prompt seems complete, confirming intent before building prevents the most common failure mode: building the wrong thing correctly.
+
+Start by offering a choice:
+
+> "Before I start building, I want to make sure I understand the workflow. Would you like to:
+> - **Quick check-in** — I'll confirm your goal, deliverable, and who uses the app (2–3 questions), then we'll build.
+> - **Full discovery interview** — 8 structured questions covering the workflow end-to-end. Takes a few more minutes but produces a better app. Recommended if this is a new workflow or you haven't built something like this before."
+
+**If they choose full discovery:** Run the `fulcrum-discovery` skill. After the discovery summary is confirmed, proceed to Step 3.
+
+**If they choose quick check-in** (or don't want to answer): Confirm these three things — do not proceed to schema without them:
+- **Goal** — one sentence describing what the app does
+- **Deliverable** — what comes out (report, export, notification, dataset)
+- **Users** — who completes it in the field and who consumes the output
+
+If the user's prompt already answers some of these clearly, confirm them ("It sounds like this app is for X, producing Y, used by Z — is that right?") and ask only what's missing.
+
+**Discovery Questions** — work into conversation as needed, don't ask all at once:
 
 1. What does the app track or collect?
 2. Who completes it and where do they work?
