@@ -127,6 +127,68 @@ Every choice has two parts: a **label** (what the user sees) and a **value** (wh
 - **Shared (managed choice list):** When the same options appear in multiple apps or will be updated centrally (e.g., employee names, equipment types, project phases)
 - **Inline (per-field):** When options are specific to one field and won't change (e.g., "Pass / Fail / NA")
 
+## App Status (Built-in)
+
+Fulcrum apps have a **built-in status system** — do not create a custom choice field to track record status. The platform status field is configured under app settings, not as a form field.
+
+**Built-in status provides:**
+- Colour-coded status labels visible in the record list and map views
+- `change-status` data event hook for automating transitions
+- Role-based permission to change status (restrict who can approve/close records)
+- Status filtering and reporting built into the platform
+
+**Common statuses to configure:** Draft → In Review → Approved, or Pending → Complete → QC Complete.
+
+> **Anti-pattern:** Adding a "Status" choice field to the form. This duplicates the platform's status system, creates a second source of truth, and misses the `change-status` event hook and permission controls. Always use app settings → Status instead.
+
+To trigger logic when status changes, use `ON('change-status', ...)` in a data event — not a field-change handler on a custom status choice field.
+
+## Visibility Rules vs Data Events
+
+Fulcrum has **two ways to show/hide fields:**
+
+| Mechanism | Where configured | When to use |
+|-----------|-----------------|-------------|
+| **Visibility rules** | App designer → field settings → Visibility | Simple show/hide based on another field's value. No code required. |
+| **Data events (`SETHIDDEN`)** | Data event script | Complex conditions, multiple dependencies, dynamic logic, or show/hide that must respond to real-time changes in ways visibility rules can't express. |
+
+**Use visibility rules first.** They're simpler to configure, easier for non-developers to modify, and don't add to the data event script complexity.
+
+**Use `SETHIDDEN()` in a data event when:**
+- The condition involves more than one or two fields
+- The logic depends on calculated values or external data
+- The visibility needs to change dynamically mid-session based on user interaction
+
+> **Common mistake:** Implementing all field visibility with `SETHIDDEN()` data events when the app designer's visibility rules would handle it without code. Ask "can this be done with a visibility rule?" before writing a data event.
+
+## Calculation Fields
+
+A **calculation field** evaluates an expression to produce a derived value. The expression syntax is like Excel — it evaluates to a value directly. It is NOT a JavaScript function body.
+
+```
+// CORRECT — expression that evaluates to a value
+$length * $width
+
+// CORRECT — conditional expression
+IF($status = "Complete", USERFULLNAME(), "")
+
+// WRONG — JavaScript function syntax does not work in calculation fields
+return $length * $width;   // ❌ 'return' locks the field
+
+function calculate() {     // ❌ function declarations not valid here
+  return $length * $width;
+}
+```
+
+**Calculation field rules:**
+- No `return` statement — the expression IS the return value
+- No `function` declarations
+- No `var`, `let`, or `const`
+- Uses Fulcrum expression functions (`IF`, `CONCATENATE`, `FORMAT`, `USERFULLNAME`, etc.) not JavaScript methods
+- References field values with `$data_name` syntax
+
+If the logic is complex enough to need a function, use a data event with a `change` handler instead, and write the result to a text or numeric field via `SETVALUE()`.
+
 ## Completion Criteria
 
 The app design is complete when:
@@ -137,3 +199,6 @@ The app design is complete when:
 - [ ] Choice lists are mutually exclusive and exhaustive
 - [ ] The app has a clear goal (see `fulcrum-app-goal`)
 - [ ] Required fields are set for data that must be captured — but sparingly (over-requiring frustrates field crews)
+- [ ] Record status uses the built-in app status system, not a custom choice field
+- [ ] Field visibility uses visibility rules where possible; `SETHIDDEN()` only for complex logic
+- [ ] Calculation field expressions do not use `return`, `function`, `var`, `let`, or `const`
