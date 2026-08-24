@@ -44,7 +44,7 @@ Start by offering a choice:
 
 If the user's prompt already answers some of these clearly, confirm them ("It sounds like this app is for X, producing Y, used by Z — is that right?") and ask only what's missing.
 
-**Additional questions to cover when relevant** (work into conversation as needed, don't ask all at once):
+**Discovery Questions** — work into conversation as needed, don't ask all at once:
 
 1. What does the app track or collect?
 2. Who completes it and where do they work?
