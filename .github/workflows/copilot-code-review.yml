@@ -1,0 +1,13 @@
+name: Copilot Code Review
+
+on:
+  pull_request:
+
+jobs:
+  copilot-review:
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: write
+    steps:
+      - name: Copilot code review
+        uses: github/copilot-code-review@v1
