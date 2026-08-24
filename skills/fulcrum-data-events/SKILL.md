@@ -126,6 +126,55 @@ ON('validate-record', function(event) {
 ### Reading a value immediately after setting it
 Do not rely on a `SETVALUE()` call to trigger another `change` handler or on the field value being immediately readable through `$data_name` in the same handler. Pass computed values forward in local variables instead.
 
+### Geometry-dependent triggers without a location check
+
+Any trigger that needs the record's GPS location must guard against an empty geometry. A new record has no location until the user explicitly captures one.
+
+```javascript
+// BAD — fires on new-record but geometry is empty at creation
+ON('new-record', function(event) {
+  var loc = LOCATION();
+  // loc is null — no GPS captured yet
+  REQUEST({ url: 'https://api.weather.com?lat=' + loc.latitude }, handleWeather);
+  // This throws or returns bad data
+});
+
+// GOOD — use change-geometry, which only fires when location is actually captured
+ON('change-geometry', function(event) {
+  var loc = LOCATION();
+  if (!loc) return; // guard for programmatic geometry clears
+  REQUEST({ url: 'https://api.weather.com?lat=' + loc.latitude + '&lon=' + loc.longitude }, handleWeather);
+});
+```
+
+**Events that have geometry available:** `change-geometry`, `edit-record` (if a location was previously saved), `validate-record` (if user has captured one).
+
+**Events where geometry is often empty:** `new-record`, `load-record` (for new records).
+
+> **Before writing any location-dependent logic, ask:** "Where does the GPS location come from, and when is it captured?" If the answer is "the user captures it in the field," use `change-geometry`. Never assume a new record has a location.
+
+### Hardcoded field lists
+
+Do not hardcode field name arrays when the platform provides dynamic alternatives.
+
+```javascript
+// BAD — breaks when fields are added, renamed, or the app is copied
+var fields = ['site_name', 'inspector_name', 'condition', 'notes', 'photo'];
+fields.forEach(function(f) { SETREADONLY(f, true); });
+
+// GOOD — use FIELD_NAMES() to get all fields dynamically
+FIELD_NAMES().forEach(function(f) { SETREADONLY(f, true); });
+
+// GOOD — filter to a section or type if needed
+FIELD_NAMES().forEach(function(f) {
+  if (f !== 'qc_status' && f !== 'qc_date') {
+    SETREADONLY(f, true);
+  }
+});
+```
+
+`FIELD_NAMES()` returns the data names of all fields in the current form scope. Inside a repeatable event, it returns fields within that repeatable. This is the correct approach for bulk read-only, bulk hide, or bulk clear operations.
+
 ### Hardcoded IDs
 ```javascript
 // BAD — breaks when app is copied or moved between orgs
@@ -179,6 +228,26 @@ A single `script` field holds ALL data events for a form. As complexity grows:
 - Extract pure functions for testable logic
 - If the script exceeds ~500 lines, the app likely needs decomposition (see `fulcrum-workflow-decomposition`)
 
+## Built-in Expression Functions
+
+Before writing custom JavaScript logic, check whether a Fulcrum built-in function already does it. The platform ships a large expression library covering geometry, strings, math, dates, and record operations.
+
+**Commonly overlooked built-ins:**
+
+| Task | Built-in | Instead of |
+|------|----------|-----------|
+| Get all field names | `FIELD_NAMES()` | Hardcoded array |
+| Find nearest record by geometry | `GEOMETRY_NEAREST(records, point)` | Custom distance loop |
+| Format a date | `FORMAT(date, 'YYYY-MM-DD')` | Manual string construction |
+| User's full name | `USERFULLNAME()` | Custom user lookup |
+| Current location | `LOCATION()` | Browser geolocation API |
+| Field value by data name | `VALUE('field_name')` | Direct `$field_name` in dynamic contexts |
+| Choice value (not label) | `CHOICEVALUE($field)` | String comparison on label |
+
+> **Guidance:** If you find yourself writing more than 5–10 lines of JavaScript to solve a problem, check the Fulcrum expressions reference first. A built-in function is more reliable, offline-safe, and maintainable than custom logic that reimplements it.
+
+The full expressions reference is available in `resources/` as `expressions-reference.md` or via the Fulcrum documentation.
+
 ## Platform Constraints
 
 - **No server execution** — Data events run on-device. No persistent state between sessions.
@@ -202,3 +271,6 @@ A single `script` field holds ALL data events for a form. As complexity grows:
 - [ ] Any CDN library references use locked version numbers — no `latest` or unversioned URLs
 - [ ] If using LOADRECORDS() or LOADFILE() — confirmed org is on Elite plan or Developer Pack
 - [ ] If using REQUEST() on web — confirmed target API supports CORS or middleware proxy is in place
+- [ ] Any location-dependent trigger uses `change-geometry` and guards against empty geometry
+- [ ] Bulk field operations use `FIELD_NAMES()` rather than hardcoded field name arrays
+- [ ] Built-in expression functions checked before writing custom logic that might duplicate them

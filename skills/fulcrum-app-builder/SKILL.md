@@ -27,6 +27,15 @@ Always surface relevant limitations:
 
 ## Step 2: Discovery Questions
 
+**Do not skip this step.** Even when the user's initial prompt seems complete, confirming goal, deliverable, and users before building prevents the most common failure mode: building the wrong thing correctly.
+
+If the user's prompt answers some questions clearly, confirm those answers and ask only the remaining ones. Do not silently infer answers and proceed to schema.
+
+The minimum required before proposing a schema:
+- **Goal confirmed** — one sentence describing what the app does
+- **Deliverable named** — what comes out (report, export, notification, dataset)
+- **Users identified** — who completes it in the field and who consumes the output
+
 Ask in small conversational batches. Cover:
 
 1. What does the app track or collect?
