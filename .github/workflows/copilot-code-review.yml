@@ -9,5 +9,4 @@ jobs:
     permissions:
       pull-requests: write
     steps:
-      - name: Copilot code review
-        uses: github/copilot-code-review@v1
+      - uses: actions/checkout@v4
