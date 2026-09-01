@@ -5,3 +5,13 @@
 # Editor
 *.code-workspace
 
+# Secrets and credentials — never commit these
+.env
+.env.*
+*.key
+*.pem
+*.p12
+secrets.json
+credentials.json
+service-account.json
+config.local.json
