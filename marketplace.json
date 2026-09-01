@@ -1,4 +1,5 @@
 {
+  "$schema": "https://anthropic.com/claude-code/marketplace.schema.json",
   "name": "fulcrum-ai-toolkit",
   "owner": {
     "name": "Fulcrum",
@@ -8,15 +9,12 @@
   "plugins": [
     {
       "name": "fulcrum-ai-toolkit",
-      "source": ".",
       "description": "AI skills for building apps, data events, reports, and workflows on the Fulcrum platform",
-      "version": "0.1.0",
-      "author": {
-        "name": "Fulcrum"
+      "source": {
+        "source": "url",
+        "url": "https://github.com/fulcrumapp/fulcrum-ai-toolkit.git"
       },
-      "homepage": "https://github.com/fulcrumapp/fulcrum-ai-toolkit",
-      "repository": "https://github.com/fulcrumapp/fulcrum-ai-toolkit",
-      "license": "MIT"
+      "homepage": "https://github.com/fulcrumapp/fulcrum-ai-toolkit"
     }
   ]
 }
