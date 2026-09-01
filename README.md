@@ -103,13 +103,13 @@ These skills aren't theoretical — they're distilled from real production work 
 
 ### Sources
 
-- **Jared Carey's App Build Methodology** — PS methodology doc covering the full build lifecycle: Discovery, Design, Build, Test/Deploy. Informed the skill chain from discovery interview through workflow decomposition. Real-world patterns from MasTec (350-field monolith), Entergy, National Grid, and commercial accounts.
+- **PS App Build Methodology** — PS methodology doc covering the full build lifecycle: Discovery, Design, Build, Test/Deploy. Informed the skill chain from discovery interview through workflow decomposition. Real-world patterns from large-scale utility and commercial field operations deployments.
 
-- **Kyle Pennell's fulcrum-tools-share** — 113 curated production examples from Solutions Engineering. Data event patterns, cascading choices, geofencing, role-based permissions, status state machines, and the PDF-to-Form-Report pipeline. The anti-patterns and platform constraints in `fulcrum-data-events` come directly from these production scripts.
+- **SE curated production examples** — 113 curated production examples from Solutions Engineering. Data event patterns, cascading choices, geofencing, role-based permissions, status state machines, and the PDF-to-Form-Report pipeline. The anti-patterns and platform constraints in `fulcrum-data-events` come directly from these production scripts.
 
-- **MasTec deep dive** — A 350-field telecom construction app that tried to capture an entire lifecycle in one form. Five different roles, 60+ data event edge cases, three restructuring attempts. The decomposition example in `fulcrum-workflow-decomposition` is based on this real case. Key lesson: "You will not put them in the same box" — template maturity models fail when customers need different workflows.
+- **Monolith decomposition case study** — A 350-field telecom construction app that tried to capture an entire lifecycle in one form. Five different roles, 60+ data event edge cases, three restructuring attempts. The decomposition example in `fulcrum-workflow-decomposition` is based on this real case. Key lesson: "You will not put them in the same box" — template maturity models fail when customers need different workflows.
 
-- **Permission loophole findings** — Jared Carey identified three permission bypass patterns in production data events: client-side export bypass, bulk update bypass, and visibility rules vs data events conflicts. These are documented as anti-patterns in `fulcrum-data-events`.
+- **Permission loophole findings** — Three permission bypass patterns identified in production data events: client-side export bypass, bulk update bypass, and visibility rules vs data events conflicts. These are documented as anti-patterns in `fulcrum-data-events`.
 
 - **Digital Transformation Best Practices** — Six practices extracted from PS engagement patterns: process discovery before building, output-first design, decompose by role, iterate don't perfect, change management, governance. These shaped `fulcrum-discovery` and `fulcrum-app-goal`.
 
@@ -135,7 +135,7 @@ Plugin configs are included for multiple AI platforms:
 
 ## Contributing
 
-Internal contributors: PS, CS, and platform engineers. Open a PR with new skills or improvements.
+Contributions welcome. Open a PR with new skills or improvements.
 
 Skills should encode patterns you've seen work (or fail) across multiple customer engagements — not one-off configurations. If you've built the same kind of app three times, there's a skill in there.
 
