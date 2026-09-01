@@ -191,7 +191,7 @@ Hardcoded form IDs, report template IDs, or record IDs make apps non-portable. *
 ### Secrets in code
 ```javascript
 // BAD — API keys visible to anyone who can view the data event
-var API_KEY = 'sk_live_abc123';
+var API_KEY = 'sk_EXAMPLE_abc123';
 REQUEST({ url: 'https://api.example.com/data?key=' + API_KEY }, handleResponse);
 
 // REALITY — Fulcrum has no secrets management.
