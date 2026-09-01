@@ -4,7 +4,7 @@ on:
   pull_request:
 
 jobs:
-  copilot-review:
+  copilot-code-review:
     runs-on: ubuntu-latest
     permissions:
       pull-requests: write
