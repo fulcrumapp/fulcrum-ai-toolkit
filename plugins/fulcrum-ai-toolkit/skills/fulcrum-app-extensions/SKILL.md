@@ -243,4 +243,3 @@ An extension that tries to replicate an entire sub-application. Extensions are p
 
 - [Fulcrum app extensions introduction](https://docs.fulcrumapp.com/docs/app-extensions-introduction)
 - [Fulcrum offline capabilities](https://docs.fulcrumapp.com/docs/offline-capabilities)
-- [Agent Skills specification](https://agentskills.io/specification)
