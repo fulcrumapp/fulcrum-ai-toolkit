@@ -19,6 +19,7 @@ assert(status.success?, "validation gate failed: #{stderr.empty? ? stdout : stde
 
 skills_dir = File.join(ROOT, "plugins", "fulcrum-ai-toolkit", "skills")
 readme = File.read(File.join(ROOT, "README.md"))
+skill_paths = Dir[File.join(skills_dir, "*", "SKILL.md")].sort
 app_builder = File.read(File.join(skills_dir, "fulcrum-app-builder", "SKILL.md"))
 product_knowledge = File.read(File.join(skills_dir, "fulcrum-product-knowledge", "SKILL.md"))
 app_design = File.read(File.join(skills_dir, "fulcrum-app-design", "SKILL.md"))
@@ -28,7 +29,11 @@ app_extensions = File.read(File.join(skills_dir, "fulcrum-app-extensions", "SKIL
 report_building = File.read(File.join(skills_dir, "fulcrum-report-building", "SKILL.md"))
 
 assert(readme.include?("## References"), "README lacks references")
-assert(app_builder.include?("https://agentskills.io/specification"), "skills lack standard reference")
+skill_paths.each do |skill_path|
+  skill_name = File.basename(File.dirname(skill_path))
+  skill = File.read(skill_path)
+  assert(skill.include?("## References"), "#{skill_name} lacks references")
+end
 
 scenario = {
   purpose: "inspect a site",

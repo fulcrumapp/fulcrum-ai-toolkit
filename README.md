@@ -21,6 +21,7 @@ In Codex, add the repository marketplace, then install
 
 ```bash
 codex plugin marketplace add fulcrumapp/fulcrum-ai-toolkit
+codex plugin install fulcrum-ai-toolkit@fulcrum-ai-toolkit
 ```
 
 In GitHub Copilot CLI, add the marketplace and install the plugin:
