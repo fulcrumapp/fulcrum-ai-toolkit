@@ -4,7 +4,7 @@
   "description": "AI skills for Fulcrum platform knowledge, app design and building, data events, reports, workflows, integrations, and field operations",
   "author": "Fulcrum (Spatial Networks)",
   "license": "MIT",
-  "skills": "./.agents/skills/",
+  "skills": "./skills/",
   "interface": {
     "displayName": "Fulcrum AI Toolkit",
     "shortDescription": "Build better Fulcrum apps with AI-guided skills",

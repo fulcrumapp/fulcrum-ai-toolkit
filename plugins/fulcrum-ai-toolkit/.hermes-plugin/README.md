@@ -2,8 +2,8 @@
 
 AI skills for building field data collection apps on the Fulcrum platform.
 
-The plugin uses the portable Agent Skills format and loads its canonical skills
-from `.agents/skills/`.
+The plugin uses the portable Agent Skills format and bundles its skills in the
+plugin's `skills/` directory.
 
 ## Installation
 

@@ -15,5 +15,5 @@
     "data-events",
     "workflows"
   ],
-  "skills": "./.agents/skills/"
+  "skills": "./skills/"
 }
