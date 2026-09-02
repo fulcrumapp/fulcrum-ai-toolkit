@@ -60,6 +60,7 @@ end
 json_paths = Dir[
   File.join(ROOT, "*.json"),
   File.join(ROOT, ".*-plugin", "*.json"),
+  File.join(ROOT, ".github", "plugin", "*.json"),
   File.join(ROOT, ".agents", "plugins", "*.json"),
   File.join(PLUGIN_DIR, "*.json"),
   File.join(PLUGIN_DIR, ".*-plugin", "*.json")
@@ -91,6 +92,7 @@ unless File.read(hermes_manifest).match?(/^skills_dir:\s+skills\s*$/)
 end
 
 marketplace_sources = {
+  ".github/plugin/marketplace.json" => "./plugins/fulcrum-ai-toolkit",
   ".claude-plugin/marketplace.json" => "./plugins/fulcrum-ai-toolkit",
   "marketplace.json" => "./plugins/fulcrum-ai-toolkit"
 }
