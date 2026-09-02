@@ -145,6 +145,10 @@ These skills aren't theoretical — they're distilled from real production work 
 - **fulcrum-product-knowledge (SE/PS reference skill)** — A comprehensive platform knowledge base maintained for the Solutions Engineering and Professional Services teams. Covers plans and licensing gates, field type constraints, integration decision frameworks, reporting architecture, GIS limitations, and the full Query API reference. Gap analysis against this source drove the July 2026 updates to `fulcrum-data-events` (LOADFILE, STORAGE, CORS, plan gates), `fulcrum-app-design` (choice value/label distinction, Classification Set constraint, platform limits, predefined vs. ad hoc pattern), and `fulcrum-discovery` (platform boundaries and misconceptions as a pre-build check). Ongoing source for future skills: `fulcrum-report-building`, `fulcrum-app-extensions`, `fulcrum-query-api`, `fulcrum-integration-patterns`, `fulcrum-gis-mapping`.
 - **Corporate Claude Desktop skill packages** — `fulcrum-product-knowledge.skill` and `fulcrum-app-builder.skill` are the source snapshots supplied for this import. Their content is maintained as repository-native copies in `plugins/fulcrum-ai-toolkit/skills/fulcrum-product-knowledge/` and `plugins/fulcrum-ai-toolkit/skills/fulcrum-app-builder/`. The copies remove the corporate `/mnt/skills/organization` dependency, point to the repository-local reference skill, and preserve a connector-independent handoff when no Fulcrum MCP is configured. The repository does not provide a Fulcrum MCP server; live app mutations require a separately configured connector.
 
+The [legacy product-knowledge migration coverage map](plugins/fulcrum-ai-toolkit/docs/legacy-product-knowledge-coverage.md)
+tracks every legacy domain, its canonical target, public sources, and material
+that must remain private or be dropped.
+
 ### Skill format
 
 Skills follow the [Agent Skills specification](https://agentskills.io/specification):

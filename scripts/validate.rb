@@ -11,6 +11,31 @@ PLUGIN_RELATIVE_PATH = File.join("plugins", "fulcrum-ai-toolkit")
 PLUGIN_DIR = File.join(ROOT, PLUGIN_RELATIVE_PATH)
 SKILLS_DIR = File.join(PLUGIN_DIR, "skills")
 EXPECTED_SKILL_COUNT = 11
+COVERAGE_MAP_RELATIVE_PATH = File.join(
+  PLUGIN_RELATIVE_PATH,
+  "docs",
+  "legacy-product-knowledge-coverage.md"
+)
+REQUIRED_COVERAGE_DOMAINS = [
+  "Platform overview",
+  "Plans and licensing",
+  "Field types",
+  "App architecture",
+  "Data Events",
+  "Workflows",
+  "Reporting",
+  "App Extensions",
+  "MCP tools and build flow",
+  "Integrations",
+  "GIS and mapping",
+  "Query API",
+  "Users, roles, SSO, and SCIM",
+  "Data migration",
+  "AI",
+  "Sidecars and internal tools",
+  "Common misconceptions",
+  "Source index"
+].freeze
 
 failures = []
 json_documents = {}
@@ -151,6 +176,30 @@ end
 
 unless references_section_has_url?(readme_text)
   failures << "README.md: add a References section with at least one URL"
+end
+
+coverage_map = File.join(ROOT, COVERAGE_MAP_RELATIVE_PATH)
+if File.file?(coverage_map)
+  coverage_text = File.read(coverage_map)
+  REQUIRED_COVERAGE_DOMAINS.each do |domain|
+    unless coverage_text.include?("| **#{domain}**")
+      failures << "#{COVERAGE_MAP_RELATIVE_PATH}: missing coverage row for #{domain}"
+    end
+  end
+
+  unless coverage_text.include?("## Source hierarchy")
+    failures << "#{COVERAGE_MAP_RELATIVE_PATH}: missing source hierarchy"
+  end
+
+  unless coverage_text.match?(/SHA-256:\s*\n?>?\s*`[0-9a-f]{64}`/)
+    failures << "#{COVERAGE_MAP_RELATIVE_PATH}: missing legacy artifact SHA-256"
+  end
+
+  if coverage_text.match?(%r{/(?:Users|home)/|atlassian\.net|slack\.com}i)
+    failures << "#{COVERAGE_MAP_RELATIVE_PATH}: contains a local path or private collaboration URL"
+  end
+else
+  failures << "#{COVERAGE_MAP_RELATIVE_PATH}: coverage manifest is missing"
 end
 
 if failures.empty?
