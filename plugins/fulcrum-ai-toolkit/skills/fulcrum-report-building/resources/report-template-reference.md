@@ -1,13 +1,16 @@
 # Report Template Functions Reference
 
 > Source: https://docs.fulcrumapp.com/docs/functions.md
-> Fetched: 2026-08-19
+> Source: https://github.com/fulcrumapp/app-mcp/pull/28
+> Verified: 2026-09-02
+
+When App MCP is registered, use the live `fulcrum_report_templates_*` schemas for template persistence and `fulcrum_reports_create` for report generation. This file documents functions available inside Report Builder EJS; it does not imply App MCP Query API, record, or media CRUD tools.
 
 ## Available Functions
 
 | Function | Purpose |
 |----------|---------|
-| API(endpoint, options) | Execute REST API calls to Fulcrum endpoints |
+| API(path, options) | Execute REST API calls to Fulcrum paths |
 | AUDIOURL(audio_id) | Generate public audio file URL |
 | FORMATDATE(date, options) | Format date values using Intl.DateTimeFormat options |
 | GET(url) | Perform synchronous HTTP GET request |
@@ -16,7 +19,7 @@
 | LOG(message) | Output debug messages to report results |
 | PHOTOURL(photo_id, version) | Generate public photo URL. Versions: original, thumbnail, large |
 | QS(object) | Convert object into URL query string |
-| QUERY(sql) | Execute SQL query on the Query API. Returns array of row objects |
+| QUERY(sql, options) | Execute a SQL query on the Query API from report EJS |
 | QUERYVALUE(sql) | Run SQL and return first column of first row |
 | RENDER(elements, callback) | Recursively process form elements with custom callbacks (handles nested/repeatable fields) |
 | RENDERVALUES(callback) | Iterate through form values for dynamic report generation |

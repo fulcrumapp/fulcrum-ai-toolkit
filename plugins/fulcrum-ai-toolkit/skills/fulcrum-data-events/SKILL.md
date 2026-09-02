@@ -1,11 +1,19 @@
 ---
 name: fulcrum-data-events
-description: Use when writing, reviewing, or debugging Fulcrum data events (JavaScript). Covers patterns, anti-patterns, platform constraints, event lifecycle, and security. Also use when a builder asks about automating behavior in a Fulcrum app.
+description: Use when writing, reviewing, persisting, or debugging Fulcrum Data Event JavaScript. Defers current hooks and signatures to App MCP knowledge, stores the single script through form get/update operations, and covers patterns, constraints, lifecycle, offline behavior, and security.
 ---
 
 A **data event** is JavaScript that runs inside a Fulcrum app in response to record lifecycle events. It executes on-device (mobile) and in-browser (web) — there is no server. Every data event shares a single `script` field on the form.
 
 > **Provenance:** Event names and function signatures in this skill follow Fulcrum's documented data-events API. Offline recommendations, security cautions, and workflow conventions are toolkit guidance unless explicitly attributed.
+
+## App MCP Control Plane
+
+When Fulcrum App MCP is registered, call `fulcrum_expressions_data_events_reference` for the current hook and function contract before authoring a script. Treat the local runtime resources as an offline fallback, not as a replacement for the registered knowledge tool.
+
+There are no standalone Data Event CRUD tools. Read the form and its current `script` with `fulcrum_forms_get`, compose the approved handler with the existing script, and write the complete script with `fulcrum_forms_update`. Do not overwrite unrelated handlers.
+
+> Source: [App MCP PR #28](https://github.com/fulcrumapp/app-mcp/pull/28) at commit [`1259888`](https://github.com/fulcrumapp/app-mcp/commit/125988885880b4916ef499cf5ebd535ccfb195f4) defines the registered knowledge tool and form-script persistence contract.
 
 ## Event Lifecycle
 
@@ -69,6 +77,7 @@ ON('load-record', function(event) {
     limit: 200
   }, function(error, result) {
     if (error) {
+      ALERT('Reference data unavailable', error.message || String(error));
       return;
     }
     var records = result.records;
@@ -82,17 +91,27 @@ ON('load-record', function(event) {
 ### Share code across apps with LOADFILE
 Store shared JavaScript in a Reference File, then load it into multiple apps at runtime. This is the standard code reuse pattern for builders maintaining several apps.
 
+> Source: [Fulcrum `LOADFILE()` reference](https://docs.fulcrumapp.com/docs/data-events-loadfile)
+
 ```javascript
 // In the data event script:
 ON('load-record', function(event) {
-  LOADFILE('https://your-cdn.example.com/shared-helpers.js');
-  // Functions defined in shared-helpers.js are now available
-  var result = mySharedFunction($some_field);
-  SETVALUE('computed_field', result);
+  LOADFILE({
+    name: 'shared-helpers.js',
+    form_id: FORM().id,
+    variable: 'sharedHelpers'
+  }, function(error, data) {
+    if (error) {
+      ALERT('Shared helpers unavailable', error.message || String(error));
+      return;
+    }
+    var result = data.sharedHelpers.mySharedFunction($some_field);
+    SETVALUE('computed_field', result);
+  });
 });
 ```
 
-Reference Files can be hosted on your own CDN or via Fulcrum's reference file storage. Lock the URL to a versioned file — not `latest`.
+`LOADFILE()` takes an options object with required `name`, optional `form_name` or `form_id`, and optional `variable`, followed by an optional callback. For App MCP-managed files, use `fulcrum_reference_files_*` to inspect or upload the Reference File before updating the form script.
 
 > **Platform Requirement — Elite plan:** `LOADFILE()` requires Elite or Developer Pack. See note above.
 
@@ -230,7 +249,7 @@ A single `script` field holds ALL data events for a form. As complexity grows:
 
 ## Built-in Expression Functions
 
-Before writing custom JavaScript logic, check whether a Fulcrum built-in function already does it. The platform ships a large expression library covering geometry, strings, math, dates, and record operations.
+Before writing custom JavaScript logic, call `fulcrum_expressions_list_functions` or `fulcrum_expressions_explain` when App MCP is available to check whether a Fulcrum built-in function already does it. The platform ships a large expression library covering geometry, strings, math, dates, and record operations.
 
 **Commonly overlooked built-ins:**
 
@@ -244,7 +263,7 @@ Before writing custom JavaScript logic, check whether a Fulcrum built-in functio
 | Field value by data name | `VALUE('field_name')` | Direct `$field_name` in dynamic contexts |
 | Choice value (not label) | `CHOICEVALUE($field)` | String comparison on label |
 
-> **Guidance:** If you find yourself writing more than 5–10 lines of JavaScript to solve a problem, check the Fulcrum expressions reference first. A built-in function is more reliable, offline-safe, and maintainable than custom logic that reimplements it.
+> **Guidance:** If you find yourself writing more than 5–10 lines of JavaScript to solve a problem, check the registered App MCP expression knowledge first, then the public Fulcrum expressions reference if the tool is unavailable. A built-in function is more reliable, offline-safe, and maintainable than custom logic that reimplements it.
 
 The full expressions reference is available in `resources/` as `expressions-reference.md` or via the Fulcrum documentation.
 
@@ -252,7 +271,7 @@ The full expressions reference is available in `resources/` as `expressions-refe
 
 - **No server execution** — Data events run on-device. No persistent state between sessions.
 - **No module imports** — No `require()`, no `import`. All code is a single script.
-- **Callback-based async, no async/await** — `REQUEST()` and `LOADRECORDS()` are asynchronous and take callbacks. `validate-record`, `validate-repeatable`, and `save-record` cannot perform asynchronous work.
+- **Callback-based async, no async/await** — `REQUEST()`, `LOADRECORDS()`, and callback-based `LOADFILE()` work asynchronously. `validate-record`, `validate-repeatable`, and `save-record` cannot perform asynchronous work.
 - **Single script per form** — All event handlers share one script. Naming collisions are possible.
 - **Mobile offline** — Data events must work offline. `REQUEST()` calls require connectivity and should have a graceful fallback or be limited to workflows that are explicitly online-only.
 - **No debugging tools** — No console, no breakpoints in production. Test in the web builder's preview mode.
@@ -274,10 +293,14 @@ The full expressions reference is available in `resources/` as `expressions-refe
 - [ ] Any location-dependent trigger uses `change-geometry` and guards against empty geometry
 - [ ] Bulk field operations use `FIELD_NAMES()` rather than hardcoded field name arrays
 - [ ] Built-in expression functions checked before writing custom logic that might duplicate them
+- [ ] When App MCP is available, current functions were checked with `fulcrum_expressions_data_events_reference` or the relevant expression knowledge tool
+- [ ] The form's existing `script` was fetched and preserved before `fulcrum_forms_update`
 
 ## References
 
 - [Fulcrum data events reference](https://docs.fulcrumapp.com/docs/data-events-reference)
+- [Fulcrum `LOADFILE()` reference](https://docs.fulcrumapp.com/docs/data-events-loadfile)
 - [Fulcrum `REQUEST()` reference](https://docs.fulcrumapp.com/docs/data-events-request)
 - [Fulcrum `STORAGE()` reference](https://docs.fulcrumapp.com/docs/data-events-storage)
+- [App MCP tool-contract prerequisite](https://github.com/fulcrumapp/app-mcp/pull/28)
 - [Agent Skills specification](https://agentskills.io/specification)
