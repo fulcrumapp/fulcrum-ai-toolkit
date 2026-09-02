@@ -160,3 +160,8 @@ After a connector send, report the destination and result. After a manual handof
 - [ ] Selected share format prepared for the destination
 - [ ] External send explicitly approved before using a configured connector
 - [ ] Builder knows what was shared, where it went, or what to copy manually
+
+## References
+
+- [Fulcrum developer documentation](https://docs.fulcrumapp.com/)
+- [Agent Skills specification](https://agentskills.io/specification)

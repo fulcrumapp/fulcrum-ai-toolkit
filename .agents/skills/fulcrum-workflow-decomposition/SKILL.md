@@ -96,3 +96,8 @@ Decomposition of a live app is disruptive. Sequence it:
 - [ ] Data events per app are under 500 lines
 - [ ] Reporting continuity is confirmed — deliverables still producible
 - [ ] Transition plan exists if decomposing a live app
+
+## References
+
+- [Fulcrum developer documentation](https://docs.fulcrumapp.com/)
+- [Agent Skills specification](https://agentskills.io/specification)

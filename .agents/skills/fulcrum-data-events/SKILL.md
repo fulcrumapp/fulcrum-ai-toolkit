@@ -274,3 +274,10 @@ The full expressions reference is available in `resources/` as `expressions-refe
 - [ ] Any location-dependent trigger uses `change-geometry` and guards against empty geometry
 - [ ] Bulk field operations use `FIELD_NAMES()` rather than hardcoded field name arrays
 - [ ] Built-in expression functions checked before writing custom logic that might duplicate them
+
+## References
+
+- [Fulcrum data events reference](https://docs.fulcrumapp.com/docs/data-events-reference)
+- [Fulcrum `REQUEST()` reference](https://docs.fulcrumapp.com/docs/data-events-request)
+- [Fulcrum `STORAGE()` reference](https://docs.fulcrumapp.com/docs/data-events-storage)
+- [Agent Skills specification](https://agentskills.io/specification)

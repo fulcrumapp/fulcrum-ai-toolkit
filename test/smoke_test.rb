@@ -17,13 +17,18 @@ validator = File.join(ROOT, "scripts", "validate.rb")
 stdout, stderr, status = Open3.capture3(RbConfig.ruby, validator, chdir: ROOT)
 assert(status.success?, "validation gate failed: #{stderr.empty? ? stdout : stderr}")
 
-app_builder = File.read(File.join(ROOT, "skills", "fulcrum-app-builder", "SKILL.md"))
-product_knowledge = File.read(File.join(ROOT, "skills", "fulcrum-product-knowledge", "SKILL.md"))
-app_design = File.read(File.join(ROOT, "skills", "fulcrum-app-design", "SKILL.md"))
-safety = File.read(File.join(ROOT, "skills", "fulcrum-safety", "SKILL.md"))
-data_events = File.read(File.join(ROOT, "skills", "fulcrum-data-events", "SKILL.md"))
-app_extensions = File.read(File.join(ROOT, "skills", "fulcrum-app-extensions", "SKILL.md"))
-report_building = File.read(File.join(ROOT, "skills", "fulcrum-report-building", "SKILL.md"))
+skills_dir = File.join(ROOT, ".agents", "skills")
+readme = File.read(File.join(ROOT, "README.md"))
+app_builder = File.read(File.join(skills_dir, "fulcrum-app-builder", "SKILL.md"))
+product_knowledge = File.read(File.join(skills_dir, "fulcrum-product-knowledge", "SKILL.md"))
+app_design = File.read(File.join(skills_dir, "fulcrum-app-design", "SKILL.md"))
+safety = File.read(File.join(skills_dir, "fulcrum-safety", "SKILL.md"))
+data_events = File.read(File.join(skills_dir, "fulcrum-data-events", "SKILL.md"))
+app_extensions = File.read(File.join(skills_dir, "fulcrum-app-extensions", "SKILL.md"))
+report_building = File.read(File.join(skills_dir, "fulcrum-report-building", "SKILL.md"))
+
+assert(readme.include?("## References"), "README lacks references")
+assert(app_builder.include?("https://agentskills.io/specification"), "skills lack standard reference")
 
 scenario = {
   purpose: "inspect a site",

@@ -202,3 +202,8 @@ The app design is complete when:
 - [ ] Record status uses the built-in app status system, not a custom choice field
 - [ ] Field visibility uses visibility rules where possible; `SETHIDDEN()` only for complex logic
 - [ ] Calculation field expressions do not use `return`, `function`, `var`, `let`, or `const`
+
+## References
+
+- [Fulcrum developer documentation](https://docs.fulcrumapp.com/)
+- [Agent Skills specification](https://agentskills.io/specification)

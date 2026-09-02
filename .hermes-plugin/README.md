@@ -2,6 +2,9 @@
 
 AI skills for building field data collection apps on the Fulcrum platform.
 
+The plugin uses the portable Agent Skills format and loads its canonical skills
+from `.agents/skills/`.
+
 ## Installation
 
 ```bash
@@ -19,3 +22,9 @@ hermes plugin install fulcrum-ai-toolkit
 - **fulcrum-report-building** — Author and debug Fulcrum report templates
 - **fulcrum-discovery** — Structured discovery interview before building
 - **fulcrum-solution-document** — Document completed solutions, review privacy, and prepare shareable formats
+
+## References
+
+- [Agent Skills specification](https://agentskills.io/specification)
+- [Fulcrum developer documentation](https://docs.fulcrumapp.com/)
+- [Hermes plugin configuration](https://github.com/NousResearch/hermes-agent)

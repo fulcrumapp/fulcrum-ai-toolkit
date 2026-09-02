@@ -64,3 +64,9 @@ Do not silently add safety fields without discussing with the builder. Safety re
 - [ ] Safety section is positioned at the beginning of the app, before work fields
 - [ ] Safety fields match the risk level of the work (don't over-prescribe for low-risk work)
 - [ ] The builder has confirmed whether their organization requires safety documentation
+
+## References
+
+- [Fulcrum developer documentation](https://docs.fulcrumapp.com/)
+- [OSHA safety and health topics](https://www.osha.gov/topics)
+- [Agent Skills specification](https://agentskills.io/specification)
