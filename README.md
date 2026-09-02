@@ -23,6 +23,13 @@ In Codex, add the repository marketplace, then install
 codex plugin marketplace add fulcrumapp/fulcrum-ai-toolkit
 ```
 
+In GitHub Copilot CLI, add the marketplace and install the plugin:
+
+```bash
+copilot plugin marketplace add fulcrumapp/fulcrum-ai-toolkit
+copilot plugin install fulcrum-ai-toolkit@fulcrum-ai-toolkit
+```
+
 For a standalone skills loader, target the packaged skills directory:
 
 ```bash
@@ -61,7 +68,7 @@ directory.
 | Claude Code | Add the Claude marketplace, then install the plugin | Yes | Connector-dependent | Target |
 | Cursor | Install `plugins/fulcrum-ai-toolkit/` as a plugin | Yes | Connector-dependent | Target |
 | Codex | Add the repository marketplace, then install the plugin | Yes | Connector-dependent | Target |
-| GitHub Copilot | Copy `plugins/fulcrum-ai-toolkit/skills/` to the consuming repo's `.agents/skills/` | Yes | Connector-dependent | Target |
+| GitHub Copilot | Add this marketplace, then install the plugin | Yes | Connector-dependent | Target |
 | Gemini | Install `plugins/fulcrum-ai-toolkit/` as an extension | Verify | Connector-dependent | Verify |
 | Hermes | Install `plugins/fulcrum-ai-toolkit/` as a plugin | Yes | Connector-dependent | Verify |
 | Claude Desktop | Copy `plugins/fulcrum-ai-toolkit/skills/` to the consuming repo and configure MCP separately | Yes | MCP-dependent | Later |
@@ -151,6 +158,7 @@ Plugin configs are included for multiple AI platforms:
 
 | Platform | Config |
 | ---------- | -------- |
+| GitHub Copilot CLI | `.github/plugin/marketplace.json` and `plugins/fulcrum-ai-toolkit/plugin.json` |
 | Claude Code | `plugins/fulcrum-ai-toolkit/.claude-plugin/plugin.json` |
 | Cursor | `plugins/fulcrum-ai-toolkit/.cursor-plugin/plugin.json` |
 | Codex | `plugins/fulcrum-ai-toolkit/.codex-plugin/plugin.json` |
@@ -159,11 +167,12 @@ Plugin configs are included for multiple AI platforms:
 | MCP | `plugins/fulcrum-ai-toolkit/.mcp.json` |
 
 All host adapters point to the package's `skills/` directory; they do not
-maintain separate copies of skill content. Claude marketplace metadata is
-available at `.claude-plugin/marketplace.json`, and the legacy root
-`marketplace.json` is kept for existing installers. Codex marketplace metadata
-is available at `.agents/plugins/marketplace.json` and points to the package
-under `plugins/`.
+maintain separate copies of skill content. GitHub Copilot marketplace metadata
+is available at `.github/plugin/marketplace.json`; the same catalog is also
+available at `.claude-plugin/marketplace.json` for Claude and Copilot's
+fallback lookup. The legacy root `marketplace.json` is kept for existing
+installers. Codex marketplace metadata is available at
+`.agents/plugins/marketplace.json` and points to the package under `plugins/`.
 
 ## References
 

@@ -1,8 +1,13 @@
 {
+  "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
   "name": "fulcrum-ai-toolkit",
   "version": "0.1.0",
   "description": "AI skills for building apps, data events, reports, and workflows on the Fulcrum platform",
-  "author": "Fulcrum (Spatial Networks)",
+  "author": {
+    "name": "Fulcrum"
+  },
+  "homepage": "https://www.fulcrumapp.com",
+  "repository": "https://github.com/fulcrumapp/fulcrum-ai-toolkit",
   "license": "MIT",
   "skills": "./skills/",
   "keywords": [
