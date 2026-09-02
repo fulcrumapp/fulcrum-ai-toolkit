@@ -255,3 +255,10 @@ A report template is a single EJS file. As it grows:
 - [ ] Representative short, long, and multi-page fixtures were rendered when layout matters
 - [ ] For parameterized reports: `$params` interface is documented at the top of the template
 - [ ] For backend-service reports: `SETCONTENTTYPE()` and `WRITE()` are used for structured output
+
+## References
+
+- [Fulcrum reports introduction](https://docs.fulcrumapp.com/docs/reports-introduction)
+- [Fulcrum Query API introduction](https://docs.fulcrumapp.com/reference/query-intro)
+- [Fulcrum report templates API](https://docs.fulcrumapp.com/reference/report-templates-api)
+- [Agent Skills specification](https://agentskills.io/specification)

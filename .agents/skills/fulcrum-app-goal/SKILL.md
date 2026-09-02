@@ -56,3 +56,8 @@ When asked to review or improve an existing app, assess the goal first:
 - [ ] A specific deliverable is named (report, dataset, notification, export)
 - [ ] The audience is identified (who uses it on mobile, who consumes the output)
 - [ ] Every field group serves the stated goal — orphan fields are flagged
+
+## References
+
+- [Fulcrum developer documentation](https://docs.fulcrumapp.com/)
+- [Agent Skills specification](https://agentskills.io/specification)

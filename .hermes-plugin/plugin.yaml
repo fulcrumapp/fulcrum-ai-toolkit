@@ -3,4 +3,4 @@ version: 0.1.0
 description: AI skills for building field data collection apps on the Fulcrum platform
 author: Fulcrum (Spatial Networks)
 license: MIT
-skills_dir: skills
+skills_dir: .agents/skills

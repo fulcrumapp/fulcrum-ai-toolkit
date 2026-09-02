@@ -150,3 +150,12 @@ Before destructive operations, obtain explicit confirmation. Deleting a form del
 - [ ] Permissions are handled by platform controls, not client-side scripts.
 - [ ] MCP actions are attempted only when the connector is available.
 - [ ] Destructive changes have explicit confirmation.
+
+## References
+
+- [Fulcrum developer documentation](https://docs.fulcrumapp.com/)
+- [Fulcrum data events reference](https://docs.fulcrumapp.com/docs/data-events-reference)
+- [Fulcrum Query API introduction](https://docs.fulcrumapp.com/reference/query-intro)
+- [Fulcrum reports introduction](https://docs.fulcrumapp.com/docs/reports-introduction)
+- [Fulcrum app extensions introduction](https://docs.fulcrumapp.com/docs/app-extensions-introduction)
+- [Agent Skills specification](https://agentskills.io/specification)

@@ -116,3 +116,9 @@ Present this to the builder. Confirm before building. Then proceed with `fulcrum
 - [ ] A discovery summary is written and confirmed by the builder
 - [ ] The structural recommendation (single vs linked apps) is stated
 - [ ] Any existing artifacts (paper forms, reports, spreadsheets) have been reviewed
+
+## References
+
+- [Fulcrum developer documentation](https://docs.fulcrumapp.com/)
+- [Fulcrum offline capabilities](https://docs.fulcrumapp.com/docs/offline-capabilities)
+- [Agent Skills specification](https://agentskills.io/specification)

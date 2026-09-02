@@ -238,3 +238,9 @@ An extension that tries to replicate an entire sub-application. Extensions are p
 - [ ] Data flows are documented: what fields the extension reads, what fields it writes back
 - [ ] `OPENEXTENSION()` call in data events passes any needed context to the extension
 - [ ] Extension returns results with `Fulcrum.finish()` after the user completes the interaction
+
+## References
+
+- [Fulcrum app extensions introduction](https://docs.fulcrumapp.com/docs/app-extensions-introduction)
+- [Fulcrum offline capabilities](https://docs.fulcrumapp.com/docs/offline-capabilities)
+- [Agent Skills specification](https://agentskills.io/specification)
