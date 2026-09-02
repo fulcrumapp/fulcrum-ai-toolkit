@@ -1,11 +1,13 @@
 ---
 name: fulcrum-product-knowledge
-description: Use when answering questions about Fulcrum platform capabilities, field types, app design, data events, reporting, integrations, GIS, the Query API, user management, plans, or known limitations. Also use when preparing demos, scoping Professional Services work, troubleshooting platform behavior, or building Fulcrum resources through an available Fulcrum MCP connector. This is the canonical platform reference for the toolkit.
+description: Route cross-cutting Fulcrum platform questions to the owning skill or registered App MCP knowledge tool. Use for capability boundaries, plans, offline behavior, integrations, GIS, Query API, identity, and limitations that span focused workflows.
 ---
 
 # Fulcrum Platform Knowledge Reference
 
-Use this skill as the platform reference behind the more focused Fulcrum skills. Prefer the narrower skill when it owns the workflow, and use this skill for platform facts, constraints, capability decisions, and cross-cutting architecture.
+Use this skill as the platform router behind the more focused Fulcrum skills. Prefer the narrower skill when it owns the workflow, and use this skill for platform facts, constraints, capability decisions, and cross-cutting architecture. When Fulcrum App MCP is registered, defer schema, expression, extension, and tool-contract questions to its live knowledge and operation schemas instead of duplicating those contracts here.
+
+> Source: [App MCP PR #28](https://github.com/fulcrumapp/app-mcp/pull/28) at commit [`1259888`](https://github.com/fulcrumapp/app-mcp/commit/125988885880b4916ef499cf5ebd535ccfb195f4) is the prerequisite contract snapshot for this toolkit orientation.
 
 ## Platform Boundaries
 
@@ -72,7 +74,7 @@ Data events run on-device and in the web app. Design offline-first:
 
 - `REQUEST()` needs connectivity and browser CORS support on web.
 - `LOADRECORDS()` reads locally synced records and can work offline.
-- `LOADFILE()` is useful for shared code but needs a reachable, versioned file and the required plan.
+- `LOADFILE({ name, form_name/form_id, variable }, callback)` loads a Reference File by name and may target another form.
 - Data events do not support `async/await`; use the platform's supported callback patterns.
 - Long-running work during save can block the user; use the documented prevent/resume pattern when necessary.
 - Repeatable fields may need manual data-name references in the builder.
@@ -80,6 +82,10 @@ Data events run on-device and in the web app. Design offline-first:
 Common functions include `ON`, `SETVALUE`, `SETREQUIRED`, `SETHIDDEN`, `SETREADONLY`, `SETSTATUS`, `SETLABEL`, `SETCHOICES`, `VALUE`, `CHOICEVALUES`, `ROLE`, `EMAIL`, `LATITUDE`, `LONGITUDE`, `RECORDID`, `REQUEST`, `LOADRECORDS`, `LOADFILE`, `STORAGE`, `ALERT`, `CONFIRM`, and `INVALID`.
 
 Do not use data events as a security boundary. Use platform permissions for authorization, avoid secrets in scripts, pin external dependencies, and document fallback behavior for offline use.
+
+When App MCP is available, call `fulcrum_expressions_data_events_reference` for current signatures. Data Event code is the form's `script`; read and write it through `fulcrum_forms_get` and `fulcrum_forms_update`, not imagined standalone Data Event CRUD tools.
+
+> Source: [Fulcrum `LOADFILE()` reference](https://docs.fulcrumapp.com/docs/data-events-loadfile) and [App MCP PR #28](https://github.com/fulcrumapp/app-mcp/pull/28).
 
 ## Workflows And Webhooks
 
@@ -93,15 +99,23 @@ Choose among data events, Workflows, global webhooks, polling, URL Actions, and 
 
 ## Reporting
 
-Standard reports provide generic PDF output with limited configuration. Advanced reports use server-side EJS and can produce PDF or HTML. Use `QUERY()` for data beyond the single record context, `PHOTOURL()` and `SIGNATUREURL()` for media, and `APIREQUEST({ api: true })` for authenticated Fulcrum API calls.
+Standard reports provide generic PDF output with limited configuration. Advanced reports use server-side EJS and can produce PDF or HTML. Use `QUERY()` for data beyond the single record context, `PHOTOURL()` and `SIGNATUREURL()` for media, and documented `API(path, options)` calls for Fulcrum REST resources.
 
-HTML reports can provide filter interfaces or act as backend services when configured for raw output. Treat report templates as code: test them outside the builder, sanitize parameters before SQL interpolation, never hardcode tokens, and keep a local copy.
+Treat Report Templates as code: test them outside the builder, sanitize parameters before SQL interpolation, never hardcode tokens, and keep a local copy.
+
+With App MCP, manage templates through `fulcrum_report_templates_*` and generate a report for a supplied record ID with `fulcrum_reports_create`. App MCP does not provide general record, Query API, or media CRUD.
+
+> Source: [Fulcrum Report Builder functions](https://docs.fulcrumapp.com/docs/functions) and [App MCP PR #28](https://github.com/fulcrumapp/app-mcp/pull/28).
 
 ## App Extensions
 
 Use an extension when native fields cannot provide the required UI. Use data events for logic that does not need a custom interface. Reference Files and inline assets can support offline extensions; CDN assets make the workflow online-only. Pin CDN versions.
 
 For picker extensions, store the result in a TextField and use a HyperlinkField as the trigger. Do not combine a picker extension with a ChoiceField's native picker.
+
+When App MCP is available, use `fulcrum_extensions_list_patterns`, `fulcrum_extensions_explain`, and `fulcrum_extensions_generate`. Keep the generated inline bootstrap and the `OPENEXTENSION({ url, title, data, onMessage })` / `payload.data` contract rather than reproducing an older bridge from memory.
+
+> Source: [Fulcrum App Extensions introduction](https://docs.fulcrumapp.com/docs/app-extensions-introduction) and [App MCP PR #28](https://github.com/fulcrumapp/app-mcp/pull/28).
 
 ## Query API
 
@@ -127,17 +141,41 @@ Use a sidecar application when the workflow needs administration, analysis, sync
 
 ## MCP Build Reference
 
-This section applies only when a public or organization-provided Fulcrum MCP connector is actually available in the current host. Do not claim that this repository provides those tools.
+This section applies only when Fulcrum App MCP is registered in the current host. This repository provides portable skills, not the server or credentials.
 
-Never hand-craft Fulcrum element JSON. Prefer the connector's schema builders and follow this sequence:
+App MCP is the default control plane for supported app configuration:
 
-1. Inspect field types when needed.
-2. Build each field with the schema builder.
-3. Assemble the form with the form schema builder.
-4. Create the form with the generated elements.
-5. For updates, retrieve the current form first, preserve existing elements, then update the complete schema.
+- Form CRUD/history/schema listing and embedded Data Event `script`
+- Schema field/form builders and form validation
+- Choice List, Classification Set, Project, and global Webhook CRUD
+- Reference File management
+- Layer metadata plus Membership and Role metadata
+- Report Template CRUD and report generation
+- Schema, expression, Data Event, and App Extension knowledge or generation
 
-Before destructive operations, obtain explicit confirmation. Deleting a form deletes its records; deleting a choice list can break dependent fields; removing a field from an update can delete stored data. Surface connector approval errors rather than silently retrying.
+Query API execution, record CRUD, and media CRUD remain outside App MCP. Do not infer tool names for unsupported domains.
+
+For a new form:
+
+1. Inspect field types with `fulcrum_schema_field_types` when needed.
+2. Build fields with `fulcrum_schema_build_field`. Choice input accepts strings and `{label, value}` objects; explicit values are preserved.
+3. Assemble the form with `fulcrum_schema_build_form`.
+4. Validate with `fulcrum_forms_validate`.
+5. Create with `fulcrum_forms_create`. Keep the default Report Template unless `skip_default_report` is explicitly requested.
+
+For an existing-form element change:
+
+1. Fetch the current form with `fulcrum_forms_get`.
+2. Preserve every existing element and inline-choice key.
+3. Build only new field additions with `fulcrum_schema_build_field` and insert them into the copied element tree.
+4. Validate the composed full definition with `fulcrum_forms_validate`.
+5. Update the complete assembled elements with `fulcrum_forms_update`.
+
+Never rebuild an existing schema wholesale with `fulcrum_schema_build_form`; doing so regenerates keys. Before destructive operations, obtain explicit confirmation. Surface approval and API errors rather than silently retrying.
+
+If form creation succeeds but returns `report_template_error`, report a successful form and a non-fatal default-template failure. Do not retry form creation.
+
+> Source: [App MCP PR #28](https://github.com/fulcrumapp/app-mcp/pull/28) documents the registered tools and key-preservation guard. [Fulcrum Forms API](https://docs.fulcrumapp.com/reference/forms-intro) documents the form `script` field.
 
 ## Decision Checklist
 
@@ -155,7 +193,9 @@ Before destructive operations, obtain explicit confirmation. Deleting a form del
 
 - [Fulcrum developer documentation](https://docs.fulcrumapp.com/)
 - [Fulcrum data events reference](https://docs.fulcrumapp.com/docs/data-events-reference)
+- [Fulcrum `LOADFILE()` reference](https://docs.fulcrumapp.com/docs/data-events-loadfile)
 - [Fulcrum Query API introduction](https://docs.fulcrumapp.com/reference/query-intro)
 - [Fulcrum reports introduction](https://docs.fulcrumapp.com/docs/reports-introduction)
 - [Fulcrum app extensions introduction](https://docs.fulcrumapp.com/docs/app-extensions-introduction)
+- [App MCP tool-contract prerequisite](https://github.com/fulcrumapp/app-mcp/pull/28)
 - [Agent Skills specification](https://agentskills.io/specification)

@@ -1,7 +1,7 @@
 # Data Event Examples
 
-> Source: Fulcrum developer documentation
-> Fetched: 2026-08-19
+> Source: https://docs.fulcrumapp.com/docs/data-events-reference.md
+> Verified: 2026-09-02
 
 ## Capture Timestamp with Yes/No Toggle
 

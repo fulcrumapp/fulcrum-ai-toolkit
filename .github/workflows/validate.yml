@@ -16,5 +16,7 @@ jobs:
           ruby-version: '3.2'
       - name: Validate skills and manifests
         run: ruby scripts/validate.rb
+      - name: Check App MCP contract guidance
+        run: ruby test/app_mcp_contract_test.rb
       - name: Run smoke test
         run: ruby test/smoke_test.rb

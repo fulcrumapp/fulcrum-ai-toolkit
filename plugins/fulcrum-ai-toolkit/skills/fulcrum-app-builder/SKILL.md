@@ -1,29 +1,48 @@
 ---
 name: fulcrum-app-builder
-description: Guided, novice-friendly workflow for creating or updating a Fulcrum app. Use when a user wants to build an app, add or change fields, or asks whether a Fulcrum app can support a workflow. Explain capabilities and limits, ask focused discovery questions, propose a plain-English schema for approval, then build only through an available Fulcrum MCP connector. If no connector is available, produce a ready-to-implement schema and handoff instead.
+description: Guided, novice-friendly workflow for creating or updating a Fulcrum app. Use when a user wants to build an app, add or change fields, or asks whether a Fulcrum app can support a workflow. Explain capabilities and limits, ask focused discovery questions, propose a plain-English schema for approval, then use Fulcrum App MCP as the default control plane when it is available. If App MCP is unavailable, produce a ready-to-implement schema and handoff instead.
 ---
 
 # Fulcrum App Builder
 
-This skill is the front door for app-building conversations. Use [fulcrum-product-knowledge](../fulcrum-product-knowledge/SKILL.md) as the platform source of truth and use the focused skills for goals, discovery, design, safety, data events, extensions, reports, and decomposition.
+This skill is the front door for app-building conversations. Use [fulcrum-product-knowledge](../fulcrum-product-knowledge/SKILL.md) for platform boundaries and use the focused skills for goals, discovery, design, safety, data events, extensions, reports, and decomposition. When Fulcrum App MCP is registered, treat its live tool schemas as the control plane for supported app configuration and knowledge operations.
+
+> Source: [App MCP PR #28](https://github.com/fulcrumapp/app-mcp/pull/28) at commit [`1259888`](https://github.com/fulcrumapp/app-mcp/commit/125988885880b4916ef499cf5ebd535ccfb195f4) defines the tool contract used by this workflow.
 
 ## Step 0: Check Execution Capability
 
-Determine whether the current host has a Fulcrum MCP connector with app-building tools. This repository does not provide that connector.
+Determine whether the current host has Fulcrum App MCP registered. This toolkit packages guidance only; it does not bundle the server or credentials.
 
-If the connector is available, use its documented schema-builder and form tools. If it is not available, do not pretend to create or modify a live app. Continue through discovery and schema approval, then provide a handoff that an authorized builder can execute in Fulcrum.
+When App MCP is available, inspect its live tool schemas and use it by default for:
+
+| Domain | App MCP surface |
+|---|---|
+| Forms and embedded Data Event scripts | `fulcrum_forms_*` |
+| Field and form schema knowledge, builders, and validation | `fulcrum_schema_*`, `fulcrum_forms_validate` |
+| Choice lists and classification sets | `fulcrum_choice_lists_*`, `fulcrum_classification_sets_*` |
+| Projects, global webhooks, and Reference Files | `fulcrum_projects_*`, `fulcrum_webhooks_*`, `fulcrum_reference_files_*` |
+| Layer metadata | `fulcrum_layers_list`, `fulcrum_layers_get` |
+| Membership and role metadata | `fulcrum_memberships_list`, `fulcrum_roles_list` |
+| Report Templates and report generation | `fulcrum_report_templates_*`, `fulcrum_reports_create` |
+| Expression and App Extension knowledge or generation | `fulcrum_expressions_*`, `fulcrum_extensions_*` |
+
+App MCP does **not** provide Query API execution, record CRUD, or media CRUD. Do not invent `fulcrum_query_*`, `fulcrum_records_*`, or `fulcrum_media_*` calls. Use another authorized interface or provide a handoff for those operations. Report templates may call the documented `QUERY()` runtime function, but that does not create an App MCP query tool.
+
+If App MCP is unavailable, do not pretend to create or modify a live app. Continue through discovery and schema approval, then provide a handoff that an authorized builder can execute in Fulcrum.
 
 ## Step 1: Set Expectations
 
-Briefly explain what the available connector can and cannot do. Depending on the connector, app building may cover text, choices, dates, numbers, photos, GPS, signatures, barcodes, calculations, sections, repeatables, shared choice lists, status workflows, data events, webhooks, and extensions.
+Briefly explain the supported App MCP surface and any operation that needs another interface. App MCP can configure forms, fields, choices, classifications, projects, global webhooks, Reference Files, Data Event scripts, App Extensions, and reports. It can inspect layer, membership, and role metadata.
 
 Always surface relevant limitations:
 
-- Custom report layouts may require manual work in the Fulcrum web app.
-- Workflow configuration and some integration features may be UI-only.
+- Query API execution, record CRUD, and media CRUD are outside App MCP.
+- Workflow automation CRUD is outside App MCP; global webhook CRUD is supported.
+- App MCP can manage Report Templates and request report generation, but rendered output still needs visual review.
 - External CDN assets do not work for offline extensions.
 - Plan gates can prevent Query API, Workflows, advanced data events, SSO, GIS, or AI features.
-- Deleting a form, choice list, or field can destroy data and requires explicit confirmation.
+- Layers, memberships, and roles are metadata-only through App MCP.
+- Deleting a form, choice list, Reference File, report template, or field can destroy data or break a workflow and requires explicit confirmation.
 
 ## Step 2: Discovery
 
@@ -84,22 +103,43 @@ Get explicit approval before creating or modifying live resources.
 
 ## Step 4: Build Or Hand Off
 
-When the Fulcrum MCP connector is available, follow its exact documented sequence. Prefer schema builders over hand-written element JSON:
+When App MCP is available, follow its live schemas exactly. Do not hand-write new element JSON when a registered schema builder owns that shape.
+
+> Source: [App MCP PR #28](https://github.com/fulcrumapp/app-mcp/pull/28) documents the create/update sequence, mixed choice inputs, default report behavior, and preservation guard.
 
 For a new app:
 
-1. Build each field with the connector's field schema tool.
-2. Assemble the elements with the form schema tool.
-3. Create the form using the generated elements.
-4. Add scripts or other resources only after the form structure is valid.
+1. Call `fulcrum_schema_field_types` when field capabilities are uncertain.
+2. Build each field with `fulcrum_schema_build_field`.
+3. For inline choices, pass either string labels or `{ "label": "...", "value": "..." }` objects. Use object form whenever the stored value differs from the label; App MCP preserves explicit values.
+4. Assemble the new form with `fulcrum_schema_build_form`.
+5. Validate the generated definition with `fulcrum_forms_validate`.
+6. Create it with `fulcrum_forms_create`, including the approved `script` only after the form structure is valid.
+7. Let `fulcrum_forms_create` create its default Report Template. Set `skip_default_report: true` only when the user explicitly asks to opt out.
+
+If the result contains a created form plus `report_template_error`, report that the form succeeded and only the default Report Template failed. This error is non-fatal. Do not retry form creation; create the missing template separately with `fulcrum_report_templates_create` when appropriate.
 
 For an existing app:
 
-1. Retrieve the current form schema.
-2. Modify only the requested parts.
-3. Preserve existing elements unless removal was explicitly approved.
-4. Warn again before removing a field because stored data may be deleted.
-5. Update the complete required schema.
+1. Fetch the current form with `fulcrum_forms_get`.
+2. Copy its complete element tree and preserve every existing element key and inline-choice key.
+3. Modify requested properties in place without changing their keys.
+4. Use `fulcrum_schema_build_field` only for genuinely new field additions, then insert those additions into the copied tree.
+5. Preserve all unrequested elements and choices. Warn again before removing a field or choice because stored data or integrations may depend on it.
+6. Validate the composed full form with `fulcrum_forms_validate`.
+7. Send the complete composed `elements` array to `fulcrum_forms_update`.
+
+Never rebuild an existing schema wholesale with `fulcrum_schema_build_form`. It generates new keys for new forms, and App MCP rejects updates that replace known element keys.
+
+### Data Event scripts
+
+There are no standalone Data Event CRUD tools. A form has one `script` value:
+
+1. Read the current script with `fulcrum_forms_get`.
+2. Compose the approved change with the existing script instead of overwriting unrelated handlers.
+3. Write the complete script with `fulcrum_forms_update`.
+
+Use `fulcrum_expressions_data_events_reference` for current hooks and signatures rather than relying on a memorized contract.
 
 If a tool fails, surface the raw error, retry at most once when appropriate, and distinguish connector permission or approval failures from Fulcrum API failures. Never silently retry destructive operations.
 
@@ -109,14 +149,15 @@ When no connector is available, produce the approved schema, field data names, c
 
 After a build or handoff, summarize:
 
-- Form name and ID, if created.
+- Form name and ID, if created or updated.
 - Full field list and types.
 - Choice lists and values.
 - Calculation logic.
 - Status workflow.
 - Data events, extensions, reports, and integrations.
 - Plan and offline dependencies.
-- Errors, skipped work, and known limitations.
+- Default Report Template status, including any non-fatal template error.
+- Errors, skipped work, unsupported operations, and known limitations.
 - Recommended follow-up for PS, CS, or product.
 
 ## Explicit Safety Rules
@@ -125,7 +166,8 @@ After a build or handoff, summarize:
 - Never delete a form, choice list, or field without explicit confirmation.
 - Never use client-side data events as an authorization boundary.
 - Never embed secrets in app scripts, report templates, or extension code.
-- Never claim execution when the MCP connector is unavailable.
+- Never regenerate existing element or choice keys during an update.
+- Never claim execution when App MCP is unavailable.
 
 ## Scope
 
@@ -134,5 +176,7 @@ This skill orchestrates app creation and updates. Defer deep platform questions 
 ## References
 
 - [Fulcrum developer documentation](https://docs.fulcrumapp.com/)
+- [Fulcrum Forms API](https://docs.fulcrumapp.com/reference/forms-intro)
+- [App MCP tool-contract prerequisite](https://github.com/fulcrumapp/app-mcp/pull/28)
 - [Agent Skills specification](https://agentskills.io/specification)
 - [Toolkit platform reference](../fulcrum-product-knowledge/SKILL.md)
