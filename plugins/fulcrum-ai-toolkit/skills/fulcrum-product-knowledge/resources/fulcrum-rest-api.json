@@ -2,7 +2,8 @@
   "openapi": "3.1.0",
   "info": {
     "title": "rest-api",
-    "version": "2"
+    "version": "2",
+    "description": "Source: https://raw.githubusercontent.com/fulcrumapp/api/v2/reference/rest-api.json. Personal workstation paths in code samples are generalized for the public toolkit."
   },
   "servers": [
     {
@@ -8812,22 +8813,22 @@
           "code-samples": [
             {
               "language": "curl",
-              "code": "curl --request POST 'https://api.fulcrumapp.com/api/v2/photos' \\\n--header 'Accept: application/json' \\\n--header 'X-ApiToken: {token}' \\\n--form 'photo[access_key]='$(uuidgen) \\\n--form 'photo[file]=@/Users/bryan/Desktop/photo.jpg'",
+              "code": "curl --request POST 'https://api.fulcrumapp.com/api/v2/photos' \\\n--header 'Accept: application/json' \\\n--header 'X-ApiToken: {token}' \\\n--form 'photo[access_key]='$(uuidgen) \\\n--form 'photo[file]=@/path/to/photo.jpg'",
               "name": "cURL"
             },
             {
               "language": "python",
-              "code": "from fulcrum import Fulcrum\nfulcrum = Fulcrum('{token}')\n\nphoto = fulcrum.photos.create('/Users/bryan/Desktop/photo.jpg')\nprint(photo['photo'])",
+              "code": "from fulcrum import Fulcrum\nfulcrum = Fulcrum('{token}')\n\nphoto = fulcrum.photos.create('/path/to/photo.jpg')\nprint(photo['photo'])",
               "name": "Python"
             },
             {
               "language": "javascript",
-              "code": "const { Client } = require('fulcrum-app');\nconst client = new Client('{token}');\n\nconst fs = require('fs');\nconst photo = fs.createReadStream('/Users/bryan/Desktop/photo.jpg');\n\nclient.photos.create(photo)\n  .then(created => console.log(created))\n  .catch(error => console.log(error));",
+              "code": "const { Client } = require('fulcrum-app');\nconst client = new Client('{token}');\n\nconst fs = require('fs');\nconst photo = fs.createReadStream('/path/to/photo.jpg');\n\nclient.photos.create(photo)\n  .then(created => console.log(created))\n  .catch(error => console.log(error));",
               "name": "JavaScript"
             },
             {
               "language": "ruby",
-              "code": "require 'fulcrum'\n\nclient = Fulcrum::Client.new('{token}')\n\nphoto = client.photos.create('/Users/bryan/Desktop/photo.jpg')\n\nputs photo",
+              "code": "require 'fulcrum'\n\nclient = Fulcrum::Client.new('{token}')\n\nphoto = client.photos.create('/path/to/photo.jpg')\n\nputs photo",
               "name": "Ruby"
             }
           ],
@@ -9269,22 +9270,22 @@
           "code-samples": [
             {
               "language": "curl",
-              "code": "curl --request POST 'https://api.fulcrumapp.com/api/v2/sketches' \\\n--header 'Accept: application/json' \\\n--header 'X-ApiToken: {token}' \\\n--form 'sketch[access_key]='$(uuidgen) \\\n--form 'sketch[file]=@/Users/bryan/Desktop/sketch.jpg'",
+              "code": "curl --request POST 'https://api.fulcrumapp.com/api/v2/sketches' \\\n--header 'Accept: application/json' \\\n--header 'X-ApiToken: {token}' \\\n--form 'sketch[access_key]='$(uuidgen) \\\n--form 'sketch[file]=@/path/to/sketch.jpg'",
               "name": "cURL"
             },
             {
               "language": "python",
-              "code": "from fulcrum import Fulcrum\nfulcrum = Fulcrum('{token}')\n\nsketch = fulcrum.sketches.create('/Users/bryan/Desktop/sketch.jpg')\nprint(sketch['sketch'])",
+              "code": "from fulcrum import Fulcrum\nfulcrum = Fulcrum('{token}')\n\nsketch = fulcrum.sketches.create('/path/to/sketch.jpg')\nprint(sketch['sketch'])",
               "name": "Python"
             },
             {
               "language": "javascript",
-              "code": "const { Client } = require('fulcrum-app');\nconst client = new Client('{token}');\n\nconst fs = require('fs');\nconst sketch = fs.createReadStream('/Users/bryan/Desktop/sketch.jpg');\n\nclient.sketches.create(sketch)\n  .then(created => console.log(created))\n  .catch(error => console.log(error));",
+              "code": "const { Client } = require('fulcrum-app');\nconst client = new Client('{token}');\n\nconst fs = require('fs');\nconst sketch = fs.createReadStream('/path/to/sketch.jpg');\n\nclient.sketches.create(sketch)\n  .then(created => console.log(created))\n  .catch(error => console.log(error));",
               "name": "JavaScript"
             },
             {
               "language": "ruby",
-              "code": "require 'fulcrum'\n\nclient = Fulcrum::Client.new('{token}')\n\nsketch = client.sketches.create('/Users/bryan/Desktop/sketch.jpg')\n\nputs sketch",
+              "code": "require 'fulcrum'\n\nclient = Fulcrum::Client.new('{token}')\n\nsketch = client.sketches.create('/path/to/sketch.jpg')\n\nputs sketch",
               "name": "Ruby"
             }
           ],
@@ -9726,22 +9727,22 @@
           "code-samples": [
             {
               "language": "curl",
-              "code": "curl --request POST 'https://api.fulcrumapp.com/api/v2/signatures' \\\n--header 'Accept: application/json' \\\n--header 'X-ApiToken: {token}' \\\n--form 'signature[access_key]='$(uuidgen) \\\n--form 'signature[file]=@/Users/bryan/Desktop/signature.jpg'",
+              "code": "curl --request POST 'https://api.fulcrumapp.com/api/v2/signatures' \\\n--header 'Accept: application/json' \\\n--header 'X-ApiToken: {token}' \\\n--form 'signature[access_key]='$(uuidgen) \\\n--form 'signature[file]=@/path/to/signature.jpg'",
               "name": "cURL"
             },
             {
               "language": "python",
-              "code": "from fulcrum import Fulcrum\nfulcrum = Fulcrum('{token}')\n\nsignature = fulcrum.signatures.create('/Users/bryan/Desktop/signature.jpg')\nprint(signature['signature'])",
+              "code": "from fulcrum import Fulcrum\nfulcrum = Fulcrum('{token}')\n\nsignature = fulcrum.signatures.create('/path/to/signature.jpg')\nprint(signature['signature'])",
               "name": "Python"
             },
             {
               "language": "javascript",
-              "code": "const { Client } = require('fulcrum-app');\nconst client = new Client('{token}');\n\nconst fs = require('fs');\nconst signature = fs.createReadStream('/Users/bryan/Desktop/signature.jpg');\n\nclient.signatures.create(signature)\n  .then(created => console.log(created))\n  .catch(error => console.log(error));",
+              "code": "const { Client } = require('fulcrum-app');\nconst client = new Client('{token}');\n\nconst fs = require('fs');\nconst signature = fs.createReadStream('/path/to/signature.jpg');\n\nclient.signatures.create(signature)\n  .then(created => console.log(created))\n  .catch(error => console.log(error));",
               "name": "JavaScript"
             },
             {
               "language": "ruby",
-              "code": "require 'fulcrum'\n\nclient = Fulcrum::Client.new('{token}')\n\nsignature = client.signatures.create('/Users/bryan/Desktop/signature.jpg')\n\nputs signature",
+              "code": "require 'fulcrum'\n\nclient = Fulcrum::Client.new('{token}')\n\nsignature = client.signatures.create('/path/to/signature.jpg')\n\nputs signature",
               "name": "Ruby"
             }
           ],
@@ -10937,22 +10938,22 @@
           "code-samples": [
             {
               "language": "curl",
-              "code": "curl --request POST 'https://api.fulcrumapp.com/api/v2/videos/upload' \\\n--header 'Accept: application/json' \\\n--header 'X-ApiToken: {token}' \\\n--form 'video[access_key]='$(uuidgen) \\\n--form 'video[file]=@/Users/bryan/Desktop/video.mp4' \\\n--form 'video[track]=@/Users/bryan/Desktop/track.json'",
+              "code": "curl --request POST 'https://api.fulcrumapp.com/api/v2/videos/upload' \\\n--header 'Accept: application/json' \\\n--header 'X-ApiToken: {token}' \\\n--form 'video[access_key]='$(uuidgen) \\\n--form 'video[file]=@/path/to/video.mp4' \\\n--form 'video[track]=@/path/to/track.json'",
               "name": "cURL"
             },
             {
               "language": "python",
-              "code": "from fulcrum import Fulcrum\nfulcrum = Fulcrum('{token}')\n\nvideo = fulcrum.videos.create('/Users/bryan/Desktop/video.mp4')\nprint(video['video'])",
+              "code": "from fulcrum import Fulcrum\nfulcrum = Fulcrum('{token}')\n\nvideo = fulcrum.videos.create('/path/to/video.mp4')\nprint(video['video'])",
               "name": "Python"
             },
             {
               "language": "javascript",
-              "code": "const { Client } = require('fulcrum-app');\nconst client = new Client('{token}');\n\nconst fs = require('fs');\nconst video = fs.createReadStream('/Users/bryan/Desktop/video.mp4');\nconst track = fs.createReadStream('/Users/bryan/Desktop/track.json');\n\nclient.videos.create(video, {\n  track: track\n})\n  .then(created => console.log(created))\n  .catch(error => console.log(error));",
+              "code": "const { Client } = require('fulcrum-app');\nconst client = new Client('{token}');\n\nconst fs = require('fs');\nconst video = fs.createReadStream('/path/to/video.mp4');\nconst track = fs.createReadStream('/path/to/track.json');\n\nclient.videos.create(video, {\n  track: track\n})\n  .then(created => console.log(created))\n  .catch(error => console.log(error));",
               "name": "JavaScript"
             },
             {
               "language": "ruby",
-              "code": "require 'fulcrum'\n\nclient = Fulcrum::Client.new('{token}')\n\nvideo = client.videos.create('/Users/bryan/Desktop/video.mp4', 'video/mp4', {\n  track: File.read('/Users/bryan/Desktop/track.json')\n})\n\nputs video",
+              "code": "require 'fulcrum'\n\nclient = Fulcrum::Client.new('{token}')\n\nvideo = client.videos.create('/path/to/video.mp4', 'video/mp4', {\n  track: File.read('/path/to/track.json')\n})\n\nputs video",
               "name": "Ruby"
             }
           ],
@@ -11586,22 +11587,22 @@
           "code-samples": [
             {
               "language": "curl",
-              "code": "curl --request POST 'https://api.fulcrumapp.com/api/v2/audio/upload' \\\n--header 'Accept: application/json' \\\n--header 'X-ApiToken: {token}' \\\n--form 'audio[access_key]='$(uuidgen) \\\n--form 'audio[file]=@/Users/bryan/Desktop/audio.m4a' \\\n--form 'audio[track]=@/Users/bryan/Desktop/track.json'",
+              "code": "curl --request POST 'https://api.fulcrumapp.com/api/v2/audio/upload' \\\n--header 'Accept: application/json' \\\n--header 'X-ApiToken: {token}' \\\n--form 'audio[access_key]='$(uuidgen) \\\n--form 'audio[file]=@/path/to/audio.m4a' \\\n--form 'audio[track]=@/path/to/track.json'",
               "name": "cURL"
             },
             {
               "language": "python",
-              "code": "from fulcrum import Fulcrum\nfulcrum = Fulcrum('{token}')\n\naudio = fulcrum.audio.create('/Users/bryan/Desktop/audio.m4a')\nprint(audio['audio'])",
+              "code": "from fulcrum import Fulcrum\nfulcrum = Fulcrum('{token}')\n\naudio = fulcrum.audio.create('/path/to/audio.m4a')\nprint(audio['audio'])",
               "name": "Python"
             },
             {
               "language": "javascript",
-              "code": "const { Client } = require('fulcrum-app');\nconst client = new Client('{token}');\n\nconst fs = require('fs');\nconst audio = fs.createReadStream('/Users/bryan/Desktop/audio.m4a');\nconst track = fs.createReadStream('/Users/bryan/Desktop/track.json');\n\nclient.audio.create(audio, {\n  track: track\n})\n  .then(created => console.log(created))\n  .catch(error => console.log(error));",
+              "code": "const { Client } = require('fulcrum-app');\nconst client = new Client('{token}');\n\nconst fs = require('fs');\nconst audio = fs.createReadStream('/path/to/audio.m4a');\nconst track = fs.createReadStream('/path/to/track.json');\n\nclient.audio.create(audio, {\n  track: track\n})\n  .then(created => console.log(created))\n  .catch(error => console.log(error));",
               "name": "JavaScript"
             },
             {
               "language": "ruby",
-              "code": "require 'fulcrum'\n\nclient = Fulcrum::Client.new('{token}')\n\naudio = client.audio.create('/Users/bryan/Desktop/audio.m4a', 'audio/x-m4a', {\n  track: File.read('/Users/bryan/Desktop/track.json')\n})\n\nputs audio",
+              "code": "require 'fulcrum'\n\nclient = Fulcrum::Client.new('{token}')\n\naudio = client.audio.create('/path/to/audio.m4a', 'audio/x-m4a', {\n  track: File.read('/path/to/track.json')\n})\n\nputs audio",
               "name": "Ruby"
             }
           ],
