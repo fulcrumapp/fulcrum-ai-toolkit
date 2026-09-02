@@ -10,10 +10,7 @@
     {
       "name": "fulcrum-ai-toolkit",
       "description": "AI skills for building apps, data events, reports, and workflows on the Fulcrum platform",
-      "source": {
-        "source": "url",
-        "url": "https://github.com/fulcrumapp/fulcrum-ai-toolkit.git"
-      },
+      "source": "./plugins/fulcrum-ai-toolkit",
       "homepage": "https://github.com/fulcrumapp/fulcrum-ai-toolkit"
     }
   ]

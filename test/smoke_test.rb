@@ -17,7 +17,7 @@ validator = File.join(ROOT, "scripts", "validate.rb")
 stdout, stderr, status = Open3.capture3(RbConfig.ruby, validator, chdir: ROOT)
 assert(status.success?, "validation gate failed: #{stderr.empty? ? stdout : stderr}")
 
-skills_dir = File.join(ROOT, ".agents", "skills")
+skills_dir = File.join(ROOT, "plugins", "fulcrum-ai-toolkit", "skills")
 readme = File.read(File.join(ROOT, "README.md"))
 app_builder = File.read(File.join(skills_dir, "fulcrum-app-builder", "SKILL.md"))
 product_knowledge = File.read(File.join(skills_dir, "fulcrum-product-knowledge", "SKILL.md"))

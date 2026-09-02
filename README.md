@@ -6,25 +6,33 @@ Built around the open [Agent Skills standard](https://agentskills.io/specificati
 
 ## Install
 
+This repository is a marketplace containing the distributable
+`plugins/fulcrum-ai-toolkit/` package.
+
+In Claude Code, add the marketplace and install the plugin:
+
 ```bash
-claude plugin install fulcrum-ai-toolkit
+/plugin marketplace add https://github.com/fulcrumapp/fulcrum-ai-toolkit.git
+/plugin install fulcrum-ai-toolkit@fulcrum-ai-toolkit
 ```
 
-Install the portable skills directly with a compatible skills manager:
+In Codex, add the repository marketplace, then install
+`fulcrum-ai-toolkit` from the Plugins directory:
 
 ```bash
-npx skills@latest add fulcrumapp/fulcrum-ai-toolkit
-```
-
-For other supported hosts:
-
-```bash
-gh skill install fulcrumapp/fulcrum-ai-toolkit
 codex plugin marketplace add fulcrumapp/fulcrum-ai-toolkit
 ```
 
+For a standalone skills loader, target the packaged skills directory:
+
+```bash
+npx skills@latest add https://github.com/fulcrumapp/fulcrum-ai-toolkit/tree/main/plugins/fulcrum-ai-toolkit/skills
+```
+
 You can also copy or symlink individual skill directories from
-`.agents/skills/` into a host's documented project skill directory.
+`plugins/fulcrum-ai-toolkit/skills/` into a host's documented project skill
+directory. `.agents/` is reserved for repository-scoped agent assets and
+marketplace metadata.
 
 The toolkit installs guidance skills only. It does not include the Fulcrum MCP
 server or Fulcrum credentials. Live app creation and updates require a
@@ -42,20 +50,21 @@ stops at an approved implementation handoff.
 
 ## Alpha install matrix
 
-The repository uses the portable `.agents/skills/*/SKILL.md` layout as its
-canonical package. Host-specific manifests are thin adapters around that
-layout.
+The distributable package uses the portable
+`plugins/fulcrum-ai-toolkit/skills/*/SKILL.md` layout. Host-specific manifests
+are adapters inside that package and all point to its shared `skills/`
+directory.
 
 | Host | Install path | Skills | Live Fulcrum actions | Alpha status |
 | --- | --- | --- | --- | --- |
-| Generic skills loader | `npx skills@latest add fulcrumapp/fulcrum-ai-toolkit` | Yes | No, connector required | Target |
-| Claude Code | `claude plugin install fulcrum-ai-toolkit` | Yes | Connector-dependent | Target |
-| Cursor | Install the repository as a plugin or add `.agents/skills/` manually | Yes | Connector-dependent | Target |
-| Codex | Install the repository as a plugin or add `.agents/skills/` manually | Yes | Connector-dependent | Target |
-| GitHub Copilot | Add the repository's `.agents/skills/` directory | Yes | Connector-dependent | Target |
-| Gemini | Install as an extension or add `.agents/skills/` manually | Verify | Connector-dependent | Verify |
-| Hermes | Install the repository as a plugin or add `.agents/skills/` manually | Yes | Connector-dependent | Verify |
-| Claude Desktop | Add `.agents/skills/` manually and configure MCP separately | Yes | MCP-dependent | Later |
+| Generic skills loader | Add `plugins/fulcrum-ai-toolkit/skills/` | Yes | No, connector required | Target |
+| Claude Code | Add the Claude marketplace, then install the plugin | Yes | Connector-dependent | Target |
+| Cursor | Install `plugins/fulcrum-ai-toolkit/` as a plugin | Yes | Connector-dependent | Target |
+| Codex | Add the repository marketplace, then install the plugin | Yes | Connector-dependent | Target |
+| GitHub Copilot | Copy `plugins/fulcrum-ai-toolkit/skills/` to the consuming repo's `.agents/skills/` | Yes | Connector-dependent | Target |
+| Gemini | Install `plugins/fulcrum-ai-toolkit/` as an extension | Verify | Connector-dependent | Verify |
+| Hermes | Install `plugins/fulcrum-ai-toolkit/` as a plugin | Yes | Connector-dependent | Verify |
+| Claude Desktop | Copy `plugins/fulcrum-ai-toolkit/skills/` to the consuming repo and configure MCP separately | Yes | MCP-dependent | Later |
 
 The `Target` and `Verify` labels describe the toolkit's intended alpha support,
 not a claim that every host has been tested in this repository yet.
@@ -126,14 +135,15 @@ These skills aren't theoretical — they're distilled from real production work 
 - **Digital Transformation Best Practices** — Six practices extracted from PS engagement patterns: process discovery before building, output-first design, decompose by role, iterate don't perfect, change management, governance. These shaped `fulcrum-discovery` and `fulcrum-app-goal`.
 
 - **fulcrum-product-knowledge (SE/PS reference skill)** — A comprehensive platform knowledge base maintained for the Solutions Engineering and Professional Services teams. Covers plans and licensing gates, field type constraints, integration decision frameworks, reporting architecture, GIS limitations, and the full Query API reference. Gap analysis against this source drove the July 2026 updates to `fulcrum-data-events` (LOADFILE, STORAGE, CORS, plan gates), `fulcrum-app-design` (choice value/label distinction, Classification Set constraint, platform limits, predefined vs. ad hoc pattern), and `fulcrum-discovery` (platform boundaries and misconceptions as a pre-build check). Ongoing source for future skills: `fulcrum-report-building`, `fulcrum-app-extensions`, `fulcrum-query-api`, `fulcrum-integration-patterns`, `fulcrum-gis-mapping`.
-- **Corporate Claude Desktop skill packages** — `fulcrum-product-knowledge.skill` and `fulcrum-app-builder.skill` are the source snapshots supplied for this import. Their content is maintained as repository-native copies in `.agents/skills/fulcrum-product-knowledge/` and `.agents/skills/fulcrum-app-builder/`. The copies remove the corporate `/mnt/skills/organization` dependency, point to the repository-local reference skill, and preserve a connector-independent handoff when no Fulcrum MCP is configured. The repository does not provide a Fulcrum MCP server; live app mutations require a separately configured connector.
+- **Corporate Claude Desktop skill packages** — `fulcrum-product-knowledge.skill` and `fulcrum-app-builder.skill` are the source snapshots supplied for this import. Their content is maintained as repository-native copies in `plugins/fulcrum-ai-toolkit/skills/fulcrum-product-knowledge/` and `plugins/fulcrum-ai-toolkit/skills/fulcrum-app-builder/`. The copies remove the corporate `/mnt/skills/organization` dependency, point to the repository-local reference skill, and preserve a connector-independent handoff when no Fulcrum MCP is configured. The repository does not provide a Fulcrum MCP server; live app mutations require a separately configured connector.
 
 ### Skill format
 
 Skills follow the [Agent Skills specification](https://agentskills.io/specification):
-each skill is a directory containing a `SKILL.md` with YAML frontmatter
-(`name` and `description`) plus a Markdown body. The optional invocation fields
-are retained where supported by a host and ignored elsewhere.
+each distributable skill under `plugins/fulcrum-ai-toolkit/skills/` is a
+directory containing a `SKILL.md` with YAML frontmatter (`name` and
+`description`) plus a Markdown body. The optional invocation fields are
+retained where supported by a host and ignored elsewhere.
 
 ### Platform support
 
@@ -141,18 +151,19 @@ Plugin configs are included for multiple AI platforms:
 
 | Platform | Config |
 | ---------- | -------- |
-| Claude Code | `.claude-plugin/plugin.json` |
-| Cursor | `.cursor-plugin/plugin.json` |
-| Codex | `.codex-plugin/plugin.json` |
-| Hermes | `.hermes-plugin/` |
-| Gemini | `gemini-extension.json` |
-| MCP | `.mcp.json` |
+| Claude Code | `plugins/fulcrum-ai-toolkit/.claude-plugin/plugin.json` |
+| Cursor | `plugins/fulcrum-ai-toolkit/.cursor-plugin/plugin.json` |
+| Codex | `plugins/fulcrum-ai-toolkit/.codex-plugin/plugin.json` |
+| Hermes | `plugins/fulcrum-ai-toolkit/.hermes-plugin/` |
+| Gemini | `plugins/fulcrum-ai-toolkit/gemini-extension.json` |
+| MCP | `plugins/fulcrum-ai-toolkit/.mcp.json` |
 
-All host adapters point to `.agents/skills/`; they do not maintain separate
-copies of skill content. Claude marketplace metadata is available at
-`.claude-plugin/marketplace.json`, and the legacy root `marketplace.json` is
-kept for existing installers. Codex marketplace metadata is available at
-`.agents/plugins/marketplace.json`.
+All host adapters point to the package's `skills/` directory; they do not
+maintain separate copies of skill content. Claude marketplace metadata is
+available at `.claude-plugin/marketplace.json`, and the legacy root
+`marketplace.json` is kept for existing installers. Codex marketplace metadata
+is available at `.agents/plugins/marketplace.json` and points to the package
+under `plugins/`.
 
 ## References
 
