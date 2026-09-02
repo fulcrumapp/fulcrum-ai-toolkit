@@ -206,4 +206,3 @@ The app design is complete when:
 ## References
 
 - [Fulcrum developer documentation](https://docs.fulcrumapp.com/)
-- [Agent Skills specification](https://agentskills.io/specification)
