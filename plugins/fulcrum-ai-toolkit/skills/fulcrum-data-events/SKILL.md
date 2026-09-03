@@ -13,7 +13,7 @@ When Fulcrum App MCP is registered, call `fulcrum_expressions_data_events_refere
 
 There are no standalone Data Event CRUD tools. Read the form and its current `script` with `fulcrum_forms_get`, compose the approved handler with the existing script, and write the complete script with `fulcrum_forms_update`. Do not overwrite unrelated handlers.
 
-> Source: [App MCP PR #28](https://github.com/fulcrumapp/app-mcp/pull/28) at commit [`1259888`](https://github.com/fulcrumapp/app-mcp/commit/125988885880b4916ef499cf5ebd535ccfb195f4) defines the registered knowledge tool and form-script persistence contract.
+> Source: [App MCP PR #28](https://github.com/fulcrumapp/app-mcp/pull/28) at commit [`43e68bb`](https://github.com/fulcrumapp/app-mcp/commit/43e68bb0a75c9afc6f6ed2b591b66431433737b4) defines the registered knowledge tool and form-script persistence contract.
 
 ## Event Lifecycle
 
@@ -111,7 +111,7 @@ ON('load-record', function(event) {
 });
 ```
 
-`LOADFILE()` takes an options object with required `name`, optional `form_name` or `form_id`, and optional `variable`, followed by an optional callback. For App MCP-managed files, use `fulcrum_reference_files_*` to inspect or upload the Reference File before updating the form script.
+`LOADFILE()` takes an options object with required `name`, optional `form_name` or `form_id`, and optional `variable`, followed by an optional callback. For App MCP-managed files, use `fulcrum_reference_files_list` or `fulcrum_reference_files_get` to inspect the file and `fulcrum_reference_files_upload` to upload it before updating the form script.
 
 > **Platform Requirement — Elite plan:** `LOADFILE()` requires Elite or Developer Pack. See note above.
 

@@ -7,7 +7,7 @@ description: Guided, novice-friendly workflow for creating or updating a Fulcrum
 
 This skill is the front door for app-building conversations. Use [fulcrum-product-knowledge](../fulcrum-product-knowledge/SKILL.md) for platform boundaries and use the focused skills for goals, discovery, design, safety, data events, extensions, reports, and decomposition. When Fulcrum App MCP is registered, treat its live tool schemas as the control plane for supported app configuration and knowledge operations.
 
-> Source: [App MCP PR #28](https://github.com/fulcrumapp/app-mcp/pull/28) at commit [`1259888`](https://github.com/fulcrumapp/app-mcp/commit/125988885880b4916ef499cf5ebd535ccfb195f4) defines the tool contract used by this workflow.
+> Source: [App MCP PR #28](https://github.com/fulcrumapp/app-mcp/pull/28) at commit [`43e68bb`](https://github.com/fulcrumapp/app-mcp/commit/43e68bb0a75c9afc6f6ed2b591b66431433737b4) defines the tool contract used by this workflow.
 
 ## Step 0: Check Execution Capability
 
@@ -15,18 +15,18 @@ Determine whether the current host has Fulcrum App MCP registered. This toolkit 
 
 When App MCP is available, inspect its live tool schemas and use it by default for:
 
-| Domain | App MCP surface |
+| Domain | App MCP capability |
 |---|---|
-| Forms and embedded Data Event scripts | `fulcrum_forms_*` |
-| Field and form schema knowledge, builders, and validation | `fulcrum_schema_*`, `fulcrum_forms_validate` |
-| Choice lists and classification sets | `fulcrum_choice_lists_*`, `fulcrum_classification_sets_*` |
-| Projects, global webhooks, and Reference Files | `fulcrum_projects_*`, `fulcrum_webhooks_*`, `fulcrum_reference_files_*` |
-| Layer metadata | `fulcrum_layers_list`, `fulcrum_layers_get` |
-| Membership and role metadata | `fulcrum_memberships_list`, `fulcrum_roles_list` |
-| Report Templates and report generation | `fulcrum_report_templates_*`, `fulcrum_reports_create` |
-| Expression and App Extension knowledge or generation | `fulcrum_expressions_*`, `fulcrum_extensions_*` |
+| Forms and embedded Data Event scripts | Form listing, schema listing, reads, creates, updates, deletes, and history |
+| Field and form schema knowledge, builders, and validation | Field-type knowledge, new-field and new-form builders, and composed-form validation |
+| Choice lists and classification sets | Full configuration lifecycle |
+| Projects, global webhooks, and Reference Files | Full configuration lifecycle, with Reference File upload in place of create |
+| Layer metadata | Read-only listing and lookup |
+| Membership and role metadata | Read-only listing |
+| Report Templates and report generation | Template lifecycle plus report generation for a supplied record ID |
+| Expression and App Extension knowledge or generation | Expression references plus extension pattern explanation and artifact generation |
 
-App MCP does **not** provide Query API execution, record CRUD, or media CRUD. Do not invent `fulcrum_query_*`, `fulcrum_records_*`, or `fulcrum_media_*` calls. Use another authorized interface or provide a handoff for those operations. Report templates may call the documented `QUERY()` runtime function, but that does not create an App MCP query tool.
+App MCP does **not** provide Query API execution, record CRUD, or media CRUD. Do not invent connector calls for those domains. Use another authorized interface or provide a handoff for those operations. Report templates may call the documented `QUERY()` runtime function, but that does not create an App MCP query tool.
 
 If App MCP is unavailable, do not pretend to create or modify a live app. Continue through discovery and schema approval, then provide a handoff that an authorized builder can execute in Fulcrum.
 
@@ -125,9 +125,20 @@ For an existing app:
 2. Copy its complete element tree and preserve every existing element key and inline-choice key.
 3. Modify requested properties in place without changing their keys.
 4. Use `fulcrum_schema_build_field` only for genuinely new field additions, then insert those additions into the copied tree.
-5. Preserve all unrequested elements and choices. Warn again before removing a field or choice because stored data or integrations may depend on it.
-6. Validate the composed full form with `fulcrum_forms_validate`.
-7. Send the complete composed `elements` array to `fulcrum_forms_update`.
+5. Preservation is the default. Preserve every unrequested element and choice. Omit `removed_element_keys` when nothing was removed.
+6. If the user requests an element removal, explain the data and integration impact and obtain explicit approval. After approval, omit the removed subtree from the copied tree and collect only that subtree root's existing key in `removed_element_keys`; one root key authorizes its descendants. Choice removals also require approval, but choice keys do not belong in `removed_element_keys`.
+7. Validate the composed full form with `fulcrum_forms_validate`.
+8. Send the complete composed payload and approved removal declarations together:
+
+```javascript
+fulcrum_forms_update({
+  id: formId,
+  elements: composedElements,
+  removed_element_keys: removedElementKeys
+});
+```
+
+Omit `removed_element_keys` when `removedElementKeys` is empty. Never declare a key that is still present in `elements`.
 
 Never rebuild an existing schema wholesale with `fulcrum_schema_build_form`. It generates new keys for new forms, and App MCP rejects updates that replace known element keys.
 

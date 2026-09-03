@@ -18,7 +18,7 @@ Use sources in this order, according to the fact being established:
 1. **Live Fulcrum App MCP tool schemas** are authoritative for connector tool
    names, arguments, required fields, and response shapes. The layer-2
    orientation is based on [App MCP PR #28](https://github.com/fulcrumapp/app-mcp/pull/28)
-   at commit [`1259888`](https://github.com/fulcrumapp/app-mcp/commit/125988885880b4916ef499cf5ebd535ccfb195f4);
+   at commit [`43e68bb`](https://github.com/fulcrumapp/app-mcp/commit/43e68bb0a75c9afc6f6ed2b591b66431433737b4);
    installed live schemas still take precedence. Never freeze a tool inventory
    from the legacy artifact into a portable skill.
 2. **Public Fulcrum documentation and the public OpenAPI document** are
