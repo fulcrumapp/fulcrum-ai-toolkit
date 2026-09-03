@@ -1,4 +1,5 @@
 /* Source: https://docs.fulcrumapp.com/docs/reports-introduction */
+/* Document: a complete stylesheet; paste it into a Report Template style block. */
 /* Purpose: a starting print stylesheet for a PDF Report Template.
    Reports render in a headless browser, so page-break control and fixed table
    layout are what separate a correct PDF from a correct-looking preview.

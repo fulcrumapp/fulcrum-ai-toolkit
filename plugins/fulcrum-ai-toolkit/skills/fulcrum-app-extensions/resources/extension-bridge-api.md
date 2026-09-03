@@ -37,7 +37,9 @@ through `payload.data`. See
 for the load/finish lifecycle and
 [`extension-load-payload.js`](../examples/extension-load-payload.js) for reading
 individual values. A complete page is
-[`species-picker-extension.html`](../examples/species-picker-extension.html).
+[`species-picker.html`](../examples/species-picker.html), uploaded under that
+exact file name so the Data Event's `attachment://species-picker.html` URL
+resolves.
 
 `Fulcrum.finish(result)` closes the extension and delivers `{ data: result }` to
 the Data Event's `onMessage` callback. It does not write form fields

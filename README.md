@@ -90,7 +90,7 @@ not a claim that every host has been tested in this repository yet.
 ## Local validation
 
 Ruby 3.2.11 is required; compatible version managers can provision it from
-`.ruby-version`. Run the dependency-free alpha checks from the repository root:
+`.ruby-version`. Run the Ruby checks from the repository root:
 
 ```bash
 ruby scripts/validate.rb
@@ -101,6 +101,20 @@ ruby test/external_examples_test.rb
 ruby test/smoke_test.rb
 ```
 
+Structural format validation for the externalized examples and assets lives in
+`tools/format-validator`, a small Node package whose parsers are pinned exactly
+in `package.json` and `package-lock.json`. Install once, then run it directly
+or let the external examples test invoke it:
+
+```bash
+npm ci --prefix tools/format-validator
+npm run --prefix tools/format-validator validate
+```
+
+The Ruby checks are dependency-free and run without Node; only the structural
+format pass needs the pinned package, and CI sets `REQUIRE_NODE=1` so it can
+never be skipped there.
+
 The validator checks the exact 16-skill inventory, skill frontmatter,
 directory/name consistency, corporate absolute paths, possible credentials,
 JSON manifests, and README inventory.
@@ -109,12 +123,15 @@ preservation-safe form updates. The decomposition test checks focused skill
 discovery, sources, router/coverage links, and package boundaries. The external
 examples test proves that no fenced code block remains in skill Markdown, that
 every `examples/` and `assets/` file is indexed and reachable, that each one
-names a public source, and that the legacy example manifest accounts for every
-legacy unit; it also parses JSON assets, syntax-checks JavaScript with Node
-when a runtime is available, and forbids destructive SQL. The smoke
-test exercises a small
-site-inspection workflow through discovery, schema approval, offline review,
-and the no-MCP handoff path.
+names a public source URL, that no example, asset, or index carries credential
+or private material, that every effective SQL statement is read-only, and that
+the legacy and current example inventories match
+`test/data/example-block-inventory.json` exactly, identifier by identifier. The
+format validator parses HTML structure and its inline scripts and styles,
+compiles EJS, and parses CSS, PostgreSQL, JSON, and JavaScript; files that are
+not whole documents are labeled `Fragment:` and validated as such. The smoke
+test exercises a small site-inspection workflow through discovery, schema
+approval, offline review, and the no-MCP handoff path.
 
 ## Skills
 

@@ -19,7 +19,7 @@ script with `fulcrum_forms_update`.
 
 | File | What it does |
 | --- | --- |
-| [`cascading-choices.js`](cascading-choices.js) | Narrows one choice field from another with `SETCHOICES()`. |
+| [`cascading-choices.js`](cascading-choices.js) | Narrows one choice field from another with `SETCHOICES()`, applied on `new-record`, `edit-record`, and change. |
 | [`sort-repeatable-children.js`](sort-repeatable-children.js) | Orders repeatable child entries by a numeric child field. |
 | [`create-repeatable-entries.js`](create-repeatable-entries.js) | Appends a repeatable child entry from a hyperlink `click`. |
 
@@ -34,7 +34,7 @@ script with `fulcrum_forms_update`.
 
 | File | What it does |
 | --- | --- |
-| [`conditional-visibility-sethidden.js`](conditional-visibility-sethidden.js) | Shows a dependent field with `SETHIDDEN()`. |
+| [`conditional-visibility-sethidden.js`](conditional-visibility-sethidden.js) | Shows a dependent field with `SETHIDDEN()`, applied on `new-record`, `edit-record`, and change. |
 
 ## Calculation
 
@@ -50,7 +50,7 @@ when the logic is too complex for an expression.
 | --- | --- |
 | [`load-reference-records.js`](load-reference-records.js) | Reads reference records with the `LOADRECORDS()` callback API. |
 | [`loadfile-shared-helpers.js`](loadfile-shared-helpers.js) | Loads a shared helper Reference File with `LOADFILE()`. |
-| [`storage-session-state.js`](storage-session-state.js) | Caches a derived value with `STORAGE()`. |
+| [`storage-session-state.js`](storage-session-state.js) | Caches a derived value with `STORAGE()` under a record-scoped key, cleared on the record lifecycle exits. |
 
 ## Anti-pattern contrasts
 

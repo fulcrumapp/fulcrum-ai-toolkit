@@ -9,7 +9,7 @@ to review a generated artifact or to work without a connector.
 
 | File | What it shows |
 | --- | --- |
-| [`species-picker-extension.html`](species-picker-extension.html) | A self-contained picker page with the current public inline bootstrap, styles, and picker script. |
+| [`species-picker.html`](species-picker.html) | A self-contained picker page with the current public inline bootstrap, styles, and picker script. Upload it under this exact name; the triggers open `attachment://species-picker.html`. |
 | [`extension-load-payload.js`](extension-load-payload.js) | Reading the `OPENEXTENSION` payload through `Fulcrum.load(({ data }) => ...)`. |
 | [`extension-bootstrap-lifecycle.js`](extension-bootstrap-lifecycle.js) | The load/finish lifecycle and safe message handling. |
 
