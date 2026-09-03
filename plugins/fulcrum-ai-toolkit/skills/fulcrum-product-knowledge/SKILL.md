@@ -74,7 +74,7 @@ Data events run on-device and in the web app. Design offline-first:
 
 - `REQUEST()` needs connectivity and browser CORS support on web.
 - `LOADRECORDS()` reads locally synced records and can work offline.
-- `LOADFILE({ name, form_name/form_id, variable }, callback)` loads a Reference File by name and may target another form.
+- `LOADFILE(options, callback)` loads a Reference File. `options` requires `name` and may include optional `form_name` or `form_id`, plus optional `variable`.
 - Data events do not support `async/await`; use the platform's supported callback patterns.
 - Long-running work during save can block the user; use the documented prevent/resume pattern when necessary.
 - Repeatable fields may need manual data-name references in the builder.
