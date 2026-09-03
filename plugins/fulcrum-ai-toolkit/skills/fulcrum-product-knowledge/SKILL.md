@@ -7,7 +7,7 @@ description: Route cross-cutting Fulcrum platform questions to the owning skill 
 
 Use this skill as the platform router behind the more focused Fulcrum skills. Prefer the narrower skill when it owns the workflow, and use this skill for platform facts, constraints, capability decisions, and cross-cutting architecture. When Fulcrum App MCP is registered, defer schema, expression, extension, and tool-contract questions to its live knowledge and operation schemas instead of duplicating those contracts here.
 
-> Source: [App MCP PR #28](https://github.com/fulcrumapp/app-mcp/pull/28) at commit [`43e68bb`](https://github.com/fulcrumapp/app-mcp/commit/43e68bb0a75c9afc6f6ed2b591b66431433737b4) is the prerequisite contract snapshot for this toolkit orientation.
+> Source: [App MCP PR #28](https://github.com/fulcrumapp/app-mcp/pull/28) at commit [`f8c041e`](https://github.com/fulcrumapp/app-mcp/commit/f8c041ee309c61c6154cce1a7b2cb84fc4c4cf10) is the prerequisite contract snapshot for this toolkit orientation.
 
 ## Platform Boundaries
 
