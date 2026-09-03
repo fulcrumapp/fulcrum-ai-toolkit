@@ -1,8 +1,12 @@
-# Fulcrum Documentation Index (llms.txt)
+# Selected Fulcrum Developer Documentation Index
 
 > Source: https://docs.fulcrumapp.com/llms.txt
 > Fetched: 2026-09-02
 > Tip: Append .md to any URL for markdown-formatted content
+
+Every URL below was present in the upstream `llms.txt` at the fetched date.
+This is a selected, reorganized index rather than a verbatim or complete copy.
+Refresh it from the named upstream source before relying on discovery coverage.
 
 ## Guides
 
@@ -70,51 +74,3 @@
 - https://docs.fulcrumapp.com/reference/batch-intro.md
 - https://docs.fulcrumapp.com/reference/report-templates-api.md
 - https://docs.fulcrumapp.com/reference/workflows-api.md
-
-## Workflows And Integrations
-
-- https://help.fulcrumapp.com/en/articles/5137763-what-are-workflows
-- https://docs.fulcrumapp.com/reference/workflows-api.md
-- https://docs.fulcrumapp.com/docs/webhooks.md
-- https://docs.fulcrumapp.com/reference/webhooks-intro.md
-- https://docs.fulcrumapp.com/docs/url-actions.md
-- https://docs.fulcrumapp.com/reference/rest-api-intro.md
-
-## GIS And Mapping
-
-- https://docs.fulcrumapp.com/reference/layers-intro.md
-- https://help.fulcrumapp.com/en/articles/94241-creating-map-layers
-- https://help.fulcrumapp.com/en/articles/4351972-offline-mbtiles-layers
-- https://help.fulcrumapp.com/en/articles/69897-how-do-i-import-my-data-into-a-fulcrum-app
-- https://help.fulcrumapp.com/en/articles/73547-how-to-download-or-export-data
-
-## Access And Identity
-
-- https://help.fulcrumapp.com/en/articles/94343-what-is-the-purpose-of-the-system-role-types
-- https://help.fulcrumapp.com/en/articles/2286638-role-permission-definitions
-- https://docs.fulcrumapp.com/reference/memberships-intro.md
-- https://docs.fulcrumapp.com/reference/memberships-change-permissions.md
-- https://help.fulcrumapp.com/en/articles/4038490-how-do-i-set-up-single-sign-on-and-user-provisioning
-
-## Migration Planning
-
-- https://docs.fulcrumapp.com/reference/records-intro.md
-- https://docs.fulcrumapp.com/reference/records-get-history.md
-- https://docs.fulcrumapp.com/reference/rest-api-timestamps.md
-- https://docs.fulcrumapp.com/reference/working-with-other-instances.md
-- https://docs.fulcrumapp.com/reference/photos-intro.md
-- https://docs.fulcrumapp.com/reference/audio-intro.md
-- https://docs.fulcrumapp.com/reference/signatures-intro.md
-
-## Public AI Capabilities
-
-- https://help.fulcrumapp.com/en/articles/10074106-audio-fastfill
-- https://help.fulcrumapp.com/en/articles/11586112-insights-beta
-- https://help.fulcrumapp.com/en/articles/4806048-mobile-face-distortion-for-photos
-- https://docs.fulcrumapp.com/docs/data-events-inference.md
-- https://www.fulcrumapp.com/pricing/
-
-## OpenAPI Spec
-
-- https://raw.githubusercontent.com/fulcrumapp/api/v2/reference/rest-api.json (OpenAPI 3.1, 101 endpoints, 47 resources)
-- Vendored copy: fulcrum-rest-api.json in this resources/ directory

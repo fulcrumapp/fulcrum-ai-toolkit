@@ -5,7 +5,7 @@ skill into smaller, public, repository-native skills and resources. It is a
 coverage record, not a product specification. A row marked `focused-skill`
 identifies a portable skill now included in the package.
 
-> **Source:** The heading inventory was adapted from the user-supplied
+> **Inventory fingerprint:** The heading inventory was adapted from the user-supplied
 > `legacy-product-knowledge-skill.md` artifact. No public URL was supplied for
 > that artifact, and the original file is intentionally not committed.
 > SHA-256:

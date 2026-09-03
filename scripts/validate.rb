@@ -4,6 +4,8 @@
 require "json"
 require "pathname"
 require "yaml"
+require_relative "content_contracts"
+require_relative "manifest_contracts"
 
 ROOT = File.expand_path("..", __dir__)
 ROOT_PATH = Pathname.new(ROOT)
@@ -150,19 +152,43 @@ private_reference_pattern = %r{
   /mnt/skills/organization|
   github\.com/fulcrumapp/app-mcp
 }ix
-public_text_paths.select { |path| File.file?(path) }.each do |path|
-  if File.read(path).match?(private_reference_pattern)
+public_text_paths.uniq.select { |path| File.file?(path) }.each do |path|
+  text = File.read(path)
+  if text.match?(private_reference_pattern)
     failures << "#{repo_relative_path(path)}: contains a private path or collaboration URL"
+  end
+
+  if ContentContracts.private_provenance?(text)
+    failures << "#{repo_relative_path(path)}: contains private person or customer provenance"
+  end
+
+  ContentContracts.invalid_source_attributions(text).each do
+    failures << "#{repo_relative_path(path)}: Source attribution must include a public URL on the same line"
   end
 end
 
-expected_skill_adapters = [
+agent_plugin_manifest_path = "#{PLUGIN_RELATIVE_PATH}/plugin.json"
+agent_plugin_manifest = json_documents[agent_plugin_manifest_path]
+if agent_plugin_manifest
+  ManifestContracts.validate_agent_plugin(agent_plugin_manifest).each do |error|
+    failures << "#{agent_plugin_manifest_path}: #{error}"
+  end
+end
+
+cursor_manifest_path = "#{PLUGIN_RELATIVE_PATH}/.cursor-plugin/plugin.json"
+cursor_manifest = json_documents[cursor_manifest_path]
+if cursor_manifest
+  ManifestContracts.validate_cursor(cursor_manifest).each do |error|
+    failures << "#{cursor_manifest_path}: #{error}"
+  end
+end
+
+expected_explicit_skill_adapters = [
   "#{PLUGIN_RELATIVE_PATH}/.claude-plugin/plugin.json",
   "#{PLUGIN_RELATIVE_PATH}/.codex-plugin/plugin.json",
-  "#{PLUGIN_RELATIVE_PATH}/.cursor-plugin/plugin.json",
-  "#{PLUGIN_RELATIVE_PATH}/plugin.json"
+  "#{PLUGIN_RELATIVE_PATH}/.cursor-plugin/plugin.json"
 ]
-expected_skill_adapters.each do |relative_path|
+expected_explicit_skill_adapters.each do |relative_path|
   skills_path = json_documents.dig(relative_path, "skills")
   unless skills_path == "./skills/"
     failures << "#{relative_path}: skills must point to ./skills/"

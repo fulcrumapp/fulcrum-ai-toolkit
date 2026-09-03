@@ -70,8 +70,8 @@ precedence over toolkit prose.
 
 The distributable package uses the portable
 `plugins/fulcrum-ai-toolkit/skills/*/SKILL.md` layout. Host-specific manifests
-are adapters inside that package and all point to its shared `skills/`
-directory.
+are adapters inside that package and either discover the standard `skills/`
+directory or explicitly point to it when the host contract supports that field.
 
 | Host | Install path | Skills | Live Fulcrum actions | Alpha status |
 | --- | --- | --- | --- | --- |
@@ -95,6 +95,7 @@ Ruby 3.2.11 is required; compatible version managers can provision it from
 ```bash
 ruby scripts/validate.rb
 ruby test/app_mcp_contract_test.rb
+ruby test/manifest_contract_test.rb
 ruby test/product_knowledge_decomposition_test.rb
 ruby test/smoke_test.rb
 ```
@@ -201,10 +202,10 @@ Plugin configs are included for multiple AI platforms:
 | Gemini | `plugins/fulcrum-ai-toolkit/gemini-extension.json` |
 | MCP | `plugins/fulcrum-ai-toolkit/.mcp.json` |
 
-All host adapters point to the package's `skills/` directory; they do not
-maintain separate copies of skill content. GitHub Copilot marketplace metadata
-is available at `.github/plugin/marketplace.json`; the same catalog is also
-available at `.claude-plugin/marketplace.json` for Claude and Copilot's
+All hosts discover or reference the package's shared `skills/` directory; they
+do not maintain separate copies of skill content. GitHub Copilot marketplace
+metadata is available at `.github/plugin/marketplace.json`; the same catalog is
+also available at `.claude-plugin/marketplace.json` for Claude and Copilot's
 fallback lookup. The legacy root `marketplace.json` is kept for existing
 installers. Codex marketplace metadata is available at
 `.agents/plugins/marketplace.json` and points to the package under `plugins/`.

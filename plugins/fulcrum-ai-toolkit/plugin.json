@@ -9,7 +9,6 @@
   "homepage": "https://www.fulcrumapp.com",
   "repository": "https://github.com/fulcrumapp/fulcrum-ai-toolkit",
   "license": "MIT",
-  "skills": "./skills/",
   "keywords": [
     "fulcrum",
     "field-data",

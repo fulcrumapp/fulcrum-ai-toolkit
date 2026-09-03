@@ -1,6 +1,8 @@
 #!/usr/bin/env ruby
 # frozen_string_literal: true
 
+require_relative "../scripts/content_contracts"
+
 ROOT = File.expand_path("..", __dir__)
 SKILLS = File.join(ROOT, "plugins", "fulcrum-ai-toolkit", "skills")
 
@@ -340,10 +342,81 @@ public_files = [
 ] +
   Dir[File.join(ROOT, "plugins", "fulcrum-ai-toolkit", "**", "*.{md,json,yaml,yml}")] +
   Dir[File.join(ROOT, "plugins", "fulcrum-ai-toolkit", ".*-plugin", "*.{md,json,yaml,yml}")]
+required_hidden_adapters = %w[
+  .claude-plugin/plugin.json
+  .codex-plugin/plugin.json
+  .cursor-plugin/plugin.json
+  .hermes-plugin/plugin.yaml
+  .mcp.json
+].map { |path| File.join(ROOT, "plugins", "fulcrum-ai-toolkit", path) }
+assert(
+  (required_hidden_adapters - public_files).empty?,
+  "public privacy scan omits hidden plugin adapters"
+)
 public_content = public_files.map { |path| File.read(path) }.join("\n")
 assert(
   !public_content.match?(%r{/(?:Users|home)/|atlassian\.net|slack\.com|/mnt/skills/organization|github\.com/fulcrumapp/app-mcp}i),
   "public toolkit content contains a private path or collaboration URL"
+)
+assert(
+  !ContentContracts.private_provenance?(public_content),
+  "public toolkit content contains private person or customer provenance"
+)
+assert(
+  ContentContracts.private_provenance?("(internal partner deep dive)"),
+  "private provenance detector misses its neutral fixture"
+)
+assert(
+  ContentContracts.private_provenance?("https://docs.example.com/source (internal partner interview)"),
+  "unrelated public URL masks private provenance"
+)
+assert(
+  !ContentContracts.private_provenance?("(public workshop https://docs.example.com/source)"),
+  "private provenance detector rejects a public source fixture"
+)
+assert(
+  ContentContracts.private_provenance?("(partner interview https://)"),
+  "private provenance detector accepts a malformed URL"
+)
+assert(
+  ContentContracts.private_provenance?("(partner workshop http://localhost/source)"),
+  "private provenance detector accepts a local URL"
+)
+[
+  "(partner interview https://bad..example.com/source)",
+  "(partner interview https://-bad.example.com/source)",
+  "(partner interview https://wiki.corp/source)",
+  "(partner interview https://service.home.arpa/source)",
+  "(partner interview http://127.1/source)",
+  "(partner interview http://127.0.0.1./source)",
+  "(partner interview http://0x7f.0x0.0x0.0x1/source)",
+  "(partner interview https://wiki.corp./source)",
+  "(partner interview https://source.example/source)",
+  "(partner interview\nnotes)",
+  "(partner\ninterview)"
+].each do |fixture|
+  assert(
+    ContentContracts.private_provenance?(fixture),
+    "private provenance detector misses a malformed, private, or wrapped fixture"
+  )
+end
+
+[
+  "> Source: private notes",
+  "   > **Source:** private notes",
+  "> > __Source:__ private notes",
+  "- Source: private notes",
+  "> **Source**: private notes",
+  "1. __Source__: private notes"
+].each do |fixture|
+  assert(
+    !ContentContracts.invalid_source_attributions(fixture).empty?,
+    "Source attribution detector misses a neutral Markdown fixture"
+  )
+end
+assert(
+  ContentContracts.invalid_source_attributions("> **Source:** https://docs.example.com/source").empty?,
+  "Source attribution detector rejects a public URL"
 )
 
 puts "App MCP contract test passed: exact tools, runtime signatures, and removal-safe updates"

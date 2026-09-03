@@ -43,14 +43,19 @@ documented geometry column when requesting a spatial response format.
 
 ## Safe Parameters
 
-- Allowlist identifiers from metadata; value binding does not make a dynamic
-  identifier safe.
-- Bind values with the selected client when available.
-- If the client cannot bind values, use a narrowly reviewed encoding strategy
-  and do not accept raw SQL fragments.
+- Allowlist identifiers from metadata.
+- The public Query request accepts one complete SQL string in `q`; it has no
+  server-side bind-parameter contract.
+- For dynamic values, use a reviewed, type-specific SQL-literal encoder in the
+  caller. If no suitable encoder exists, stop instead of interpolating
+  untrusted input or accepting raw SQL fragments.
 - Keep credentials in the client's secret mechanism, never in SQL or a shared
   URL.
 - Bound result size and execution time, and avoid `SELECT *` in durable queries.
+
+> Source: [POST Query request contract](https://docs.fulcrumapp.com/reference/query-post)
+> defines the complete SQL `q` field plus optional `format` and `table_name`;
+> it defines no bind-parameter field.
 
 ## References
 

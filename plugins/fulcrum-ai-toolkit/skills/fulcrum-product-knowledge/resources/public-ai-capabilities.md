@@ -10,8 +10,7 @@ privacy behavior, or plan eligibility as current.
 | Mobile face distortion | Applies to faces detected during supported in-app photo capture; gallery uploads do not pass through that capture-time detection. | [Mobile face distortion](https://help.fulcrumapp.com/en/articles/4806048-mobile-face-distortion-for-photos) |
 | Custom on-device inference | `INFERENCE()` is documented for mobile, not the web record editor; model type, device resources, reference files, and beta caveats must match the current function reference. | [`INFERENCE()`](https://docs.fulcrumapp.com/docs/data-events-inference) |
 
-> Source: Each row is materially summarized from its linked public Fulcrum
-> documentation. [Fulcrum pricing](https://www.fulcrumapp.com/pricing/) remains
+> Source: Each row is materially summarized from its linked public Fulcrum documentation; [Fulcrum pricing](https://www.fulcrumapp.com/pricing/) remains
 > the authority for current plan availability.
 
 Do not turn beta access instructions into a timeless support matrix. Do not
