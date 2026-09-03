@@ -78,9 +78,11 @@ Event function.
    handlers.
 5. Write the complete script with `fulcrum_forms_update`.
 
-Replacing a Reference File requires a deliberate delete and upload through the
-registered Reference File tools. Confirm the destructive delete first and keep
-the filename synchronized with the `attachment://` URL.
+The layer-2 Reference File tool subset exposes list, get, and upload operations;
+it does not define a delete tool. Do not invent a delete call: use the upload
+workflow according to the registered service contract for replacement, and use
+the supported product UI or manual flow when removal is required. Keep the
+filename synchronized with the `attachment://` URL.
 
 ## Sandbox Constraints
 
