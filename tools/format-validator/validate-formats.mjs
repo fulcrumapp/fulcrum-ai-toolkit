@@ -47,7 +47,7 @@ const FRAGMENT_LABEL = /(?:^|[^A-Za-z])Fragment:/;
 
 const INLINE_SCRIPT = /<script\b([^>]*)>([\s\S]*?)<\/script>/gi;
 const INLINE_STYLE = /<style\b[^>]*>([\s\S]*?)<\/style>/gi;
-const SCRIPT_SRC = /\bsrc\s*=/i;
+const SCRIPT_SRC = /(?:^|\s)src\s*=/i;
 
 const documentValidator = new HtmlValidate({
   extends: ['html-validate:recommended', 'html-validate:document']

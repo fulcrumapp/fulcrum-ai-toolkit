@@ -190,13 +190,20 @@ skill_names.each do |skill|
 end
 assert(!external_files.empty?, "no externalized examples or assets were found")
 
-# 3. Every example and asset is referenced by name from skill Markdown.
+# 3. Every example and asset is referenced by a link that resolves to that exact
+#    file. Basenames are not sufficient because different skills may use the
+#    same example filename.
 skill_markdown = FileContracts.files_under(SKILLS).select { |path| markdown?(path) }
-markdown_corpus = skill_markdown.map { |path| FileContracts.read_text(path) }.join("\n")
+linked_files = skill_markdown.flat_map do |document|
+  FileContracts.read_text(document).scan(/\]\(([^)\s]+)\)/).flatten.filter_map do |target|
+    next if target.start_with?("http://", "https://", "#", "mailto:")
+
+    File.expand_path(target.split("#").first.to_s, File.dirname(document))
+  end
+end.uniq
 external_files.each do |path|
-  basename = File.basename(path)
   assert(
-    markdown_corpus.include?("](#{basename})") || markdown_corpus.include?("/#{basename})"),
+    linked_files.include?(path),
     "externalized file is not linked from any skill Markdown: #{relative(path)}"
   )
 end
