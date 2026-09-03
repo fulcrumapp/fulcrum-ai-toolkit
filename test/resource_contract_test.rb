@@ -2,8 +2,11 @@
 # frozen_string_literal: true
 
 require "digest"
+require "fileutils"
 require "json"
+require "open3"
 require "pathname"
+require "tmpdir"
 require_relative "../scripts/content_contracts"
 require_relative "../scripts/file_contracts"
 
@@ -17,6 +20,7 @@ MAX_RESOURCE_BYTES = 100 * 1024
 APPROVED_OVERSIZED_RESOURCES = {}.freeze
 PUBLIC_OPENAPI = "https://raw.githubusercontent.com/fulcrumapp/api/v2/reference/rest-api.json"
 PUBLIC_OPENAPI_DOCS = "https://docs.fulcrumapp.com/reference/openapi-and-postman-collection"
+BASE_SNAPSHOT_COMMIT = "ecf12093cf454ff6c1daa3f0b434bfef54ce74b8"
 
 def assert(condition, message)
   return if condition
@@ -29,8 +33,17 @@ def relative(path)
   Pathname.new(path).relative_path_from(Pathname.new(ROOT)).to_s
 end
 
-def markdown_links(path)
-  text = FileContracts.read_text(path)
+def file_entry(path)
+  content = File.binread(path)
+  {
+    path: path,
+    size: content.bytesize,
+    sha256: Digest::SHA256.hexdigest(content),
+    text: content.encode("UTF-8", invalid: :replace, undef: :replace)
+  }
+end
+
+def markdown_links(text)
   inline = text.scan(
     /\]\(\s*(?:<([^>]+)>|([^\s)]+))(?:\s+(?:"[^"]*"|'[^']*'|\([^)]*\)))?\s*\)/
   ).map { |angle, plain| angle || plain }
@@ -55,9 +68,9 @@ def plugin_path?(path)
   path == PLUGIN || path.start_with?("#{PLUGIN}#{File::SEPARATOR}")
 end
 
-def markdown_anchors(path)
+def markdown_anchors(text)
   counts = Hash.new(0)
-  FileContracts.read_text(path).scan(/^\#{1,6}\s+(.+?)\s*\#*\s*$/).flatten.map do |heading|
+  text.scan(/^\#{1,6}\s+(.+?)\s*\#*\s*$/).flatten.map do |heading|
     base = heading
       .gsub(/<[^>]+>/, "")
       .gsub(/\[([^\]]+)\]\([^)]+\)/, '\1')
@@ -70,6 +83,18 @@ def markdown_anchors(path)
     counts[base] += 1
     ordinal.zero? ? base : "#{base}-#{ordinal}"
   end
+end
+
+def resource_policy_violations(entries, forbidden_digest:, approvals:)
+  {
+    retired_digest: entries.select { |entry| entry.fetch(:sha256) == forbidden_digest },
+    oversized: entries.select do |entry|
+      next false unless entry.fetch(:size) > MAX_RESOURCE_BYTES
+
+      rationale = approvals[relative(entry.fetch(:path))]
+      !rationale.is_a?(String) || rationale.strip.empty?
+    end
+  }
 end
 
 def managed_file?(path)
@@ -89,13 +114,82 @@ snapshot_digest = [
   "2befa5b402d371627cffea0423ec26ff1",
   "96d12b3b014d37e83e1dbe4acedef81"
 ].join
-snapshot_path = File.join(SKILLS, "fulcrum-product-knowledge", "resources", snapshot_name)
+snapshot_relative_path = File.join(
+  "plugins",
+  "fulcrum-ai-toolkit",
+  "skills",
+  "fulcrum-product-knowledge",
+  "resources",
+  snapshot_name
+)
+snapshot_path = File.join(ROOT, snapshot_relative_path)
 assert(!File.exist?(snapshot_path), "retired generated authority snapshot exists")
 
 distributable_files = FileContracts.files_under(PLUGIN)
-distributable_text = distributable_files.map { |path| FileContracts.read_text(path) }.join("\n")
+distributable_entries = distributable_files.map { |path| file_entry(path) }
+text_by_path = distributable_entries.to_h { |entry| [entry.fetch(:path), entry.fetch(:text)] }
+distributable_text = distributable_entries.map { |entry| entry.fetch(:text) }.join("\n")
 assert(!distributable_text.include?(snapshot_name), "distributable content names the retired snapshot")
-assert(!distributable_text.include?(snapshot_digest), "distributable content retains the retired snapshot hash")
+
+policy_violations = resource_policy_violations(
+  distributable_entries,
+  forbidden_digest: snapshot_digest,
+  approvals: APPROVED_OVERSIZED_RESOURCES
+)
+assert(
+  policy_violations.fetch(:retired_digest).empty?,
+  "distributable content retains the retired snapshot bytes: " \
+    "#{policy_violations.fetch(:retired_digest).map { |entry| relative(entry.fetch(:path)) }.join(", ")}"
+)
+assert(
+  policy_violations.fetch(:oversized).empty?,
+  "distributable files exceed #{MAX_RESOURCE_BYTES} bytes without a reviewed exception: " \
+    "#{policy_violations.fetch(:oversized).map { |entry| relative(entry.fetch(:path)) }.join(", ")}"
+)
+
+snapshot_bytes, snapshot_error, snapshot_status = Open3.capture3(
+  "git",
+  "show",
+  "#{BASE_SNAPSHOT_COMMIT}:#{snapshot_relative_path}",
+  chdir: ROOT
+)
+assert(snapshot_status.success?, "cannot load exact retired snapshot from local Git: #{snapshot_error.strip}")
+assert(snapshot_bytes.bytesize == 412_082, "retired base snapshot size changed")
+assert(Digest::SHA256.hexdigest(snapshot_bytes) == snapshot_digest, "retired base snapshot digest changed")
+
+Dir.mktmpdir("resource-contract-mutations") do |directory|
+  mutation_root = File.join(directory, "plugin")
+  mutation_paths = [
+    File.join(mutation_root, "skills", "fulcrum-product-knowledge", ".rest-authority.json"),
+    File.join(mutation_root, "docs", "rest-authority-copy")
+  ]
+  mutation_paths.each do |path|
+    FileUtils.mkdir_p(File.dirname(path))
+    File.binwrite(path, snapshot_bytes)
+  end
+  mutation_entries = FileContracts.files_under(mutation_root).map { |path| file_entry(path) }
+  assert(
+    mutation_entries.map { |entry| entry.fetch(:path) } == mutation_paths.sort,
+    "shared traversal misses a renamed hidden or non-resource snapshot copy"
+  )
+  mutation_violations = resource_policy_violations(
+    mutation_entries,
+    forbidden_digest: snapshot_digest,
+    approvals: APPROVED_OVERSIZED_RESOURCES
+  )
+  assert(
+    mutation_violations.fetch(:retired_digest).map { |entry| entry.fetch(:path) } == mutation_paths.sort,
+    "retired snapshot digest policy misses renamed hidden or non-resource copies"
+  )
+  assert(
+    mutation_violations.fetch(:oversized).map { |entry| entry.fetch(:path) } == mutation_paths.sort,
+    "distributable size policy misses hidden or non-resource copies"
+  )
+end
+assert(
+  distributable_files.any? { |path| relative(path).split(File::SEPARATOR).any? { |part| part.start_with?(".") } },
+  "shared traversal did not discover any hidden distributable adapter"
+)
 
 product_router = File.read(File.join(SKILLS, "fulcrum-product-knowledge", "SKILL.md"))
 governance = File.read(
@@ -115,7 +209,7 @@ assert(governance.include?("100 KB"), "governance omits the generated snapshot e
 markdown_files = distributable_files.select { |path| File.extname(path).casecmp(".md").zero? }
 incoming = []
 markdown_files.each do |path|
-  markdown_links(path).each do |target|
+  markdown_links(text_by_path.fetch(path)).each do |target|
     local = local_target(path, target)
     next unless local
     resolved, fragment = local
@@ -124,7 +218,7 @@ markdown_files.each do |path|
     assert(File.exist?(resolved), "dangling local link in #{relative(path)}: #{target}")
     if fragment && File.file?(resolved) && File.extname(resolved).casecmp(".md").zero?
       assert(
-        markdown_anchors(resolved).include?(fragment),
+        markdown_anchors(text_by_path.fetch(resolved)).include?(fragment),
         "dangling local anchor in #{relative(path)}: #{target}"
       )
     end
@@ -144,7 +238,7 @@ Dir[File.join(SKILLS, "*", "{examples,assets}")].sort.each do |directory|
 
   index = File.join(directory, "README.md")
   assert(File.file?(index), "#{relative(directory)} has no README.md index")
-  indexed = markdown_links(index).filter_map do |target|
+  indexed = markdown_links(text_by_path.fetch(index)).filter_map do |target|
     local_target(index, target)&.first
   end
   FileContracts.files_under(directory).each do |path|
@@ -154,8 +248,9 @@ Dir[File.join(SKILLS, "*", "{examples,assets}")].sort.each do |directory|
   end
 end
 
-distributable_files.each do |path|
-  text = FileContracts.read_text(path)
+distributable_entries.each do |entry|
+  path = entry.fetch(:path)
+  text = entry.fetch(:text)
   assert(
     !ContentContracts.private_collaboration_url?(text),
     "private collaboration URL in #{relative(path)}"
@@ -167,21 +262,6 @@ distributable_files.each do |path|
     "Source attribution lacks a public URL in #{relative(path)}"
   )
 end
-
-oversized_resources = managed_files.select do |path|
-  relative_path = relative(path)
-  relative_path.split(File::SEPARATOR).include?("resources") &&
-    File.size(path) > MAX_RESOURCE_BYTES
-end
-unapproved_oversized_resources = oversized_resources.reject do |path|
-  approval = APPROVED_OVERSIZED_RESOURCES[relative(path)]
-  approval.is_a?(String) && !approval.strip.empty?
-end
-assert(
-  unapproved_oversized_resources.empty?,
-  "skill resources exceed #{MAX_RESOURCE_BYTES} bytes without a reviewed exception: " \
-    "#{unapproved_oversized_resources.map { |path| relative(path) }.join(", ")}"
-)
 
 source_index = File.read(
   File.join(SKILLS, "fulcrum-product-knowledge", "resources", "llms-txt-index.md")
@@ -225,13 +305,14 @@ inventory.fetch("report_templates").each do |row|
   path = File.join(PLUGIN, row.fetch("path"))
   assert(File.file?(path), "hash-pinned report template is missing: #{row.fetch("path")}")
   assert(
-    Digest::SHA256.hexdigest(File.binread(path)) == row.fetch("sha256"),
+    distributable_entries.find { |entry| entry.fetch(:path) == path }.fetch(:sha256) == row.fetch("sha256"),
     "hash-pinned report template changed: #{row.fetch("path")}"
   )
 end
 
 puts format(
-  "Resource contract test passed: %d managed files, %d local links, 49+9 example contracts, no resource over %d KB",
+  "Resource contract test passed: %d files hashed, %d managed files, %d local links, 49+9 example contracts, no file over %d KB",
+  distributable_entries.length,
   managed_files.length,
   incoming.length,
   MAX_RESOURCE_BYTES / 1024
