@@ -138,11 +138,14 @@ For an existing app:
 8. Send the complete composed payload and approved removal declarations together:
 
 ```javascript
-fulcrum_forms_update({
+const updatePayload = {
   id: formId,
-  elements: composedElements,
-  removed_element_keys: removedElementKeys
-});
+  elements: composedElements
+};
+if (removedElementKeys.length > 0) {
+  updatePayload.removed_element_keys = removedElementKeys;
+}
+fulcrum_forms_update(updatePayload);
 ```
 
 Omit `removed_element_keys` when `removedElementKeys` is empty. Never declare a key that is still present in `elements`.

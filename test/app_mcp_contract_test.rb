@@ -192,8 +192,9 @@ assert(
 )
 assert(
   update_workflow.include?("elements: composedElements") &&
-    update_workflow.include?("removed_element_keys: removedElementKeys"),
-  "existing-form update does not pass the complete elements payload with removed_element_keys"
+    update_workflow.include?("if (removedElementKeys.length > 0)") &&
+    update_workflow.include?("updatePayload.removed_element_keys = removedElementKeys"),
+  "existing-form update does not conditionally pass removed_element_keys with the complete elements payload"
 )
 assert(
   update_workflow.include?("Preservation is the default") &&
