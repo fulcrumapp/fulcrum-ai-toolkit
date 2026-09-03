@@ -1,8 +1,15 @@
 {
   "type": "RecordLinkField",
-  "linked_form_id": "the-form-id",
+  "key": "a1b2",
+  "label": "Linked Site",
+  "data_name": "linked_site",
+  "description": "Select the site record this inspection belongs to.",
+  "required": false,
+  "disabled": false,
+  "hidden": false,
+  "linked_form_id": "00000000-0000-4000-8000-000000000000",
   "allow_existing_records": true,
   "allow_creating_records": false,
   "allow_updating_records": false,
-  "allow_multiple_records": false
+  "allow_empty_records": true
 }

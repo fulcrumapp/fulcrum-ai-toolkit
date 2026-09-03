@@ -258,9 +258,13 @@ assert(
   "object-form OPENEXTENSION contract is missing"
 )
 assert(
-  app_extensions_tree.include?("attachment://species_picker.html") &&
+  app_extensions_tree.include?("attachment://species-picker.html") &&
     app_extensions_tree.include?("initialize(payload.data || {})"),
   "generated extension target or payload semantics are missing"
+)
+assert(
+  !app_extensions_tree.match?(/attachment:\/\/species_picker\.html|species-picker-extension\.html/),
+  "a stale spelling of the extension Reference File name remains"
 )
 assert(
   extension_bridge.include?("fulcrum_reference_files_upload({ form_id, file_name, content })"),

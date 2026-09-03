@@ -62,11 +62,17 @@ Hide a dependent field from a choice answer with `SETHIDDEN()`:
 [`examples/conditional-visibility-sethidden.js`](examples/conditional-visibility-sethidden.js).
 For field and section visibility, use the documented `SETHIDDEN()` pattern:
 [`examples/conditional-visibility-sethidden.js`](examples/conditional-visibility-sethidden.js).
-Neither is a security control.
+Neither is a security control. Register the rule on `new-record` and
+`edit-record` as well as on `change`: default values fire no change event on a
+new record, and reopening a saved record fires none either, so a change handler
+alone leaves the dependent field at its designed visibility.
 
 ### Cascading choices
 Narrow one choice field from another with `SETCHOICES()`:
-[`examples/cascading-choices.js`](examples/cascading-choices.js).
+[`examples/cascading-choices.js`](examples/cascading-choices.js). Apply the
+filter on `new-record` and `edit-record` too, for the same reason: without it
+the dependent field shows its full designed option list until the controlling
+field is touched.
 
 ### Load reference data
 `LOADRECORDS()` takes an options object and an asynchronous callback; it does not return records directly. See
@@ -85,7 +91,7 @@ Store shared JavaScript in a Reference File, then load it into multiple apps at 
 > **Platform Requirement — Elite plan:** `LOADFILE()` requires Elite or Developer Pack. See note above.
 
 ### Session state with STORAGE
-`STORAGE()` returns a local-storage-like object with `getItem`, `setItem`, `removeItem`, and `clear` methods. Values must be strings, so serialize objects with `JSON.stringify()`. See
+`STORAGE()` returns a local-storage-like object with `getItem`, `setItem`, `removeItem`, and `clear` methods. Values must be strings, so serialize objects with `JSON.stringify()`. The store is device-wide and persistent, so a bare key such as `baseline` is still there when the next record opens: scope every key to the current record or editing session, and remove it on `cancel-record` and `unload-record`. See
 [`examples/storage-session-state.js`](examples/storage-session-state.js).
 
 ### Validate before save
@@ -184,7 +190,9 @@ The full expressions reference is available in `resources/` as `expressions-refe
 
 ## Platform Constraints
 
-- **No server execution** — Data events run on-device. No persistent state between sessions.
+- **No server execution** — Data events run on-device. Ordinary script state is
+  ephemeral; `STORAGE()` is the explicit device-persistent exception and must
+  use scoped keys with lifecycle cleanup.
 - **No module imports** — No `require()`, no `import`. All code is a single script.
 - **Callback-based async, no async/await** — `REQUEST()`, `LOADRECORDS()`, and callback-based `LOADFILE()` work asynchronously. `validate-record`, `validate-repeatable`, and `save-record` cannot perform asynchronous work.
 - **Single script per form** — All event handlers share one script. Naming collisions are possible.
@@ -194,7 +202,7 @@ The full expressions reference is available in `resources/` as `expressions-refe
 
 ## Completion Criteria
 
-- [ ] Field-change logic uses `ON('change', 'field', ...)`, not `edit-record`
+- [ ] Field-change logic listens on `ON('change', 'field', ...)` rather than treating `edit-record` as a change event, and any rule that must also hold when a record opens is applied from `new-record` and `edit-record` as well
 - [ ] All field data names are verified against the live form — wrong names can fail silently
 - [ ] `LOADRECORDS()` and `REQUEST()` are treated as asynchronous callback APIs
 - [ ] No hardcoded IDs — all resources discovered at runtime

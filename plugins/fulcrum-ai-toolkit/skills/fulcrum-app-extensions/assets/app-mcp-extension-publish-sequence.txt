@@ -24,7 +24,9 @@ Step 4  fulcrum_reference_files_upload(
           file_name="species-picker.html",
           content=<generated HTML>
         )
-        The file name must match the attachment:// URL in the Data Event.
+        The file name must match the attachment:// URL in the Data Event
+        exactly: attachment://species-picker.html. See
+        ../examples/open-species-picker.js.
 
 Step 5  fulcrum_forms_get(id=...)
         Read the form's existing script before changing it.

@@ -8,7 +8,7 @@
 | Property | Type | Description |
 |----------|------|-------------|
 | type | string | Field type identifier (e.g., "TextField", "ChoiceField") |
-| key | string | Unique UUID for the field element |
+| key | string | Unique four-character hex key identifying this element within the form (e.g. `af72`) |
 | data_name | string | Unique data name used in API responses and data events ($data_name) |
 | label | string | Display label shown to the user |
 | description | string | Optional help text displayed below the field |
@@ -19,7 +19,11 @@
 | visible_conditions_type | string | "all" or "any" — how multiple conditions combine |
 | required_conditions | array | Conditional requirement rules |
 | required_conditions_type | string | "all" or "any" |
-| parent | object | Reference to parent section/repeatable if nested |
+| default_value | any | Value pre-populated on a new record; its type follows the element type |
+
+Nesting is expressed by containment: a child element lives in its parent
+section's or repeatable's `elements` array. There is no `parent` property on an
+element.
 
 ## TextField
 
@@ -41,9 +45,9 @@ Text input field for short or long text entry.
 
 Date and optional time picker.
 
-| Property | Type | Description |
-|----------|------|-------------|
-| is_date | boolean | Date-only (true) or date+time (false) |
+No additional properties beyond the universal ones. Use `DateField` for a
+date-only value and `TimeField` for a time-only value; the element type carries
+the distinction, not a flag.
 
 ## TimeField
 
@@ -152,7 +156,7 @@ Tappable link or button that triggers a URL action or data event.
 
 | Property | Type | Description |
 |----------|------|-------------|
-| default_url | string | URL template (supports variable substitution) |
+| default_value | string | URL template (supports variable substitution), set through the universal `default_value` property |
 
 Used for URL actions, opening external apps, and triggering data event click handlers.
 
@@ -173,10 +177,16 @@ Link to records in another app (or the same app).
 
 | Property | Type | Description |
 |----------|------|-------------|
-| record_link_default_form_id | string | Target form/app ID to link to |
-| record_link_conditions | array | Filter conditions for which records can be linked |
-| min_length | integer | Minimum number of linked records |
-| max_length | integer | Maximum number of linked records |
+| linked_form_id | string | ID of the form whose records can be linked |
+| allow_existing_records | boolean | Allow linking to existing records |
+| allow_creating_records | boolean | Allow creating new linked records inline |
+| allow_updating_records | boolean | Allow editing linked records inline |
+| allow_empty_records | boolean | Allow saving without selecting a linked record |
+
+A complete element is
+[`record-link-field.json`](../assets/record-link-field.json). There is no
+`record_link_default_form_id`, `record_link_conditions`, `min_length`, or
+`max_length` on this element type.
 
 ## Section
 
@@ -187,14 +197,20 @@ Container element that groups fields together. Not a data field itself.
 | elements | array | Child field elements contained in this section |
 | display | object | Display rules (collapsed by default, etc.) |
 
-Sections can be used as repeatables when `repeatable` is true — allowing users to add multiple instances of the grouped fields.
+Sections group fields for display only. A group the user can add more than once
+is a separate element type, `Repeatable` — not a section with a flag.
 
-### Repeatable Section Properties
+## Repeatable
+
+Container element whose child fields are repeated per entry, producing child
+records in their own table.
 
 | Property | Type | Description |
 |----------|------|-------------|
-| repeatable | boolean | Whether this section is a repeatable |
-| geometry_enabled | boolean | Enable per-entry geometry (GPS point per repeatable) |
+| elements | array | Child field elements repeated in each entry |
+| title_field_key | string | Key of the child element whose value titles each entry |
+| title_field_keys | array | Keys of the child elements that together title each entry |
+| geometry_required | boolean | Require geometry on each repeatable entry |
 | geometry_types | array | Allowed geometry types: ["Point"], ["LineString"], ["Polygon"], or combinations |
 | min_length | integer | Minimum number of repeatable entries |
 | max_length | integer | Maximum number of repeatable entries |
@@ -233,7 +249,7 @@ Every field element **MUST** include `required`, `hidden`, and `disabled` as exp
 
 ### RecordLinkField — correct parameter name
 
-The API field is `linked_form_id` (not `form_id` or `record_link_form_id`). Additionally, at least one of `allow_existing_records` or `allow_creating_records` must be `true`. A minimal element is
+The API field is `linked_form_id` (not `form_id` or `record_link_form_id`). Additionally, at least one of `allow_existing_records` or `allow_creating_records` must be `true`. The other RecordLinkField properties are `allow_updating_records` and `allow_empty_records`; there is no `allow_multiple_records`. A complete element, carrying the required common properties `type`, `key`, `data_name`, and `label` alongside explicit `required`, `hidden`, and `disabled` booleans, is
 [`record-link-field.json`](../assets/record-link-field.json); its public source
 is recorded in [`assets/README.md`](../assets/README.md).
 

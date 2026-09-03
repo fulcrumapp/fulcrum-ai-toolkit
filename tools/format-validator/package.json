@@ -1,0 +1,21 @@
+{
+  "name": "fulcrum-ai-toolkit-format-validator",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Validates the structure of every externalized example and asset in the distributable toolkit plugin.",
+  "license": "MIT",
+  "type": "module",
+  "engines": {
+    "node": "^22.22.0 || >=24.8.0"
+  },
+  "scripts": {
+    "validate": "node validate-formats.mjs"
+  },
+  "dependencies": {
+    "acorn": "8.18.0",
+    "ejs": "6.0.1",
+    "html-validate": "11.12.0",
+    "pgsql-ast-parser": "12.0.2",
+    "postcss": "8.5.26"
+  }
+}
