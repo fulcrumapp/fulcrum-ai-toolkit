@@ -182,7 +182,7 @@ coverage_map = File.join(ROOT, COVERAGE_MAP_RELATIVE_PATH)
 if File.file?(coverage_map)
   coverage_text = File.read(coverage_map)
   REQUIRED_COVERAGE_DOMAINS.each do |domain|
-    unless coverage_text.include?("| **#{domain}**")
+    unless coverage_text.match?(/^\|\s+\*\*#{Regexp.escape(domain)}\*\*/)
       failures << "#{COVERAGE_MAP_RELATIVE_PATH}: missing coverage row for #{domain}"
     end
   end
@@ -191,11 +191,20 @@ if File.file?(coverage_map)
     failures << "#{COVERAGE_MAP_RELATIVE_PATH}: missing source hierarchy"
   end
 
-  unless coverage_text.match?(/SHA-256:\s*\n?>?\s*`[0-9a-f]{64}`/)
+  unless coverage_text.match?(/SHA-256:\s*(?:>\s*)?`[0-9a-f]{64}`/i)
     failures << "#{COVERAGE_MAP_RELATIVE_PATH}: missing legacy artifact SHA-256"
   end
 
-  if coverage_text.match?(%r{/(?:Users|home)/|atlassian\.net|slack\.com}i)
+  local_path_pattern = %r{
+    (?:^|[[:space:]`"'(])
+    (?:
+      file:// |
+      /(?:Users|home)(?:/|\b) |
+      [A-Z]:\\Users(?:\\|\b)
+    )
+  }ix
+  if coverage_text.match?(local_path_pattern) ||
+     coverage_text.match?(/atlassian\.net|slack\.com/i)
     failures << "#{COVERAGE_MAP_RELATIVE_PATH}: contains a local path or private collaboration URL"
   end
 else
