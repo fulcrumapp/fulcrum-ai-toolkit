@@ -7,7 +7,7 @@ An **app extension** is a custom HTML/CSS/JavaScript UI that runs inside a Fulcr
 
 Extensions communicate with the Fulcrum record through the data events API bridge. The data lives in standard Fulcrum fields and syncs normally.
 
-> **Provenance:** The bridge API and event flow in this skill follow Fulcrum's documented extension API. Field-type recommendations, offline decisions, and payload-sizing guidance are toolkit conventions unless explicitly attributed.
+> **Guidance boundary:** The bridge API and event flow in this skill follow Fulcrum's documented extension API. Field-type recommendations, offline decisions, and payload-sizing guidance are toolkit conventions unless explicitly sourced.
 
 ## App MCP Knowledge And Generation
 
