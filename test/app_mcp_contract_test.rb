@@ -221,6 +221,17 @@ assert(
 )
 assert(!data_events.match?(/LOADFILE\(\s*['"]/), "positional LOADFILE guidance remains")
 assert(
+  [data_events_runtime, product_knowledge].all? do |document|
+    document.include?("LOADFILE(options, callback)") &&
+      document.include?("optional `form_name` or `form_id`")
+  end,
+  "LOADFILE guidance does not distinguish the optional form_name and form_id keys"
+)
+assert(
+  [data_events_runtime, product_knowledge].none? { |document| document.include?("form_name/form_id") },
+  "ambiguous combined LOADFILE form key remains"
+)
+assert(
   data_events.include?("fulcrum_expressions_data_events_reference"),
   "Data Event guidance does not defer to the registered knowledge tool"
 )
@@ -285,6 +296,11 @@ assert(
     report_reference.include?("| RENDER(feature, options, eachFunction) |") &&
     report_reference.include?("| RENDERVALUES(feature, options, eachFunction) |"),
   "report function signatures do not match the public reference"
+)
+assert(
+  report_building.include?("| `PHOTOURL(id, options)` |") &&
+    report_building.include?("| `SIGNATUREURL(id, options)` |"),
+  "report workflow media URL signatures do not match the public reference"
 )
 assert(
   !report_guidance.match?(/JSONREQUEST\(url\)|RENDER\(elements, callback\)|RENDERVALUES\(callback\)/),
