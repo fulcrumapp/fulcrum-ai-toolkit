@@ -6,19 +6,20 @@
 # This test proves that no fenced code block survives in distributable skill
 # Markdown, that every externalized file is indexed and reachable, that every
 # executable file names a public source, that every distributable example,
-# asset, and index is free of credential or private material, that SQL is
-# read-only, and that the legacy and current example inventories are exact.
+# asset, and index is free of credential or private material, and that the
+# legacy and current example inventories are exact.
 #
-# Structural format validation — HTML, inline scripts and styles, EJS, CSS,
-# SQL, JSON, and JavaScript — belongs to tools/format-validator, which uses
-# established parsers pinned in its lockfile. This file invokes it rather than
-# re-implementing parsing.
+# Everything that needs a parser — HTML, inline scripts and styles, EJS, CSS,
+# JSON, JavaScript, the read-only SQL contract, and the structural validity of
+# what a report template renders — belongs to tools/format-validator, which uses
+# established parsers pinned in its lockfile and proves its own contracts
+# against bypass fixtures. This file invokes it and requires its evidence rather
+# than carrying a second implementation of the same rules.
 #
 # Exhaustive cross-package App MCP contract parity remains layer 6's job.
 
 require_relative "../scripts/content_contracts"
 require_relative "../scripts/file_contracts"
-require_relative "../scripts/sql_contracts"
 require "fileutils"
 require "json"
 require "open3"
@@ -64,6 +65,26 @@ SOURCE_COMMENT_PATTERNS = {
 # Strict JSON cannot carry a comment, so its source lives in the sibling index.
 COMMENTLESS_EXTENSIONS = %w[.json].freeze
 
+# The evidence tools/format-validator must report back, so delegating the
+# parsing work cannot quietly become skipping it.
+#
+#   contract-fixture  bypass fixtures the SQL, QUERY(), interpolation, markup,
+#                     and branch-coverage contracts prove themselves against
+#   embedded-sql      QUERY() statements read out of a report template's syntax
+#                     tree
+#   rendered-html     report templates rendered with fixture data and validated
+#                     as markup
+#   branch-covered    report templates whose fixtures were measured to reach
+#                     every branch, which is what makes rendering proof rather
+#                     than a sample
+#
+# The first two are floors, so adding an example does not fail this layer. The
+# last two are counted against the report templates this layer already found,
+# so a template that is never rendered — or rendered without reaching all of
+# its markup — is missing evidence rather than merely below a round number.
+MINIMUM_CONTRACT_FIXTURES = 60
+MINIMUM_EMBEDDED_SQL = 5
+
 # The single Reference File name the publish sequence uploads and every trigger
 # opens. There is exactly one spelling of it in the repository.
 EXTENSION_ATTACHMENT_FILE = "species-picker.html"
@@ -75,9 +96,6 @@ ALLOWED_ATTACHMENT_URLS = [
   "attachment://my-extension.html",
   EXTENSION_ATTACHMENT_URL
 ].sort.freeze
-
-# SQL a report template builds as a template literal and hands to QUERY().
-QUERY_TEMPLATE_LITERAL = /QUERY\(\s*`([^`]*)`/m.freeze
 
 CREDENTIAL_SHAPES = [
   /\b(?:sk|pk|rk)_(?:live|test)_[A-Za-z0-9]{8,}/,
@@ -115,12 +133,6 @@ end
 
 def credential_shapes(text)
   CREDENTIAL_SHAPES.select { |shape| text.match?(shape) }
-end
-
-# Interpolated values are replaced with a literal so the surrounding statement
-# can be held to the read-only contract.
-def embedded_sql_statements(text)
-  text.scan(QUERY_TEMPLATE_LITERAL).flatten.map { |sql| sql.gsub(/\$\{[^}]*\}/, "NULL") }
 end
 
 def manifest_link_targets(cell)
@@ -288,57 +300,27 @@ assert(
   "private-path scan misses an index-entry fixture"
 )
 
-# 7. SQL is read-only. The contract parses every effective statement rather
-#    than matching line starts, so a statement hidden after a semicolon, inside
-#    a CTE, or behind a comment prefix cannot pass.
+# 7. SQL policy this layer still owns: every SQL asset repeats the no-bind
+#    guidance. Proving the SQL is read-only needs a PostgreSQL parser, and the
+#    repository has exactly one — tools/format-validator, invoked below — so
+#    this layer states the policy and that tool decides it.
 sql_files = external_files.select { |path| File.extname(path).casecmp(".sql").zero? }
 assert(!sql_files.empty?, "no SQL assets were externalized")
 sql_files.each do |path|
   text = FileContracts.read_text(path)
-  violations = SqlContracts.violations(text)
-  assert(violations.empty?, "non-read-only SQL in #{relative(path)}: #{violations.map(&:to_s).join("; ")}")
   assert(
     text.match?(/no server-side bind parameters|no bind-parameter|exposes no\s+\n?--\s*server-side bind parameters/),
     "SQL asset does not repeat the no-bind guidance: #{relative(path)}"
   )
 end
 
-external_files.select { |path| File.extname(path).casecmp(".ejs").zero? }.each do |path|
-  embedded_sql_statements(FileContracts.read_text(path)).each_with_index do |sql, offset|
-    violations = SqlContracts.violations(sql)
-    assert(
-      violations.empty?,
-      "non-read-only QUERY() statement ##{offset + 1} in #{relative(path)}: #{violations.map(&:to_s).join("; ")}"
-    )
-  end
-end
-
-[
-  ['SELECT 1; DELETE FROM "App";', "a second statement after a semicolon"],
-  ['WITH removed AS (DELETE FROM "App" RETURNING *) SELECT * FROM removed;', "a writing CTE"],
-  ['/* housekeeping */ DROP TABLE "App";', "a comment-prefixed statement"],
-  ["SELECT setval('sequence_name', 1);", "setval state mutation"],
-  ["SELECT nextval('sequence_name');", "nextval state mutation"],
-  ["SELECT pg_notify('channel', 'message');", "notification side effect"],
-  ["SELECT \"nextval\"('sequence_name');", "quoted nextval state mutation"],
-  ["SELECT pg_catalog.\"setval\"('sequence_name', 1);", "qualified quoted setval mutation"],
-  ["SELECT 1 /* unterminated", "an unterminated comment"],
-  ["SELECT 'unterminated;", "an unterminated string"]
-].each do |sql, description|
-  assert(!SqlContracts.violations(sql).empty?, "SQL contract misses #{description}: #{sql.inspect}")
-end
-[
-  "SELECT 1;\n-- DROP TABLE \"App\"\nSELECT 2;",
-  "SELECT 'DELETE FROM x' AS note;",
-  "SELECT 'It''s safe';",
-  "SELECT \"a\"\"b\" FROM \"Table\";",
-  'SELECT _record_id FROM "My App" WHERE ST_DWithin(a, b, 1000) OFFSET 5;'
-].each do |sql|
-  assert(SqlContracts.violations(sql).empty?, "SQL contract rejects a read-only fixture: #{sql.inspect}")
-end
-
-# 8. Structural format validation runs in tools/format-validator, whose parsers
-#    are pinned by its lockfile.
+# 8. Structural, SQL, and rendered-markup validation run in
+#    tools/format-validator, whose parsers are pinned by its lockfile. Its
+#    contracts prove themselves against bypass fixtures on every run, and this
+#    layer requires that proof rather than repeating it in a second SQL
+#    implementation.
+ejs_files = external_files.select { |path| File.extname(path).casecmp(".ejs").zero? }
+assert(!ejs_files.empty?, "no report templates were externalized")
 node = ENV["NODE"] || "node"
 node_available =
   begin
@@ -354,6 +336,24 @@ if node_available && dependencies_installed
     stdout.include?("Format validation passed"),
     "format validator did not report a pass: #{stdout.strip}"
   )
+  # The counts below are the evidence that the work this layer delegated was
+  # actually done: the bypass fixtures ran, every QUERY() statement was read out
+  # of a syntax tree, and every report template was rendered, checked, and
+  # measured to have had all of its branches reached.
+  {
+    "contract-fixture" => MINIMUM_CONTRACT_FIXTURES,
+    "embedded-sql" => MINIMUM_EMBEDDED_SQL,
+    "rendered-html" => ejs_files.length,
+    "branch-covered" => ejs_files.length,
+    "sql" => sql_files.length
+  }.each do |kind, minimum|
+    reported = stdout[/\b#{Regexp.escape(kind)}=(\d+)/, 1]
+    assert(reported, "format validator did not report a #{kind} count: #{stdout.strip}")
+    assert(
+      Integer(reported) >= minimum,
+      "format validator reported #{kind}=#{reported}, fewer than the #{minimum} this layer requires"
+    )
+  end
 else
   assert(
     ENV["REQUIRE_NODE"] != "1",
@@ -492,8 +492,24 @@ end
 
 storage_example = File.read(File.join(data_event_examples, "storage-session-state.js"))
 assert(
-  storage_example.include?("BASELINE_KEY_PREFIX + (RECORDID() || 'new-record')"),
-  "storage example does not scope its key to the current record or editing session"
+  storage_example.include?("BASELINE_KEY_PREFIX + FORM().id") &&
+    storage_example.include?("formScope() + ':record:' + recordId") &&
+    storage_example.include?("formScope() + ':draft:' + sessionNonce()"),
+  "storage example does not scope its key to the app and to the record or editing session"
+)
+assert(
+  storage_example.include?("function sessionNonce()") &&
+    storage_example.include?("Math.random().toString(36)"),
+  "storage example does not give an unsaved record a per-session nonce"
+)
+assert(
+  !storage_example.include?("'new-record'"),
+  "storage example still gives every unsaved record the same shared key"
+)
+assert(
+  storage_example.include?("function discardAbandonedDraft()") &&
+    storage_example.match?(/ON\('load-record', function \(event\) \{\s*discardAbandonedDraft\(\);/m),
+  "storage example does not reclaim the key a crashed session abandoned"
 )
 assert(
   !storage_example.match?(/(?:getItem|setItem|removeItem)\('baseline'\)/),
@@ -507,9 +523,24 @@ assert(
 end
 assert(
   storage_example.include?("https://docs.fulcrumapp.com/docs/data-events-storage") &&
-    storage_example.include?("https://docs.fulcrumapp.com/docs/data-events-reference"),
-  "storage example does not source its storage and lifecycle behavior"
+    storage_example.include?("https://docs.fulcrumapp.com/docs/data-events-reference") &&
+    storage_example.include?("https://docs.fulcrumapp.com/docs/data-events-loadrecords") &&
+    storage_example.include?("https://docs.fulcrumapp.com/docs/app-extensions-introduction"),
+  "storage example does not source its storage, lifecycle, FORM(), and RECORDID() behavior"
 )
+
+# Every runtime function the Data Event examples call is in the portable
+# runtime reference, so an example cannot depend on a function this package
+# never documents.
+runtime_reference = File.read(
+  File.join(SKILLS, "fulcrum-data-events", "resources", "data-events-runtime-api.md")
+)
+%w[FORM RECORDID STORAGE].each do |function|
+  assert(
+    runtime_reference.include?("| #{function}()"),
+    "the Data Events runtime reference does not document #{function}()"
+  )
+end
 
 # 10. App Extension examples use the object-form bridge contract and exactly one
 #     spelling of the Reference File name.
@@ -627,32 +658,30 @@ assert(
     date_range.include?("parseIsoDay(isoDay(addDays(endDay || today, -DEFAULT_WINDOW_DAYS)))"),
   "date-range example does not bound years before computing the exclusive end"
 )
-date_range_sql = embedded_sql_statements(date_range)
-assert(date_range_sql.length == 1, "date-range example does not issue exactly one QUERY() statement")
+assert(
+  date_range.scan("QUERY(").length == 1,
+  "date-range example does not issue exactly one QUERY() call"
+)
 assert(
   date_range.include?("addDays(endDay, 1)") &&
-    date_range.include?("_created_at >= '${startDate}'") &&
-    date_range.include?("_created_at < '${endExclusiveDate}'"),
+    date_range.include?("_created_at >= '${String(startDate)") &&
+    date_range.include?("_created_at < '${String(endExclusiveDate)"),
   "date-range example does not query a half-open interval"
 )
 assert(
   !date_range.include?("${requested") && !date_range.include?("${$params"),
   "date-range example interpolates a raw request parameter"
 )
-
-# BETWEEN may be named in prose that explains why it is wrong; it must not
-# survive in an effective statement. Comments are stripped before the check.
-[date_range_sql, [File.read(File.join(SKILLS, "fulcrum-query-api", "assets", "report-queries.sql"))]]
-  .flatten
-  .flat_map { |sql| SqlContracts.effective_statements(sql) }
-  .each do |statement|
-    next unless statement.match?(/_created_at/i)
-
-    assert(
-      !statement.match?(/\bBETWEEN\b/i),
-      "a date-range statement still uses an inclusive BETWEEN bound: #{statement.strip.gsub(/\s+/, " ")}"
-    )
-  end
+assert(
+  date_range.include?("<tbody>") &&
+    date_range.include?("recordResults.rows.length === 0") &&
+    date_range.include?("class=\"report-error\""),
+  "date-range example does not wrap its rows in a table with empty and error markup"
+)
+# BETWEEN is inclusive of its upper bound, so it must not reach a timestamp
+# column. Naming it in prose that explains why is fine; surviving into a
+# statement is not, and tools/format-validator decides that on the parsed tree
+# rather than on this file's text.
 
 # 12. The legacy example manifest accounts for every legacy unit, and the
 #     current-block manifest is exact. Identifiers, source documents, ordinals,

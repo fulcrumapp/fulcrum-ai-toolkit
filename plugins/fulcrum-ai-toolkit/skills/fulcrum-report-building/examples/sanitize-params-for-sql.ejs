@@ -4,12 +4,18 @@
 <%#
   The Query endpoint accepts one complete SQL string in `q` and exposes no
   server-side bind parameters, so the template is responsible for encoding.
-  Reduce the value to an allowlisted character class, or map it through a
-  fixed lookup, before interpolating it.
+  Reduce the value to an allowlisted character class before interpolating it.
+
+  Encode in the gap itself, not in a variable further up. A reader — and any
+  checker — can see that `String(status).replace(/[^a-zA-Z_]/g, '')` yields
+  letters and underscores, and that those cannot close the quote around them.
+  The same filter written twenty lines earlier proves nothing at the point
+  where the value reaches SQL, because the name in the gap could have been
+  reassigned in between.
 %>
 
-<% const safeStatus = ($params.status || '').replace(/[^a-zA-Z_]/g, ''); %>
+<% const status = $params.status || ''; %>
 <% const result = QUERY(
-  `SELECT * FROM "App" WHERE _status = '${safeStatus}'`,
+  `SELECT * FROM "App" WHERE _status = '${String(status).replace(/[^a-zA-Z_]/g, '')}'`,
   { format: 'json' }
 ); %>

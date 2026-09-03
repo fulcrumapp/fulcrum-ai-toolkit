@@ -1,12 +1,15 @@
 #!/usr/bin/env node
-// Structural validation for every externalized example and asset in the
+// Parser-backed validation for every externalized example and asset in the
 // distributable toolkit plugin.
 //
-// The Ruby suite owns repository policy: inventories, source attribution,
-// privacy, and the read-only SQL contract. This tool owns one narrower job —
-// proving that each file is well formed in its own format — and it does that
-// with established parsers pinned to exact versions in package.json and
-// package-lock.json, rather than with hand-rolled matching.
+// The Ruby suite owns repository policy: inventories, source attribution, and
+// privacy. This tool owns everything that needs a parser — proving each file is
+// well formed in its own format, that its SQL is read-only and its
+// interpolation safe, and that its rendered markup is structurally valid on
+// every branch — and it does that with established parsers pinned to exact
+// versions in package.json and package-lock.json, rather than with hand-rolled
+// matching. There is one parser per language in this repository, and it lives
+// here.
 //
 // Every commentable file that is not a whole document in its own right is
 // labeled `Fragment:`; a whole document is labeled `Document:`. The label
@@ -21,8 +24,13 @@ import { fileURLToPath } from 'node:url';
 import * as acorn from 'acorn';
 import ejs from 'ejs';
 import { HtmlValidate } from 'html-validate';
-import { parse as parsePostgres } from 'pgsql-ast-parser';
 import postcss from 'postcss';
+
+import { compiledSource, queryCalls } from './lib/ejs-queries.mjs';
+import { renderScenarios } from './lib/render-coverage.mjs';
+import { hostDocument, HOST_LINE_OFFSET, scenariosFor } from './lib/render-fixtures.mjs';
+import { selfCheck } from './lib/self-check.mjs';
+import { readOnlyViolations } from './lib/sql-contract.mjs';
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(HERE, '..', '..');
@@ -37,12 +45,6 @@ const PROSE_EXTENSIONS = new Set(['.md', '.txt']);
 const DOCUMENT_LABEL = /(?:^|[^A-Za-z])Document:/;
 const FRAGMENT_LABEL = /(?:^|[^A-Za-z])Fragment:/;
 
-// `:name` in a Fulcrum SQL asset stands for an encoded literal the caller
-// produces, and `${...}` in a report template is an interpolated value. Both
-// are replaced with NULL so the statement can be parsed for shape.
-const SQL_PLACEHOLDER = /(?<![:\w]):[A-Za-z_][A-Za-z0-9_]*/g;
-const TEMPLATE_INTERPOLATION = /\$\{[^}]*\}/g;
-const QUERY_TEMPLATE_LITERAL = /QUERY\(\s*`([^`]*)`/g;
 const INLINE_SCRIPT = /<script\b([^>]*)>([\s\S]*?)<\/script>/gi;
 const INLINE_STYLE = /<style\b[^>]*>([\s\S]*?)<\/style>/gi;
 const SCRIPT_SRC = /\bsrc\s*=/i;
@@ -53,6 +55,13 @@ const documentValidator = new HtmlValidate({
 const fragmentValidator = new HtmlValidate({
   extends: ['html-validate:recommended']
 });
+// Rendered output is machine-produced: an EJS tag leaves the whitespace that
+// stood around it, so a whitespace rule reports the template engine rather than
+// the example. Everything structural and accessible still applies.
+const renderedValidator = new HtmlValidate({
+  extends: ['html-validate:recommended'],
+  rules: { 'no-trailing-whitespace': 'off' }
+});
 
 const failures = [];
 const counts = new Map();
@@ -61,8 +70,8 @@ function fail(file, message) {
   failures.push(`${path.relative(ROOT, file)}: ${message}`);
 }
 
-function count(kind) {
-  counts.set(kind, (counts.get(kind) ?? 0) + 1);
+function count(kind, amount = 1) {
+  counts.set(kind, (counts.get(kind) ?? 0) + amount);
 }
 
 function filesUnder(directory) {
@@ -129,19 +138,20 @@ function parseCss(file, css, what) {
 }
 
 function parseSql(file, sql, what) {
-  const normalized = sql
-    .replace(TEMPLATE_INTERPOLATION, 'NULL')
-    .replace(SQL_PLACEHOLDER, 'NULL');
-  try {
-    const statements = parsePostgres(normalized);
-    if (statements.length === 0) {
-      fail(file, `${what} contains no SQL statement`);
-      return false;
+  const violations = readOnlyViolations(sql);
+  if (violations.length === 0) return true;
+  for (const { reason } of violations) fail(file, `${what} ${reason}`);
+  return false;
+}
+
+async function reportHtml(file, html, what) {
+  const report = await renderedValidator.validateString(hostDocument(html), file);
+  if (report.valid) return;
+  for (const result of report.results) {
+    for (const message of result.messages) {
+      const line = message.line - HOST_LINE_OFFSET;
+      fail(file, `${what} ${line}:${message.column} ${message.ruleId}: ${message.message}`);
     }
-    return true;
-  } catch (error) {
-    fail(file, `${what} is not valid PostgreSQL: ${error.message.split('\n')[0]}`);
-    return false;
   }
 }
 
@@ -182,26 +192,73 @@ async function validateHtml(file, text) {
   count(`html:${label}`);
 }
 
-function validateEjs(file, text) {
+async function validateEjs(file, text) {
   const label = labelOf(text);
   if (!label) {
     fail(file, 'needs exactly one "Fragment:" or "Document:" label comment');
     return;
   }
 
+  let source;
   try {
     ejs.compile(text, { filename: file });
+    source = compiledSource(text, file);
   } catch (error) {
-    fail(file, `EJS does not compile: ${error.message.split('\n')[0]}`);
+    fail(file, `EJS does not compile: ${String(error.message).split('\n')[0]}`);
     return;
   }
 
-  let embedded = 0;
-  for (const match of text.matchAll(QUERY_TEMPLATE_LITERAL)) {
-    embedded += 1;
-    parseSql(file, match[1], `QUERY() statement #${embedded}`);
+  // SQL is read out of the compiled syntax tree, never by rendering.
+  let calls;
+  try {
+    calls = queryCalls(source);
+  } catch (error) {
+    fail(file, `compiled EJS is not parseable JavaScript: ${String(error.message).split('\n')[0]}`);
+    return;
+  }
+  for (const call of calls) {
+    if (call.reason) {
+      fail(file, `QUERY() finding #${call.ordinal}: ${call.reason}`);
+    } else {
+      parseSql(file, call.sql, `QUERY() statement #${call.ordinal}`);
+    }
     count('embedded-sql');
   }
+
+  // Markup is read out of the rendered output, because a row emitted inside a
+  // loop is invisible to a static reader of the template. Each template has its
+  // own scenarios, and the branches they miss are reported rather than assumed
+  // away.
+  const scenarios = scenariosFor(path.basename(file));
+  if (!scenarios) {
+    fail(file, 'has no render fixtures in lib/render-fixtures.mjs, so its markup was never rendered');
+    return;
+  }
+
+  let run;
+  try {
+    run = await renderScenarios(text, file, scenarios);
+  } catch (error) {
+    fail(file, `could not be rendered under coverage: ${String(error.message).split('\n')[0]}`);
+    return;
+  }
+
+  for (const rendered of run.renders) {
+    if (rendered.error) {
+      fail(file, `does not render with the "${rendered.name}" fixture: ${rendered.error}`);
+      continue;
+    }
+    await reportHtml(file, rendered.html, `rendered "${rendered.name}" HTML`);
+    count('rendered-html');
+  }
+
+  for (const branch of run.uncovered) {
+    fail(
+      file,
+      `line ${branch.line} holds a branch no fixture reaches, so its markup is never validated: ${branch.text}`
+    );
+  }
+  if (run.uncovered.length === 0) count('branch-covered');
 
   count(`ejs:${label}`);
 }
@@ -229,6 +286,13 @@ async function main() {
     process.exit(1);
   }
 
+  // The contracts prove themselves before they are used on the repository, so a
+  // contract that stopped catching bypasses fails here rather than passing
+  // everything silently.
+  const contracts = await selfCheck(renderedValidator);
+  for (const failure of contracts.failures) failures.push(`tools/format-validator: ${failure}`);
+  count('contract-fixture', contracts.total);
+
   const files = externalFiles();
   if (files.length === 0) {
     console.error('Format validation failed: no externalized files were found');
@@ -247,7 +311,7 @@ async function main() {
         await validateHtml(file, text);
         break;
       case '.ejs':
-        validateEjs(file, text);
+        await validateEjs(file, text);
         break;
       case '.css':
         validateCss(file, text);

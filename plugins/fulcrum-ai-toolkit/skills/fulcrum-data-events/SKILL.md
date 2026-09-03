@@ -91,7 +91,7 @@ Store shared JavaScript in a Reference File, then load it into multiple apps at 
 > **Platform Requirement — Elite plan:** `LOADFILE()` requires Elite or Developer Pack. See note above.
 
 ### Session state with STORAGE
-`STORAGE()` returns a local-storage-like object with `getItem`, `setItem`, `removeItem`, and `clear` methods. Values must be strings, so serialize objects with `JSON.stringify()`. The store is device-wide and persistent, so a bare key such as `baseline` is still there when the next record opens: scope every key to the current record or editing session, and remove it on `cancel-record` and `unload-record`. See
+`STORAGE()` returns a local-storage-like object with `getItem`, `setItem`, `removeItem`, and `clear` methods. Values must be strings, so serialize objects with `JSON.stringify()`. The store is device-wide and persistent, so a bare key such as `baseline` is still there when the next record opens. Scope every key with `FORM().id` and the record it belongs to, and remove it on `cancel-record` and `unload-record`. `RECORDID()` is null until a new record has been saved, so it cannot separate one unsaved record from the next on its own: give an unsaved record a nonce generated once per editing session, so a session that crashed before its cleanup ran leaves a key the next session never computes. See
 [`examples/storage-session-state.js`](examples/storage-session-state.js).
 
 ### Validate before save

@@ -50,7 +50,7 @@ when the logic is too complex for an expression.
 | --- | --- |
 | [`load-reference-records.js`](load-reference-records.js) | Reads reference records with the `LOADRECORDS()` callback API. |
 | [`loadfile-shared-helpers.js`](loadfile-shared-helpers.js) | Loads a shared helper Reference File with `LOADFILE()`. |
-| [`storage-session-state.js`](storage-session-state.js) | Caches a derived value with `STORAGE()` under a record-scoped key, cleared on the record lifecycle exits. |
+| [`storage-session-state.js`](storage-session-state.js) | Caches a derived value with `STORAGE()` under a key scoped to the app and to the record — or, for an unsaved record, to the editing session — cleared on the record lifecycle exits. |
 
 ## Anti-pattern contrasts
 
