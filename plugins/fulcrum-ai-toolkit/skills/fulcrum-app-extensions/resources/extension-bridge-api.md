@@ -1,6 +1,6 @@
 # App Extension Bridge API Reference
 
-> Source: https://docs.fulcrumapp.com/docs/app-extensions-introduction.md
+> Source: https://docs.fulcrumapp.com/docs/app-extensions-introduction
 > Source: about:blank
 > Verified: 2026-09-02
 

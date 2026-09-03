@@ -107,7 +107,7 @@ add-audio event object: id, size, duration
 | SETFORMATTRIBUTES(attributes) | Customize app behavior (geometry types, auto-sync, etc.) |
 | INSPECT(object) | Output object content for debugging |
 | REQUEST(options, callback) | Make HTTP request (GET, POST, PUT). Async — response processing must be in callback |
-| LOADFILE({ name, form_name/form_id, variable }, callback) | Load a Reference File, optionally from another form, and optionally bind its exported content to a variable |
+| LOADFILE(options, callback) | Load a Reference File. `options` requires `name` and may include optional `form_name` or `form_id`, plus optional `variable` |
 | OPENEXTENSION({ url, title, data, onMessage }) | Open an App Extension; use `attachment://filename.html` for a Reference File |
 | SETRESULT(value) | Set the result of a calculation field |
 | FIELD(data_name) | Return field metadata object (key, type, label, etc.) |
