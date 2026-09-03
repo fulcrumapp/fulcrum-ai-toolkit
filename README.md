@@ -90,9 +90,9 @@ not a claim that every host has been tested in this repository yet.
 Run the dependency-free alpha checks from the repository root:
 
 ```bash
-/usr/bin/ruby scripts/validate.rb
-/usr/bin/ruby test/app_mcp_contract_test.rb
-/usr/bin/ruby test/smoke_test.rb
+ruby scripts/validate.rb
+ruby test/app_mcp_contract_test.rb
+ruby test/smoke_test.rb
 ```
 
 The validator checks skill frontmatter, directory/name consistency, corporate
