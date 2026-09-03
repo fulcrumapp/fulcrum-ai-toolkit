@@ -1,0 +1,8 @@
+{
+  "type": "RecordLinkField",
+  "linked_form_id": "the-form-id",
+  "allow_existing_records": true,
+  "allow_creating_records": false,
+  "allow_updating_records": false,
+  "allow_multiple_records": false
+}

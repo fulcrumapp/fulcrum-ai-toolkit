@@ -1,0 +1,14 @@
+<%# Source: https://docs.fulcrumapp.com/docs/functions#render %>
+<%# Purpose: render repeatable child entries as table rows. %>
+<%# A repeatable form value exposes `items`; each item has its own formValues. %>
+
+<% const observations = record.formValues.find('observations'); %>
+<% const observationItems = observations ? observations.items : []; %>
+<% observationItems.forEach(function (observation) { %>
+  <% const species = observation.formValues.find('species'); %>
+  <% const count = observation.formValues.find('count'); %>
+  <tr>
+    <td><%= species ? species.displayValue : '' %></td>
+    <td><%= count ? count.value : '' %></td>
+  </tr>
+<% }); %>

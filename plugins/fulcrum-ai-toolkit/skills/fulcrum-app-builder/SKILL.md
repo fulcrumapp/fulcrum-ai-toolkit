@@ -124,6 +124,8 @@ For a new app:
 6. Create it with `fulcrum_forms_create`, including the approved `script` only after the form structure is valid.
 7. Let `fulcrum_forms_create` create its default Report Template. Set `skip_default_report: true` only when the user explicitly asks to opt out.
 
+The full ordered sequence, with the builder arguments worth knowing, is in [`assets/app-build-sequence.txt`](assets/app-build-sequence.txt).
+
 If the result contains a created form plus `report_template_error`, report that the form succeeded and only the default Report Template failed. This error is non-fatal. Do not retry form creation; create the missing template separately with `fulcrum_report_templates_create` when appropriate.
 
 For an existing app:
@@ -135,15 +137,8 @@ For an existing app:
 5. Preservation is the default. Preserve every unrequested element and choice. Omit `removed_element_keys` when nothing was removed.
 6. If the user requests an element removal, explain the data and integration impact and obtain explicit approval. After approval, omit the removed subtree from the copied tree and collect only that subtree root's existing key in `removed_element_keys`; one root key authorizes its descendants. Choice removals also require approval, but choice keys do not belong in `removed_element_keys`.
 7. Validate the composed full form with `fulcrum_forms_validate`.
-8. Send the complete composed payload and approved removal declarations together:
-
-```javascript
-fulcrum_forms_update({
-  id: formId,
-  elements: composedElements,
-  removed_element_keys: removedElementKeys
-});
-```
+8. Send the complete composed payload and approved removal declarations together — `fulcrum_forms_update({ id: formId, elements: composedElements, removed_element_keys: removedElementKeys })`. The annotated call is
+   [`examples/forms-update-preserving-keys.js`](examples/forms-update-preserving-keys.js).
 
 Omit `removed_element_keys` when `removedElementKeys` is empty. Never declare a key that is still present in `elements`.
 
@@ -195,5 +190,6 @@ This skill orchestrates app creation and updates. Defer deep platform questions 
 
 - [Fulcrum developer documentation](https://docs.fulcrumapp.com/)
 - [Fulcrum Forms API](https://docs.fulcrumapp.com/reference/forms-intro)
+- [Build example index](examples/README.md)
 - [Agent Skills specification](https://agentskills.io/specification)
 - [Toolkit platform reference](../fulcrum-product-knowledge/SKILL.md)

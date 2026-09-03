@@ -16,25 +16,10 @@ setup notes. Do not reconstruct those artifacts from this fallback reference.
 
 Call `OPENEXTENSION` from a HyperlinkField `click` handler with an options object
 containing `url`, `title`, `data`, and `onMessage`. A bare filename or positional
-string is not the supported contract.
-
-```javascript
-ON('click', 'open_editor', function() {
-  OPENEXTENSION({
-    url: 'attachment://my-extension.html',
-    title: 'My Extension',
-    data: {
-      current_value: VALUE('target_field')
-    },
-    onMessage: function(message) {
-      var data = message && message.data;
-      if (data) {
-        SETVALUE('target_field', data.value);
-      }
-    }
-  });
-});
-```
+string is not the supported contract. See
+[`open-extension-editor.js`](../examples/open-extension-editor.js) for a minimal
+trigger and [`open-extension-pass-values.js`](../examples/open-extension-pass-values.js)
+for the canonical version with record context.
 
 For HTML uploaded as a Reference File, use exactly
 `attachment://<filename>.html`. External HTTPS pages require connectivity.
@@ -47,21 +32,12 @@ remains standalone and offline-capable. Do not replace it with an old hosted
 script.
 
 Code after the generated bootstrap receives the options object's `data` value
-through `payload.data`:
-
-```javascript
-Fulcrum.load(function(payload) {
-  initialize(payload.data || {});
-});
-
-function initialize(data) {
-  // Populate the extension UI from data.
-}
-
-function saveAndClose(result) {
-  Fulcrum.finish(result);
-}
-```
+through `payload.data`. See
+[`extension-bootstrap-lifecycle.js`](../examples/extension-bootstrap-lifecycle.js)
+for the load/finish lifecycle and
+[`extension-load-payload.js`](../examples/extension-load-payload.js) for reading
+individual values. A complete page is
+[`species-picker-extension.html`](../examples/species-picker-extension.html).
 
 `Fulcrum.finish(result)` closes the extension and delivers `{ data: result }` to
 the Data Event's `onMessage` callback. It does not write form fields
@@ -80,7 +56,9 @@ Event function.
 
 Replacing a Reference File requires a deliberate delete and upload through the
 registered Reference File tools. Confirm the destructive delete first and keep
-the filename synchronized with the `attachment://` URL.
+the filename synchronized with the `attachment://` URL. The full ordered
+sequence is in
+[`app-mcp-extension-publish-sequence.txt`](../assets/app-mcp-extension-publish-sequence.txt).
 
 ## Sandbox Constraints
 
@@ -90,7 +68,14 @@ the filename synchronized with the `attachment://` URL.
 - Extension state is not persistent unless it is written back to a form field
   and passed in again.
 - Keep offline-required CSS and JavaScript in the generated HTML or other
-  Reference Files.
+  Reference Files. Any external reference is both an offline and a
+  supply-chain risk; pin an exact semver version when one is unavoidable, as in
+  [`cdn-version-pinning.html`](../assets/cdn-version-pinning.html).
+- The Fulcrum bridge is the only trusted channel. Do not add ad hoc
+  `window.postMessage` listeners, and verify `event.origin` and `event.source`
+  before trusting a message from any other embedded frame.
+- Never embed a credential; extension source is readable by anyone who can open
+  the Reference File.
 
 ## Field Pattern
 

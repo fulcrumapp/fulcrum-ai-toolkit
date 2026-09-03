@@ -1,0 +1,13 @@
+<!-- Source: https://docs.fulcrumapp.com/docs/offline-capabilities -->
+<!--
+  Purpose: contrast unpinned and pinned external script references.
+  Any external URL is unavailable offline. If the extension must run during
+  offline field work, inline the library or ship it as a Reference File
+  instead of referencing a CDN at all.
+-->
+
+<!-- AVOID — an unversioned URL changes under the extension without notice. -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<!-- PREFER — an exact semver reference for an online-only extension. -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>

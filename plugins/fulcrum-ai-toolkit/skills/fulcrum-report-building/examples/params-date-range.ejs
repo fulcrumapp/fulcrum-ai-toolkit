@@ -1,0 +1,21 @@
+<%# Source: https://docs.fulcrumapp.com/docs/reports-introduction %>
+<%# Purpose: accept report URL parameters through $params, safely. %>
+<%#
+  URL: .../run/<template_id>?start_date=2024-01-01&end_date=2024-03-31
+  $params is user-controlled. Validate each value against an expected shape and
+  fall back to a default; never interpolate a raw parameter into SQL.
+%>
+
+<% const datePattern = /^\d{4}-\d{2}-\d{2}$/; %>
+<% const requestedStartDate = $params.start_date || ''; %>
+<% const requestedEndDate = $params.end_date || ''; %>
+<% const startDate = datePattern.test(requestedStartDate) ? requestedStartDate : '2024-01-01'; %>
+<% const today = new Date().toISOString().slice(0, 10); %>
+<% const endDate = datePattern.test(requestedEndDate) ? requestedEndDate : today; %>
+
+<% const recordResults = QUERY(
+  `SELECT * FROM "Inspections"
+   WHERE _created_at BETWEEN '${startDate}' AND '${endDate}'`,
+  { format: 'json' }
+); %>
+<% const records = recordResults.rows; %>

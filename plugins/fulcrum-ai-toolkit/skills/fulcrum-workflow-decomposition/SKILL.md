@@ -34,11 +34,8 @@ Every workflow has entities — the nouns. Common patterns:
 
 ### Step 2: Map the relationships
 
-```
-[Site] 1 ──── * [Inspection]     (one site, many inspections over time)
-[Site] 1 ──── * [Work Order]     (one site, many work orders)
-[Inspection] * ──── 1 [Species List]  (many inspections reference one lookup)
-```
+Sketch the cardinality between entities before choosing apps. A worked example
+is [`assets/entity-relationship-map.txt`](assets/entity-relationship-map.txt).
 
 Use **Record Link** fields to connect apps. The child record links to the parent — not the other way around.
 
@@ -99,4 +96,5 @@ Decomposition of a live app is disruptive. Sequence it:
 ## References
 
 - [Fulcrum developer documentation](https://docs.fulcrumapp.com/)
+- [Decomposition template index](assets/README.md)
 - [Agent Skills specification](https://agentskills.io/specification)

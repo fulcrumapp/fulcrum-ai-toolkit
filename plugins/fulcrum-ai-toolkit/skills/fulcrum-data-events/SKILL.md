@@ -9,7 +9,9 @@ A **data event** is JavaScript that runs inside a Fulcrum app in response to rec
 
 ## App MCP Control Plane
 
-When Fulcrum App MCP is registered, call `fulcrum_expressions_data_events_reference` for the current hook and function contract before authoring a script. Treat the local runtime resources as an offline fallback, not as a replacement for the registered knowledge tool.
+When Fulcrum App MCP is registered, call `fulcrum_expressions_data_events_reference` for the current hook and function contract before authoring a script. The knowledge categories worth requesting are listed in
+[`assets/data-events-reference-categories.txt`](assets/data-events-reference-categories.txt).
+Treat the local runtime resources as an offline fallback, not as a replacement for the registered knowledge tool.
 
 There are no standalone Data Event CRUD tools. Read the form and its current `script` with `fulcrum_forms_get`, compose the approved handler with the existing script, and write the complete script with `fulcrum_forms_update`. Do not overwrite unrelated handlers.
 
@@ -46,97 +48,62 @@ Fulcrum has several event families. The event family matters: `edit-record` is n
 
 ## Core Patterns
 
+Runnable snippets for every pattern below live in
+[`examples/`](examples/README.md). Each file names its public source in a
+`// Source:` comment. Merge a snippet into the form's existing script; never
+replace unrelated handlers.
+
 ### Set field values
-```javascript
-ON('change-status', function(event) {
-  SETVALUE('status_date', new Date());
-  SETVALUE('status_by', USERFULLNAME());
-});
-```
+Stamp derived values on a lifecycle event with `SETVALUE()`:
+[`examples/set-field-values-on-status-change.js`](examples/set-field-values-on-status-change.js).
 
 ### Conditional visibility
-```javascript
-ON('change', 'permit_required', function(event) {
-  SETHIDDEN('permit_number', CHOICEVALUE($permit_required) !== 'Yes');
-});
-```
+Hide a dependent field from a choice answer with `SETHIDDEN()`:
+[`examples/conditional-visibility-sethidden.js`](examples/conditional-visibility-sethidden.js).
+For field and section visibility, use the documented `SETHIDDEN()` pattern:
+[`examples/conditional-visibility-sethidden.js`](examples/conditional-visibility-sethidden.js).
+Neither is a security control.
 
 ### Cascading choices
-```javascript
-ON('change', 'state', function(event) {
-  var counties = COUNTIES_BY_STATE[CHOICEVALUE($state)];
-  SETCHOICES('county', counties || []);
-});
-```
+Narrow one choice field from another with `SETCHOICES()`:
+[`examples/cascading-choices.js`](examples/cascading-choices.js).
 
 ### Load reference data
-`LOADRECORDS()` takes an options object and an asynchronous callback; it does not return records directly.
-```javascript
-ON('load-record', function(event) {
-  LOADRECORDS({
-    form_id: FORM().id,
-    limit: 200
-  }, function(error, result) {
-    if (error) {
-      ALERT('Reference data unavailable', error.message || String(error));
-      return;
-    }
-    var records = result.records;
-    // Use loaded records to populate choices or validate
-  });
-});
-```
+`LOADRECORDS()` takes an options object and an asynchronous callback; it does not return records directly. See
+[`examples/load-reference-records.js`](examples/load-reference-records.js).
 
 > **Platform Requirement — Elite plan:** `LOADRECORDS()` and `LOADFILE()` require an Elite plan or Developer Pack. On Professional, only `REQUEST()` is available for external data. If you write `LOADRECORDS()` on a Professional org it silently fails — no error, no data.
 
 ### Share code across apps with LOADFILE
-Store shared JavaScript in a Reference File, then load it into multiple apps at runtime. This is the standard code reuse pattern for builders maintaining several apps.
+Store shared JavaScript in a Reference File, then load it into multiple apps at runtime. This is the standard code reuse pattern for builders maintaining several apps. See
+[`examples/loadfile-shared-helpers.js`](examples/loadfile-shared-helpers.js).
 
 > Source: [Fulcrum `LOADFILE()` reference](https://docs.fulcrumapp.com/docs/data-events-loadfile)
 
-```javascript
-// In the data event script:
-ON('load-record', function(event) {
-  LOADFILE({
-    name: 'shared-helpers.js',
-    form_id: FORM().id,
-    variable: 'sharedHelpers'
-  }, function(error, data) {
-    if (error) {
-      ALERT('Shared helpers unavailable', error.message || String(error));
-      return;
-    }
-    var result = data.sharedHelpers.mySharedFunction($some_field);
-    SETVALUE('computed_field', result);
-  });
-});
-```
-
-`LOADFILE()` takes an options object with required `name`, optional `form_name` or `form_id`, and optional `variable`, followed by an optional callback. For App MCP-managed files, use `fulcrum_reference_files_list` or `fulcrum_reference_files_get` to inspect the file and `fulcrum_reference_files_upload` to upload it before updating the form script.
+`LOADFILE()` takes an options object with required `name`, optional `form_name` or `form_id`, and optional `variable`, followed by an optional callback — `LOADFILE({ name, form_name | form_id, variable }, callback)`. For App MCP-managed files, use `fulcrum_reference_files_list` or `fulcrum_reference_files_get` to inspect the file and `fulcrum_reference_files_upload` to upload it before updating the form script.
 
 > **Platform Requirement — Elite plan:** `LOADFILE()` requires Elite or Developer Pack. See note above.
 
 ### Session state with STORAGE
-`STORAGE()` returns a local-storage-like object with `getItem`, `setItem`, `removeItem`, and `clear` methods. Values must be strings, so serialize objects with `JSON.stringify()`.
-
-```javascript
-ON('load-record', function(event) {
-  var storage = STORAGE();
-  if (!storage.getItem('baseline')) {
-    storage.setItem('baseline', JSON.stringify(computeBaseline()));
-  }
-  var baseline = JSON.parse(storage.getItem('baseline'));
-});
-```
+`STORAGE()` returns a local-storage-like object with `getItem`, `setItem`, `removeItem`, and `clear` methods. Values must be strings, so serialize objects with `JSON.stringify()`. See
+[`examples/storage-session-state.js`](examples/storage-session-state.js).
 
 ### Validate before save
-```javascript
-ON('validate-record', function(event) {
-  if (!$photo_field || $photo_field.length === 0) {
-    INVALID('At least one photo is required');
-  }
-});
-```
+`validate-record` is synchronous; call `INVALID('message')` to stop the save. See
+[`examples/validate-record-photo-required.js`](examples/validate-record-photo-required.js)
+for a single rule and
+[`examples/validate-record-completeness.js`](examples/validate-record-completeness.js)
+for several rules in one handler.
+
+### Repeatable child entries
+Sort child entries with
+[`examples/sort-repeatable-children.js`](examples/sort-repeatable-children.js)
+and append them with
+[`examples/create-repeatable-entries.js`](examples/create-repeatable-entries.js).
+
+### Timestamps and comment trails
+See [`examples/capture-timestamp-toggle.js`](examples/capture-timestamp-toggle.js)
+and [`examples/comment-summary-audit-trail.js`](examples/comment-summary-audit-trail.js).
 
 ## Anti-patterns
 
@@ -148,24 +115,8 @@ Do not rely on a `SETVALUE()` call to trigger another `change` handler or on the
 
 ### Geometry-dependent triggers without a location check
 
-Any trigger that needs the record's GPS location must guard against an empty geometry. A new record has no location until the user explicitly captures one.
-
-```javascript
-// BAD — fires on new-record but geometry is empty at creation
-ON('new-record', function(event) {
-  var loc = LOCATION();
-  // loc is null — no GPS captured yet
-  REQUEST({ url: 'https://api.weather.com?lat=' + loc.latitude }, handleWeather);
-  // This throws or returns bad data
-});
-
-// GOOD — use change-geometry, which only fires when location is actually captured
-ON('change-geometry', function(event) {
-  var loc = LOCATION();
-  if (!loc) return; // guard for programmatic geometry clears
-  REQUEST({ url: 'https://api.weather.com?lat=' + loc.latitude + '&lon=' + loc.longitude }, handleWeather);
-});
-```
+Any trigger that needs the record's GPS location must guard against an empty geometry. A new record has no location until the user explicitly captures one. Compare the unsafe and guarded handlers in
+[`examples/geometry-trigger-guard.js`](examples/geometry-trigger-guard.js).
 
 **Events that have geometry available:** `change-geometry`, `edit-record` (if a location was previously saved), `validate-record` (if user has captured one).
 
@@ -175,50 +126,20 @@ ON('change-geometry', function(event) {
 
 ### Hardcoded field lists
 
-Do not hardcode field name arrays when the platform provides dynamic alternatives.
-
-```javascript
-// BAD — breaks when fields are added, renamed, or the app is copied
-var fields = ['site_name', 'inspector_name', 'condition', 'notes', 'photo'];
-fields.forEach(function(f) { SETREADONLY(f, true); });
-
-// GOOD — use FIELD_NAMES() to get all fields dynamically
-FIELD_NAMES().forEach(function(f) { SETREADONLY(f, true); });
-
-// GOOD — filter to a section or type if needed
-FIELD_NAMES().forEach(function(f) {
-  if (f !== 'qc_status' && f !== 'qc_date') {
-    SETREADONLY(f, true);
-  }
-});
-```
+Do not hardcode field name arrays when the platform provides dynamic alternatives. See
+[`examples/field-names-bulk-readonly.js`](examples/field-names-bulk-readonly.js).
 
 `FIELD_NAMES()` returns the data names of all fields in the current form scope. Inside a repeatable event, it returns fields within that repeatable. This is the correct approach for bulk read-only, bulk hide, or bulk clear operations.
 
 ### Hardcoded IDs
-```javascript
-// BAD — breaks when app is copied or moved between orgs
-var TEMPLATE_ID = 'abc-123-def';
-
-// GOOD — load records at runtime and match by a stable attribute
-LOADRECORDS({ form_id: FORM().id }, function(error, result) {
-  var templates = error ? [] : result.records;
-  // Match by name or type, not a hardcoded ID.
-});
-```
+Compare a literal identifier with runtime discovery in
+[`examples/avoid-hardcoded-ids.js`](examples/avoid-hardcoded-ids.js).
 Hardcoded form IDs, report template IDs, or record IDs make apps non-portable. **Always discover resources at runtime** by querying by name, type, or relationship.
 
 ### Secrets in code
-```javascript
-// BAD — API keys visible to anyone who can view the data event
-var API_KEY = 'sk_live_abc123';
-REQUEST({ url: 'https://api.example.com/data?key=' + API_KEY }, handleResponse);
-
-// REALITY — Fulcrum has no secrets management.
-// If your data event needs an API key, the key will be in the code.
-// Acknowledge this limitation and use the least-privileged key possible.
-```
-There is currently no secure way to store secrets in Fulcrum data events. This is a known platform gap. Mitigations: use read-only API keys, restrict key permissions to minimum scope, rotate keys regularly.
+Data events execute where the user is, so anyone who can open the app configuration can read the script. See
+[`examples/no-secrets-in-scripts.js`](examples/no-secrets-in-scripts.js).
+There is currently no secure way to store secrets in Fulcrum data events. This is a known platform gap. Mitigations: move the credential behind a middleware endpoint, use read-only API keys, restrict key permissions to minimum scope, and rotate keys regularly.
 
 ### Permission bypasses
 Data events execute with the **record creator's context**, not the viewing user's context. This means:
@@ -230,15 +151,8 @@ Data events execute with the **record creator's context**, not the viewing user'
 Design data events assuming they run in a **least-privilege context**. Do not use data events to implement security controls — use platform permissions.
 
 ### Unversioned CDN libraries
-```javascript
-// BAD — "latest" or unversioned URLs break without warning when the library updates
-'<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>'
-'<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/latest/d3.min.js"></script>'
-
-// GOOD — lock to a specific version
-'<script src="https://cdn.jsdelivr.net/npm/chart.js@4.12.0"></script>'
-'<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.9.0/d3.min.js"></script>'
-```
+Compare unversioned and pinned script references in
+[`examples/pin-cdn-library-versions.js`](examples/pin-cdn-library-versions.js).
 AI coding assistants love pulling in CDN libraries for charts, dashboards, and widgets. They often use `latest` or unversioned URLs. When the library pushes a breaking update, your tool stops working with no code change on your side. **Always lock CDN references to a specific semver version.** This applies to any external script or stylesheet loaded via CDN in data events, report templates, or app extensions.
 
 ### Monolithic scripts
@@ -303,4 +217,6 @@ The full expressions reference is available in `resources/` as `expressions-refe
 - [Fulcrum `LOADFILE()` reference](https://docs.fulcrumapp.com/docs/data-events-loadfile)
 - [Fulcrum `REQUEST()` reference](https://docs.fulcrumapp.com/docs/data-events-request)
 - [Fulcrum `STORAGE()` reference](https://docs.fulcrumapp.com/docs/data-events-storage)
+- [Runnable example index](examples/README.md)
+- [Example catalog by pattern](resources/data-event-examples.md)
 - [Agent Skills specification](https://agentskills.io/specification)

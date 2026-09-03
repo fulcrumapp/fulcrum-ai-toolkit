@@ -1,0 +1,9 @@
+<%# Source: https://docs.fulcrumapp.com/docs/variables#record %>
+<%# Purpose: render a block only when a stored choice value matches. %>
+<%# Compare against `value`, not `displayValue`; labels are editable. %>
+
+<% const followupStatus = record.formValues.find('followup_status'); %>
+<% const followupReason = record.formValues.find('followup_reason'); %>
+<% if (followupStatus && followupStatus.value === 'required') { %>
+  <div class="alert">Follow-up required: <%= followupReason ? followupReason.displayValue : '' %></div>
+<% } %>
