@@ -13,7 +13,7 @@ jobs:
       - name: Set up Ruby
         uses: ruby/setup-ruby@v1
         with:
-          ruby-version: .ruby-version
+          ruby-version: '.ruby-version'
       - name: Validate skills and manifests
         run: ruby scripts/validate.rb
       - name: Check App MCP contract guidance

@@ -368,7 +368,9 @@ public_files = [
   File.join(ROOT, ".claude-plugin", "marketplace.json"),
   File.join(ROOT, ".github", "plugin", "marketplace.json"),
   File.join(ROOT, ".agents", "plugins", "marketplace.json")
-] + FileContracts.files_under(File.join(ROOT, "plugins", "fulcrum-ai-toolkit"))
+] .concat(FileContracts.files_under(File.join(ROOT, "plugins", "fulcrum-ai-toolkit")))
+  .select { |path| File.file?(path) }
+  .uniq
 required_hidden_adapters = %w[
   .claude-plugin/plugin.json
   .codex-plugin/plugin.json
@@ -407,6 +409,11 @@ assert(
     "private provenance detector misses a neutral attribution fixture"
   )
 end
+assert(
+  ["C:\\Users\\example\\file.md", "C:/home/example/file.md"].all? { |path| ContentContracts.private_filesystem_path?(path) },
+  "privacy detector does not catch Windows local paths"
+)
+
 assert(
   !ContentContracts.private_provenance?("(public workshop on API design)"),
   "private provenance detector rejects a neutral public event"
