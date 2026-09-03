@@ -328,10 +328,18 @@ end
 
 public_files = [File.join(ROOT, "README.md")] +
   Dir[File.join(ROOT, "plugins", "fulcrum-ai-toolkit", "**", "*.{md,json,yaml,yml}")]
-public_content = public_files.map { |path| File.read(path) }.join("\n")
+private_path = nil
+public_files.each do |path|
+  if File.foreach(path).any? do |line|
+       line.match?(%r{/(?:Users|home)/|atlassian\.net|slack\.com|/mnt/skills/organization}i)
+     end
+    private_path = path
+    break
+  end
+end
 assert(
-  !public_content.match?(%r{/(?:Users|home)/|atlassian\.net|slack\.com|/mnt/skills/organization}i),
-  "public toolkit content contains a private path or collaboration URL"
+  private_path.nil?,
+  "public toolkit content contains a private path or collaboration URL: #{private_path}"
 )
 
 puts "App MCP contract test passed: exact tools, runtime signatures, and removal-safe updates"
