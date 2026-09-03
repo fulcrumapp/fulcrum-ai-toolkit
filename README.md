@@ -52,7 +52,7 @@ Report Templates, and report generation. Query API execution, record CRUD, and
 media CRUD require another authorized interface.
 
 > Source: [App MCP PR #28](https://github.com/fulcrumapp/app-mcp/pull/28) at
-> commit [`43e68bb`](https://github.com/fulcrumapp/app-mcp/commit/43e68bb0a75c9afc6f6ed2b591b66431433737b4)
+> commit [`f8c041e`](https://github.com/fulcrumapp/app-mcp/commit/f8c041ee309c61c6154cce1a7b2cb84fc4c4cf10)
 > defines the prerequisite tool contract.
 
 ## Start here

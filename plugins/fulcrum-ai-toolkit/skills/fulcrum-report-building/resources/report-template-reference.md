@@ -1,7 +1,7 @@
 # Report Template Functions Reference
 
 > Source: [Fulcrum Report Builder functions](https://docs.fulcrumapp.com/docs/functions.md) for runtime signatures; [Report Builder variables](https://docs.fulcrumapp.com/docs/variables#record) for record value access; and the public [Sketches report example](https://docs.fulcrumapp.com/docs/sketches#add-metadata-to-sketches) for `QUERY()` result handling.
-> Source: [App MCP PR #28](https://github.com/fulcrumapp/app-mcp/pull/28) at commit [`43e68bb`](https://github.com/fulcrumapp/app-mcp/commit/43e68bb0a75c9afc6f6ed2b591b66431433737b4) for Report Template persistence and report generation tools.
+> Source: [App MCP PR #28](https://github.com/fulcrumapp/app-mcp/pull/28) at commit [`f8c041e`](https://github.com/fulcrumapp/app-mcp/commit/f8c041ee309c61c6154cce1a7b2cb84fc4c4cf10) for Report Template persistence and report generation tools.
 > Verified: 2026-09-02
 
 When App MCP is registered, use `fulcrum_report_templates_list`, `fulcrum_report_templates_get`, `fulcrum_report_templates_create`, `fulcrum_report_templates_update`, and `fulcrum_report_templates_delete` for template persistence, and use `fulcrum_reports_create` for report generation. This file documents functions available inside Report Builder EJS; it does not imply App MCP Query API, record, or media CRUD tools.
