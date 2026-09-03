@@ -13,7 +13,7 @@ Extensions communicate with the Fulcrum record through the data events API bridg
 
 When Fulcrum App MCP is registered, use `fulcrum_extensions_list_patterns` and `fulcrum_extensions_explain` to select a supported pattern, then use `fulcrum_extensions_generate` for the Data Event, HTML, and setup notes. Treat those registered tools as the current extension contract instead of recreating a remembered bootstrap or bridge.
 
-> Source: [App MCP PR #28](about:blank) at commit [`1259888`](about:blank) defines the generated artifacts used here. The bridge behavior comes from the [Fulcrum App Extensions introduction](https://docs.fulcrumapp.com/docs/app-extensions-introduction).
+> Source: [App MCP PR #28](about:blank) at commit [`43e68bb`](about:blank) defines the generated artifacts used here. The bridge behavior comes from the [Fulcrum App Extensions introduction](https://docs.fulcrumapp.com/docs/app-extensions-introduction).
 
 ## When to Use an Extension vs. a Data Event
 

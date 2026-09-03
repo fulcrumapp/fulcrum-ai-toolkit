@@ -52,7 +52,7 @@ Report Templates, and report generation. Query API execution, record CRUD, and
 media CRUD require another authorized interface.
 
 > Source: [App MCP PR #28](about:blank) at
-> commit [`1259888`](about:blank)
+> commit [`43e68bb`](about:blank)
 > defines the prerequisite tool contract.
 
 ## Start here
