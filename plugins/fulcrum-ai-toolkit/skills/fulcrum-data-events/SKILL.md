@@ -58,9 +58,7 @@ Stamp derived values on a lifecycle event with `SETVALUE()`:
 [`examples/set-field-values-on-status-change.js`](examples/set-field-values-on-status-change.js).
 
 ### Conditional visibility
-Hide a dependent field from a choice answer with `SETHIDDEN()`:
-[`examples/conditional-visibility-sethidden.js`](examples/conditional-visibility-sethidden.js).
-For field and section visibility, use the documented `SETHIDDEN()` pattern:
+Use the documented `SETHIDDEN()` pattern for field and section visibility:
 [`examples/conditional-visibility-sethidden.js`](examples/conditional-visibility-sethidden.js).
 Neither is a security control. Register the rule on `new-record` and
 `edit-record` as well as on `change`: default values fire no change event on a
