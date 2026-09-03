@@ -2,23 +2,11 @@
   "name": "fulcrum-ai-toolkit",
   "version": "0.1.0",
   "description": "Portable AI skills for Fulcrum app building, integrations, mapping, queries, access, migrations, and field operations",
-  "author": "Fulcrum (Spatial Networks)",
+  "author": {
+    "name": "Fulcrum"
+  },
+  "homepage": "https://www.fulcrumapp.com",
+  "repository": "https://github.com/fulcrumapp/fulcrum-ai-toolkit",
   "license": "MIT",
-  "skills": "./skills/",
-  "interface": {
-    "displayName": "Fulcrum AI Toolkit",
-    "shortDescription": "Build better Fulcrum apps with AI-guided skills",
-    "longDescription": "Portable skills for Fulcrum platform routing, app design and building, integrations, GIS and mapping, Query API modeling, access management, data migration planning, data events, extensions, reports, safety, discovery, workflow decomposition, and solution documentation.",
-    "capabilities": [
-      "Canonical Fulcrum platform knowledge and capability guidance",
-      "Novice-friendly app discovery and connector-dependent build orchestration",
-      "App design and structure guidance",
-      "Data event patterns and anti-patterns",
-      "Safety section recommendations for field work",
-      "Workflow decomposition for complex apps",
-      "App extension and report-building guidance",
-      "Integration, GIS, Query API, access, and migration planning",
-      "Structured discovery interviews and solution documentation"
-    ]
-  }
+  "skills": "./skills/"
 }

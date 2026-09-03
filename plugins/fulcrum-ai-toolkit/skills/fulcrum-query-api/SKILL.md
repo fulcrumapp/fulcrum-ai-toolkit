@@ -46,17 +46,22 @@ read-only analytics.
    [`query-modeling-reference.md`](resources/query-modeling-reference.md) to
    distinguish system, form, repeatable, link, and media tables and select
    explicit join keys.
-4. **Separate identifiers from values.** Allowlist discovered table/column
-   identifiers. Bind or safely encode values through the chosen client; never
-   concatenate user-controlled input into SQL.
+4. **Separate identifiers from values.** The Query endpoint accepts one complete
+   SQL string in `q`; it does not expose server-side bind parameters. Allowlist
+   discovered table/column identifiers. For dynamic values, require a reviewed,
+   type-specific SQL-literal encoder in caller code. If no suitable encoder
+   exists, stop rather than interpolating untrusted input.
+   > Source: [POST Query request schema](https://docs.fulcrumapp.com/reference/query-post)
+   > defines `q`, `format`, and `table_name` and no bind-parameter field.
 5. **Constrain the query.** Select only required columns, bound time/space,
    paginate where supported, and inspect the plan/cost before broad production
    use.
 6. **Validate safely.** Test with non-sensitive data and compare counts,
    nullability, duplicates, parent-child cardinality, geometry, and response
    format against an independent sample.
-7. **Hand off execution.** Provide the SQL design, parameter contract, expected
-   output, and reconciliation checks to an authorized Query API client.
+7. **Hand off execution.** Provide the SQL design, identifier allowlist,
+   literal-encoding contract, expected output, and reconciliation checks to an
+   authorized Query API client.
 
 ## App MCP Boundary
 
@@ -74,9 +79,9 @@ keep tokens out of query text and logs, and do not paste production results into
 public tools. Require separate explicit authorization before using result IDs in
 any REST mutation.
 
-If metadata, permissions, plan access, spatial support, or client
-parameterization is unknown, do not guess. Report the failed assumption, retain
-the read-only boundary, and provide the smallest discovery step needed.
+If metadata, permissions, plan access, spatial support, or safe literal
+encoding is unknown, do not guess. Report the failed assumption, retain the
+read-only boundary, and provide the smallest discovery step needed.
 
 ## References
 

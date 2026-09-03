@@ -85,8 +85,7 @@ Do not substitute an old external bootstrap URL. Start from the complete HTML re
 </html>
 ```
 
-> Source: The payload and inline-bootstrap semantics above follow the
-> [public App Extensions quick start](https://docs.fulcrumapp.com/docs/app-extensions-introduction#quick-start);
+> Source: The payload and inline-bootstrap semantics above follow the [public App Extensions quick start](https://docs.fulcrumapp.com/docs/app-extensions-introduction#quick-start);
 > live installed App MCP schemas govern generated artifacts.
 
 ## Data Exchange — Reading and Writing Record Fields
