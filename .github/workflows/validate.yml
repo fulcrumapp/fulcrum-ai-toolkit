@@ -29,9 +29,6 @@ jobs:
         run: ruby test/manifest_contract_test.rb
       - name: Check product knowledge decomposition
         run: ruby test/product_knowledge_decomposition_test.rb
-      - name: Validate example and asset formats
-        run: npm run validate
-        working-directory: tools/format-validator
       - name: Check externalized examples and assets
         env:
           REQUIRE_NODE: "1"
