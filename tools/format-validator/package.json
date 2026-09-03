@@ -2,7 +2,7 @@
   "name": "fulcrum-ai-toolkit-format-validator",
   "version": "1.0.0",
   "private": true,
-  "description": "Validates the structure of every externalized example and asset in the distributable toolkit plugin.",
+  "description": "Validates the structure, read-only SQL, safe interpolation, and rendered markup of every externalized example and asset in the distributable toolkit plugin.",
   "license": "MIT",
   "type": "module",
   "engines": {
@@ -13,6 +13,7 @@
   },
   "dependencies": {
     "acorn": "8.18.0",
+    "acorn-walk": "8.3.5",
     "ejs": "6.0.1",
     "html-validate": "11.12.0",
     "pgsql-ast-parser": "12.0.2",

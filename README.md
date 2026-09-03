@@ -101,19 +101,19 @@ ruby test/external_examples_test.rb
 ruby test/smoke_test.rb
 ```
 
-Structural format validation for the externalized examples and assets lives in
-`tools/format-validator`, a small Node package whose parsers are pinned exactly
-in `package.json` and `package-lock.json`. Install once, then run it directly
-or let the external examples test invoke it:
+Structural, SQL, and rendered-markup validation for the externalized examples
+and assets lives in `tools/format-validator`, a small Node package whose parsers
+are pinned exactly in `package.json` and `package-lock.json`. Install once, then
+run it directly or let the external examples test invoke it:
 
 ```bash
 npm ci --prefix tools/format-validator
 npm run --prefix tools/format-validator validate
 ```
 
-The Ruby checks are dependency-free and run without Node; only the structural
-format pass needs the pinned package, and CI sets `REQUIRE_NODE=1` so it can
-never be skipped there.
+The Ruby checks are dependency-free and run without Node; only the parser-backed
+pass needs the pinned package, and CI sets `REQUIRE_NODE=1` so it can never be
+skipped there.
 
 The validator checks the exact 16-skill inventory, skill frontmatter,
 directory/name consistency, corporate absolute paths, possible credentials,
@@ -124,14 +124,47 @@ discovery, sources, router/coverage links, and package boundaries. The external
 examples test proves that no fenced code block remains in skill Markdown, that
 every `examples/` and `assets/` file is indexed and reachable, that each one
 names a public source URL, that no example, asset, or index carries credential
-or private material, that every effective SQL statement is read-only, and that
-the legacy and current example inventories match
-`test/data/example-block-inventory.json` exactly, identifier by identifier. The
-format validator parses HTML structure and its inline scripts and styles,
-compiles EJS, and parses CSS, PostgreSQL, JSON, and JavaScript; files that are
-not whole documents are labeled `Fragment:` and validated as such. The smoke
-test exercises a small site-inspection workflow through discovery, schema
-approval, offline review, and the no-MCP handoff path.
+or private material, and that the legacy and current example inventories match
+`test/data/example-block-inventory.json` exactly, identifier by identifier. It
+also requires the format validator's own counts back, so the work it delegates
+cannot quietly become work that is skipped.
+
+The format validator owns everything that needs a parser, so the repository has
+one implementation of each language rather than two. It parses HTML structure
+and its inline scripts and styles, compiles EJS, and parses CSS, PostgreSQL,
+JSON, and JavaScript; files that are not whole documents are labeled `Fragment:`
+and validated as such. Beyond well-formedness it decides four contracts.
+
+Every SQL statement — in a `.sql` asset or in a report template's `QUERY()`
+call — is held to a read-only allowlist applied to the parsed PostgreSQL tree,
+so a write hidden after a semicolon, inside a CTE, behind a comment, or in a
+quoted function name is rejected, and an unrecognized statement form or function
+fails closed.
+
+Every report template is compiled to JavaScript, parsed, and walked to find its
+`QUERY()` calls, so a call written with a double-quoted string, an interposed
+comment, or a newline cannot escape the check. The helper is also reachable
+through the locals bag `ejs` opens with `with`, so `locals.QUERY(...)` and
+`locals['QUERY'](...)` are read the same way, and everything that could hide a
+call — a name referenced without being called, a computed property that is not a
+literal, the locals bag used as a value, `eval`, the Function constructor — is
+refused rather than guessed at.
+
+Reading a statement means replacing each `${...}` with a placeholder, and a
+placeholder is only earned. A gap is accepted when the template can be read, at
+the gap itself, as filtering the value down to characters that cannot leave the
+quoted literal it sits in; `'${$params.q}'` parses as `'NULL'` and looks
+read-only, so it is rejected instead.
+
+Each template is then rendered with its own fixture data — no network, no
+database — and the output is validated as markup inside a host document, so a
+`<tr>` emitted outside a table is caught. Rendering only proves the branches it
+reaches, so the render runs under V8's own block coverage through
+`node:inspector`, every `if` is given an `else` first so an outcome nobody wrote
+is still an outcome that can be counted, and a branch no fixture reaches is
+reported against its template line. Bypass fixtures for all four contracts run
+on every invocation. The smoke test exercises a small site-inspection workflow
+through discovery, schema approval, offline review, and the no-MCP handoff path.
 
 ## Skills
 

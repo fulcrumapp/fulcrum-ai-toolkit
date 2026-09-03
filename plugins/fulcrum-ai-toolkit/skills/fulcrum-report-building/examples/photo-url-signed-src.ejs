@@ -3,12 +3,16 @@
 <%# Purpose: render a photo field with a signed URL. %>
 <%# A media ID alone is not a usable src; PHOTOURL() signs it. %>
 <%# SIGNATUREURL(), SKETCHURL(), AUDIOURL(), and VIDEOURL() work the same way. %>
+<%# Emit the <img> only when there is a photo: an empty src re-requests the %>
+<%# page, and every image needs alt text. %>
 
 <% const sitePhoto = record.formValues.find('site_photo'); %>
 <% const firstSitePhoto = sitePhoto && sitePhoto.items[0]; %>
 
-<%# AVOID — the media ID is not a URL. %>
-<img src="<%= firstSitePhoto ? firstSitePhoto.mediaID : '' %>">
+<% if (firstSitePhoto) { %>
+  <%# AVOID — the media ID is not a URL. %>
+  <img src="<%= firstSitePhoto.mediaID %>" alt="Site photo">
 
-<%# PREFER — wrap the media ID in PHOTOURL(). %>
-<img src="<%= firstSitePhoto ? PHOTOURL(firstSitePhoto.mediaID) : '' %>">
+  <%# PREFER — wrap the media ID in PHOTOURL(). %>
+  <img src="<%= PHOTOURL(firstSitePhoto.mediaID) %>" alt="Site photo">
+<% } %>

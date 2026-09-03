@@ -17,15 +17,22 @@
 
   The Query API accepts one complete SQL string and exposes no server-side bind
   parameters, so the template owns the literal. Each literal below is re-emitted
-  from the parsed Date, never from the request string: only YYYY-MM-DD can leave
-  toISOString().slice(0, 10), so no user-controlled text reaches the statement.
+  from the parsed Date, and is filtered again in the gap where it reaches SQL,
+  so what lands inside the quotes is digits and hyphens whatever happened
+  upstream. Encoding in the gap is what a reader can check: a filter written
+  further up says nothing about the name that is actually interpolated here.
+
+  Every branch emits complete markup. A row is only valid inside a table, so the
+  rows below are wrapped in one here rather than left to the surrounding
+  template: a rejected range renders a message, an empty result renders a single
+  spanning row, and neither leaves a <tr> loose in the document.
 %>
 
 <% const MS_PER_DAY = 86400000; %>
 <% const DEFAULT_WINDOW_DAYS = 90; %>
 
 <% function parseIsoDay(value) {
-     const text = String(value == null ? '' : value);
+     const text = String(value);
      if (!/^\d{4}-\d{2}-\d{2}$/.test(text)) { return null; }
      const year = Number(text.slice(0, 4));
      if (year < 1 || year > 9998) { return null; }
@@ -61,18 +68,35 @@
   <% const recordResults = QUERY(
        `SELECT _record_id, _created_at, _status
         FROM "Inspections"
-        WHERE _created_at >= '${startDate}'
-          AND _created_at < '${endExclusiveDate}'
+        WHERE _created_at >= '${String(startDate).replace(/[^0-9-]/g, '')}'
+          AND _created_at < '${String(endExclusiveDate).replace(/[^0-9-]/g, '')}'
         ORDER BY _created_at DESC
         LIMIT 500`,
        { format: 'json' }
      ); %>
   <p>Inspections from <%= startDate %> through <%= endDate %></p>
-  <% recordResults.rows.forEach(function (row) { %>
-    <tr>
-      <td><%= row._record_id %></td>
-      <td><%= row._created_at %></td>
-      <td><%= row._status %></td>
-    </tr>
-  <% }); %>
+  <table class="report-table">
+    <thead>
+      <tr>
+        <th scope="col">Record</th>
+        <th scope="col">Created</th>
+        <th scope="col">Status</th>
+      </tr>
+    </thead>
+    <tbody>
+      <% if (recordResults.rows.length === 0) { %>
+        <tr>
+          <td colspan="3">No inspections in this range.</td>
+        </tr>
+      <% } else { %>
+        <% recordResults.rows.forEach(function (row) { %>
+          <tr>
+            <td><%= row._record_id %></td>
+            <td><%= row._created_at %></td>
+            <td><%= row._status %></td>
+          </tr>
+        <% }); %>
+      <% } %>
+    </tbody>
+  </table>
 <% } %>
