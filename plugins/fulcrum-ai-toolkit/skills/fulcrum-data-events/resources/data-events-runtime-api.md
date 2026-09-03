@@ -2,7 +2,8 @@
 
 > Source: https://docs.fulcrumapp.com/docs/data-events-reference
 > Source: https://docs.fulcrumapp.com/docs/data-events-loadfile
-> Source: https://github.com/fulcrumapp/app-mcp/pull/28
+> Connector authority: Live installed App MCP schemas define connector
+> operations. Runtime behavior is sourced from the public references below.
 > Verified: 2026-09-02
 
 When App MCP is registered, prefer `fulcrum_expressions_data_events_reference` for the current runtime catalog. This resource is a portable fallback. Data Event JavaScript is stored in a form's `script` and is read or written with `fulcrum_forms_get` and `fulcrum_forms_update`; there are no standalone Data Event CRUD tools.

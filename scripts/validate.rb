@@ -10,7 +10,24 @@ ROOT_PATH = Pathname.new(ROOT)
 PLUGIN_RELATIVE_PATH = File.join("plugins", "fulcrum-ai-toolkit")
 PLUGIN_DIR = File.join(ROOT, PLUGIN_RELATIVE_PATH)
 SKILLS_DIR = File.join(PLUGIN_DIR, "skills")
-EXPECTED_SKILL_COUNT = 11
+EXPECTED_SKILLS = %w[
+  fulcrum-access-management
+  fulcrum-app-builder
+  fulcrum-app-design
+  fulcrum-app-extensions
+  fulcrum-app-goal
+  fulcrum-data-events
+  fulcrum-data-migration
+  fulcrum-discovery
+  fulcrum-gis-mapping
+  fulcrum-integration-patterns
+  fulcrum-product-knowledge
+  fulcrum-query-api
+  fulcrum-report-building
+  fulcrum-safety
+  fulcrum-solution-document
+  fulcrum-workflow-decomposition
+].freeze
 COVERAGE_MAP_RELATIVE_PATH = File.join(
   PLUGIN_RELATIVE_PATH,
   "docs",
@@ -50,8 +67,11 @@ def references_section_has_url?(text)
 end
 
 skill_paths = Dir[File.join(SKILLS_DIR, "*", "SKILL.md")].sort
-if skill_paths.length != EXPECTED_SKILL_COUNT
-  failures << "expected #{EXPECTED_SKILL_COUNT} skills, found #{skill_paths.length}"
+actual_skill_names = skill_paths.map { |path| File.basename(File.dirname(path)) }.sort
+if actual_skill_names != EXPECTED_SKILLS
+  missing = EXPECTED_SKILLS - actual_skill_names
+  unexpected = actual_skill_names - EXPECTED_SKILLS
+  failures << "skill inventory mismatch (missing: #{missing.join(", ")}; unexpected: #{unexpected.join(", ")})"
 end
 
 skill_paths.each do |path|
@@ -84,6 +104,10 @@ skill_paths.each do |path|
     failures << "#{relative_path}: contains a corporate absolute skill path"
   end
 
+  if text.include?("github.com/fulcrumapp/app-mcp")
+    failures << "#{relative_path}: contains a private App MCP repository URL"
+  end
+
   if text.match?(/(?:api[_-]?token|secret|password| bearer )[=:][[:space:]]*[A-Za-z0-9_\-]{12,}/i)
     failures << "#{relative_path}: possible credential in skill content"
   end
@@ -106,6 +130,29 @@ json_paths.each do |path|
     json_documents[repo_relative_path(path)] = JSON.parse(File.read(path))
   rescue JSON::ParserError => e
     failures << "#{repo_relative_path(path)}: invalid JSON (#{e.message})"
+  end
+end
+
+public_text_paths = [
+  File.join(ROOT, "README.md"),
+  File.join(ROOT, "marketplace.json"),
+  File.join(ROOT, ".claude-plugin", "marketplace.json"),
+  File.join(ROOT, ".github", "plugin", "marketplace.json"),
+  File.join(ROOT, ".agents", "plugins", "marketplace.json"),
+  File.join(PLUGIN_DIR, ".mcp.json")
+] +
+  Dir[File.join(PLUGIN_DIR, "**", "*.{md,json,yaml,yml}")] +
+  Dir[File.join(PLUGIN_DIR, ".*-plugin", "*.{md,json,yaml,yml}")]
+private_reference_pattern = %r{
+  /(?:Users|home)/|
+  atlassian\.net|
+  slack\.com|
+  /mnt/skills/organization|
+  github\.com/fulcrumapp/app-mcp
+}ix
+public_text_paths.select { |path| File.file?(path) }.each do |path|
+  if File.read(path).match?(private_reference_pattern)
+    failures << "#{repo_relative_path(path)}: contains a private path or collaboration URL"
   end
 end
 
@@ -169,7 +216,6 @@ end
 readme = File.join(ROOT, "README.md")
 readme_text = File.read(readme)
 readme_skill_names = readme_text.scan(/^\| `([^`]+)` \|/).flatten.sort
-actual_skill_names = skill_paths.map { |path| File.basename(File.dirname(path)) }.sort
 if readme_skill_names != actual_skill_names
   failures << "README skill inventory does not match #{PLUGIN_RELATIVE_PATH}/skills/*/SKILL.md"
 end

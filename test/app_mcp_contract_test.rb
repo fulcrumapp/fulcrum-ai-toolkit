@@ -48,6 +48,11 @@ app_extensions = read_skill("fulcrum-app-extensions")
 extension_bridge = read_skill("fulcrum-app-extensions", "resources/extension-bridge-api.md")
 report_building = read_skill("fulcrum-report-building")
 report_reference = read_skill("fulcrum-report-building", "resources/report-template-reference.md")
+integration_patterns = read_skill("fulcrum-integration-patterns")
+gis_mapping = read_skill("fulcrum-gis-mapping")
+query_api = read_skill("fulcrum-query-api")
+access_management = read_skill("fulcrum-access-management")
+data_migration = read_skill("fulcrum-data-migration")
 readme = read_file("README.md")
 coverage_map = read_file("plugins/fulcrum-ai-toolkit/docs/legacy-product-knowledge-coverage.md")
 
@@ -59,7 +64,12 @@ contract_documents = {
   "App Extensions" => app_extensions,
   "extension bridge" => extension_bridge,
   "report building" => report_building,
-  "report reference" => report_reference
+  "report reference" => report_reference,
+  "integration patterns" => integration_patterns,
+  "GIS mapping" => gis_mapping,
+  "Query API" => query_api,
+  "access management" => access_management,
+  "data migration" => data_migration
 }.freeze
 tool_guidance_documents = contract_documents.merge(
   "README" => readme,
@@ -80,6 +90,9 @@ allowed_app_mcp_tools = %w[
   fulcrum_forms_get
   fulcrum_forms_update
   fulcrum_forms_validate
+  fulcrum_layers_get
+  fulcrum_layers_list
+  fulcrum_memberships_list
   fulcrum_reference_files_get
   fulcrum_reference_files_list
   fulcrum_reference_files_upload
@@ -89,9 +102,15 @@ allowed_app_mcp_tools = %w[
   fulcrum_report_templates_list
   fulcrum_report_templates_update
   fulcrum_reports_create
+  fulcrum_roles_list
   fulcrum_schema_build_field
   fulcrum_schema_build_form
   fulcrum_schema_field_types
+  fulcrum_webhooks_create
+  fulcrum_webhooks_delete
+  fulcrum_webhooks_get
+  fulcrum_webhooks_list
+  fulcrum_webhooks_update
 ].sort.freeze
 non_tool_identifiers = %w[fulcrum_parent_id].freeze
 
@@ -167,25 +186,6 @@ assert(
   update_workflow.include?("Preservation is the default") &&
     update_workflow.include?("Omit `removed_element_keys` when nothing was removed"),
   "existing-form workflow does not keep preservation as the default"
-)
-product_update_workflow = section_between(
-  product_knowledge,
-  "For an existing-form element change:",
-  "If form creation succeeds",
-  "product router existing-form workflow"
-)
-assert_in_order(
-  product_update_workflow,
-  [
-    "fulcrum_forms_get",
-    "preservation as the default",
-    "explicit user confirmation",
-    "removed_element_keys",
-    "fulcrum_forms_validate",
-    "fulcrum_forms_update",
-    "complete assembled `elements` array"
-  ],
-  "product router existing-form workflow"
 )
 assert(
   app_builder.include?('{ "label": "...", "value": "..." }') &&
@@ -305,16 +305,44 @@ assert(
   product_knowledge.include?("Query API execution, record CRUD, and media CRUD remain outside App MCP"),
   "product router does not preserve App MCP boundaries"
 )
+assert(
+  integration_patterns.include?("App MCP has no Workflow CRUD tools"),
+  "integration skill invents or omits the Workflow boundary"
+)
+assert(
+  gis_mapping.include?("read-only layer inspection"),
+  "GIS skill omits the read-only App MCP layer boundary"
+)
+assert(
+  access_management.match?(/read-only\s+organization membership and role\/permission inspection/),
+  "access skill omits the read-only App MCP account boundary"
+)
+assert(
+  query_api.include?("Query API execution is outside App MCP"),
+  "Query skill omits the App MCP execution boundary"
+)
+assert(
+  data_migration.include?("App MCP is not a migration executor"),
+  "migration skill omits the App MCP migration boundary"
+)
 
 contract_documents.each_value do |document|
   assert(document.match?(/^> Source: .*https:\/\//), "contract documentation lacks a linked Source note")
 end
 
-public_files = [File.join(ROOT, "README.md")] +
-  Dir[File.join(ROOT, "plugins", "fulcrum-ai-toolkit", "**", "*.{md,json,yaml,yml}")]
+public_files = [
+  File.join(ROOT, "README.md"),
+  File.join(ROOT, "marketplace.json"),
+  File.join(ROOT, ".claude-plugin", "marketplace.json"),
+  File.join(ROOT, ".github", "plugin", "marketplace.json"),
+  File.join(ROOT, ".agents", "plugins", "marketplace.json"),
+  File.join(ROOT, "plugins", "fulcrum-ai-toolkit", ".mcp.json")
+] +
+  Dir[File.join(ROOT, "plugins", "fulcrum-ai-toolkit", "**", "*.{md,json,yaml,yml}")] +
+  Dir[File.join(ROOT, "plugins", "fulcrum-ai-toolkit", ".*-plugin", "*.{md,json,yaml,yml}")]
 public_content = public_files.map { |path| File.read(path) }.join("\n")
 assert(
-  !public_content.match?(%r{/(?:Users|home)/|atlassian\.net|slack\.com|/mnt/skills/organization}i),
+  !public_content.match?(%r{/(?:Users|home)/|atlassian\.net|slack\.com|/mnt/skills/organization|github\.com/fulcrumapp/app-mcp}i),
   "public toolkit content contains a private path or collaboration URL"
 )
 

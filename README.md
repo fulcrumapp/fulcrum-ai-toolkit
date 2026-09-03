@@ -1,6 +1,8 @@
 # Fulcrum AI Toolkit
 
-AI skills for building apps, data events, reports, and workflows on the [Fulcrum](https://www.fulcrumapp.com) platform.
+Portable AI skills for building apps, data events, reports, integrations,
+mapping, queries, access models, and migrations on the
+[Fulcrum](https://www.fulcrumapp.com) platform.
 
 Built around the open [Agent Skills standard](https://agentskills.io/specification) — skills are portable Markdown workflows with structured metadata that compatible AI agents load on demand.
 
@@ -51,16 +53,16 @@ projects, layer metadata, webhooks, Reference Files, memberships and roles,
 Report Templates, and report generation. Query API execution, record CRUD, and
 media CRUD require another authorized interface.
 
-> Source: [App MCP PR #28](https://github.com/fulcrumapp/app-mcp/pull/28) at
-> commit [`f8c041e`](https://github.com/fulcrumapp/app-mcp/commit/f8c041ee309c61c6154cce1a7b2cb84fc4c4cf10)
-> defines the prerequisite tool contract.
+Live installed App MCP schemas define the connector tool contract and take
+precedence over toolkit prose.
 
 ## Start here
 
 1. Run `fulcrum-discovery` for a new workflow.
 2. Define the goal and deliverable with `fulcrum-app-goal`.
 3. Use `fulcrum-app-builder` and `fulcrum-app-design` to propose and approve a schema.
-4. Review safety, offline, integration, and plan constraints.
+4. Route integration, mapping, Query API, access, and migration decisions to
+   their focused skills.
 5. Build through Fulcrum App MCP when available, or use the approved handoff.
 6. Test the workflow and document the result with `fulcrum-solution-document`.
 
@@ -93,13 +95,17 @@ Ruby 3.2.11 is required; compatible version managers can provision it from
 ```bash
 ruby scripts/validate.rb
 ruby test/app_mcp_contract_test.rb
+ruby test/product_knowledge_decomposition_test.rb
 ruby test/smoke_test.rb
 ```
 
-The validator checks skill frontmatter, directory/name consistency, corporate
-absolute paths, possible credentials, JSON manifests, and README inventory.
+The validator checks the exact 16-skill inventory, skill frontmatter,
+directory/name consistency, corporate absolute paths, possible credentials,
+JSON manifests, and README inventory.
 The contract test prevents regressions in App MCP tool names, signatures, and
-preservation-safe form updates. The smoke test exercises a small
+preservation-safe form updates. The decomposition test checks focused skill
+discovery, sources, router/coverage links, and package boundaries. The smoke
+test exercises a small
 site-inspection workflow through discovery, schema approval, offline review,
 and the no-MCP handoff path.
 
@@ -108,6 +114,11 @@ and the no-MCP handoff path.
 | Skill | Description | Type |
 | ------- | ------------- | ------ |
 | `fulcrum-product-knowledge` | Fulcrum platform capability router, constraints, plans, boundaries, and App MCP build reference | Model-invoked |
+| `fulcrum-integration-patterns` | Workflow and integration selection, webhooks, URL Actions, REST, middleware, and delivery safety | Model-invoked |
+| `fulcrum-gis-mapping` | GIS/layer selection, online/offline mapping, geometry, and import/export boundaries | Model-invoked |
+| `fulcrum-query-api` | Read-only Query API modeling, metadata discovery, safe SQL parameters, and spatial-query boundaries | Model-invoked |
+| `fulcrum-access-management` | Roles, resource access, memberships, SSO/SCIM, and least-privilege reasoning | Model-invoked |
+| `fulcrum-data-migration` | Supported migration assessment, mapping, dry runs, reconciliation, cutover, and rollback design | Model-invoked |
 | `fulcrum-app-builder` | Novice-friendly app discovery, schema approval, App MCP orchestration, and connector-independent handoff | Model-invoked |
 | `fulcrum-app-design` | App structure, field types, linked apps vs single app, repeatables | Model-invoked |
 | `fulcrum-app-goal` | Ensure every app has a clear goal and defined deliverable | Model-invoked |
@@ -123,7 +134,18 @@ and the no-MCP handoff path.
 
 Skills are **model-invoked** by default: the agent fires them automatically when building Fulcrum apps. The agent will:
 
-- Use the platform router for capability, plan, offline, integration, and App MCP boundary decisions (`fulcrum-product-knowledge`)
+- Use the platform router for capability, plan, public AI, offline, and App MCP
+  boundary decisions (`fulcrum-product-knowledge`)
+- Select Workflows, webhooks, URL Actions, REST, and middleware safely
+  (`fulcrum-integration-patterns`)
+- Verify current GIS, layer, geometry, and online/offline mapping support
+  (`fulcrum-gis-mapping`)
+- Model read-only SQL from discovered Query API metadata
+  (`fulcrum-query-api`)
+- Design role plus resource access and SSO/SCIM lifecycle controls
+  (`fulcrum-access-management`)
+- Plan supported migrations with dry-run, reconciliation, and rollback evidence
+  (`fulcrum-data-migration`)
 - Guide app discovery, schema approval, and App MCP-dependent execution (`fulcrum-app-builder`)
 - Check that every app has a clear goal before building (`fulcrum-app-goal`)
 - Select appropriate field types and app structure (`fulcrum-app-design`)
@@ -150,8 +172,8 @@ shapes; public Fulcrum documentation owns product and runtime behavior.
   platform behavior and runtime functions.
 - [Fulcrum public OpenAPI document](https://raw.githubusercontent.com/fulcrumapp/api/v2/reference/rest-api.json)
   for REST resource shapes.
-- [App MCP PR #28](https://github.com/fulcrumapp/app-mcp/pull/28) for the
-  prerequisite control-plane contract used by the current workflow guidance.
+- Live installed App MCP schemas for the connector control-plane contract used
+  by the current workflow guidance.
 
 The [legacy product-knowledge migration coverage map](plugins/fulcrum-ai-toolkit/docs/legacy-product-knowledge-coverage.md)
 tracks every legacy domain, its canonical target, public sources, and material
@@ -197,7 +219,6 @@ installers. Codex marketplace metadata is available at
 - [GitHub Copilot agent skills](https://docs.github.com/en/copilot/how-tos/copilot-on-github/customize-copilot/customize-cloud-agent/add-skills)
 - [Vercel skills CLI](https://github.com/vercel-labs/skills)
 - [Fulcrum developer documentation](https://docs.fulcrumapp.com/)
-- [App MCP tool-contract prerequisite](https://github.com/fulcrumapp/app-mcp/pull/28)
 
 ## Contributing
 
