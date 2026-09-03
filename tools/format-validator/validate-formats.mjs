@@ -2,19 +2,24 @@
 // Parser-backed validation for every externalized example and asset in the
 // distributable toolkit plugin.
 //
-// The Ruby suite owns repository policy: inventories, source attribution, and
-// privacy. This tool owns everything that needs a parser — proving each file is
-// well formed in its own format, that its SQL is read-only, and that its
-// interpolation uses a recognized encoder — with established parsers pinned to
-// exact versions in package.json and package-lock.json rather than with
-// hand-rolled matching. There is one parser per language in this repository,
-// and it lives here.
+// The Ruby suite owns repository policy: inventories, template identity, source
+// attribution, and privacy. This tool owns everything that needs a parser —
+// proving each file is well formed in its own format, that its SQL is
+// read-only, and that its interpolation uses a recognized encoder — with
+// established parsers pinned to exact versions in package.json and
+// package-lock.json rather than with hand-rolled matching. There is one parser
+// per language in this repository, and it lives here.
 //
 // Nothing this repository authors is executed. HTML is parsed, inline scripts
-// and styles are parsed, a report template is turned into source and parsed,
-// and its markup is checked against a declaration held in
-// lib/template-markup.mjs. No template is rendered, no example script is run,
-// and no query is issued, so validation needs no sandbox and claims none.
+// and styles are parsed, and a report template is compiled to source by the
+// pinned official EJS parser and then parsed. No template is rendered, no
+// example script is run, and no query is issued, so validation needs no sandbox
+// and claims none.
+//
+// This tool makes no claim about what a template renders to. It does not model
+// EJS escaping, branch coverage, or emitted HTML validity. The two EJS rules
+// below are repository example checks: literal facts about the small fixed set
+// of templates this repository ships, read off the template text as written.
 //
 // Every commentable file that is not a whole document in its own right is
 // labeled `Fragment:`; a whole document is labeled `Document:`. The label
@@ -33,7 +38,6 @@ import postcss from 'postcss';
 import { compiledSource, queryCalls } from './lib/ejs-queries.mjs';
 import { selfCheck } from './lib/self-check.mjs';
 import { readOnlyViolations } from './lib/sql-contract.mjs';
-import { markupViolations } from './lib/template-markup.mjs';
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(HERE, '..', '..');
@@ -51,6 +55,14 @@ const FRAGMENT_LABEL = /(?:^|[^A-Za-z])Fragment:/;
 const INLINE_SCRIPT = /<script\b([^>]*)>([\s\S]*?)<\/script>/gi;
 const INLINE_STYLE = /<style\b[^>]*>([\s\S]*?)<\/style>/gi;
 const SCRIPT_SRC = /(?:^|\s)src\s*=/i;
+
+// Repository example checks for the report templates this repository ships.
+// Both are literal: the raw output tag is spelled one way, and each output
+// internal is one name. Neither is an analysis of what an arbitrary template
+// would escape or emit — the point is that these examples never reach for
+// either, so a reader can confirm the rule by looking.
+const RAW_OUTPUT_TAG = '<%-';
+const OUTPUT_INTERNALS = ['__append', '__output', 'escapeFn'];
 
 const documentValidator = new HtmlValidate({
   extends: ['html-validate:recommended', 'html-validate:document']
@@ -206,12 +218,18 @@ function validateEjs(file, text) {
     count('embedded-sql');
   }
 
-  // Markup is checked against what the template says it emits, because a row
-  // emitted inside a loop is invisible to a careless reader of the file and
-  // running the template to find out is not on offer.
-  const violations = markupViolations(path.basename(file), text);
-  for (const violation of violations) fail(file, violation);
-  if (violations.length === 0) count('markup-asserted');
+  let clean = true;
+  if (text.includes(RAW_OUTPUT_TAG)) {
+    fail(file, `uses the raw output tag ${RAW_OUTPUT_TAG}, which these examples do not use`);
+    clean = false;
+  }
+  for (const name of OUTPUT_INTERNALS) {
+    if (new RegExp(`\\b${name}\\b`).test(text)) {
+      fail(file, `names the EJS output internal ${name}, which these examples do not use`);
+      clean = false;
+    }
+  }
+  if (clean) count('ejs-checked');
 
   count(`ejs:${label}`);
 }
@@ -241,7 +259,7 @@ async function main() {
 
   // The contracts prove themselves before they are used on the repository, so a
   // contract that stopped catching bypasses fails here rather than passing
-  // everything silently.
+  // everything silently. Their scope is the SQL a QUERY() call may carry.
   const contracts = selfCheck();
   for (const failure of contracts.failures) failures.push(`tools/format-validator: ${failure}`);
   count('contract-probe', contracts.total);

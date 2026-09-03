@@ -12,14 +12,21 @@
 # Everything that needs a parser — HTML, inline scripts and styles, EJS, CSS,
 # JSON, JavaScript, and the read-only SQL contract — belongs to
 # tools/format-validator, which uses established parsers pinned in its lockfile
-# and proves its own contracts against bypass probes. It parses; it never runs
-# anything this repository authors. This file invokes it and requires its
-# evidence rather than carrying a second implementation of the same rules.
+# and proves its SQL and QUERY() contracts against bypass probes. It parses; it
+# never runs anything this repository authors. This file invokes it and requires
+# its evidence rather than carrying a second implementation of the same rules.
+#
+# Nothing in either layer claims to know what a report template renders to. What
+# the templates must contain is stated here instead, as repository example
+# checks: an exact checked-in list of the templates this repository ships, each
+# pinned by SHA-256 and classified as a fragment or a whole document, plus
+# per-file assertions on the one example whose table wrapper was reviewed.
 #
 # Exhaustive cross-package App MCP contract parity remains layer 6's job.
 
 require_relative "../scripts/content_contracts"
 require_relative "../scripts/file_contracts"
+require "digest"
 require "fileutils"
 require "json"
 require "open3"
@@ -68,17 +75,17 @@ COMMENTLESS_EXTENSIONS = %w[.json].freeze
 # The evidence tools/format-validator must report back, so delegating the
 # parsing work cannot quietly become skipping it.
 #
-#   contract-probe    bypass probes the SQL, QUERY(), interpolation, intrinsic,
-#                     and markup contracts prove themselves against
+#   contract-probe    bypass probes the SQL, QUERY(), interpolation, and
+#                     intrinsic contracts prove themselves against
 #   embedded-sql      QUERY() statements read out of a report template's syntax
 #                     tree
-#   markup-asserted   report templates whose markup matched the element
-#                     declaration and nesting rules held for them
+#   ejs-checked       report templates that compiled and parsed, and that use
+#                     neither a raw output tag nor an EJS output internal
 #
 # The first two are floors, so adding an example does not fail this layer. The
 # last is counted against the report templates this layer already found, so a
-# template whose markup is never checked — or that has no declaration at all —
-# is missing evidence rather than merely below a round number.
+# template that was never checked is missing evidence rather than merely below a
+# round number.
 MINIMUM_CONTRACT_PROBES = 85
 MINIMUM_EMBEDDED_SQL = 5
 
@@ -318,8 +325,8 @@ sql_files.each do |path|
   )
 end
 
-# 8. Structural, SQL, and markup validation run in tools/format-validator,
-#    whose parsers are pinned by its lockfile. Its contracts prove themselves
+# 8. Structural and SQL validation run in tools/format-validator, whose parsers
+#    are pinned by its lockfile. Its SQL and QUERY() contracts prove themselves
 #    against bypass probes on every run, and this layer requires that proof
 #    rather than repeating it in a second SQL implementation.
 ejs_files = external_files.select { |path| File.extname(path).casecmp(".ejs").zero? }
@@ -341,12 +348,12 @@ if node_available && dependencies_installed
   )
   # The counts below are the evidence that the work this layer delegated was
   # actually done: the bypass probes ran, every QUERY() statement was read out
-  # of a syntax tree, and every report template's markup was checked against
-  # the declaration held for it.
+  # of a syntax tree, and every report template compiled, parsed, and stayed
+  # clear of raw output tags and EJS output internals.
   {
     "contract-probe" => MINIMUM_CONTRACT_PROBES,
     "embedded-sql" => MINIMUM_EMBEDDED_SQL,
-    "markup-asserted" => ejs_files.length,
+    "ejs-checked" => ejs_files.length,
     "sql" => sql_files.length
   }.each do |kind, minimum|
     reported = stdout[/\b#{Regexp.escape(kind)}=(\d+)/, 1]
@@ -612,8 +619,42 @@ assert(
   "extension examples reference a stale hosted bootstrap"
 )
 
-# 11. Report examples use documented runtime functions only, and the date-range
-#     example parses real calendar days over a half-open interval.
+# 11. Report templates: an exact checked-in set, each one present, pinned by
+#     SHA-256, and classified as a fragment or a whole document. These are
+#     repository example checks, not an analysis of EJS in general — nothing
+#     here reasons about what a template escapes or renders. Because the set and
+#     the hashes are checked in, adding, removing, renaming, or editing a
+#     template requires a visible update to test/data/example-block-inventory.json
+#     in the same change, which is where the review happens. That each template
+#     compiles, parses, and names no raw output tag or EJS output internal is
+#     decided once, by tools/format-validator above.
+assert(File.file?(BLOCK_INVENTORY), "independent example block inventory is missing")
+inventory = JSON.parse(File.read(BLOCK_INVENTORY))
+declared_templates = inventory.fetch("report_templates")
+assert(
+  declared_templates.map { |row| row.fetch("path") } == ejs_files.map { |path| path.sub("#{PLUGIN}/", "") }.sort,
+  "declared report templates are not exactly the templates on disk: " \
+    "#{declared_templates.map { |row| row.fetch("path") }.join(", ")}"
+)
+declared_templates.each do |row|
+  path = File.join(PLUGIN, row.fetch("path"))
+  assert(File.file?(path), "declared report template is missing: #{row.fetch("path")}")
+  actual_digest = Digest::SHA256.hexdigest(File.binread(path))
+  assert(
+    actual_digest == row.fetch("sha256"),
+    "report template #{row.fetch("path")} is #{actual_digest}, not the declared #{row.fetch("sha256")}; " \
+      "update the inventory in the same change if the edit was intended"
+  )
+  text = File.read(path)
+  actual_kind = text.match?(/(?:^|[^A-Za-z])Document:/) ? "document" : "fragment"
+  assert(
+    %w[fragment document].include?(row.fetch("kind")) && actual_kind == row.fetch("kind"),
+    "report template #{row.fetch("path")} labels itself a #{actual_kind}, not the declared #{row.fetch("kind")}"
+  )
+end
+
+# Report examples use documented runtime functions only, and the date-range
+# example parses real calendar days over a half-open interval.
 report_examples = File.join(SKILLS, "fulcrum-report-building", "examples")
 report_corpus = FileContracts.files_under(report_examples).map { |path| FileContracts.read_text(path) }.join("\n")
 assert(
@@ -687,11 +728,37 @@ assert(
   !date_range.include?("${requested") && !date_range.include?("${$params"),
   "date-range example interpolates a raw request parameter"
 )
+# The table wrapper in this one example was reviewed by hand, and these
+# assertions are what hold that review in place. They are literal: the opening
+# tags appear before the first scriptlet that opens a branch, the closing tags
+# appear after the last one, and each of the three branches writes a whole row.
+# No inference about other templates is drawn from any of it.
+first_branch = date_range.index("<% if (")
+last_branch_end = date_range.rindex("<% } %>")
+assert(first_branch && last_branch_end, "date-range example no longer has the reviewed row branches")
+%w[<table <thead> <tbody>].each do |opening|
+  position = date_range.index(opening)
+  assert(
+    position && position < first_branch,
+    "date-range example does not open #{opening} unconditionally before its row branches"
+  )
+end
+%w[</tbody> </table>].each do |closing|
+  position = date_range.rindex(closing)
+  assert(
+    position && position > last_branch_end,
+    "date-range example does not close #{closing} unconditionally after its row branches"
+  )
+end
 assert(
-  date_range.include?("<tbody>") &&
-    date_range.include?("recordResults.rows.length === 0") &&
+  date_range.scan(/<tr>\s*(?:<t[dh]\b[\s\S]*?<\/t[dh]>\s*)+<\/tr>/).length == 4,
+  "date-range example does not write a complete <tr> in its header and in each of its three row branches"
+)
+assert(
+  date_range.include?("recordResults.rows.length === 0") &&
+    date_range.include?("colspan=\"3\"") &&
     date_range.include?("class=\"report-error\""),
-  "date-range example does not wrap its rows in a table with empty and error markup"
+  "date-range example does not give its empty and error branches their own spanning row"
 )
 # BETWEEN is inclusive of its upper bound, so it must not reach a timestamp
 # column. Naming it in prose that explains why is fine; surviving into a
@@ -703,9 +770,7 @@ assert(
 #     and targets all match the independent inventory, so a dropped, added,
 #     renumbered, or duplicated row fails.
 assert(File.file?(EXAMPLE_COVERAGE), "legacy example coverage manifest is missing")
-assert(File.file?(BLOCK_INVENTORY), "independent example block inventory is missing")
 coverage = File.read(EXAMPLE_COVERAGE)
-inventory = JSON.parse(File.read(BLOCK_INVENTORY))
 assert(
   coverage.match?(/SHA-256:\s*\n?>?\s*`274e73e1ea09910244821d809fa9b3427240d20b6f3b5133acb7c81b0912a7b5`/),
   "legacy example manifest does not record the artifact SHA-256"

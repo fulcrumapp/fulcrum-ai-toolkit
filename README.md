@@ -101,7 +101,7 @@ ruby test/external_examples_test.rb
 ruby test/smoke_test.rb
 ```
 
-Structural, SQL, and markup validation for the externalized examples and assets
+Structural and read-only SQL validation for the externalized examples and assets
 lives in `tools/format-validator`, a small Node package whose parsers are pinned
 exactly in `package.json` and `package-lock.json`. Install once, then run it
 directly or let the external examples test invoke it:
@@ -130,14 +130,18 @@ also requires the format validator's own counts back, so the work it delegates
 cannot quietly become work that is skipped.
 
 Validation never runs anything this repository authors. HTML is parsed, its
-inline scripts and styles are parsed, a report template is turned into the
-JavaScript `ejs` would run and then parsed, and CSS, PostgreSQL, JSON, and
+inline scripts and styles are parsed, a report template is compiled to source by
+the pinned official EJS parser and then parsed, and CSS, PostgreSQL, JSON, and
 JavaScript are parsed. No template is rendered, no example script is executed,
 and no query is issued, so validation needs no sandbox and claims none. Files
 that are not whole documents are labeled `Fragment:` and validated as such.
-Beyond well-formedness the validator decides three contracts: read-only SQL,
-what a `QUERY()` call and its interpolation may be, and what markup a template
-may emit.
+Beyond well-formedness the validator decides two contracts: read-only SQL, and
+what a `QUERY()` call and its interpolation may be.
+
+Nothing here proves that arbitrary EJS escapes safely or that a template renders
+to valid HTML. No branch analysis is performed and none is claimed. What the
+report templates must contain is stated instead as repository example checks
+over this repository's own fixed set of twelve templates.
 
 Every SQL statement — in a `.sql` asset or in a report template's `QUERY()`
 call — is held to allowlists applied to the parsed PostgreSQL tree: SELECT only,
@@ -171,14 +175,20 @@ rebinding or overwriting `String` or `RegExp` — through `const`, a parameter, 
 recognized class is measured on every run against the characters it actually
 keeps, so it cannot be widened without the check that depends on it failing.
 
-A template's markup is checked against a declaration held for it in
-`lib/template-markup.mjs`: the exact set of elements it may emit, that every
-element it opens is closed, and that a `<tr>` is written inside a row group
-inside a `<table>`. A template with no declaration is a failure rather than a
-skip. Bypass probes for all three contracts run on every invocation, on the same
-code paths the repository's own files take. The smoke test exercises a small
-site-inspection workflow through discovery, schema approval, offline review, and
-the no-MCP handoff path.
+The report templates are a fixed, checked-in set. `test/data/example-block-inventory.json`
+lists each one by path, pins it by SHA-256, and declares whether it is a whole
+document or a fragment, so adding, renaming, or editing a template requires a
+visible inventory update in the same change. Each template must also compile and
+parse, and must use neither a raw output tag nor an EJS output internal, both
+checked as the literal text they are. The date-range example carries per-file
+assertions for the table wrapper that was reviewed by hand: its `<table>`,
+`<thead>`, and `<tbody>` open before its row branches and close after them, and
+each branch writes a complete row. These are checks on this repository's
+examples; they generalize to nothing else. Bypass probes for the SQL and
+`QUERY()` contracts run on every invocation, on the same code paths the
+repository's own files take. The smoke test exercises a small site-inspection
+workflow through discovery, schema approval, offline review, and the no-MCP
+handoff path.
 
 ## Skills
 

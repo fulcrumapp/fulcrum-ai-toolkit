@@ -2,7 +2,7 @@
   "name": "fulcrum-ai-toolkit-format-validator",
   "version": "1.0.0",
   "private": true,
-  "description": "Parses and validates the structure, read-only SQL, recognized SQL encoders, and declared markup of every externalized example and asset in the distributable toolkit plugin, without executing any of them.",
+  "description": "Parses every externalized example and asset in the distributable toolkit plugin and holds their SQL to a read-only contract, without executing any of them.",
   "license": "MIT",
   "type": "module",
   "engines": {

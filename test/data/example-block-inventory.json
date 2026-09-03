@@ -1,5 +1,5 @@
 {
-  "description": "Independent record of the example inventory the legacy-example-coverage manifest must match exactly. Neutral identifiers and repository-relative paths only.",
+  "description": "Independent record of the example inventory the legacy-example-coverage manifest must match exactly, and of the report templates whose identity is pinned by hash. Neutral identifiers and repository-relative paths only. Editing a report template intentionally means updating its sha256 here, in the same change.",
   "legacy_units": [
     {
       "id": "L1",
@@ -361,6 +361,68 @@
       "source": "fulcrum-solution-document/SKILL.md",
       "ordinal": 2,
       "target": "skills/fulcrum-solution-document/assets/solution-share-summary.txt"
+    }
+  ],
+  "report_templates": [
+    {
+      "path": "skills/fulcrum-report-building/assets/ejs-tag-types.ejs",
+      "kind": "fragment",
+      "sha256": "d9d0b7d0c2e781dd1c482141f86b1494d8998cbb67cd43deb7c371bd4a53c5c3"
+    },
+    {
+      "path": "skills/fulcrum-report-building/examples/api-fulcrum-rest.ejs",
+      "kind": "fragment",
+      "sha256": "9f9380e4df31b72ee4c6fba85bcb18b7a91ed4384ccf018b4f3efeac8945bb71"
+    },
+    {
+      "path": "skills/fulcrum-report-building/examples/conditional-section.ejs",
+      "kind": "fragment",
+      "sha256": "27cc8cfca55304884da439e93504ec699119cf74b568a5306c7e07b9a0abc7f4"
+    },
+    {
+      "path": "skills/fulcrum-report-building/examples/html-filter-form.ejs",
+      "kind": "fragment",
+      "sha256": "a5050a6e2221c498ad9493e714f60b55fe730921fbf935e01061a9e2cb1b1c62"
+    },
+    {
+      "path": "skills/fulcrum-report-building/examples/params-date-range.ejs",
+      "kind": "fragment",
+      "sha256": "51317194b796c970a281c9609b6cf21f157a99b62892132d407731b308a1470b"
+    },
+    {
+      "path": "skills/fulcrum-report-building/examples/photo-url-signed-src.ejs",
+      "kind": "fragment",
+      "sha256": "b3da720a8de029a077003e994caa6853642f5a6ae4e3cac21e95d45398a0656c"
+    },
+    {
+      "path": "skills/fulcrum-report-building/examples/query-related-records.ejs",
+      "kind": "fragment",
+      "sha256": "aa4884e0069f2a78a994fc47e8b4b65e18970cc6486c0aa4174f3d39f3688d44"
+    },
+    {
+      "path": "skills/fulcrum-report-building/examples/query-repeatable-join.ejs",
+      "kind": "fragment",
+      "sha256": "3c26a7c7b2e6a1000345a6e8a2735ebad4d42c50c1257cff8dabdbac4bfde622"
+    },
+    {
+      "path": "skills/fulcrum-report-building/examples/query-rows-iteration.ejs",
+      "kind": "fragment",
+      "sha256": "cf97d4e95a09f6d3e22369400da6900143f6b84f7d0dba980d31b75603c53662"
+    },
+    {
+      "path": "skills/fulcrum-report-building/examples/record-field-access.ejs",
+      "kind": "fragment",
+      "sha256": "2c10c8a43339ffc98b43b8451b445e9415cd87dc6b5d1666ce9d9a2baea151ff"
+    },
+    {
+      "path": "skills/fulcrum-report-building/examples/repeatable-table-rows.ejs",
+      "kind": "fragment",
+      "sha256": "44defa35afb268e003bdaaf4db5170757c2d9384cfd4f754c015c75d05c6d6d3"
+    },
+    {
+      "path": "skills/fulcrum-report-building/examples/sanitize-params-for-sql.ejs",
+      "kind": "fragment",
+      "sha256": "994e2bc08056e0254f3230ce85c4d0fa6b0379befa5a71b4ec763cf8818d83fc"
     }
   ]
 }

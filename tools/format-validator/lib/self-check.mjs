@@ -1,19 +1,22 @@
-// Probes that prove the SQL, QUERY(), encoder, intrinsic, and markup contracts
-// still catch what they are for. They run on every validation, so the contracts
-// are exercised by the same command that validates the repository rather than
-// by a separate suite.
+// Probes that prove the SQL, QUERY(), encoder, and intrinsic contracts still
+// catch what they are for. They run on every validation, so the contracts are
+// exercised by the same command that validates the repository rather than by a
+// separate suite.
 //
 // Each probe is a bypass someone could plausibly write, and each names the rule
 // that must catch it. Naming the rule is what makes a probe useful: one that
 // only asserts "rejected" keeps passing when a rule dies and another happens to
 // cover for it, which is how a contract quietly stops working.
 //
+// The scope here is exactly the SQL a QUERY() call may carry. There is no probe
+// for what a template's HTML renders to, because nothing in this tool claims to
+// know that.
+//
 // Nothing here is executed. A probe template is turned into source and parsed,
-// and a probe's markup is read as text, exactly as a repository file is.
+// exactly as a repository file is.
 
 import { compiledSource, queryCalls, recognizedEncoders } from './ejs-queries.mjs';
 import { readOnlyViolations } from './sql-contract.mjs';
-import { markupViolations, markupViolationsAgainst } from './template-markup.mjs';
 
 const QUERY_ONE = { single: true };
 
@@ -207,54 +210,6 @@ const TEMPLATE_PROBES = [
   ['a lowercase name that is not the runtime helper', writes(`query('${WRITE}')`), 0, 'ignored', null]
 ];
 
-// [because, declared, template, valid] — markup judged without rendering
-// anything. A row emitted inside a loop is the case a careless reader misses,
-// and it is decided here on the template text.
-const MARKUP_PROBES = [
-  ['a row emitted in a loop with no table around it', ['td', 'tr'], '<% r.forEach(function (n) { %><tr><td><%= n %></td></tr><% }); %>', false],
-  ['a row placed directly in a table with no row group', ['table', 'td', 'tr'], '<table><tr><td>x</td></tr></table>', false],
-  ['a row emitted in a loop inside a table body', ['table', 'tbody', 'td', 'tr'], '<table><tbody><% r.forEach(function (n) { %><tr><td><%= n %></td></tr><% }); %></tbody></table>', true],
-  ['an unclosed element', ['div', 'p'], '<div><p>text</div>', false],
-  ['an element the template never declared', [], '<p>text</p>', false],
-  ['a declared element the template no longer emits', ['p'], 'text', false],
-  ['a void element that needs no closing tag', ['img'], '<img src="<%= url %>" alt="Example">', true],
-  ['raw EJS output that could emit undeclared markup', [], '<%- "<script>alert(1)</script>" %>', false],
-  ['EJS output internals emitting undeclared markup', [], '<% __append("<script>x</script>") %>', false],
-  ['escapeFn reassigned before escaped output', [], '<% escapeFn = (value) => value; %><%= userHtml %>', false],
-  ['escapeFn aliased before escaped output', [], '<% const emit = escapeFn; %><%= userHtml %>', false],
-  [
-    'an escaped output-internal identifier',
-    [],
-    '<% const emit = \\u005f\\u005fappend; emit("<script>x</script>"); %>',
-    false
-  ],
-  ['an EJS expression constructing tag names', [], '<<%= tag %>>x</<%= tag %>>', false],
-  [
-    'a table container opened only in one control-flow branch',
-    ['table', 'tbody', 'td', 'tr'],
-    '<% if (show) { %><table><tbody><% } %><tr><td>x</td></tr>',
-    false
-  ],
-  [
-    'mutually exclusive table and bare-row branches',
-    ['table', 'thead', 'tbody', 'td', 'th', 'tr'],
-    '<% if (show) { %><table><thead><tr><th>x</th></tr></thead><tbody><% } else { %><tr><td>x</td></tr><% } %></tbody></table>',
-    false
-  ],
-  [
-    'a row split across mutually exclusive branches',
-    ['table', 'thead', 'tbody', 'td', 'th', 'tr'],
-    '<table><thead><tr><th>x</th></tr></thead><tbody><tr><% if (show) { %><td>x</td><% } else { %><td>y</td><% } %></tr></tbody></table>',
-    false
-  ],
-  [
-    'a conditional table hidden behind nested control flow',
-    ['table', 'thead', 'tbody', 'td', 'th', 'tr'],
-    '<% try { if (show) { %><table><thead><tr><th>x</th></tr></thead><tbody><tr><td>x</td></tr></tbody></table><% } } catch (error) { } %>',
-    false
-  ]
-];
-
 function sqlFailures() {
   const failures = [];
 
@@ -358,40 +313,11 @@ function encoderFailures() {
   return failures;
 }
 
-function markupFailures() {
-  const failures = [];
-
-  for (const [because, declared, template, valid] of MARKUP_PROBES) {
-    const violations = markupViolationsAgainst(declared, template);
-    if (violations.length === 0 === valid) continue;
-
-    failures.push(
-      valid
-        ? `markup validation rejects ${because}: ${violations.join('; ')}`
-        : `markup validation no longer rejects ${because}`
-    );
-  }
-
-  // A template nobody declared is a failure rather than a skip, which is what
-  // keeps a new example from opting out of having its markup checked.
-  if (markupViolations('never-declared.ejs', '<p>text</p>').length === 0) {
-    failures.push('markup validation no longer rejects a template with no markup declaration');
-  }
-
-  return failures;
-}
-
 // Returns { failures, total } — the reasons the contracts are no longer sound,
 // and how many probes were exercised.
 export function selfCheck() {
   return {
-    failures: [...sqlFailures(), ...templateFailures(), ...encoderFailures(), ...markupFailures()],
-    total:
-      REJECTED_SQL.length +
-      ACCEPTED_SQL.length +
-      TEMPLATE_PROBES.length +
-      recognizedEncoders.size +
-      MARKUP_PROBES.length +
-      1
+    failures: [...sqlFailures(), ...templateFailures(), ...encoderFailures()],
+    total: REJECTED_SQL.length + ACCEPTED_SQL.length + TEMPLATE_PROBES.length + recognizedEncoders.size
   };
 }
