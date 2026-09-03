@@ -24,7 +24,7 @@ When Fulcrum App MCP is registered, use its live schemas for Report Template man
 
 `fulcrum_forms_create` creates a default Report Template unless `skip_default_report` is explicitly `true`. If form creation returns a form plus `report_template_error`, the form succeeded and only template creation failed. Do not create the form again; use `fulcrum_report_templates_create` for the missing template.
 
-> Source: [App MCP PR #28](about:blank) at commit [`43e68bb`](about:blank) defines the registered report tools and default-template result. Runtime names come from the [Fulcrum Report Builder functions reference](https://docs.fulcrumapp.com/docs/functions).
+> Source: [App MCP PR #28](about:blank) at commit [`f8c041e`](about:blank) defines the registered report tools and default-template result. Runtime names come from the [Fulcrum Report Builder functions reference](https://docs.fulcrumapp.com/docs/functions).
 
 ## Report Types
 
