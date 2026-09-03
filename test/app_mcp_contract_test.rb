@@ -168,8 +168,9 @@ assert(
 )
 assert(
   update_workflow.include?("elements: composedElements") &&
-    update_workflow.include?("removed_element_keys: removedElementKeys"),
-  "existing-form update does not pass the complete elements payload with removed_element_keys"
+    update_workflow.include?("if (removedElementKeys.length > 0)") &&
+    update_workflow.include?("updatePayload.removed_element_keys = removedElementKeys"),
+  "existing-form update does not conditionally pass removed_element_keys with the complete elements payload"
 )
 assert(
   update_workflow.include?("Preservation is the default") &&
@@ -334,19 +335,8 @@ contract_documents.each_value do |document|
   assert(document.match?(/^> Source: .*https:\/\//), "contract documentation lacks a linked Source note")
 end
 
-public_guidance_files = [
-  File.join(ROOT, "README.md"),
-  File.join(ROOT, "plugins", "fulcrum-ai-toolkit", "docs", "legacy-product-knowledge-coverage.md"),
-  File.join(SKILLS, "fulcrum-app-builder", "SKILL.md"),
-  File.join(SKILLS, "fulcrum-product-knowledge", "SKILL.md"),
-  File.join(SKILLS, "fulcrum-data-events", "SKILL.md"),
-  File.join(SKILLS, "fulcrum-data-events", "resources", "data-event-examples.md"),
-  File.join(SKILLS, "fulcrum-data-events", "resources", "data-events-runtime-api.md"),
-  File.join(SKILLS, "fulcrum-app-extensions", "SKILL.md"),
-  File.join(SKILLS, "fulcrum-app-extensions", "resources", "extension-bridge-api.md"),
-  File.join(SKILLS, "fulcrum-report-building", "SKILL.md"),
-  File.join(SKILLS, "fulcrum-report-building", "resources", "report-template-reference.md")
-].freeze
+public_guidance_files = [File.join(ROOT, "README.md")] +
+  Dir[File.join(ROOT, "plugins", "fulcrum-ai-toolkit", "**", "*.{md,json,yaml,yml}")].sort
 private_content_pattern = %r{/(?:Users|home)/|[A-Za-z]:[\\/](?:Users|home)[\\/]|atlassian\.net|slack\.com|/mnt/skills/organization}i
 assert(
   ["C:\\Users\\example\\file.md", "C:/home/example/file.md"].all? { |path| path.match?(private_content_pattern) },
