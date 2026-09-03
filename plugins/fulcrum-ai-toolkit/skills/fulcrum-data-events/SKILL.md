@@ -13,7 +13,8 @@ When Fulcrum App MCP is registered, call `fulcrum_expressions_data_events_refere
 
 There are no standalone Data Event CRUD tools. Read the form and its current `script` with `fulcrum_forms_get`, compose the approved handler with the existing script, and write the complete script with `fulcrum_forms_update`. Do not overwrite unrelated handlers.
 
-> Source: [App MCP PR #28](about:blank) at commit [`f8c041e`](about:blank) defines the registered knowledge tool and form-script persistence contract.
+> Connector authority: Live installed App MCP schemas define the registered
+> knowledge tool and form-script persistence contract.
 
 ## Event Lifecycle
 
@@ -302,5 +303,4 @@ The full expressions reference is available in `resources/` as `expressions-refe
 - [Fulcrum `LOADFILE()` reference](https://docs.fulcrumapp.com/docs/data-events-loadfile)
 - [Fulcrum `REQUEST()` reference](https://docs.fulcrumapp.com/docs/data-events-request)
 - [Fulcrum `STORAGE()` reference](https://docs.fulcrumapp.com/docs/data-events-storage)
-- [App MCP tool-contract prerequisite](about:blank)
 - [Agent Skills specification](https://agentskills.io/specification)
