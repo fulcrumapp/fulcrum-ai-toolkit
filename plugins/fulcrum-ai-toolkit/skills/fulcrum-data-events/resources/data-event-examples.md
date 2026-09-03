@@ -1,6 +1,6 @@
 # Data Event Examples
 
-> Source: https://docs.fulcrumapp.com/docs/data-events-reference.md
+> Source: https://docs.fulcrumapp.com/docs/data-events-reference
 > Verified: 2026-09-02
 
 ## Capture Timestamp with Yes/No Toggle

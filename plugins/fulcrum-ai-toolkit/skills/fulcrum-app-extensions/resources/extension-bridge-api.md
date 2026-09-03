@@ -1,6 +1,6 @@
 # App Extension Bridge API Reference
 
-> Source: https://docs.fulcrumapp.com/docs/app-extensions-introduction.md
+> Source: https://docs.fulcrumapp.com/docs/app-extensions-introduction
 > Source: https://github.com/fulcrumapp/app-mcp/pull/28
 > Verified: 2026-09-02
 

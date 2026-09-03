@@ -1,6 +1,6 @@
 # Report Template Functions Reference
 
-> Source: [Fulcrum Report Builder functions](https://docs.fulcrumapp.com/docs/functions.md) for runtime signatures; [Report Builder variables](https://docs.fulcrumapp.com/docs/variables#record) for record value access; and the public [Sketches report example](https://docs.fulcrumapp.com/docs/sketches#add-metadata-to-sketches) for `QUERY()` result handling.
+> Source: [Fulcrum Report Builder functions](https://docs.fulcrumapp.com/docs/functions) for runtime signatures; [Report Builder variables](https://docs.fulcrumapp.com/docs/variables#record) for record value access; and the public [Sketches report example](https://docs.fulcrumapp.com/docs/sketches#add-metadata-to-sketches) for `QUERY()` result handling.
 > Source: [App MCP PR #28](https://github.com/fulcrumapp/app-mcp/pull/28) at commit [`f8c041e`](https://github.com/fulcrumapp/app-mcp/commit/f8c041ee309c61c6154cce1a7b2cb84fc4c4cf10) for Report Template persistence and report generation tools.
 > Verified: 2026-09-02
 
