@@ -1,0 +1,14 @@
+<%# Source: https://docs.fulcrumapp.com/reference/query-post %>
+<%# Purpose: encode a user-controlled parameter before it reaches SQL. %>
+<%#
+  The Query endpoint accepts one complete SQL string in `q` and exposes no
+  server-side bind parameters, so the template is responsible for encoding.
+  Reduce the value to an allowlisted character class, or map it through a
+  fixed lookup, before interpolating it.
+%>
+
+<% const safeStatus = ($params.status || '').replace(/[^a-zA-Z_]/g, ''); %>
+<% const result = QUERY(
+  `SELECT * FROM "App" WHERE _status = '${safeStatus}'`,
+  { format: 'json' }
+); %>

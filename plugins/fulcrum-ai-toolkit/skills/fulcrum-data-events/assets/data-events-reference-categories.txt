@@ -1,0 +1,23 @@
+# Source: https://docs.fulcrumapp.com/docs/data-events-reference
+# Purpose: the knowledge categories to request before authoring a script.
+# Live installed App MCP schemas define the current arguments and response
+# shape; treat the category names below as a starting point, not a contract.
+
+fulcrum_expressions_data_events_reference(category="values")
+    Value read and write functions.
+
+fulcrum_expressions_data_events_reference(category="visibility")
+    Field visibility and read-only control.
+
+fulcrum_expressions_data_events_reference(category="http")
+    Outbound request and record-loading functions.
+
+fulcrum_expressions_data_events_reference(category="ui")
+    Alerts, confirmations, and extension launching.
+
+fulcrum_expressions_data_events_reference(category="validation")
+    Save-time validation and required-field control.
+
+# Calculation-field expressions are a different language from Data Event
+# JavaScript. Use fulcrum_expressions_list_functions for those, and see
+# ../../fulcrum-app-design/assets/calculation-field-expressions.txt.

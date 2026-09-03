@@ -1,0 +1,10 @@
+# Source: https://docs.fulcrumapp.com/reference/forms-intro
+# Purpose: the 422 messages returned when a field element omits the required
+# booleans on create or update.
+#
+# Every field element must include `required`, `hidden`, and `disabled` as
+# explicit booleans, even though a forms GET omits false values.
+
+"disabled must be true or false"
+"hidden must be true or false"
+"required must be true or false"

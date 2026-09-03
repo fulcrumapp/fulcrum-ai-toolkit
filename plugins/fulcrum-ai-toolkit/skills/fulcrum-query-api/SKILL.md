@@ -45,7 +45,10 @@ read-only analytics.
 3. **Model relationships.** Use
    [`query-modeling-reference.md`](resources/query-modeling-reference.md) to
    distinguish system, form, repeatable, link, and media tables and select
-   explicit join keys.
+   explicit join keys. Read-only starting shapes — app-table sampling, a
+   parent/repeatable join, a PostGIS distance filter, and record metadata
+   columns — are in
+   [`assets/query-api-examples.sql`](assets/query-api-examples.sql).
 4. **Separate identifiers from values.** The Query endpoint accepts one complete
    SQL string in `q`; it does not expose server-side bind parameters. Allowlist
    discovered table/column identifiers. For dynamic values, require a reviewed,
@@ -89,3 +92,4 @@ read-only boundary, and provide the smallest discovery step needed.
 - [POST Query](https://docs.fulcrumapp.com/reference/query-post)
 - [Fulcrum Query functions](https://docs.fulcrumapp.com/reference/query-functions)
 - [Fulcrum public OpenAPI](https://raw.githubusercontent.com/fulcrumapp/api/v2/reference/rest-api.json)
+- [Read-only SQL asset index](assets/README.md)

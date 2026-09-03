@@ -224,12 +224,8 @@ Status values drive workflow visibility, filtering, and can trigger data events 
 
 ### Required booleans on create AND update
 
-Every field element **MUST** include `required`, `hidden`, and `disabled` as explicit booleans. Omitting them (even though `forms GET` omits false values) causes a 422 on create or update:
-```
-"disabled must be true or false"
-"hidden must be true or false"
-"required must be true or false"
-```
+Every field element **MUST** include `required`, `hidden`, and `disabled` as explicit booleans. Omitting them (even though `forms GET` omits false values) causes a 422 on create or update. The exact messages are in
+[`required-boolean-errors.txt`](../assets/required-boolean-errors.txt).
 
 ### forms_update requires the full object
 
@@ -237,18 +233,9 @@ Every field element **MUST** include `required`, `hidden`, and `disabled` as exp
 
 ### RecordLinkField — correct parameter name
 
-The API field is `linked_form_id` (not `form_id` or `record_link_form_id`). Additionally, at least one of `allow_existing_records` or `allow_creating_records` must be `true`:
-
-```json
-{
-  "type": "RecordLinkField",
-  "linked_form_id": "the-form-id",
-  "allow_existing_records": true,
-  "allow_creating_records": false,
-  "allow_updating_records": false,
-  "allow_multiple_records": false
-}
-```
+The API field is `linked_form_id` (not `form_id` or `record_link_form_id`). Additionally, at least one of `allow_existing_records` or `allow_creating_records` must be `true`. A minimal element is
+[`record-link-field.json`](../assets/record-link-field.json); its public source
+is recorded in [`assets/README.md`](../assets/README.md).
 
 ### ChoiceField — multiple selection
 

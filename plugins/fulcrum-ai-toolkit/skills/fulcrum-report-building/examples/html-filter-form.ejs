@@ -1,0 +1,13 @@
+<%# Source: https://docs.fulcrumapp.com/docs/reports-introduction %>
+<%# Purpose: an HTML-output report that re-submits to its own URL. %>
+<%# Pair with params-date-range.ejs, which validates the submitted values. %>
+
+<form method="GET">
+  <label>Start Date: <input type="date" name="start_date" value="<%= startDate %>"></label>
+  <label>End Date: <input type="date" name="end_date" value="<%= endDate %>"></label>
+  <button type="submit">Generate</button>
+</form>
+
+<% if ($params.start_date) { %>
+  <%# Render the results table only after parameters are supplied. %>
+<% } %>

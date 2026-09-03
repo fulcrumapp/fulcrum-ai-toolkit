@@ -46,44 +46,10 @@ An app extension has two parts: a Data Event script that opens the extension, an
 
 Do not substitute an old external bootstrap URL. Start from the complete HTML returned by `fulcrum_extensions_generate`, which includes the current standalone bootstrap needed for Reference File and offline use.
 
-```html
-<!DOCTYPE html>
-<html>
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <!-- The generated artifact contains Fulcrum's current inline bootstrap here. -->
-  <style>
-    /* Keep styles self-contained — no external stylesheets at runtime */
-    body { font-family: sans-serif; margin: 0; padding: 16px; }
-  </style>
-</head>
-<body>
-  <select id="my-select">
-    <option value="">-- choose --</option>
-    <option value="option_a">Option A</option>
-    <option value="option_b">Option B</option>
-  </select>
-  <button id="save-btn">Save</button>
-  <script>
-    var select = document.getElementById('my-select');
-
-    Fulcrum.load(function(payload) {
-      initialize(payload.data || {});
-    });
-
-    function initialize(data) {
-      select.value = data.current_value || '';
-    }
-
-    document.getElementById('save-btn').addEventListener('click', function() {
-      var selectedValue = document.getElementById('my-select').value;
-      Fulcrum.finish({ value: selectedValue });
-    });
-  </script>
-</body>
-</html>
-```
+A self-contained page with inline styles, the current public inline bootstrap,
+and an inline picker script is in
+[`examples/species-picker-extension.html`](examples/species-picker-extension.html).
+The full example index is [`examples/README.md`](examples/README.md).
 
 > Source: The payload and inline-bootstrap semantics above follow the [public App Extensions quick start](https://docs.fulcrumapp.com/docs/app-extensions-introduction#quick-start);
 > live installed App MCP schemas govern generated artifacts.
@@ -94,66 +60,23 @@ Extensions exchange data with the host through the Data Event that opened them. 
 
 ### Passing values into the extension
 
-```javascript
-// In the form's Data Event script:
-ON('click', 'open_picker_btn', function() {
-  OPENEXTENSION({
-    url: 'attachment://species_picker.html',
-    title: 'Species picker',
-    data: {
-      current_value: VALUE('species_name'),
-      record_id: RECORDID()
-    },
-    onMessage: function(message) {
-      var data = message && message.data;
-      if (data) {
-        SETVALUE('species_name', data.value);
-      }
-    }
-  });
-});
-```
+The Data Event calls `OPENEXTENSION({ url, title, data, onMessage })`. Use
+`attachment://<filename>.html` for HTML uploaded as a Reference File. The
+canonical trigger, including the `onMessage` write-back, is
+[`examples/open-extension-pass-values.js`](examples/open-extension-pass-values.js).
 
-Inside the HTML extension, receive the data with `Fulcrum.load(...)`:
-
-```javascript
-Fulcrum.load(function(payload) {
-  var data = payload.data || {};
-  var currentValue = data.current_value;
-  var recordId = data.record_id;
-});
-```
+Inside the HTML extension, receive the data with `Fulcrum.load(({ data }) => ...)`:
+[`examples/extension-load-payload.js`](examples/extension-load-payload.js).
 
 ### Triggering from data events (OPENEXTENSION)
 
-The Data Event opens the extension with an options object. When the HTML page calls `Fulcrum.finish(data)`, the Data Event's `onMessage` callback receives the result and can write it to form fields:
+The Data Event opens the extension with an options object. When the HTML page calls `Fulcrum.finish(data)`, the Data Event's `onMessage` callback receives the result and can write it to form fields. The same canonical trigger covers this flow —
+[`examples/open-extension-pass-values.js`](examples/open-extension-pass-values.js)
+passes `mode` alongside the current value, and
+[`examples/extension-bootstrap-lifecycle.js`](examples/extension-bootstrap-lifecycle.js)
+shows the matching page lifecycle.
 
-```javascript
-ON('click', 'open_picker_btn', function() {
-  OPENEXTENSION({
-    url: 'attachment://my_extension_reference_file.html',
-    title: 'My extension',
-    data: {
-      current_value: VALUE('species_name'),
-      mode: 'picker'
-    },
-    onMessage: function(message) {
-      var data = message && message.data;
-      if (data) {
-        SETVALUE('species_name', data.value);
-      }
-    }
-  });
-});
-```
-
-Access the context data inside the HTML page:
-
-```javascript
-Fulcrum.load(function(payload) {
-  var currentValue = (payload.data || {}).current_value;
-});
-```
+Treat `payload.data` as untrusted input inside the page. The bridge is the only trusted channel; do not add ad hoc `window.postMessage` listeners, and verify `event.origin` and `event.source` if the page embeds any other frame.
 
 ## The Picker Pattern — Read This First
 
@@ -171,21 +94,8 @@ The ChoiceField has its own picker UI that conflicts with the extension. The cor
 4. `ON('click', ...)` on the HyperlinkField → `OPENEXTENSION(...)` in data events
 5. Extension returns the selected value with `Fulcrum.finish()`; the Data Event writes it back to the target field.
 
-```javascript
-// Data events — opens extension when user taps the hyperlink button
-ON('click', 'open_species_picker', function(event) {
-  OPENEXTENSION({
-    url: 'attachment://species_picker.html',
-    data: { current_value: VALUE('selected_species') },
-    onMessage: function(message) {
-      var data = message && message.data;
-      if (data) {
-        SETVALUE('selected_species', data.value);
-      }
-    }
-  });
-});
-```
+The picker trigger is
+[`examples/open-species-picker.js`](examples/open-species-picker.js).
 
 Getting this wrong means building the extension and the form around the wrong field type — an expensive rework. Lock the field type decision before writing extension code.
 
@@ -201,15 +111,8 @@ Whether an extension works offline depends entirely on where its assets are host
 
 **Decision:** If the extension is needed during offline field work, host everything in Reference Files and inline all JavaScript. If the extension is only used in the office (online), CDN libraries are acceptable.
 
-**CDN version pinning:** If you use CDN libraries, always lock to a specific semver version. `latest` or unversioned CDN URLs break silently when the library updates.
-
-```html
-<!-- BAD — will break when chart.js pushes a major update -->
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-
-<!-- GOOD — locked version, predictable behavior -->
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-```
+**CDN version pinning:** If you use CDN libraries, always lock to a specific semver version. `latest` or unversioned CDN URLs break silently when the library updates. Compare both forms in
+[`assets/cdn-version-pinning.html`](assets/cdn-version-pinning.html).
 
 ## Uploading and Attaching Extensions
 
@@ -218,24 +121,10 @@ The extension HTML file is uploaded as a **Reference File** on the form. When Ap
 > Connector authority: Live installed App MCP schemas define exact tool
 > arguments and the generated Reference File workflow.
 
-```
-Step 1: fulcrum_extensions_generate(
-          pattern="picker",
-          name="species-picker",
-          description="Select a species",
-          field_name="open_species_picker"
-        )
-Step 2: fulcrum_reference_files_upload(
-          form_id=...,
-          file_name="species-picker.html",
-          content=<generated HTML>
-        )
-Step 3: fulcrum_forms_get(id=...)
-Step 4: fulcrum_forms_update(
-          id=...,
-          script=<existing script plus generated Data Event>
-        )
-```
+The generate, upload, read, and update sequence is in
+[`assets/app-mcp-extension-publish-sequence.txt`](assets/app-mcp-extension-publish-sequence.txt).
+It calls `fulcrum_extensions_generate`, `fulcrum_reference_files_upload`,
+`fulcrum_forms_get`, and `fulcrum_forms_update` in that order.
 
 Use `fulcrum_extensions_list_patterns` and `fulcrum_extensions_explain(pattern="picker")` to explore registered patterns before generating. There is no standalone Data Event update tool; preserve the existing form `script` through the form get/update operations.
 
@@ -289,3 +178,5 @@ An extension that tries to replicate an entire sub-application. Extensions are p
 
 - [Fulcrum app extensions introduction](https://docs.fulcrumapp.com/docs/app-extensions-introduction)
 - [Fulcrum offline capabilities](https://docs.fulcrumapp.com/docs/offline-capabilities)
+- [Runnable example index](examples/README.md)
+- [Bridge API reference](resources/extension-bridge-api.md)

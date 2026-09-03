@@ -1,0 +1,28 @@
+<%# Source: https://docs.fulcrumapp.com/docs/functions#query %>
+<%# Source: https://docs.fulcrumapp.com/docs/sketches#add-metadata-to-sketches %>
+<%# Purpose: read related records beyond the single-record report context. %>
+<%#
+  QUERY(sql, options) returns a result object; the row objects are on `rows`.
+  The Query API is read-only and accepts one complete SQL string with no
+  server-side bind parameters, so every interpolated value must be encoded or
+  allowlisted first. The filter below is reduced to a safe character class.
+%>
+
+<% const siteIdField = record.formValues.find('site_id'); %>
+<% const siteId = ((siteIdField && siteIdField.value) || '').replace(/[^a-zA-Z0-9_-]/g, ''); %>
+<% const relatedInspections = QUERY(
+  `SELECT inspector_name, inspection_date, status
+   FROM "Site Inspections"
+   WHERE site_id = '${siteId}'
+   ORDER BY _created_at DESC
+   LIMIT 100`,
+  { format: 'json' }
+); %>
+
+<% relatedInspections.rows.forEach(function (row) { %>
+  <tr>
+    <td><%= row.inspector_name %></td>
+    <td><%= row.inspection_date %></td>
+    <td><%= row.status %></td>
+  </tr>
+<% }); %>

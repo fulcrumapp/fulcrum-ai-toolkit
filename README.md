@@ -97,6 +97,7 @@ ruby scripts/validate.rb
 ruby test/app_mcp_contract_test.rb
 ruby test/manifest_contract_test.rb
 ruby test/product_knowledge_decomposition_test.rb
+ruby test/external_examples_test.rb
 ruby test/smoke_test.rb
 ```
 
@@ -105,7 +106,12 @@ directory/name consistency, corporate absolute paths, possible credentials,
 JSON manifests, and README inventory.
 The contract test prevents regressions in App MCP tool names, signatures, and
 preservation-safe form updates. The decomposition test checks focused skill
-discovery, sources, router/coverage links, and package boundaries. The smoke
+discovery, sources, router/coverage links, and package boundaries. The external
+examples test proves that no fenced code block remains in skill Markdown, that
+every `examples/` and `assets/` file is indexed and reachable, that each one
+names a public source, and that the legacy example manifest accounts for every
+legacy unit; it also parses JSON assets, syntax-checks JavaScript with Node
+when a runtime is available, and forbids destructive SQL. The smoke
 test exercises a small
 site-inspection workflow through discovery, schema approval, offline review,
 and the no-MCP handoff path.

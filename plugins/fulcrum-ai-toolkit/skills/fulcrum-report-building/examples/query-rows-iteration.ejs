@@ -1,0 +1,15 @@
+<%# Source: https://docs.fulcrumapp.com/docs/sketches#add-metadata-to-sketches %>
+<%# Purpose: iterate a QUERY() result. %>
+<%# QUERY() returns a result object; the row objects are on `rows`. %>
+
+<% const result = QUERY(
+  `SELECT * FROM "Inspections"
+   WHERE _status = 'complete'
+   ORDER BY _created_at DESC
+   LIMIT 100`,
+  { format: 'json' }
+); %>
+
+<% result.rows.forEach(function (row) { %>
+  <div><%= row.id %></div>
+<% }); %>
