@@ -15,6 +15,6 @@
   belongs in a public package.
 - Review exceptions explicitly. A local resource must have an owning skill,
   a public source, an offline need that a link cannot satisfy, and a size
-  proportionate to that need. Any skill resource over 100 KB requires a named,
-  reviewed exception in the resource contract with its offline rationale.
-  Generated or authoritative snapshots do not qualify for that exception.
+  proportionate to that need. Any distributable plugin file over 100 KB requires
+  a named, reviewed exception in the resource contract with its offline
+  rationale. Generated or authoritative snapshots do not qualify.
