@@ -33,5 +33,7 @@ jobs:
         env:
           REQUIRE_NODE: "1"
         run: ruby test/external_examples_test.rb
+      - name: Check distributable resource contracts
+        run: ruby test/resource_contract_test.rb
       - name: Run smoke test
         run: ruby test/smoke_test.rb

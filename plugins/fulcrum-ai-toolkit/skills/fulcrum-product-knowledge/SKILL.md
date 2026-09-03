@@ -49,6 +49,9 @@ feasibility.
   or extension skill. Do not infer offline support from a feature name.
 - **Source discovery:** use [`llms-txt-index.md`](resources/llms-txt-index.md)
   to find public Fulcrum documentation, then open the current source.
+- **Resource governance:** use
+  [`resource-governance.md`](resources/resource-governance.md) when deciding
+  whether a public source should be linked, indexed, or packaged for offline use.
 
 ## Authority And App MCP Boundary
 
@@ -56,6 +59,10 @@ Use live installed App MCP schemas for connector names, arguments, required
 fields, and response shapes. Use public Fulcrum docs/OpenAPI for product and API
 behavior, and pricing for plan gates. If these sources disagree, do not blend
 them; report the discrepancy and identify which authority governs each claim.
+
+> Source: [Fulcrum public OpenAPI](https://raw.githubusercontent.com/fulcrumapp/api/v2/reference/rest-api.json)
+> defines REST behavior; [OpenAPI and Postman collection](https://docs.fulcrumapp.com/reference/openapi-and-postman-collection)
+> explains the supported public contract.
 
 App MCP is an app-configuration control plane. Query API execution, record CRUD, and media CRUD remain outside App MCP. The focused skills describe additional
 read-only and destructive boundaries. Never infer an unregistered tool or claim
@@ -89,4 +96,6 @@ migration runbooks, or roadmap statements.
 
 - [Fulcrum developer documentation](https://docs.fulcrumapp.com/)
 - [Fulcrum public OpenAPI document](https://raw.githubusercontent.com/fulcrumapp/api/v2/reference/rest-api.json)
+- [OpenAPI and Postman collection](https://docs.fulcrumapp.com/reference/openapi-and-postman-collection)
 - [Fulcrum pricing](https://www.fulcrumapp.com/pricing/)
+- [Resource governance](resources/resource-governance.md)

@@ -39,7 +39,6 @@ SKILLS = File.join(PLUGIN, "skills")
 EXAMPLE_COVERAGE = File.join(PLUGIN, "docs", "legacy-example-coverage.md")
 BLOCK_INVENTORY = File.join(ROOT, "test", "data", "example-block-inventory.json")
 FORMAT_VALIDATOR = File.join(ROOT, "tools", "format-validator")
-OPENAPI = File.join(SKILLS, "fulcrum-product-knowledge", "resources", "fulcrum-rest-api.json")
 
 EXTERNAL_DIRECTORIES = %w[examples assets].freeze
 INDEX_BASENAME = "README.md"
@@ -276,8 +275,8 @@ distributable.each do |path|
   text = FileContracts.read_text(path)
   assert(credential_shapes(text).empty?, "possible credential in #{relative(path)}")
   assert(
-    !text.include?("github.com/fulcrumapp/app-mcp"),
-    "private App MCP repository URL in #{relative(path)}"
+    !ContentContracts.private_collaboration_url?(text),
+    "private collaboration URL in #{relative(path)}"
   )
   assert(
     !ContentContracts.private_filesystem_path?(text),
@@ -372,36 +371,39 @@ else
   Kernel.warn "External examples test: no Node runtime or pinned dependencies; skipped structural format validation"
 end
 
-# The RecordLinkField asset is held to the vendored public Forms schema, so an
-# invented property or a missing required property fails here, not at the API.
+# The RecordLinkField asset is held to the compact contract reviewed from the
+# public Forms documentation. This keeps the test offline without treating a
+# generated API snapshot as authority; reviewers can compare the current public
+# OpenAPI when intentionally changing this fixture.
 record_link = File.join(SKILLS, "fulcrum-app-design", "assets", "record-link-field.json")
 assert(File.file?(record_link), "RecordLinkField asset is missing")
 element = JSON.parse(File.read(record_link))
-schemas = JSON.parse(File.read(OPENAPI)).dig("components", "schemas")
-base_schema = schemas.fetch("FormBaseElement")
-record_link_schema = schemas.fetch("FormRecordLinkFieldElement").fetch("allOf").last
-allowed_properties = base_schema.fetch("properties").keys | record_link_schema.fetch("properties").keys
-unknown_properties = element.keys - allowed_properties
+expected_record_link_properties = %w[
+  type key label data_name description required disabled hidden linked_form_id
+  allow_existing_records allow_creating_records allow_updating_records
+  allow_empty_records
+]
 assert(
-  unknown_properties.empty?,
-  "RecordLinkField asset uses properties the public Forms schema does not define: #{unknown_properties.join(", ")}"
+  element.keys == expected_record_link_properties,
+  "RecordLinkField asset properties changed: #{element.keys.join(", ")}"
 )
-missing_required = base_schema.fetch("required") - element.keys
+required_properties = %w[type key data_name label required disabled hidden]
+missing_required = required_properties - element.keys
 assert(
   missing_required.empty?,
   "RecordLinkField asset omits required element properties: #{missing_required.join(", ")}"
 )
 assert(
-  element["type"] == "RecordLinkField" &&
-    base_schema.dig("properties", "type", "enum").include?(element["type"]),
+  element["type"] == "RecordLinkField",
   "RecordLinkField asset does not declare the RecordLinkField type"
 )
 %w[required disabled hidden].each do |flag|
   assert([true, false].include?(element[flag]), "RecordLinkField asset must set #{flag} as an explicit boolean")
 end
-record_link_schema.fetch("properties").each do |name, definition|
-  next unless element.key?(name) && definition["type"] == "boolean"
-
+%w[
+  allow_existing_records allow_creating_records allow_updating_records
+  allow_empty_records
+].each do |name|
   assert([true, false].include?(element[name]), "RecordLinkField asset property #{name} must be a boolean")
 end
 assert(
@@ -421,39 +423,21 @@ assert(
   "RecordLinkField asset must allow existing or created records"
 )
 
-# The field-type reference teaches the same schema in prose. Every property
-# name it tabulates must exist in the vendored public schema, so an invented
-# property cannot survive in the reference after being removed from the asset.
+# The field-type reference must teach the same reviewed local contract.
 field_reference = File.read(
   File.join(SKILLS, "fulcrum-app-design", "resources", "field-type-reference.md")
 )
-schema_properties = lambda do |name|
-  schema = schemas[name]
-  next nil unless schema
-
-  (schema["allOf"] ? schema["allOf"].last["properties"] : schema["properties"]).keys
-end
-universal_properties = schema_properties.call("FormBaseElement")
-# Headings whose properties are not those of a Form<Heading>Element.
-REFERENCE_SCHEMA_OVERRIDES = {
-  "Universal Properties (All Field Types)" => %w[FormBaseElement],
-  "StatusField" => %w[FormBody FormStatusField],
-  "Repeatable" => %w[FormRepeatableElement]
-}.freeze
-field_reference.split(/^## /).drop(1).each do |section|
-  heading = section.lines.first.strip
-  documented = section.scan(/^\| ([a-z_]+(?:\.[a-z_]+)?) \| /).flatten.uniq
-  next if documented.empty?
-
-  schema_names = REFERENCE_SCHEMA_OVERRIDES.fetch(heading, ["Form#{heading}Element"])
-  known = schema_names.filter_map { |name| schema_properties.call(name) }.flatten
-  assert(!known.empty?, "field-type reference section #{heading} has no matching public schema")
-  known |= universal_properties unless REFERENCE_SCHEMA_OVERRIDES.key?(heading)
-  # A dotted row documents a nested key of a property named on its own row.
-  unknown = documented.reject { |name| known.include?(name.split(".").first) }
+record_link_section = field_reference.split("## RecordLinkField", 2).last.split(/^## /, 2).first
+documented_record_link_properties =
+  record_link_section.scan(/^\| ([a-z_]+) \| /).flatten
+assert(
+  documented_record_link_properties == expected_record_link_properties.last(5),
+  "field-type reference RecordLinkField properties changed: #{documented_record_link_properties.join(", ")}"
+)
+%w[type key data_name label required disabled hidden].each do |name|
   assert(
-    unknown.empty?,
-    "field-type reference section #{heading} documents properties the public Forms schema does not define: #{unknown.join(", ")}"
+    field_reference.include?("| #{name} |"),
+    "field-type reference omits required common property #{name}"
   )
 end
 
@@ -989,8 +973,6 @@ assert(skill_names.length == 16, "skill inventory changed: #{skill_names.length}
 ].each do |focused|
   assert(File.file?(File.join(SKILLS, focused, "SKILL.md")), "focused skill #{focused} was removed")
 end
-assert(File.file?(OPENAPI), "vendored OpenAPI resource was retired")
-
 puts format(
   "External examples test passed: %d externalized files across %d indexes, 0 skill Markdown fences, %d legacy units, %d current blocks",
   external_files.length,

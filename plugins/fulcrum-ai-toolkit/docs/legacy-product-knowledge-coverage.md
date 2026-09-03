@@ -68,13 +68,13 @@ nearby `Source:` note for copied or materially adapted documentation.
 | **AI** — roadmap direction | `private-or-drop` | Private companion only | None; intentionally excluded from the public toolkit | Do not publish forward-looking statements from a legacy snapshot. Only documented, currently available behavior belongs in public skills. |
 | **Sidecars and internal tools** — internal application and repository inventory | `private-or-drop` | Private companion catalog only | None; intentionally excluded from the public toolkit | Do not include private repositories, deployment locations, internal ownership, customer delivery details, or access paths. Public sidecar guidance must be generic. |
 | **Common misconceptions** — platform, workflow, reporting, GIS, repeatable, offline, and service-ownership boundaries | `existing` | [`fulcrum-discovery`](../skills/fulcrum-discovery/SKILL.md) for pre-build checks and [`fulcrum-product-knowledge`](../skills/fulcrum-product-knowledge/SKILL.md) for sourced boundaries | [Developer documentation](https://docs.fulcrumapp.com/), [offline capabilities](https://docs.fulcrumapp.com/docs/offline-capabilities) | Keep only misconceptions that public documentation can resolve. Remove organization-specific service promises and anecdotal claims. |
-| **Source index** — public help, developer, Data Events, reporting, Query API, REST API, webhook, URL Action, extension, pricing, role, and SSO sources | `move` | [`llms-txt-index.md`](../skills/fulcrum-product-knowledge/resources/llms-txt-index.md), this manifest, and a public OpenAPI link or generated contract that replaces the vendored `fulcrum-rest-api.json` snapshot | [Fulcrum developer `llms.txt`](https://docs.fulcrumapp.com/llms.txt), [public OpenAPI](https://raw.githubusercontent.com/fulcrumapp/api/v2/reference/rest-api.json) | Retire the 412 KB vendored OpenAPI snapshot rather than preserving it as canonical. Keep only public URLs and refresh generated contracts from their named upstream sources. |
+| **Source index** — public help, developer, Data Events, reporting, Query API, REST API, webhook, URL Action, extension, pricing, role, and SSO sources | `move` | [`llms-txt-index.md`](../skills/fulcrum-product-knowledge/resources/llms-txt-index.md), [`resource-governance.md`](../skills/fulcrum-product-knowledge/resources/resource-governance.md), this manifest, and the named public OpenAPI contract | [Fulcrum developer `llms.txt`](https://docs.fulcrumapp.com/llms.txt), [public OpenAPI](https://raw.githubusercontent.com/fulcrumapp/api/v2/reference/rest-api.json), [OpenAPI documentation](https://docs.fulcrumapp.com/reference/openapi-and-postman-collection) | The heavyweight vendored REST contract is retired. Keep compact selected indexes and offline resources only when they name their public upstream and refresh expectations. |
 
 ## Public-repository boundary
 
 This public package intentionally excludes tenant data, credentials, personal
 identities, customer-specific examples, private collaboration locations,
 private repository inventories, internal deployment details, unsupported
-feature-enablement techniques, and forward-looking product statements. If a
-future migration needs any of that context, create a separately access-controlled
-companion and link to it only from an appropriate private environment.
+feature-enablement techniques, and forward-looking product statements. Any
+separately controlled private companion remains outside this public package and
+is not linked from distributable content.
