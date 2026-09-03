@@ -364,25 +364,16 @@ assert(
   "public toolkit content contains private person or customer provenance"
 )
 assert(
-  ContentContracts.private_provenance?("(internal partner deep dive)"),
-  "private provenance detector misses its neutral fixture"
-)
-assert(
-  ContentContracts.private_provenance?("https://docs.example.com/source (internal partner interview)"),
-  "unrelated public URL masks private provenance"
-)
-assert(
   !ContentContracts.private_provenance?("> Source: https://docs.example.com/source"),
   "private provenance detector rejects a standardized public source fixture"
 )
 [
-  "Internal partner deep dive notes",
-  "Notes from a customer call",
-  "Notes from a client session",
-  "Notes from an internal session",
+  "(Example Person interview)",
+  "## Example Person interview",
+  "Example Person workshop notes",
+  "Workshop notes from Example Person",
   "(Example Person, Example Customer field visit)",
-  "Example Person at Example Customer customer interview",
-  "Source: Example Person at Example Customer; see https://docs.ruby-lang.org"
+  "Example Person from Example Organization customer session"
 ].each do |fixture|
   assert(
     ContentContracts.private_provenance?(fixture),
@@ -393,6 +384,20 @@ assert(
   !ContentContracts.private_provenance?("(public workshop on API design)"),
   "private provenance detector rejects a neutral public event"
 )
+assert(
+  !ContentContracts.private_provenance?("## Platform Boundaries - Resolve Before the Interview"),
+  "private provenance detector treats a general heading as named attribution"
+)
+[
+  "> Source: [Customer interviews](https://docs.example.com/customer-interviews)",
+  "> Source: https://docs.example.com/workshop/field-visit",
+  "> Source: [Example Person interview](<https://docs.example.com/interviews>)"
+].each do |fixture|
+  assert(
+    ContentContracts.invalid_source_attributions(fixture).empty?,
+    "Source attribution detector rejects event words inside a public link or URL"
+  )
+end
 
 [
   "> Source: private notes",
@@ -414,7 +419,10 @@ end
   "> Source: https://wiki.corp/source",
   "> Source: http://127.1/source",
   "> Source: http://0x7f.0x0.0x0.0x1/source",
-  "> Provenance: https://docs.example.com/source"
+  "> Provenance: https://docs.example.com/source",
+  "> Source: Example Person at Example Company; see https://docs.ruby-lang.org",
+  "> Source: Example Person at ExampleCo; see https://docs.ruby-lang.org",
+  "> Source: Example Person interview; see https://docs.ruby-lang.org"
 ].each do |fixture|
   assert(
     !ContentContracts.invalid_source_attributions(fixture).empty?,
@@ -440,6 +448,8 @@ assert(
   "/home/example/file",
   "path: \"/Users/example/file\"",
   "file:///home/example/file",
+  "file://localhost/home/example/file",
+  "file://127.0.0.1/Users/example/file",
   "/mnt/skills/organization/reference",
   "/mnt/example/file"
 ].each do |fixture|

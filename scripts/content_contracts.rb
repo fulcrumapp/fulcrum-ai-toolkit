@@ -3,18 +3,16 @@
 require "uri"
 
 module ContentContracts
-  RESEARCH_EVENT_PATTERN = /(?:deep[ \t\r\n-]+dive|workshop|interview|field[ -]visit|(?:customer|client|internal|research)[ -]session|(?:customer|client)[ -]call)/i
-  PRIVATE_EVENT_PATTERN = /\b(?:customer|client|internal|private)(?:\s+\p{L}+){0,2}\s+(?:deep[ \t\r\n-]+dive|workshop|interview|field[ -]visit|session|call)\b/i
-  NAMED_EVENT_PATTERN = /[A-Z][\p{L}'-]+(?:\s+[A-Z][\p{L}'-]+){1,3}\s*,\s*[A-Z][\p{L}&.'-]+(?:\s+[A-Z][\p{L}&.'-]+){0,3}\s+(?i:#{RESEARCH_EVENT_PATTERN.source})/
-  NAMED_AFFILIATION_EVENT_PATTERN = /[A-Z][\p{L}'-]+(?:\s+[A-Z][\p{L}'-]+){1,3}\s+(?:at|from)\s+[A-Z][\p{L}&.'-]+(?:\s+[A-Z][\p{L}&.'-]+){0,3}[^\n]{0,100}(?i:#{RESEARCH_EVENT_PATTERN.source})/
-  PRIVATE_AFFILIATION_PATTERN = /\b(?:at|from)\s+(?:[A-Z][\p{L}&.'-]*\s+){0,4}(?:Customer|Client)\b/
   SOURCE_LABEL = /\A(?:Source:|\*\*Source(?::\*\*|\*\*:)|__Source(?::__|__:))/i
   PROVENANCE_LABEL = /\A(?:Provenance:|\*\*Provenance(?::\*\*|\*\*:)|__Provenance(?::__|__:))/i
   INVENTORY_LABEL = /\A(?:Inventory fingerprint:|\*\*Inventory fingerprint(?::\*\*|\*\*:)|__Inventory fingerprint(?::__|__:))/i
-  PRIVATE_FILESYSTEM_PATH = %r{
-    (?:\A|(?<=[\s"'`(\[\{:=>]))/(?:Users|home|mnt)(?:/|\z)|
-    file:/+(?:Users|home|mnt)(?:/|\z)
-  }ix
+  RESEARCH_EVENT = /(?:deep[ -]dive|workshop|interview|field[ -]visit|(?:customer|client|internal)[ -]session|(?:customer|client)[ -]call)/i
+  PROPER_TOKEN = /[A-Z][\p{L}0-9&.'-]+/
+  ENTITY = /(?:#{PROPER_TOKEN.source}(?:\s+#{PROPER_TOKEN.source}){1,3}|[A-Z][a-z0-9]+[A-Z][A-Za-z0-9&.'-]*|[A-Z]{2,})/
+  ATTRIBUTION_SEPARATOR = /[\s,;:()—-]{1,8}/
+  ATTRIBUTION = /(?:#{ENTITY.source}#{ATTRIBUTION_SEPARATOR.source}(?i:#{RESEARCH_EVENT.source})|(?i:#{RESEARCH_EVENT.source})#{ATTRIBUTION_SEPARATOR.source}#{ENTITY.source}|(?i:#{RESEARCH_EVENT.source})\s+notes?\s+(?:from|by)\s+#{ENTITY.source})/
+  AFFILIATION = /#{ENTITY.source}\s+(?:at|from)\s+(?:#{ENTITY.source}|#{PROPER_TOKEN.source})/
+  PRIVATE_PATH = %r{\A/(?:Users|home|mnt)(?:/|\z)}i
   PRIVATE_HOST_SUFFIXES = %w[
     corp
     example
@@ -31,21 +29,14 @@ module ContentContracts
 
   module_function
 
+  # This detects attribution-shaped prose, not arbitrary names or personal data.
   def private_provenance?(text)
-    return true if text.match?(NAMED_EVENT_PATTERN) || text.match?(NAMED_AFFILIATION_EVENT_PATTERN)
-    return true if text.match?(PRIVATE_EVENT_PATTERN)
-
-    text.each_line.any? do |line|
+    non_source_text = text.each_line.reject do |line|
       normalized = normalize_container_prefix(line)
-      attribution_line = normalized.match?(SOURCE_LABEL) || normalized.match?(PROVENANCE_LABEL)
-      attribution_line &&
-        (normalized.match?(RESEARCH_EVENT_PATTERN) || normalized.match?(PRIVATE_AFFILIATION_PATTERN))
-    end
-  end
-
-  def private_filesystem_path?(text)
-    without_http_urls = text.gsub(%r{https?://[^\s"'`<>]+}i, "")
-    without_http_urls.match?(PRIVATE_FILESYSTEM_PATH)
+      normalized.match?(SOURCE_LABEL) ||
+        normalized.match?(INVENTORY_LABEL)
+    end.join
+    non_source_text.match?(ATTRIBUTION)
   end
 
   def invalid_source_attributions(text)
@@ -53,9 +44,13 @@ module ContentContracts
       normalized = normalize_container_prefix(line)
       next line.strip if normalized.match?(PROVENANCE_LABEL)
       next unless normalized.match?(SOURCE_LABEL)
-      next if public_url?(normalized)
+      next line.strip unless public_url?(normalized)
 
-      line.strip
+      unlinked = normalized
+        .sub(SOURCE_LABEL, "")
+        .gsub(/\[[^\]]*\]\((?:<https?:\/\/[^>]+>|https?:\/\/[^)]+)\)/i, "")
+        .gsub(%r{https?://[^\s"'`<>]+}i, "")
+      line.strip if unlinked.match?(AFFILIATION) || unlinked.match?(ATTRIBUTION)
     end
   end
 
@@ -67,15 +62,38 @@ module ContentContracts
     relative_path == allowed_path ? [] : lines
   end
 
+  def private_filesystem_path?(text)
+    uris = URI.extract(text, %w[file http https])
+    return true if uris.any? { |candidate| private_file_uri?(candidate) }
+
+    without_web_urls = uris
+      .select { |candidate| candidate.match?(/\Ahttps?:/i) }
+      .reduce(text) { |content, candidate| content.gsub(candidate, "") }
+    without_web_urls.scan(%r{(?:\A|[\s"'`(\[\{:=>])(/[^\s"'`<>]*)}).flatten.any? do |path|
+      path.match?(PRIVATE_PATH)
+    end
+  end
+
+  # Layer 3 deliberately bans fence marker tokens rather than parsing Markdown.
+  def fence_marker_token?(text)
+    text.include?("```") || text.include?("~~~")
+  end
+
+  def private_file_uri?(candidate)
+    uri = URI.parse(candidate)
+    uri.scheme&.casecmp("file")&.zero? && uri.path.match?(PRIVATE_PATH)
+  rescue URI::InvalidURIError
+    false
+  end
+
   def public_url?(text)
     URI.extract(text, %w[http https]).any? do |candidate|
       uri = URI.parse(candidate)
       host = uri.host&.downcase&.sub(/\.\z/, "")
       next false unless uri.is_a?(URI::HTTP) && public_dns_name?(host)
-      numeric_host = host.split(".").all? { |label| label.match?(/\A(?:\d+|0x[0-9a-f]+)\z/i) }
-      next false if numeric_host || host.include?(":")
 
-      true
+      numeric_host = host.split(".").all? { |label| label.match?(/\A(?:\d+|0x[0-9a-f]+)\z/i) }
+      !numeric_host && !host.include?(":")
     rescue URI::InvalidURIError
       false
     end
