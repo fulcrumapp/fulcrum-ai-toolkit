@@ -5,7 +5,7 @@ description: Use when building, modifying, generating, or debugging Fulcrum repo
 
 A Fulcrum **report template** is EJS (Embedded JavaScript) that runs server-side inside a headless Chrome instance (Puppeteer). The output is a PDF or HTML page — not a live view. Every report starts from a single record's context and expands from there via `QUERY()`.
 
-> **Provenance:** Report APIs and template behavior should be checked against current Fulcrum documentation. The rendering workflow below is a toolkit convention, not a guarantee of public product support.
+> **Guidance boundary:** Report APIs and template behavior should be checked against current Fulcrum documentation. The rendering workflow below is a toolkit convention, not a guarantee of public product support.
 
 ## App MCP Control Plane
 

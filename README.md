@@ -167,6 +167,13 @@ The toolkit combines public Fulcrum documentation with portable workflow
 guidance. Live App MCP schemas own connector names, arguments, and result
 shapes; public Fulcrum documentation owns product and runtime behavior.
 
+Distributable provenance uses `> Source:` notes with a public URL. The legacy
+coverage manifest may instead use its neutral `Inventory fingerprint:` label.
+Named people, customers, and non-public research attribution are not valid
+public
+provenance. Validation enforces these structural cues across packaged text,
+including dotfiles; it is not a general-purpose personal-data detector.
+
 ### Sources
 
 - [Fulcrum developer documentation](https://docs.fulcrumapp.com/) for public

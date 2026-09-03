@@ -5,6 +5,7 @@ require "json"
 require "pathname"
 require "yaml"
 require_relative "content_contracts"
+require_relative "file_contracts"
 require_relative "manifest_contracts"
 
 ROOT = File.expand_path("..", __dir__)
@@ -140,21 +141,16 @@ public_text_paths = [
   File.join(ROOT, "marketplace.json"),
   File.join(ROOT, ".claude-plugin", "marketplace.json"),
   File.join(ROOT, ".github", "plugin", "marketplace.json"),
-  File.join(ROOT, ".agents", "plugins", "marketplace.json"),
-  File.join(PLUGIN_DIR, ".mcp.json")
-] +
-  Dir[File.join(PLUGIN_DIR, "**", "*.{md,json,yaml,yml}")] +
-  Dir[File.join(PLUGIN_DIR, ".*-plugin", "*.{md,json,yaml,yml}")]
+  File.join(ROOT, ".agents", "plugins", "marketplace.json")
+] + FileContracts.files_under(PLUGIN_DIR)
 private_reference_pattern = %r{
-  /(?:Users|home)/|
   atlassian\.net|
   slack\.com|
-  /mnt/skills/organization|
   github\.com/fulcrumapp/app-mcp
 }ix
 public_text_paths.uniq.select { |path| File.file?(path) }.each do |path|
-  text = File.read(path)
-  if text.match?(private_reference_pattern)
+  text = FileContracts.read_text(path)
+  if text.match?(private_reference_pattern) || ContentContracts.private_filesystem_path?(text)
     failures << "#{repo_relative_path(path)}: contains a private path or collaboration URL"
   end
 
@@ -164,6 +160,14 @@ public_text_paths.uniq.select { |path| File.file?(path) }.each do |path|
 
   ContentContracts.invalid_source_attributions(text).each do
     failures << "#{repo_relative_path(path)}: Source attribution must include a public URL on the same line"
+  end
+
+  ContentContracts.invalid_inventory_fingerprints(
+    text,
+    relative_path: repo_relative_path(path),
+    allowed_path: COVERAGE_MAP_RELATIVE_PATH
+  ).each do
+    failures << "#{repo_relative_path(path)}: Inventory fingerprint is allowed only in #{COVERAGE_MAP_RELATIVE_PATH}"
   end
 end
 
@@ -183,16 +187,22 @@ if cursor_manifest
   end
 end
 
-expected_explicit_skill_adapters = [
-  "#{PLUGIN_RELATIVE_PATH}/.claude-plugin/plugin.json",
-  "#{PLUGIN_RELATIVE_PATH}/.codex-plugin/plugin.json",
-  "#{PLUGIN_RELATIVE_PATH}/.cursor-plugin/plugin.json"
-]
-expected_explicit_skill_adapters.each do |relative_path|
-  skills_path = json_documents.dig(relative_path, "skills")
-  unless skills_path == "./skills/"
-    failures << "#{relative_path}: skills must point to ./skills/"
+claude_manifest_path = "#{PLUGIN_RELATIVE_PATH}/.claude-plugin/plugin.json"
+if (claude_manifest = json_documents[claude_manifest_path])
+  ManifestContracts.validate_claude(claude_manifest).each do |error|
+    failures << "#{claude_manifest_path}: #{error}"
   end
+end
+
+codex_manifest_path = "#{PLUGIN_RELATIVE_PATH}/.codex-plugin/plugin.json"
+if (codex_manifest = json_documents[codex_manifest_path])
+  ManifestContracts.validate_codex(codex_manifest).each do |error|
+    failures << "#{codex_manifest_path}: #{error}"
+  end
+end
+
+unless cursor_manifest&.dig("skills") == "./skills/"
+  failures << "#{cursor_manifest_path}: skills must point to ./skills/"
 end
 
 hermes_manifest = File.join(PLUGIN_DIR, ".hermes-plugin", "plugin.yaml")

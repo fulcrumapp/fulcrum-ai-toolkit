@@ -44,6 +44,32 @@ module ManifestContracts
   CURSOR_NAME = /\A[a-z0-9](?:[a-z0-9.-]*[a-z0-9])?\z/
   SEMVER = /\A(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-((?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\.(?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?\z/
 
+  CLAUDE_FIELDS = %w[
+    $schema
+    author
+    description
+    homepage
+    keywords
+    license
+    name
+    repository
+    skills
+    version
+  ].freeze
+  CLAUDE_SCHEMA = "https://json.schemastore.org/claude-code-plugin-manifest.json"
+
+  CODEX_FIELDS = %w[
+    author
+    description
+    homepage
+    keywords
+    license
+    name
+    repository
+    skills
+    version
+  ].freeze
+
   module_function
 
   # Source: https://agent-plugins.org/specification#52-manifest-object
@@ -114,6 +140,70 @@ module ManifestContracts
     errors
   end
 
+  # Source: https://json.schemastore.org/claude-code-plugin-manifest.json
+  # The upstream schema permits additional fields. This repository intentionally
+  # accepts only the documented skills-only subset above for deterministic CI.
+  def validate_claude(manifest)
+    return ["manifest must be an object"] unless manifest.is_a?(Hash)
+
+    errors = unknown_fields(manifest, CLAUDE_FIELDS)
+    errors << "name is required" unless manifest.key?("name")
+    errors << "name must be a non-empty string" unless manifest["name"].is_a?(String) && !manifest["name"].empty?
+    if manifest.key?("$schema") && manifest["$schema"] != CLAUDE_SCHEMA
+      errors << "$schema must identify the Claude Code plugin manifest schema"
+    end
+    %w[version description repository license].each do |field|
+      errors << "#{field} must be a string" if manifest.key?(field) && !manifest[field].is_a?(String)
+    end
+    errors << "homepage must be an absolute URI" if manifest.key?("homepage") && !absolute_uri?(manifest["homepage"])
+    if manifest.key?("author")
+      errors.concat(
+        validate_author(
+          manifest["author"],
+          allowed_fields: %w[name email url],
+          require_name: true,
+          require_nonempty_name: true
+        )
+      )
+    end
+    errors.concat(validate_string_array(manifest["keywords"], "keywords")) if manifest.key?("keywords")
+    errors.concat(validate_skill_paths(manifest["skills"], required: true, exact_path: "./skills/"))
+    errors
+  end
+
+  # Source: https://developers.openai.com/plugins/build/plugins#manifest-fields
+  # This package uses Codex's documented skills-only metadata subset.
+  def validate_codex(manifest)
+    return ["manifest must be an object"] unless manifest.is_a?(Hash)
+
+    errors = unknown_fields(manifest, CODEX_FIELDS)
+    errors << "name is required" unless manifest.key?("name")
+    errors.concat(validate_name(manifest["name"], CURSOR_NAME))
+    if manifest.key?("version") && (!manifest["version"].is_a?(String) || !manifest["version"].match?(SEMVER))
+      errors << "version must be semantic version X.Y.Z"
+    end
+    %w[description license].each do |field|
+      errors << "#{field} must be a string" if manifest.key?(field) && !manifest[field].is_a?(String)
+    end
+    %w[homepage repository].each do |field|
+      errors << "#{field} must be an absolute URI" if manifest.key?(field) && !absolute_uri?(manifest[field])
+    end
+    if manifest.key?("author")
+      errors.concat(
+        validate_author(
+          manifest["author"],
+          allowed_fields: %w[name email url],
+          require_name: true,
+          require_nonempty_name: true,
+          validate_email: true
+        )
+      )
+    end
+    errors.concat(validate_string_array(manifest["keywords"], "keywords")) if manifest.key?("keywords")
+    errors.concat(validate_skill_paths(manifest["skills"], required: true, exact_path: "./skills/"))
+    errors
+  end
+
   def unknown_fields(manifest, allowed)
     unknown = manifest.keys - allowed
     unknown.empty? ? [] : ["unsupported fields: #{unknown.join(", ")}"]
@@ -160,6 +250,19 @@ module ManifestContracts
 
   def string_or_string_array?(value)
     value.is_a?(String) || (value.is_a?(Array) && value.all? { |item| item.is_a?(String) })
+  end
+
+  def validate_skill_paths(value, required:, exact_path: nil)
+    return ["skills is required"] if required && value.nil?
+    return [] if value.nil?
+
+    paths = value.is_a?(String) ? [value] : value
+    return ["skills must be a string or string array"] unless paths.is_a?(Array) && paths.all? { |path| path.is_a?(String) }
+    return ["skills must not be empty"] if paths.empty?
+    return ["skills must point exactly to #{exact_path}"] if exact_path && paths != [exact_path]
+    return [] if paths.all? { |path| path.start_with?("./") }
+
+    ["skills paths must start with ./"]
   end
 
   def absolute_uri?(value)

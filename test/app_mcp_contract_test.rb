@@ -2,6 +2,9 @@
 # frozen_string_literal: true
 
 require_relative "../scripts/content_contracts"
+require_relative "../scripts/file_contracts"
+require "fileutils"
+require "tmpdir"
 
 ROOT = File.expand_path("..", __dir__)
 SKILLS = File.join(ROOT, "plugins", "fulcrum-ai-toolkit", "skills")
@@ -337,11 +340,8 @@ public_files = [
   File.join(ROOT, "marketplace.json"),
   File.join(ROOT, ".claude-plugin", "marketplace.json"),
   File.join(ROOT, ".github", "plugin", "marketplace.json"),
-  File.join(ROOT, ".agents", "plugins", "marketplace.json"),
-  File.join(ROOT, "plugins", "fulcrum-ai-toolkit", ".mcp.json")
-] +
-  Dir[File.join(ROOT, "plugins", "fulcrum-ai-toolkit", "**", "*.{md,json,yaml,yml}")] +
-  Dir[File.join(ROOT, "plugins", "fulcrum-ai-toolkit", ".*-plugin", "*.{md,json,yaml,yml}")]
+  File.join(ROOT, ".agents", "plugins", "marketplace.json")
+] + FileContracts.files_under(File.join(ROOT, "plugins", "fulcrum-ai-toolkit"))
 required_hidden_adapters = %w[
   .claude-plugin/plugin.json
   .codex-plugin/plugin.json
@@ -353,9 +353,10 @@ assert(
   (required_hidden_adapters - public_files).empty?,
   "public privacy scan omits hidden plugin adapters"
 )
-public_content = public_files.map { |path| File.read(path) }.join("\n")
+public_content = public_files.map { |path| FileContracts.read_text(path) }.join("\n")
 assert(
-  !public_content.match?(%r{/(?:Users|home)/|atlassian\.net|slack\.com|/mnt/skills/organization|github\.com/fulcrumapp/app-mcp}i),
+  !public_content.match?(%r{atlassian\.net|slack\.com|github\.com/fulcrumapp/app-mcp}i) &&
+    !ContentContracts.private_filesystem_path?(public_content),
   "public toolkit content contains a private path or collaboration URL"
 )
 assert(
@@ -371,35 +372,27 @@ assert(
   "unrelated public URL masks private provenance"
 )
 assert(
-  !ContentContracts.private_provenance?("(public workshop https://docs.example.com/source)"),
-  "private provenance detector rejects a public source fixture"
-)
-assert(
-  ContentContracts.private_provenance?("(partner interview https://)"),
-  "private provenance detector accepts a malformed URL"
-)
-assert(
-  ContentContracts.private_provenance?("(partner workshop http://localhost/source)"),
-  "private provenance detector accepts a local URL"
+  !ContentContracts.private_provenance?("> Source: https://docs.example.com/source"),
+  "private provenance detector rejects a standardized public source fixture"
 )
 [
-  "(partner interview https://bad..example.com/source)",
-  "(partner interview https://-bad.example.com/source)",
-  "(partner interview https://wiki.corp/source)",
-  "(partner interview https://service.home.arpa/source)",
-  "(partner interview http://127.1/source)",
-  "(partner interview http://127.0.0.1./source)",
-  "(partner interview http://0x7f.0x0.0x0.0x1/source)",
-  "(partner interview https://wiki.corp./source)",
-  "(partner interview https://source.example/source)",
-  "(partner interview\nnotes)",
-  "(partner\ninterview)"
+  "Internal partner deep dive notes",
+  "Notes from a customer call",
+  "Notes from a client session",
+  "Notes from an internal session",
+  "(Example Person, Example Customer field visit)",
+  "Example Person at Example Customer customer interview",
+  "Source: Example Person at Example Customer; see https://docs.ruby-lang.org"
 ].each do |fixture|
   assert(
     ContentContracts.private_provenance?(fixture),
-    "private provenance detector misses a malformed, private, or wrapped fixture"
+    "private provenance detector misses a neutral attribution fixture"
   )
 end
+assert(
+  !ContentContracts.private_provenance?("(public workshop on API design)"),
+  "private provenance detector rejects a neutral public event"
+)
 
 [
   "> Source: private notes",
@@ -414,9 +407,108 @@ end
     "Source attribution detector misses a neutral Markdown fixture"
   )
 end
+[
+  "> Source: https://",
+  "> Source: http://localhost/source",
+  "> Source: https://bad..example.com/source",
+  "> Source: https://wiki.corp/source",
+  "> Source: http://127.1/source",
+  "> Source: http://0x7f.0x0.0x0.0x1/source",
+  "> Provenance: https://docs.example.com/source"
+].each do |fixture|
+  assert(
+    !ContentContracts.invalid_source_attributions(fixture).empty?,
+    "Source attribution detector accepts a malformed, private, or unsupported provenance fixture"
+  )
+end
+[
+  "# Source: private notes",
+  "## Provenance: https://docs.example.com/source",
+  "10. item\n\n    Source: private notes"
+].each do |fixture|
+  assert(
+    !ContentContracts.invalid_source_attributions(fixture).empty?,
+    "attribution detector misses a heading-form fixture"
+  )
+end
 assert(
   ContentContracts.invalid_source_attributions("> **Source:** https://docs.example.com/source").empty?,
   "Source attribution detector rejects a public URL"
 )
+
+[
+  "/home/example/file",
+  "path: \"/Users/example/file\"",
+  "file:///home/example/file",
+  "/mnt/skills/organization/reference",
+  "/mnt/example/file"
+].each do |fixture|
+  assert(ContentContracts.private_filesystem_path?(fixture), "filesystem path detector misses a private path fixture")
+end
+[
+  "https://docs.example.org/home/reference",
+  "https://docs.example.org/Users/reference",
+  "https://docs.example.org/mnt/skills/organization/reference",
+  "https://docs.example.org/?next=/home/reference",
+  "https://docs.example.org/?next=/Users/reference",
+  "https://docs.example.org/?next=/mnt/reference"
+].each do |fixture|
+  assert(!ContentContracts.private_filesystem_path?(fixture), "filesystem path detector rejects a public URL path")
+end
+
+inventory_fixture = "> **Inventory fingerprint:** private artifact"
+assert(
+  !ContentContracts.invalid_inventory_fingerprints(
+    inventory_fixture,
+    relative_path: "plugins/fulcrum-ai-toolkit/skills/example/SKILL.md",
+    allowed_path: "plugins/fulcrum-ai-toolkit/docs/legacy-product-knowledge-coverage.md"
+  ).empty?,
+  "inventory fingerprint exception escapes its allowed coverage manifest"
+)
+assert(
+  !ContentContracts.invalid_inventory_fingerprints(
+    "### Inventory fingerprint: private artifact",
+    relative_path: "plugins/fulcrum-ai-toolkit/skills/example/SKILL.md",
+    allowed_path: "plugins/fulcrum-ai-toolkit/docs/legacy-product-knowledge-coverage.md"
+  ).empty?,
+  "inventory fingerprint scope check misses a heading-form fixture"
+)
+assert(
+  !ContentContracts.invalid_inventory_fingerprints(
+    "-    item\n\n     Inventory fingerprint: private artifact",
+    relative_path: "plugins/fulcrum-ai-toolkit/skills/example/SKILL.md",
+    allowed_path: "plugins/fulcrum-ai-toolkit/docs/legacy-product-knowledge-coverage.md"
+  ).empty?,
+  "inventory fingerprint scope check misses a list continuation"
+)
+assert(
+  ContentContracts.invalid_inventory_fingerprints(
+    inventory_fixture,
+    relative_path: "plugins/fulcrum-ai-toolkit/docs/legacy-product-knowledge-coverage.md",
+    allowed_path: "plugins/fulcrum-ai-toolkit/docs/legacy-product-knowledge-coverage.md"
+  ).empty?,
+  "inventory fingerprint is rejected in its allowed coverage manifest"
+)
+
+Dir.mktmpdir("toolkit-hidden-privacy") do |directory|
+  hidden_file = File.join(directory, ".private.md")
+  hidden_text_file = File.join(directory, ".private.txt")
+  hidden_directory_file = File.join(directory, ".private", "notes")
+  FileUtils.mkdir_p(File.dirname(hidden_directory_file))
+  File.write(hidden_file, "path: /home/example/private\n")
+  File.write(hidden_text_file, "path: /mnt/example/private\n")
+  File.write(hidden_directory_file, "(Example Person, Example Customer field visit)\n")
+  discovered = FileContracts.files_under(directory)
+  assert(discovered.include?(hidden_file), "privacy traversal omits a hidden file")
+  assert(discovered.include?(hidden_text_file), "privacy traversal omits a hidden text extension")
+  assert(discovered.include?(hidden_directory_file), "privacy traversal omits a hidden directory")
+  assert(
+    discovered.any? do |path|
+      text = FileContracts.read_text(path)
+      ContentContracts.private_filesystem_path?(text) || ContentContracts.private_provenance?(text)
+    end,
+    "privacy traversal does not inspect hidden fixture content"
+  )
+end
 
 puts "App MCP contract test passed: exact tools, runtime signatures, and removal-safe updates"

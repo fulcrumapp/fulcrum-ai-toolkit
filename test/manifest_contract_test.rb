@@ -87,13 +87,37 @@ assert(
   "Cursor schema fixture fails to reject an email with consecutive dots"
 )
 
-# Sources:
-# - https://json.schemastore.org/claude-code-plugin-manifest.json
-# - https://developers.openai.com/plugins/build/plugins
-%w[.claude-plugin/plugin.json .codex-plugin/plugin.json].each do |relative_path|
-  manifest = json(relative_path)
-  assert(manifest["skills"] == "./skills/", "#{relative_path} does not reference the shared skills directory")
-  assert(author_object_valid?(manifest["author"]), "#{relative_path} author is not an object with a name")
+# Source: https://json.schemastore.org/claude-code-plugin-manifest.json
+claude = json(".claude-plugin/plugin.json")
+assert(ManifestContracts.validate_claude(claude).empty?, "Claude manifest is invalid")
+assert(claude["skills"] == "./skills/", "Claude manifest does not reference the shared skills directory")
+[
+  claude.merge("version" => 1),
+  claude.merge("unknownField" => true),
+  claude.merge("author" => "Example Publisher"),
+  claude.merge("skills" => 1),
+  claude.merge("skills" => "./wrong/"),
+  claude.merge("skills" => []),
+  claude.reject { |key| key == "name" }
+].each do |fixture|
+  assert(!ManifestContracts.validate_claude(fixture).empty?, "Claude validator accepts an invalid mutation")
+end
+
+# Source: https://developers.openai.com/plugins/build/plugins#manifest-fields
+codex = json(".codex-plugin/plugin.json")
+assert(ManifestContracts.validate_codex(codex).empty?, "Codex manifest is invalid")
+assert(codex["skills"] == "./skills/", "Codex manifest does not reference the shared skills directory")
+[
+  codex.merge("version" => 1),
+  codex.merge("unknownField" => true),
+  codex.merge("author" => "Example Publisher"),
+  codex.merge("skills" => 1),
+  codex.merge("skills" => "skills/"),
+  codex.merge("skills" => "./wrong/"),
+  codex.merge("skills" => []),
+  codex.reject { |key| key == "name" }
+].each do |fixture|
+  assert(!ManifestContracts.validate_codex(fixture).empty?, "Codex validator accepts an invalid mutation")
 end
 
 # Source: https://github.com/NousResearch/hermes-agent
