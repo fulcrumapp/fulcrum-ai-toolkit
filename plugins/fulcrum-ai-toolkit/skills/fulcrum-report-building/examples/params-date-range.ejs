@@ -64,10 +64,7 @@
 <% const endExclusiveDay = rangeError ? null : addDays(endDay, 1); %>
 <% const endExclusiveDate = endExclusiveDay ? isoDay(endExclusiveDay) : ''; %>
 
-<% if (rangeError) { %>
-  <p class="report-error"><%= rangeError %></p>
-<% } else { %>
-  <% const recordResults = QUERY(
+<% const recordResults = rangeError ? { rows: [] } : QUERY(
        `SELECT _record_id, _created_at, _status
         FROM "Inspections"
         WHERE _created_at >= '${('' + startDate).replace(/[^0-9-]/g, '')}'
@@ -76,29 +73,31 @@
         LIMIT 500`,
        { format: 'json' }
      ); %>
-  <p>Inspections from <%= startDate %> through <%= endDate %></p>
-  <table class="report-table">
-    <thead>
+<table class="report-table">
+  <thead>
+    <tr>
+      <th scope="col">Record</th>
+      <th scope="col">Created</th>
+      <th scope="col">Status</th>
+    </tr>
+  </thead>
+  <tbody>
+    <% if (rangeError) { %>
       <tr>
-        <th scope="col">Record</th>
-        <th scope="col">Created</th>
-        <th scope="col">Status</th>
+        <td colspan="3" class="report-error"><%= rangeError %> No query was run.</td>
       </tr>
-    </thead>
-    <tbody>
-      <% if (recordResults.rows.length === 0) { %>
+    <% } else if (recordResults.rows.length === 0) { %>
+      <tr>
+        <td colspan="3">No inspections in this range.</td>
+      </tr>
+    <% } else { %>
+      <% recordResults.rows.forEach(function (row) { %>
         <tr>
-          <td colspan="3">No inspections in this range.</td>
+          <td><%= row._record_id %></td>
+          <td><%= row._created_at %></td>
+          <td><%= row._status %></td>
         </tr>
-      <% } else { %>
-        <% recordResults.rows.forEach(function (row) { %>
-          <tr>
-            <td><%= row._record_id %></td>
-            <td><%= row._created_at %></td>
-            <td><%= row._status %></td>
-          </tr>
-        <% }); %>
-      <% } %>
-    </tbody>
-  </table>
-<% } %>
+      <% }); %>
+    <% } %>
+  </tbody>
+</table>
