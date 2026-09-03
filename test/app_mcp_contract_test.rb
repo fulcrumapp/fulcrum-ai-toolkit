@@ -347,10 +347,15 @@ public_guidance_files = [
   File.join(SKILLS, "fulcrum-report-building", "SKILL.md"),
   File.join(SKILLS, "fulcrum-report-building", "resources", "report-template-reference.md")
 ].freeze
+private_content_pattern = %r{/(?:Users|home)/|[A-Za-z]:[\\/](?:Users|home)[\\/]|atlassian\.net|slack\.com|/mnt/skills/organization}i
+assert(
+  ["C:\\Users\\example\\file.md", "C:/home/example/file.md"].all? { |path| path.match?(private_content_pattern) },
+  "privacy detector does not catch Windows local paths"
+)
 private_path = nil
 public_guidance_files.each do |path|
   if File.foreach(path).any? do |line|
-       line.match?(%r{/(?:Users|home)/|atlassian\.net|slack\.com|/mnt/skills/organization}i)
+       line.match?(private_content_pattern)
      end
     private_path = path
     break
