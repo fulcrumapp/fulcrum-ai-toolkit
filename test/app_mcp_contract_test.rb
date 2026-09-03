@@ -221,11 +221,14 @@ assert(
 )
 assert(!data_events.match?(/LOADFILE\(\s*['"]/), "positional LOADFILE guidance remains")
 assert(
-  [data_events_runtime, product_knowledge].all? do |document|
-    document.include?("LOADFILE(options, callback)") &&
-      document.include?("optional `form_name` or `form_id`")
-  end,
-  "LOADFILE guidance does not distinguish the optional form_name and form_id keys"
+  data_events_runtime.include?("LOADFILE(options, callback)") &&
+    data_events_runtime.include?("optional `form_name` or `form_id`"),
+  "LOADFILE runtime guidance does not distinguish the optional form_name and form_id keys"
+)
+assert(
+  product_knowledge.include?("Data Event runtime behavior or code") &&
+    product_knowledge.include?("fulcrum-data-events"),
+  "product knowledge router does not route Data Event runtime questions"
 )
 assert(
   [data_events_runtime, product_knowledge].none? { |document| document.include?("form_name/form_id") },
