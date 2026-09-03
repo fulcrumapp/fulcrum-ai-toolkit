@@ -728,32 +728,96 @@ assert(
   !date_range.include?("${requested") && !date_range.include?("${$params"),
   "date-range example interpolates a raw request parameter"
 )
-# The table wrapper in this one example was reviewed by hand, and these
-# assertions are what hold that review in place. They are literal: the opening
-# tags appear before the first scriptlet that opens a branch, the closing tags
-# appear after the last one, and each of the three branches writes a whole row.
-# No inference about other templates is drawn from any of it.
-first_branch = date_range.index("<% if (")
-last_branch_end = date_range.rindex("<% } %>")
-assert(first_branch && last_branch_end, "date-range example no longer has the reviewed row branches")
-%w[<table <thead> <tbody>].each do |opening|
-  position = date_range.index(opening)
-  assert(
-    position && position < first_branch,
-    "date-range example does not open #{opening} unconditionally before its row branches"
-  )
+# The table wrapper in this one example was reviewed by hand. This finite,
+# literal contract holds that review in place and is mutation-checked below; it
+# makes no inference about arbitrary EJS control flow.
+date_range_structure_violations = lambda do |template|
+  tag_sequence = lambda do |fragment|
+    fragment.scan(/<(\/?)(tr|th|td)\b[^>]*>/i).map do |closing, name|
+      closing.empty? ? name.downcase : "/#{name.downcase}"
+    end
+  end
+  positions = {
+    table_open: template.index("<table"),
+    thead_open: template.index("<thead>"),
+    thead_close: template.index("</thead>"),
+    tbody_open: template.index("<tbody>"),
+    tbody_close: template.rindex("</tbody>"),
+    table_close: template.rindex("</table>"),
+    first_branch: template.index("<% if ("),
+    last_branch_end: template.rindex("<% } %>")
+  }
+  errors = []
+  errors << "missing reviewed table boundary" if positions.values.any?(&:nil?)
+  return errors unless errors.empty?
+
+  header = template[positions.fetch(:thead_open)...(positions.fetch(:thead_close) + "</thead>".length)]
+  expected_headers = [
+    '<th scope="col">Record</th>',
+    '<th scope="col">Created</th>',
+    '<th scope="col">Status</th>'
+  ]
+  header_order = expected_headers.map { |cell| header.index(cell) }
+  errors << "header row is not enclosed by <thead>...</thead>" unless
+    tag_sequence.call(header) == %w[tr th /th th /th th /th /tr] &&
+    header_order.none?(&:nil?) &&
+    header_order.each_cons(2).all? { |left, right| left < right }
+
+  ordered = %i[
+    table_open thead_open thead_close tbody_open first_branch
+    last_branch_end tbody_close table_close
+  ].map { |name| positions.fetch(name) }
+  errors << "table boundaries and row branches are misordered" unless ordered.each_cons(2).all? { |left, right| left < right }
+
+  body = template[(positions.fetch(:tbody_open) + "<tbody>".length)...positions.fetch(:tbody_close)]
+  branch_markers = [
+    "<% if (rangeError) { %>",
+    "<% } else if (recordResults.rows.length === 0) { %>",
+    "<% } else { %>",
+    "<% } %>"
+  ]
+  branch_positions = branch_markers.map { |marker| body.index(marker) }
+  errors << "reviewed row branch markers are missing or misordered" if
+    branch_positions.any?(&:nil?) ||
+    !branch_positions.each_cons(2).all? { |left, right| left < right }
+
+  unless errors.any? { |error| error.include?("branch markers") }
+    expected_cells = [1, 1, 3]
+    branch_positions.each_cons(2).zip(expected_cells).each do |(left, right), cells|
+      branch = body[left...right]
+      complete = tag_sequence.call(branch) == ["tr", *(%w[td /td] * cells), "/tr"]
+      errors << "a reviewed conditional branch does not contain one complete row" unless complete
+    end
+  end
+  errors
 end
-%w[</tbody> </table>].each do |closing|
-  position = date_range.rindex(closing)
-  assert(
-    position && position > last_branch_end,
-    "date-range example does not close #{closing} unconditionally after its row branches"
-  )
-end
+
 assert(
-  date_range.scan(/<tr>\s*(?:<t[dh]\b[\s\S]*?<\/t[dh]>\s*)+<\/tr>/).length == 4,
-  "date-range example does not write a complete <tr> in its header and in each of its three row branches"
+  date_range_structure_violations.call(date_range).empty?,
+  "date-range example does not preserve its reviewed header/body/row structure"
 )
+{
+  "missing </thead>" => date_range.sub("</thead>", ""),
+  "misordered </thead>" => date_range.sub("</thead>\n  <tbody>", "<tbody>\n  </thead>"),
+  "incomplete header cell" => date_range.sub("</th>", ""),
+  "reversed header row tags" => date_range.sub(
+    /<tr>([\s\S]*?)<\/tr>/,
+    "</tr>\\1<tr>"
+  ),
+  "empty branch without its row" => date_range.sub(
+    /(<% } else if \(recordResults\.rows\.length === 0\) \{ %>)([\s\S]*?)(<% } else \{ %>)/,
+    "\\1\\3"
+  ),
+  "reversed error row tags" => date_range.sub(
+    /(<% if \(rangeError\) \{ %>\s*)<tr>([\s\S]*?)<\/tr>/,
+    "\\1</tr>\\2<tr>"
+  )
+}.each do |mutation, template|
+  assert(
+    !date_range_structure_violations.call(template).empty?,
+    "date-range structure contract does not reject #{mutation}"
+  )
+end
 assert(
   date_range.include?("recordResults.rows.length === 0") &&
     date_range.include?("colspan=\"3\"") &&
