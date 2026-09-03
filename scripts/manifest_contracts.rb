@@ -56,8 +56,6 @@ module ManifestContracts
     skills
     version
   ].freeze
-  CLAUDE_SCHEMA = "https://json.schemastore.org/claude-code-plugin-manifest.json"
-
   CODEX_FIELDS = %w[
     author
     description
@@ -108,8 +106,8 @@ module ManifestContracts
       errors << "#{field} must be a string" if manifest.key?(field) && !manifest[field].is_a?(String)
     end
     errors << "publisher must not be empty" if manifest["publisher"] == ""
-    if manifest.key?("version") && (!manifest["version"].is_a?(String) || !manifest["version"].match?(SEMVER))
-      errors << "version must be semantic version X.Y.Z"
+    if manifest.key?("version") && !manifest["version"].is_a?(String)
+      errors << "version must be a string"
     end
     if manifest.key?("author")
       errors.concat(
@@ -146,13 +144,11 @@ module ManifestContracts
   def validate_claude(manifest)
     return ["manifest must be an object"] unless manifest.is_a?(Hash)
 
+    # Repository policy: keep this adapter to the documented skills-only subset.
     errors = unknown_fields(manifest, CLAUDE_FIELDS)
     errors << "name is required" unless manifest.key?("name")
     errors << "name must be a non-empty string" unless manifest["name"].is_a?(String) && !manifest["name"].empty?
-    if manifest.key?("$schema") && manifest["$schema"] != CLAUDE_SCHEMA
-      errors << "$schema must identify the Claude Code plugin manifest schema"
-    end
-    %w[version description repository license].each do |field|
+    %w[$schema version description repository license].each do |field|
       errors << "#{field} must be a string" if manifest.key?(field) && !manifest[field].is_a?(String)
     end
     errors << "homepage must be an absolute URI" if manifest.key?("homepage") && !absolute_uri?(manifest["homepage"])
@@ -176,6 +172,7 @@ module ManifestContracts
   def validate_codex(manifest)
     return ["manifest must be an object"] unless manifest.is_a?(Hash)
 
+    # Repository policy: keep this adapter to Codex's documented skills-only subset.
     errors = unknown_fields(manifest, CODEX_FIELDS)
     errors << "name is required" unless manifest.key?("name")
     errors.concat(validate_name(manifest["name"], CURSOR_NAME))

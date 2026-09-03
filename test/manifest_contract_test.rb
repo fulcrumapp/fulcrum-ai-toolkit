@@ -59,8 +59,8 @@ assert(
   "Cursor schema fixture fails to reject a missing name"
 )
 assert(
-  !ManifestContracts.validate_cursor(cursor.merge("version" => "version-one")).empty?,
-  "Cursor schema fixture fails to reject an invalid version"
+  ManifestContracts.validate_cursor(cursor.merge("version" => "1.2.3+build.1")).empty?,
+  "Cursor schema rejects a valid arbitrary string version"
 )
 assert(
   !ManifestContracts.validate_cursor(cursor.merge("version" => 1)).empty?,
@@ -91,7 +91,12 @@ assert(
 claude = json(".claude-plugin/plugin.json")
 assert(ManifestContracts.validate_claude(claude).empty?, "Claude manifest is invalid")
 assert(claude["skills"] == "./skills/", "Claude manifest does not reference the shared skills directory")
+assert(
+  ManifestContracts.validate_claude(claude.merge("$schema" => "https://schemas.example.com/ignored.json")).empty?,
+  "Claude validator pins the ignored $schema string"
+)
 [
+  claude.merge("$schema" => 1),
   claude.merge("version" => 1),
   claude.merge("unknownField" => true),
   claude.merge("author" => "Example Publisher"),

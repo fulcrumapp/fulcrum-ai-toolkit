@@ -174,6 +174,11 @@ public
 provenance. Validation enforces these structural cues across packaged text,
 including dotfiles; it is not a general-purpose personal-data detector.
 
+The five layer-3 product skills prohibit any triple-backtick or triple-tilde
+token anywhere in a packaged regular file. This intentionally simple rule is
+stricter than Markdown fence parsing; later layers own executable examples and
+their durable externalization policy.
+
 ### Sources
 
 - [Fulcrum developer documentation](https://docs.fulcrumapp.com/) for public
