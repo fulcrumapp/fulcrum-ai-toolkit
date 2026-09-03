@@ -198,8 +198,11 @@ so its exact public source is recorded in
 
 - The five-skill decomposition, the 16-skill inventory, and every host manifest
   are unchanged.
-- The vendored OpenAPI snapshot and other heavy resources are retained; layer 4
-  did not retire them.
+- Layer 5 retired the heavyweight vendored REST contract in favor of the named
+  [public OpenAPI](https://raw.githubusercontent.com/fulcrumapp/api/v2/reference/rest-api.json)
+  and its [documentation](https://docs.fulcrumapp.com/reference/openapi-and-postman-collection).
+  Layer-4 example identities, sources, hashes, and focused offline guidance are
+  retained.
 - Source and guidance boundaries survive the move. A file that documents a
   toolkit convention says so, and a file that reproduces documented platform
   behavior links the documentation that establishes it.

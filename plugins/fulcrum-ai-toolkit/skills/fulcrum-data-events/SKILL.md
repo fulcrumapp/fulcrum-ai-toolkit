@@ -12,6 +12,8 @@ A **data event** is JavaScript that runs inside a Fulcrum app in response to rec
 When Fulcrum App MCP is registered, call `fulcrum_expressions_data_events_reference` for the current hook and function contract before authoring a script. The knowledge categories worth requesting are listed in
 [`assets/data-events-reference-categories.txt`](assets/data-events-reference-categories.txt).
 Treat the local runtime resources as an offline fallback, not as a replacement for the registered knowledge tool.
+The compact fallback is
+[`resources/data-events-runtime-api.md`](resources/data-events-runtime-api.md).
 
 There are no standalone Data Event CRUD tools. Read the form and its current `script` with `fulcrum_forms_get`, compose the approved handler with the existing script, and write the complete script with `fulcrum_forms_update`. Do not overwrite unrelated handlers.
 
@@ -225,4 +227,5 @@ The full expressions reference is available in `resources/` as `expressions-refe
 - [Fulcrum `STORAGE()` reference](https://docs.fulcrumapp.com/docs/data-events-storage)
 - [Runnable example index](examples/README.md)
 - [Example catalog by pattern](resources/data-event-examples.md)
+- [Offline runtime fallback](resources/data-events-runtime-api.md)
 - [Agent Skills specification](https://agentskills.io/specification)

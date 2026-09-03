@@ -98,6 +98,7 @@ ruby test/app_mcp_contract_test.rb
 ruby test/manifest_contract_test.rb
 ruby test/product_knowledge_decomposition_test.rb
 ruby test/external_examples_test.rb
+ruby test/resource_contract_test.rb
 ruby test/smoke_test.rb
 ```
 
@@ -127,7 +128,10 @@ names a public source URL, that no example, asset, or index carries credential
 or private material, and that the legacy and current example inventories match
 `test/data/example-block-inventory.json` exactly, identifier by identifier. It
 also requires the format validator's own counts back, so the work it delegates
-cannot quietly become work that is skipped.
+cannot quietly become work that is skipped. The resource contract test validates
+all distributable local links, resource ownership, public-source precedence,
+privacy boundaries, exact layer-4 inventory and report hashes, and the 100 KB
+skill-resource snapshot limit without network access.
 
 Validation never runs anything this repository authors. HTML is parsed, its
 inline scripts and styles are parsed, a report template is compiled to source by
