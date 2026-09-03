@@ -4,12 +4,17 @@
 //
 // The Ruby suite owns repository policy: inventories, source attribution, and
 // privacy. This tool owns everything that needs a parser — proving each file is
-// well formed in its own format, that its SQL is read-only and its
-// interpolation safe, and that its rendered markup is structurally valid on
-// every branch — and it does that with established parsers pinned to exact
-// versions in package.json and package-lock.json, rather than with hand-rolled
-// matching. There is one parser per language in this repository, and it lives
-// here.
+// well formed in its own format, that its SQL is read-only, and that its
+// interpolation uses a recognized encoder — with established parsers pinned to
+// exact versions in package.json and package-lock.json rather than with
+// hand-rolled matching. There is one parser per language in this repository,
+// and it lives here.
+//
+// Nothing this repository authors is executed. HTML is parsed, inline scripts
+// and styles are parsed, a report template is turned into source and parsed,
+// and its markup is checked against a declaration held in
+// lib/template-markup.mjs. No template is rendered, no example script is run,
+// and no query is issued, so validation needs no sandbox and claims none.
 //
 // Every commentable file that is not a whole document in its own right is
 // labeled `Fragment:`; a whole document is labeled `Document:`. The label
@@ -22,15 +27,13 @@ import process from 'node:process';
 import { fileURLToPath } from 'node:url';
 
 import * as acorn from 'acorn';
-import ejs from 'ejs';
 import { HtmlValidate } from 'html-validate';
 import postcss from 'postcss';
 
 import { compiledSource, queryCalls } from './lib/ejs-queries.mjs';
-import { renderScenarios } from './lib/render-coverage.mjs';
-import { hostDocument, HOST_LINE_OFFSET, scenariosFor } from './lib/render-fixtures.mjs';
 import { selfCheck } from './lib/self-check.mjs';
 import { readOnlyViolations } from './lib/sql-contract.mjs';
+import { markupViolations } from './lib/template-markup.mjs';
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(HERE, '..', '..');
@@ -54,13 +57,6 @@ const documentValidator = new HtmlValidate({
 });
 const fragmentValidator = new HtmlValidate({
   extends: ['html-validate:recommended']
-});
-// Rendered output is machine-produced: an EJS tag leaves the whitespace that
-// stood around it, so a whitespace rule reports the template engine rather than
-// the example. Everything structural and accessible still applies.
-const renderedValidator = new HtmlValidate({
-  extends: ['html-validate:recommended'],
-  rules: { 'no-trailing-whitespace': 'off' }
 });
 
 const failures = [];
@@ -117,6 +113,8 @@ function labelOf(text) {
   return isDocument ? 'document' : 'fragment';
 }
 
+// Parsing is where a script stops. Nothing built from an example's source is
+// ever called.
 function parseScript(file, code, what) {
   try {
     acorn.parse(code, { ecmaVersion: 'latest', sourceType: 'script' });
@@ -137,22 +135,11 @@ function parseCss(file, css, what) {
   }
 }
 
-function parseSql(file, sql, what) {
-  const violations = readOnlyViolations(sql);
+function parseSql(file, sql, what, options) {
+  const violations = readOnlyViolations(sql, options);
   if (violations.length === 0) return true;
   for (const { reason } of violations) fail(file, `${what} ${reason}`);
   return false;
-}
-
-async function reportHtml(file, html, what) {
-  const report = await renderedValidator.validateString(hostDocument(html), file);
-  if (report.valid) return;
-  for (const result of report.results) {
-    for (const message of result.messages) {
-      const line = message.line - HOST_LINE_OFFSET;
-      fail(file, `${what} ${line}:${message.column} ${message.ruleId}: ${message.message}`);
-    }
-  }
 }
 
 async function validateHtml(file, text) {
@@ -192,73 +179,39 @@ async function validateHtml(file, text) {
   count(`html:${label}`);
 }
 
-async function validateEjs(file, text) {
+function validateEjs(file, text) {
   const label = labelOf(text);
   if (!label) {
     fail(file, 'needs exactly one "Fragment:" or "Document:" label comment');
     return;
   }
 
-  let source;
+  // `generateSource()` is the step `compile()` takes before it builds a
+  // function. Stopping here means the template becomes text and then a syntax
+  // tree, and never a thing that runs.
+  let calls;
   try {
-    ejs.compile(text, { filename: file });
-    source = compiledSource(text, file);
+    calls = queryCalls(compiledSource(text, file));
   } catch (error) {
-    fail(file, `EJS does not compile: ${String(error.message).split('\n')[0]}`);
+    fail(file, `does not compile to parseable JavaScript: ${String(error.message).split('\n')[0]}`);
     return;
   }
 
-  // SQL is read out of the compiled syntax tree, never by rendering.
-  let calls;
-  try {
-    calls = queryCalls(source);
-  } catch (error) {
-    fail(file, `compiled EJS is not parseable JavaScript: ${String(error.message).split('\n')[0]}`);
-    return;
-  }
   for (const call of calls) {
     if (call.reason) {
       fail(file, `QUERY() finding #${call.ordinal}: ${call.reason}`);
     } else {
-      parseSql(file, call.sql, `QUERY() statement #${call.ordinal}`);
+      parseSql(file, call.sql, `QUERY() statement #${call.ordinal}`, { single: true });
     }
     count('embedded-sql');
   }
 
-  // Markup is read out of the rendered output, because a row emitted inside a
-  // loop is invisible to a static reader of the template. Each template has its
-  // own scenarios, and the branches they miss are reported rather than assumed
-  // away.
-  const scenarios = scenariosFor(path.basename(file));
-  if (!scenarios) {
-    fail(file, 'has no render fixtures in lib/render-fixtures.mjs, so its markup was never rendered');
-    return;
-  }
-
-  let run;
-  try {
-    run = await renderScenarios(text, file, scenarios);
-  } catch (error) {
-    fail(file, `could not be rendered under coverage: ${String(error.message).split('\n')[0]}`);
-    return;
-  }
-
-  for (const rendered of run.renders) {
-    if (rendered.error) {
-      fail(file, `does not render with the "${rendered.name}" fixture: ${rendered.error}`);
-      continue;
-    }
-    await reportHtml(file, rendered.html, `rendered "${rendered.name}" HTML`);
-    count('rendered-html');
-  }
-
-  for (const branch of run.uncovered) {
-    fail(
-      file,
-      `line ${branch.line} holds a branch no fixture reaches, so its markup is never validated: ${branch.text}`
-    );
-  }
-  if (run.uncovered.length === 0) count('branch-covered');
+  // Markup is checked against what the template says it emits, because a row
+  // emitted inside a loop is invisible to a careless reader of the file and
+  // running the template to find out is not on offer.
+  const violations = markupViolations(path.basename(file), text);
+  for (const violation of violations) fail(file, violation);
+  if (violations.length === 0) count('markup-asserted');
 
   count(`ejs:${label}`);
 }
@@ -289,9 +242,9 @@ async function main() {
   // The contracts prove themselves before they are used on the repository, so a
   // contract that stopped catching bypasses fails here rather than passing
   // everything silently.
-  const contracts = await selfCheck(renderedValidator);
+  const contracts = selfCheck();
   for (const failure of contracts.failures) failures.push(`tools/format-validator: ${failure}`);
-  count('contract-fixture', contracts.total);
+  count('contract-probe', contracts.total);
 
   const files = externalFiles();
   if (files.length === 0) {
@@ -311,7 +264,7 @@ async function main() {
         await validateHtml(file, text);
         break;
       case '.ejs':
-        await validateEjs(file, text);
+        validateEjs(file, text);
         break;
       case '.css':
         validateCss(file, text);

@@ -17,10 +17,12 @@
 
   The Query API accepts one complete SQL string and exposes no server-side bind
   parameters, so the template owns the literal. Each literal below is re-emitted
-  from the parsed Date, and is filtered again in the gap where it reaches SQL,
+  from the parsed Date, and is encoded again in the gap where it reaches SQL,
   so what lands inside the quotes is digits and hyphens whatever happened
   upstream. Encoding in the gap is what a reader can check: a filter written
   further up says nothing about the name that is actually interpolated here.
+  `('' + value)` converts without naming `String`, which is an ordinary binding
+  a template could rebind.
 
   Every branch emits complete markup. A row is only valid inside a table, so the
   rows below are wrapped in one here rather than left to the surrounding
@@ -32,7 +34,7 @@
 <% const DEFAULT_WINDOW_DAYS = 90; %>
 
 <% function parseIsoDay(value) {
-     const text = String(value);
+     const text = '' + value;
      if (!/^\d{4}-\d{2}-\d{2}$/.test(text)) { return null; }
      const year = Number(text.slice(0, 4));
      if (year < 1 || year > 9998) { return null; }
@@ -68,8 +70,8 @@
   <% const recordResults = QUERY(
        `SELECT _record_id, _created_at, _status
         FROM "Inspections"
-        WHERE _created_at >= '${String(startDate).replace(/[^0-9-]/g, '')}'
-          AND _created_at < '${String(endExclusiveDate).replace(/[^0-9-]/g, '')}'
+        WHERE _created_at >= '${('' + startDate).replace(/[^0-9-]/g, '')}'
+          AND _created_at < '${('' + endExclusiveDate).replace(/[^0-9-]/g, '')}'
         ORDER BY _created_at DESC
         LIMIT 500`,
        { format: 'json' }
