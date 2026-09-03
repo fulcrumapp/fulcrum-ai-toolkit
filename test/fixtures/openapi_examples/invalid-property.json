@@ -5,7 +5,5 @@
   "label": "Linked Record",
   "linked_form_id": "the-form-id",
   "allow_existing_records": true,
-  "allow_creating_records": false,
-  "allow_updating_records": false,
-  "allow_empty_records": true
+  "unknown_setting": true
 }

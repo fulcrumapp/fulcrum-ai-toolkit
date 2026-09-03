@@ -7,6 +7,7 @@ require "yaml"
 require_relative "content_contracts"
 require_relative "file_contracts"
 require_relative "manifest_contracts"
+require_relative "openapi_example_contracts"
 
 ROOT = File.expand_path("..", __dir__)
 ROOT_PATH = Pathname.new(ROOT)
@@ -253,10 +254,12 @@ unless File.directory?(PLUGIN_DIR) && File.directory?(SKILLS_DIR)
   failures << "#{PLUGIN_RELATIVE_PATH}: distributable plugin package is missing"
 end
 
-repo_local_skills = File.join(ROOT, ".agents", "skills")
-if File.directory?(repo_local_skills)
-  failures << ".agents/skills must remain reserved for repository-scoped skills"
+openapi_example_skill = File.join(ROOT, ".agents", "skills", "validate-openapi-examples", "SKILL.md")
+unless File.file?(openapi_example_skill)
+  failures << ".agents/skills/validate-openapi-examples/SKILL.md: repository validation skill is missing"
 end
+
+failures.concat(OpenapiExampleContracts.validate_all(root: ROOT))
 
 readme = File.join(ROOT, "README.md")
 readme_text = File.read(readme)

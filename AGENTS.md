@@ -15,7 +15,10 @@ Customize and add instructions and documentation that will provide context to th
 <!-- Describe any coding standards to follow. -->
 
 ## Test Guidelines
-<!-- Describe any testing standards to follow. -->
+
+When adding or changing JSON in a toolkit skill's `examples/` or `assets/`
+directory, follow
+[Validate OpenAPI Examples](.agents/skills/validate-openapi-examples/SKILL.md).
 
 ## Required Documentation
 <!--
