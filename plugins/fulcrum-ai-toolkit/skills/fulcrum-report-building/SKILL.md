@@ -240,7 +240,8 @@ Trying to pass all data through the single record context (via very long JSON bl
 ### Photo references without PHOTOURL()
 ```ejs
 <% const sitePhoto = record.formValues.find('site_photo'); %>
-<% const firstSitePhoto = sitePhoto && sitePhoto.items[0]; %>
+<% const sitePhotoItems = sitePhoto && Array.isArray(sitePhoto.items) ? sitePhoto.items : []; %>
+<% const firstSitePhoto = sitePhotoItems[0]; %>
 
 <%# BAD — the media_id alone is not a usable URL %>
 <img src="<%= firstSitePhoto ? firstSitePhoto.mediaID : '' %>">
