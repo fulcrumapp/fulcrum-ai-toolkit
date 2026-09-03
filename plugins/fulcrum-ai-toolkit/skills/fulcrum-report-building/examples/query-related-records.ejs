@@ -8,7 +8,8 @@
   server-side bind parameters, so every interpolated value must be encoded
   where it enters the statement. The filter below sits in the gap itself, so
   what reaches SQL is letters, digits, underscores, and hyphens — none of which
-  can close the quote around them.
+  can close the quote around them. `('' + value)` converts without naming
+  `String`, which is an ordinary binding a template could rebind.
 
   A <tr> is only valid inside a table, so the rows are wrapped in one here and
   an empty result gets its own spanning row.
@@ -19,7 +20,7 @@
 <% const relatedInspections = QUERY(
   `SELECT inspector_name, inspection_date, status
    FROM "Site Inspections"
-   WHERE site_id = '${String(siteId).replace(/[^a-zA-Z0-9_-]/g, '')}'
+   WHERE site_id = '${('' + siteId).replace(/[^A-Za-z0-9_-]/g, '')}'
    ORDER BY _created_at DESC
    LIMIT 100`,
   { format: 'json' }

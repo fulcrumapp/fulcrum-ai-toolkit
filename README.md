@@ -101,10 +101,10 @@ ruby test/external_examples_test.rb
 ruby test/smoke_test.rb
 ```
 
-Structural, SQL, and rendered-markup validation for the externalized examples
-and assets lives in `tools/format-validator`, a small Node package whose parsers
-are pinned exactly in `package.json` and `package-lock.json`. Install once, then
-run it directly or let the external examples test invoke it:
+Structural, SQL, and markup validation for the externalized examples and assets
+lives in `tools/format-validator`, a small Node package whose parsers are pinned
+exactly in `package.json` and `package-lock.json`. Install once, then run it
+directly or let the external examples test invoke it:
 
 ```bash
 npm ci --prefix tools/format-validator
@@ -129,42 +129,56 @@ or private material, and that the legacy and current example inventories match
 also requires the format validator's own counts back, so the work it delegates
 cannot quietly become work that is skipped.
 
-The format validator owns everything that needs a parser, so the repository has
-one implementation of each language rather than two. It parses HTML structure
-and its inline scripts and styles, compiles EJS, and parses CSS, PostgreSQL,
-JSON, and JavaScript; files that are not whole documents are labeled `Fragment:`
-and validated as such. Beyond well-formedness it decides four contracts.
+Validation never runs anything this repository authors. HTML is parsed, its
+inline scripts and styles are parsed, a report template is turned into the
+JavaScript `ejs` would run and then parsed, and CSS, PostgreSQL, JSON, and
+JavaScript are parsed. No template is rendered, no example script is executed,
+and no query is issued, so validation needs no sandbox and claims none. Files
+that are not whole documents are labeled `Fragment:` and validated as such.
+Beyond well-formedness the validator decides three contracts: read-only SQL,
+what a `QUERY()` call and its interpolation may be, and what markup a template
+may emit.
 
 Every SQL statement — in a `.sql` asset or in a report template's `QUERY()`
-call — is held to a read-only allowlist applied to the parsed PostgreSQL tree,
-so a write hidden after a semicolon, inside a CTE, behind a comment, or in a
-quoted function name is rejected, and an unrecognized statement form or function
-fails closed.
+call — is held to allowlists applied to the parsed PostgreSQL tree: SELECT only,
+one statement per `QUERY()` call, and an exact set of node forms, operators, cast
+targets, and functions taken from what the examples actually use. So a write
+hidden after a semicolon, inside a CTE, behind a comment, or in a quoted function
+name is rejected, and `::application_side_effect_type`, `@@`, `SELECT ... INTO`,
+an unrecognized function, and a second statement riding along in one call all
+fail closed.
 
-Every report template is compiled to JavaScript, parsed, and walked to find its
+Every report template is turned into JavaScript, parsed, and walked to find its
 `QUERY()` calls, so a call written with a double-quoted string, an interposed
 comment, or a newline cannot escape the check. The helper is also reachable
 through the locals bag `ejs` opens with `with`, so `locals.QUERY(...)` and
 `locals['QUERY'](...)` are read the same way, and everything that could hide a
 call — a name referenced without being called, a computed property that is not a
-literal, the locals bag used as a value, `eval`, the Function constructor — is
-refused rather than guessed at.
+literal, the locals bag used as a value, `eval`, `Function`, `arguments`,
+`constructor`, `prototype`, `globalThis`, `Reflect` — is refused rather than
+guessed at.
 
 Reading a statement means replacing each `${...}` with a placeholder, and a
-placeholder is only earned. A gap is accepted when the template can be read, at
-the gap itself, as filtering the value down to characters that cannot leave the
-quoted literal it sits in; `'${$params.q}'` parses as `'NULL'` and looks
-read-only, so it is rejected instead.
+placeholder is only earned. A gap is accepted only when it is one of two
+recognized encoders written in the gap itself and inside quotes —
+`('' + value).replace(/[^0-9-]/g, '')` for a date literal and
+`('' + value).replace(/[^A-Za-z0-9_-]/g, '')` for an identifier literal — and
+everything else is refused, including a value sanitized further up and a class
+this list does not name. The examples convert with `('' + value)` rather than
+`String(value)` because `String` is an ordinary binding inside a template;
+rebinding or overwriting `String` or `RegExp` — through `const`, a parameter, a
+`catch` clause, an assignment, or a prototype — is refused in any case. Each
+recognized class is measured on every run against the characters it actually
+keeps, so it cannot be widened without the check that depends on it failing.
 
-Each template is then rendered with its own fixture data — no network, no
-database — and the output is validated as markup inside a host document, so a
-`<tr>` emitted outside a table is caught. Rendering only proves the branches it
-reaches, so the render runs under V8's own block coverage through
-`node:inspector`, every `if` is given an `else` first so an outcome nobody wrote
-is still an outcome that can be counted, and a branch no fixture reaches is
-reported against its template line. Bypass fixtures for all four contracts run
-on every invocation. The smoke test exercises a small site-inspection workflow
-through discovery, schema approval, offline review, and the no-MCP handoff path.
+A template's markup is checked against a declaration held for it in
+`lib/template-markup.mjs`: the exact set of elements it may emit, that every
+element it opens is closed, and that a `<tr>` is written inside a row group
+inside a `<table>`. A template with no declaration is a failure rather than a
+skip. Bypass probes for all three contracts run on every invocation, on the same
+code paths the repository's own files take. The smoke test exercises a small
+site-inspection workflow through discovery, schema approval, offline review, and
+the no-MCP handoff path.
 
 ## Skills
 

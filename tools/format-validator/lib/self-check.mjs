@@ -1,60 +1,85 @@
-// Fixtures that prove the SQL, QUERY(), interpolation, rendered-markup, and
-// branch-coverage contracts still catch what they are for. They run on every
-// validation, so the contracts are exercised by the same command that validates
-// the repository rather than by a separate suite.
+// Probes that prove the SQL, QUERY(), encoder, intrinsic, and markup contracts
+// still catch what they are for. They run on every validation, so the contracts
+// are exercised by the same command that validates the repository rather than
+// by a separate suite.
 //
-// Each fixture is a bypass someone could plausibly write, and each names the
-// rule that must catch it. Naming the rule is what makes the fixture useful: a
-// fixture that only asserts "rejected" keeps passing when one rule dies and
-// another happens to cover for it, which is exactly how a contract quietly
-// stops working.
+// Each probe is a bypass someone could plausibly write, and each names the rule
+// that must catch it. Naming the rule is what makes a probe useful: one that
+// only asserts "rejected" keeps passing when a rule dies and another happens to
+// cover for it, which is how a contract quietly stops working.
+//
+// Nothing here is executed. A probe template is turned into source and parsed,
+// and a probe's markup is read as text, exactly as a repository file is.
 
-import { compiledSource, queryCalls } from './ejs-queries.mjs';
-import { renderScenarios } from './render-coverage.mjs';
-import { DEFAULT_SCENARIO, hostDocument, scenario } from './render-fixtures.mjs';
+import { compiledSource, queryCalls, recognizedEncoders } from './ejs-queries.mjs';
 import { readOnlyViolations } from './sql-contract.mjs';
+import { markupViolations, markupViolationsAgainst } from './template-markup.mjs';
 
-// SQL that must be rejected, by the rule named in `kinds`. Every kind listed
-// must appear among the violations reported.
+const QUERY_ONE = { single: true };
+
+// [sql, kinds, because, options?] — every kind listed must appear among the
+// violations reported, so a probe cannot pass because some other rule covered
+// for the one it names.
 const REJECTED_SQL = [
-  // The parser refuses `SELECT ... INTO` outright, and SQL that cannot be
-  // parsed cannot be proven read-only. The `into` rule below covers the form
-  // itself, on a statement the parser does accept.
+  // Writes, however they are spelled. The parser refuses `SELECT ... INTO`
+  // outright, and SQL that cannot be parsed cannot be proven read-only; the
+  // `into` rule covers the form itself on a statement the parser does accept.
   ['SELECT a INTO written FROM "App"', ['unreadable'], 'SELECT ... INTO writing a new table'],
-  ['SELECT * INTO TEMP written FROM "App"', ['unreadable'], 'SELECT ... INTO TEMP writing a temporary table'],
+  ['SELECT * INTO TEMP written FROM "App"', ['unreadable'], 'SELECT ... INTO TEMP writing a temp table'],
   ['INSERT INTO "App" (a) VALUES (1)', ['into', 'statement-form'], 'writing INTO a table'],
-  ['SELECT lo_create(0)', ['function'], 'lo_create creating a large object'],
-  ['SELECT pg_advisory_unlock(1)', ['function'], 'pg_advisory_unlock releasing a lock'],
-  ['SELECT pg_advisory_lock(1)', ['function'], 'pg_advisory_lock taking a lock'],
-  ["SELECT lo_import('/etc/passwd')", ['function'], 'lo_import reading a server file'],
-  ["SELECT setval('sequence_name', 1)", ['function'], 'setval moving a sequence'],
-  ["SELECT nextval('sequence_name')", ['function'], 'nextval consuming a sequence'],
-  ["SELECT pg_notify('channel', 'message')", ['function'], 'pg_notify raising a notification'],
-  ["SELECT \"nextval\"('sequence_name')", ['function'], 'a quoted nextval'],
-  ["SELECT pg_catalog.\"setval\"('sequence_name', 1)", ['function'], 'a schema-qualified quoted setval'],
-  ['SELECT (SELECT lo_create(0))', ['function'], 'a writing call nested in a subquery'],
-  ["SELECT 1 WHERE EXISTS (SELECT pg_notify('a', 'b'))", ['function'], 'a writing call inside EXISTS'],
-  ['SELECT 1; DELETE FROM "App"', ['statement-form', 'node-form'], 'a second statement after a semicolon'],
   ['DELETE FROM "App"', ['statement-form', 'node-form'], 'a bare DELETE'],
   ["UPDATE \"App\" SET _status = 'x'", ['statement-form', 'node-form'], 'a bare UPDATE'],
+  ['/* housekeeping */ DROP TABLE "App"', ['statement-form', 'node-form'], 'a comment-prefixed DROP'],
+  ['SELECT 1; DELETE FROM "App"', ['statement-form', 'node-form'], 'a second statement after a semicolon'],
+  ['SELECT a FROM t UNION SELECT b FROM u', ['statement-form'], 'an unlisted statement form'],
   [
     'WITH removed AS (DELETE FROM "App" RETURNING *) SELECT * FROM removed',
     ['statement-form', 'node-form'],
     'a writing CTE'
   ],
-  ['/* housekeeping */ DROP TABLE "App"', ['statement-form', 'node-form'], 'a comment-prefixed DROP'],
+  ['SELECT 1; SELECT 2', ['statement-count'], 'a second statement in one QUERY() argument', QUERY_ONE],
+
+  // Functions, including every way of disguising the name.
+  ['SELECT lo_create(0)', ['function'], 'lo_create creating a large object'],
+  ['SELECT pg_advisory_lock(1)', ['function'], 'pg_advisory_lock taking a lock'],
+  ['SELECT pg_advisory_unlock(1)', ['function'], 'pg_advisory_unlock releasing a lock'],
+  ["SELECT lo_import('/etc/passwd')", ['function'], 'lo_import reading a server file'],
+  ["SELECT setval('s', 1)", ['function'], 'setval moving a sequence'],
+  ["SELECT nextval('s')", ['function'], 'nextval consuming a sequence'],
+  ["SELECT pg_notify('c', 'm')", ['function'], 'pg_notify raising a notification'],
+  ['SELECT "nextval"(\'s\')', ['function'], 'a quoted nextval'],
+  ['SELECT pg_catalog."setval"(\'s\', 1)', ['function'], 'a schema-qualified quoted setval'],
+  ['SELECT evil.st_dwithin(a, b, 1)', ['function'], 'a schema-qualified allowlisted function name'],
+  ['SELECT unknown_function(1)', ['function'], 'an unrecognized function'],
+  ['SELECT (SELECT lo_create(0))', ['function'], 'a writing call nested in a subquery'],
+  ["SELECT 1 WHERE EXISTS (SELECT pg_notify('a', 'b'))", ['function'], 'a writing call inside EXISTS'],
+
+  // Casts run the target type's input function, so only the type the examples
+  // take is allowed and every other one is named and refused.
+  ['SELECT a::application_side_effect_type FROM "App"', ['cast'], 'a cast to a custom type'],
+  ['SELECT a::text FROM "App"', ['cast'], 'a cast to a type the examples never take'],
+  ['SELECT a::pg_catalog.geography FROM "App"', ['cast'], 'a schema-qualified cast to an allowed type'],
+
+  // Operators reach functions too, and an unlisted one is refused by name.
+  ["SELECT * FROM \"App\" WHERE tsv @@ to_tsquery('x')", ['operator'], 'the @@ full-text search operator'],
+  ["SELECT * FROM \"App\" WHERE a || b = 'x'", ['operator'], 'the || concatenation operator'],
+  [
+    'SELECT * FROM app_table WHERE a OPERATOR(evil.=) b',
+    ['operator-schema'],
+    'a schema-qualified custom operator'
+  ],
+  ["SELECT * FROM \"App\" WHERE meta -> 'k' = 'v'", ['operator'], 'a JSON traversal operator'],
   [
     "SELECT * FROM \"Inspections\" WHERE _created_at BETWEEN '2024-01-01' AND '2024-03-31'",
     ['inclusive-range'],
     'an inclusive BETWEEN bound on a timestamp column'
   ],
-  ['SELECT unknown_function(1)', ['function'], 'an unrecognized function'],
-  ['SELECT evil.st_dwithin(a, b, 1)', ['function'], 'a schema-qualified allowlisted function name'],
-  ['SELECT a FROM t UNION SELECT b FROM u', ['statement-form'], 'an unlisted statement form'],
+
   ['', ['unreadable'], 'empty SQL']
 ];
 
-// SQL that must be accepted: the shapes the read-only examples actually use.
+// The shapes the read-only examples actually use, which must keep passing so
+// the contract cannot reach safety by refusing everything.
 const ACCEPTED_SQL = [
   'SELECT * FROM "My App Name" LIMIT 10',
   'SELECT _record_id, _status FROM "My App" ORDER BY _updated_at DESC LIMIT 100',
@@ -67,396 +92,148 @@ const ACCEPTED_SQL = [
   'SELECT * FROM "Inspections" WHERE _created_at >= :start AND _created_at < :end LIMIT 500'
 ];
 
-const READ_ONLY = 'SELECT * FROM "App" LIMIT 1';
 const WRITE = 'DELETE FROM "App"';
-// The same write with no quoting of its own, for fixtures that have to put the
+// The same write with no quoting of its own, for probes that have to put the
 // statement inside a nested JavaScript string.
 const NESTED_WRITE = 'DELETE FROM app_table';
+// The recognized identifier encoder, written where the value enters SQL.
+const TOKEN = "('' + $params.q).replace(/[^A-Za-z0-9_-]/g, '')";
 
-// A filter that reduces a value to letters and underscores, written where the
-// value enters SQL.
-const SAFE_FILTER = "String($params.q).replace(/[^a-zA-Z_]/g, '')";
+// A scriptlet, a call written as one, and a QUERY() whose SQL selects on a gap.
+const js = (code) => `<% ${code} %>`;
+const writes = (call) => js(`const removed = ${call};`);
+const gap = (expression) =>
+  js(`const rows = QUERY(\`SELECT * FROM "App" WHERE q = '${expression}'\`, { format: 'json' });`);
 
-function selectWhere(gap) {
-  return `SELECT * FROM "App" WHERE q = '${gap}'`;
-}
-
-// How a QUERY() call must be judged:
+// [because, template, findings, outcome, reason]
 //
-//   read        the SQL was read out of the tree and the read-only contract
-//               decided it
-//   unreadable  something could not be read statically, so nothing was decided
-//               and the template is refused
-//   ignored     there is nothing here for this contract to find
-//
-// A refusal also names the rule that must produce it, because a fixture that
-// only asserts "refused" keeps passing when one rule dies and another happens
-// to cover for it.
-const TEMPLATE_FIXTURES = [
-  {
-    because: 'a double-quoted string argument',
-    template: `<% const removed = QUERY("${WRITE.replace(/"/g, '\\"')}", { format: 'json' }); %>`,
-    findings: 1,
-    outcome: 'read',
-    rejected: true
-  },
-  {
-    because: 'QUERY extracted through the arguments object',
-    template:
-      '<% const { "QUERY": run } = arguments[0]; run("DELETE FROM app_table"); %>',
-    findings: 1,
-    outcome: 'unreadable',
-    rejected: true
-  },
-  {
-    because: 'a shadowed String intrinsic in SQL filtering',
-    template:
-      '<% const String = (value) => ({ replace: () => value }); %>' +
-      '<% QUERY(`SELECT * FROM "App" WHERE q = \'${String($params.q).replace(/[^A-Za-z0-9_-]/g, "")}\'`); %>',
-    findings: 2,
-    outcome: 'unreadable',
-    rejected: true
-  },
-  {
-    because: 'indirect Function construction',
-    template:
-      '<% String.constructor("l", "l.QUERY(\\"DELETE FROM app_table\\")")(arguments[0]); %>',
-    findings: 2,
-    outcome: 'unreadable',
-    rejected: true
-  },
-  {
-    because: 'Function reached through a static member',
-    template: '<% globalThis["Function"]("QUERY(\\"DELETE FROM app_table\\")")(); %>',
-    findings: 1,
-    outcome: 'unreadable',
-    rejected: true
-  },
-  {
-    because: 'String shadowed through a function parameter',
-    template:
-      '<% ((String) => QUERY(`SELECT * FROM "App" WHERE q = \'${String($params.q).replace(/[^A-Za-z0-9_-]/g, "")}\'`))((value) => ({ replace: () => value })); %>',
-    findings: 2,
-    outcome: 'unreadable',
-    rejected: true
-  },
-  {
-    because: 'a comment between the name and its parenthesis',
-    template: `<% const removed = QUERY /* comment */ (\`${WRITE}\`, { format: 'json' }); %>`,
-    findings: 1,
-    outcome: 'read',
-    rejected: true
-  },
-  {
-    because: 'a newline between the name and its parenthesis',
-    template: `<% const removed = QUERY\n  (\`${WRITE}\`, { format: 'json' }); %>`,
-    findings: 1,
-    outcome: 'read',
-    rejected: true
-  },
-  {
-    because: 'a single-quoted string argument',
-    template: `<% const removed = QUERY('${WRITE}', { format: 'json' }); %>`,
-    findings: 1,
-    outcome: 'read',
-    rejected: true
-  },
-  {
-    because: 'a tagged template',
-    template: `<% const removed = QUERY\`${WRITE}\`; %>`,
-    findings: 1,
-    outcome: 'read',
-    rejected: true
-  },
-  {
-    because: 'a statement assembled in a variable',
-    template: `<% const sql = '${WRITE}'; const removed = QUERY(sql, { format: 'json' }); %>`,
-    findings: 1,
-    outcome: 'unreadable',
-    names: 'rather than a string or template literal',
-    rejected: true
-  },
-  {
-    because: 'a statement concatenated inline',
-    template: `<% const removed = QUERY('DELETE ' + 'FROM "App"', { format: 'json' }); %>`,
-    findings: 1,
-    outcome: 'unreadable',
-    names: 'rather than a string or template literal',
-    rejected: true
-  },
-  {
-    because: 'the helper aliased to another name',
-    template: `<% const run = QUERY; const removed = run(\`${WRITE}\`); %>`,
-    findings: 1,
-    outcome: 'unreadable',
-    names: 'referenced somewhere other than a direct call',
-    rejected: true
-  },
-  {
-    because: 'a call with no argument at all',
-    template: '<% const removed = QUERY(); %>',
-    findings: 1,
-    outcome: 'unreadable',
-    names: 'has no SQL argument',
-    rejected: true
-  },
+//   findings  how many things the walker must find, so a probe cannot pass by
+//             finding something else
+//   outcome   'read' when the SQL was recovered out of the tree, 'unreadable'
+//             when something was refused instead, 'ignored' when there was
+//             nothing to find
+//   reason    a fragment of the rule that must reject it, or null when the
+//             probe must be accepted with no violation at all
+const TEMPLATE_PROBES = [
+  // The call itself, however it is spelled.
+  ['a double-quoted string argument', writes(`QUERY("${WRITE.replace(/"/g, '\\"')}")`), 1, 'read', 'only SELECT'],
+  ['a single-quoted string argument', writes(`QUERY('${WRITE}')`), 1, 'read', 'only SELECT'],
+  ['a comment between the name and its parenthesis', writes(`QUERY /* c */ (\`${WRITE}\`)`), 1, 'read', 'only SELECT'],
+  ['a newline between the name and its parenthesis', writes(`QUERY\n  (\`${WRITE}\`)`), 1, 'read', 'only SELECT'],
+  ['a tagged template', writes(`QUERY\`${WRITE}\``), 1, 'read', 'only SELECT'],
+  ['a second statement hidden in one call', writes(`QUERY('SELECT 1; ${NESTED_WRITE}')`), 1, 'read', 'statements where the Query API takes one'],
+  ['a statement assembled in a variable', js(`const q = '${WRITE}'; const removed = QUERY(q);`), 1, 'unreadable', 'rather than a string or template literal'],
+  ['a statement concatenated inline', writes(`QUERY('DELETE ' + 'FROM "App"')`), 1, 'unreadable', 'rather than a string or template literal'],
+  ['the helper aliased to another name', js(`const run = QUERY; const removed = run(\`${WRITE}\`);`), 1, 'unreadable', 'referenced somewhere other than a direct call'],
+  ['a call with no argument at all', writes('QUERY()'), 1, 'unreadable', 'has no SQL argument'],
 
-  // The helper reached through the locals bag rather than by its bare name.
-  // `ejs` opens that bag with `with`, so every one of these runs the same
-  // function a bare call would.
-  {
-    because: 'the helper reached as a property of the locals bag',
-    template: `<% const removed = locals.QUERY('${WRITE}'); %>`,
-    findings: 1,
-    outcome: 'read',
-    rejected: true
-  },
-  {
-    because: 'the helper reached with a string subscript',
-    template: `<% const removed = locals['QUERY']('${WRITE}'); %>`,
-    findings: 1,
-    outcome: 'read',
-    rejected: true
-  },
-  {
-    because: 'the helper named by a variable subscript',
-    template: `<% const name = 'QUERY'; const removed = locals[name]('${WRITE}'); %>`,
-    findings: 1,
-    outcome: 'unreadable',
-    names: 'looked up with an expression rather than a literal',
-    rejected: true
-  },
-  {
-    because: 'the helper destructured out of the locals bag',
-    template: `<% const { QUERY: run } = locals; const removed = run('${WRITE}'); %>`,
-    findings: 1,
-    outcome: 'unreadable',
-    names: 'used as a value rather than read through a named property',
-    rejected: true
-  },
-  {
-    because: 'the locals bag copied to another name',
-    template: `<% const bag = locals; const removed = bag.QUERY('${WRITE}'); %>`,
-    findings: 2,
-    outcome: 'unreadable',
-    names: 'used as a value rather than read through a named property',
-    rejected: true
-  },
-  {
-    because: 'a member reference to the helper that is not itself the call',
-    template: `<% const run = locals.QUERY; const removed = run('${WRITE}'); %>`,
-    findings: 1,
-    outcome: 'unreadable',
-    names: 'referenced somewhere other than a direct call',
-    rejected: true
-  },
-  {
-    because: 'a statement built as text and run through eval',
-    template: `<% const removed = eval("QUERY('${NESTED_WRITE}')"); %>`,
-    findings: 1,
-    outcome: 'unreadable',
-    names: 'turns text into code',
-    rejected: true
-  },
-  {
-    because: 'a statement built as text and run through the Function constructor',
-    template: `<% const run = new Function('Q', "return Q('${NESTED_WRITE}')"); run(QUERY); %>`,
-    findings: 2,
-    outcome: 'unreadable',
-    names: 'turns text into code',
-    rejected: true
-  },
+  // The helper reached through the locals bag `ejs` opens with `with`, which
+  // runs the same function a bare call would.
+  ['the helper as a property of the locals bag', writes(`locals.QUERY('${WRITE}')`), 1, 'read', 'only SELECT'],
+  ['the helper with a string subscript', writes(`locals['QUERY']('${WRITE}')`), 1, 'read', 'only SELECT'],
+  ['the helper named by a variable subscript', js(`const n = 'QUERY'; const removed = locals[n]('${WRITE}');`), 1, 'unreadable', 'looked up with an expression rather than a literal'],
+  ['the helper destructured out of the locals bag', js(`const { QUERY: run } = locals; const removed = run('${WRITE}');`), 1, 'unreadable', 'used as a value rather than read through a named property'],
+  ['the locals bag copied to another name', js(`const bag = locals; const removed = bag.QUERY('${WRITE}');`), 2, 'unreadable', 'used as a value rather than read through a named property'],
+  ['a member reference that is not itself the call', js(`const run = locals.QUERY; const removed = run('${WRITE}');`), 1, 'unreadable', 'referenced somewhere other than a direct call'],
+  ['QUERY extracted through the arguments object', `<% const { "QUERY": run } = arguments[0]; run("${NESTED_WRITE}"); %>`, 1, 'unreadable', 'exposes the locals bag indirectly'],
 
-  // Interpolation. Reading the statement means replacing each gap with a
-  // placeholder, and a placeholder only describes the statement that runs when
-  // the gap is confined to characters that cannot leave the literal.
-  {
-    because: 'a parameter interpolated with nothing done to it',
-    template: `<% const rows = QUERY(\`${selectWhere('${$params.q}')}\`, { format: 'json' }); %>`,
-    findings: 1,
-    outcome: 'unreadable',
-    names: 'neither a fixed string nor an allowlist filter',
-    rejected: true
-  },
-  {
-    because: 'a filter whose allowlist still keeps the quote that ends the literal',
-    template:
-      `<% const rows = QUERY(\`${selectWhere("${String($params.q).replace(/[^a-zA-Z_']/g, '')}")}\`, ` +
-      "{ format: 'json' }); %>",
-    findings: 1,
-    outcome: 'unreadable',
-    names: 'still allows',
-    rejected: true
-  },
-  {
-    because: 'a filter whose allowlist is written with a shorthand this contract cannot expand',
-    template:
-      `<% const rows = QUERY(\`${selectWhere("${String($params.q).replace(/[^\\w-]/g, '')}")}\`, ` +
-      "{ format: 'json' }); %>",
-    findings: 1,
-    outcome: 'unreadable',
-    names: 'not a single negated character class',
-    rejected: true
-  },
-  {
-    because: 'a filter that removes only the first match',
-    template:
-      `<% const rows = QUERY(\`${selectWhere("${String($params.q).replace(/[^a-zA-Z_]/, '')}")}\`, ` +
-      "{ format: 'json' }); %>",
-    findings: 1,
-    outcome: 'unreadable',
-    names: 'only the g flag removes every occurrence',
-    rejected: true
-  },
-  {
-    because: 'a filter whose receiver is not known to be a string',
-    template:
-      `<% const rows = QUERY(\`${selectWhere("${($params.q || '').replace(/[^a-zA-Z_]/g, '')}")}\`, ` +
-      "{ format: 'json' }); %>",
-    findings: 1,
-    outcome: 'unreadable',
-    names: 'not known to be a string',
-    rejected: true
-  },
-  {
-    because: 'a value filtered somewhere other than the gap it is interpolated into',
-    template:
-      `<% const safe = ${SAFE_FILTER}; %>` +
-      `<% const rows = QUERY(\`${selectWhere('${safe}')}\`, { format: 'json' }); %>`,
-    findings: 1,
-    outcome: 'unreadable',
-    names: 'neither a fixed string nor an allowlist filter',
-    rejected: true
-  },
-  {
-    because: 'a filtered value interpolated outside any quoted literal',
-    template:
-      '<% const rows = QUERY(`SELECT * FROM "App" ' +
-      "LIMIT ${String($params.n).replace(/[^0-9]/g, '')}`, { format: 'json' }); %>",
-    findings: 1,
-    outcome: 'unreadable',
-    names: 'interpolated outside a quoted SQL string literal',
-    rejected: true
-  },
-  {
-    because: 'a value filtered in the gap it is interpolated into',
-    template: `<% const rows = QUERY(\`${selectWhere(`\${${SAFE_FILTER}}`)}\`, { format: 'json' }); %>`,
-    findings: 1,
-    outcome: 'read',
-    rejected: false
-  },
-  {
-    because: 'a fixed string interpolated into a quoted literal',
-    template: `<% const rows = QUERY(\`${selectWhere("${'complete'}")}\`, { format: 'json' }); %>`,
-    findings: 1,
-    outcome: 'read',
-    rejected: false
-  },
+  // Names that reach code, the global scope, or an object's internals.
+  ['a statement built as text and run through eval', writes(`eval("QUERY('${NESTED_WRITE}')")`), 1, 'unreadable', 'turns text into code'],
+  ['a statement run through the Function constructor', `<% const r = new Function('Q', "return Q('${NESTED_WRITE}')"); r(QUERY); %>`, 2, 'unreadable', 'turns text into code'],
+  ['Function reached through a static member', `<% globalThis["Function"]("QUERY(\\"${NESTED_WRITE}\\")")(); %>`, 2, 'unreadable', 'reaches the global object'],
+  ['indirect construction through a constructor', `<% String.constructor("l", "l.QUERY(\\"${NESTED_WRITE}\\")")(arguments[0]); %>`, 2, 'unreadable', 'reaches a constructor'],
+  ['a property reached through Reflect', `<% const r = Reflect.get(locals, "QUERY"); r("${NESTED_WRITE}"); %>`, 2, 'unreadable', 'can read or write a property this contract cannot name'],
+  [
+    'prototype mutation through Object reflection',
+    `<% Object.defineProperty(Object.getPrototypeOf(''), 'replace', { value: (v) => v }); %>${gap(TOKEN)}`,
+    3,
+    'unreadable',
+    'exposes reflection methods'
+  ],
 
-  {
-    because: 'a read-only statement in a plain string',
-    template: `<% const rows = QUERY('${READ_ONLY}', { format: 'json' }); %>`,
-    findings: 1,
-    outcome: 'read',
-    rejected: false
-  },
-  {
-    because: 'two calls in one template',
-    template:
-      `<% const a = QUERY(\`${READ_ONLY}\`, { format: 'json' }); %>\n` +
-      '<% const b = QUERY(`SELECT * FROM "Other" LIMIT 1`, { format: \'json\' }); %>',
-    findings: 2,
-    outcome: 'read',
-    rejected: false
-  },
-  {
-    // A literal subscript names one thing and cannot become another, so
-    // rejecting it would only push examples into worse shapes.
-    because: 'a collection indexed by a literal',
-    template: "<% const first = record.formValues.find('site_photo').items[0]; %>",
-    findings: 0,
-    outcome: 'ignored',
-    rejected: false
-  },
-  {
-    // The runtime helper is QUERY. A lowercase name is a different function and
-    // reaches no database, so treating it as one would be a false report.
-    because: 'a lowercase name that is not the runtime helper',
-    template: `<% const removed = query('${WRITE}'); %>`,
-    findings: 0,
-    outcome: 'ignored',
-    rejected: false
-  }
+  // The intrinsics the encoders are written against. No example names them, and
+  // no spelling below may rebind or rewrite one.
+  ['String rebound by a const declaration', `<% const String = (v) => v; %>${gap(TOKEN)}`, 2, 'unreadable', 'String is rebound'],
+  ['String rebound through a function parameter', `<% ((String) => { %>${gap(TOKEN)}<% })(null); %>`, 2, 'unreadable', 'String is rebound'],
+  ['String rebound through a catch clause', `<% try { %>${gap(TOKEN)}<% } catch (String) { } %>`, 2, 'unreadable', 'String is rebound'],
+  ['String rebound through a destructured default', `<% function b({ as: String = null }) { %>${gap(TOKEN)}<% } %>`, 2, 'unreadable', 'String is rebound'],
+  ['RegExp rebound through a catch clause', `<% try { %>${gap(TOKEN)}<% } catch (RegExp) { } %>`, 2, 'unreadable', 'RegExp is rebound'],
+  ['String reassigned outright', `<% String = function (v) { return v; }; %>${gap(TOKEN)}`, 2, 'unreadable', 'String is assigned to'],
+  ['a String property overwritten', `<% String.raw = function () { return ''; }; %>${gap(TOKEN)}`, 2, 'unreadable', 'String is assigned to'],
+  ['the prototype method the encoders use overwritten', `<% String.prototype.replace = function () { return "' OR 1=1 --"; }; %>${gap(TOKEN)}`, 2, 'unreadable', 'reaches a prototype'],
+  ['the String prototype reached through __proto__', `<% ''.__proto__.replace = function () { return ''; }; %>${gap(TOKEN)}`, 2, 'unreadable', 'reaches a prototype'],
+
+  // Interpolation. Reading a statement means replacing each gap with a
+  // placeholder, and a placeholder is only earned by a recognized encoder
+  // written inside the quotes it lands in.
+  ['a parameter interpolated with nothing done to it', gap('${$params.q}'), 1, 'unreadable', 'not one of the recognized SQL encoders'],
+  ['a value sanitized somewhere other than the gap', `<% const safe = ${TOKEN}; %>${gap('${safe}')}`, 1, 'unreadable', 'not one of the recognized SQL encoders'],
+  ['a fixed string interpolated into a quoted literal', gap("${'complete'}"), 1, 'unreadable', 'not one of the recognized SQL encoders'],
+  ['the ambient String sanitizer this contract used to trust', gap("${String($params.q).replace(/[^A-Za-z0-9_-]/g, '')}"), 1, 'unreadable', 'not known to be a string built without a binding this template could rebind'],
+  ['a character class wider than any recognized encoder', gap("${('' + $params.q).replace(/[^A-Za-z0-9_'-]/g, '')}"), 1, 'unreadable', 'is not a recognized encoder'],
+  ['a recognized class that removes only the first match', gap("${('' + $params.q).replace(/[^A-Za-z0-9_-]/, '')}"), 1, 'unreadable', 'only the g flag removes every occurrence'],
+  ['an encoder that keeps what it matches', gap("${('' + $params.q).replace(/[^A-Za-z0-9_-]/g, '_')}"), 1, 'unreadable', 'so the removed characters are not gone'],
+  [
+    'an encoded value interpolated outside any quoted literal',
+    '<% const rows = QUERY(`SELECT * FROM "App" ' +
+      "LIMIT ${('' + $params.n).replace(/[^0-9-]/g, '')}`, { format: 'json' }); %>",
+    1,
+    'unreadable',
+    'interpolated outside a quoted SQL string literal'
+  ],
+
+  // What must still be accepted.
+  ['the recognized identifier encoder in its own gap', gap(`\${${TOKEN}}`), 1, 'read', null],
+  [
+    'the recognized date encoder in its own gap',
+    '<% const rows = QUERY(`SELECT * FROM "Inspections" ' +
+      "WHERE _created_at >= '${('' + $params.start).replace(/[^0-9-]/g, '')}'`, { format: 'json' }); %>",
+    1,
+    'read',
+    null
+  ],
+  ['a read-only statement in a plain string', writes('QUERY(\'SELECT * FROM "App" LIMIT 1\')'), 1, 'read', null],
+  [
+    'two calls in one template',
+    '<% const a = QUERY(`SELECT * FROM "App" LIMIT 1`); %>\n<% const b = QUERY(`SELECT * FROM "Other" LIMIT 1`); %>',
+    2,
+    'read',
+    null
+  ],
+  // A literal subscript names one thing and cannot become another, and a
+  // lowercase name is a different function that reaches no database. Reporting
+  // either would be a false alarm that pushes examples into worse shapes.
+  ['a collection indexed by a literal', "<% const f = record.formValues.find('p').items[0]; %>", 0, 'ignored', null],
+  ['a lowercase name that is not the runtime helper', writes(`query('${WRITE}')`), 0, 'ignored', null]
 ];
 
-// Rendered markup that must be judged correctly. A row emitted inside a loop is
-// the case a static reader of the template never sees.
-const MARKUP_FIXTURES = [
-  {
-    because: 'a row emitted inside a loop with no table around it',
-    template: '<% [1, 2].forEach(function (n) { %><tr><td><%= n %></td></tr><% }); %>',
-    valid: false
-  },
-  {
-    because: 'a row emitted inside a loop inside a table',
-    template:
-      '<table><tbody><% [1, 2].forEach(function (n) { %><tr><td><%= n %></td></tr><% }); %></tbody></table>',
-    valid: true
-  },
-  {
-    because: 'an unclosed element',
-    template: '<div><p>text</div>',
-    valid: false
-  }
-];
-
-const PRESENT = scenario('present', { fields: { site_id: { value: 'a' } }, rows: 2 });
-const ABSENT = scenario('absent', { fields: {}, rows: 0 });
-
-// Templates whose branches the given scenarios do or do not reach. `covered` is
-// whether every branch ran; a fixture that expects `false` is the case the
-// whole check exists for, so it must keep failing.
-const COVERAGE_FIXTURES = [
-  {
-    because: 'an else whose scenarios never take it',
-    template: "<% if (record.formValues.find('site_id')) { %><p>yes</p><% } else { %><p>no</p><% } %>",
-    scenarios: [PRESENT],
-    covered: false
-  },
-  {
-    because: 'an if with no else that always tests true',
-    template: "<% if (record.formValues.find('site_id')) { %><p>yes</p><% } %>",
-    scenarios: [PRESENT],
-    covered: false
-  },
-  {
-    because: 'a loop body no scenario enters',
-    template: "<% QUERY('SELECT 1').rows.forEach(function (row) { %><p>x</p><% }); %>",
-    scenarios: [ABSENT],
-    covered: false
-  },
-  {
-    because: 'both outcomes of an if that has no else',
-    template: "<% if (record.formValues.find('site_id')) { %><p>yes</p><% } %>",
-    scenarios: [PRESENT, ABSENT],
-    covered: true
-  },
-  {
-    because: 'both outcomes of an if and a loop that runs',
-    template:
-      "<% if (record.formValues.find('site_id')) { %>" +
-      "<% QUERY('SELECT 1').rows.forEach(function (row) { %><p>x</p><% }); %>" +
-      '<% } else { %><p>none</p><% } %>',
-    scenarios: [PRESENT, ABSENT],
-    covered: true
-  }
+// [because, declared, template, valid] — markup judged without rendering
+// anything. A row emitted inside a loop is the case a careless reader misses,
+// and it is decided here on the template text.
+const MARKUP_PROBES = [
+  ['a row emitted in a loop with no table around it', ['td', 'tr'], '<% r.forEach(function (n) { %><tr><td><%= n %></td></tr><% }); %>', false],
+  ['a row placed directly in a table with no row group', ['table', 'td', 'tr'], '<table><tr><td>x</td></tr></table>', false],
+  ['a row emitted in a loop inside a table body', ['table', 'tbody', 'td', 'tr'], '<table><tbody><% r.forEach(function (n) { %><tr><td><%= n %></td></tr><% }); %></tbody></table>', true],
+  ['an unclosed element', ['div', 'p'], '<div><p>text</div>', false],
+  ['an element the template never declared', [], '<p>text</p>', false],
+  ['a declared element the template no longer emits', ['p'], 'text', false],
+  ['a void element that needs no closing tag', ['img'], '<img src="<%= url %>" alt="Example">', true],
+  ['raw EJS output that could emit undeclared markup', [], '<%- "<script>alert(1)</script>" %>', false],
+  ['EJS output internals emitting undeclared markup', [], '<% __append("<script>x</script>") %>', false],
+  ['an EJS expression constructing tag names', [], '<<%= tag %>>x</<%= tag %>>', false],
+  [
+    'a table container opened only in one control-flow branch',
+    ['table', 'tbody', 'td', 'tr'],
+    '<% if (show) { %><table><tbody><% } %><tr><td>x</td></tr>',
+    false
+  ]
 ];
 
 function sqlFailures() {
   const failures = [];
 
-  for (const [sql, kinds, because] of REJECTED_SQL) {
-    const reported = new Set(readOnlyViolations(sql).map(({ kind }) => kind));
+  for (const [sql, kinds, because, options = {}] of REJECTED_SQL) {
+    const reported = new Set(readOnlyViolations(sql, options).map(({ kind }) => kind));
     const missing = kinds.filter((kind) => !reported.has(kind));
     if (missing.length === 0) continue;
 
@@ -478,8 +255,6 @@ function sqlFailures() {
   return failures;
 }
 
-// A finding is 'read' when its SQL was recovered statically, 'unreadable' when
-// something was refused instead, and 'ignored' when there was nothing to find.
 function outcomeOf(findings) {
   if (findings.length === 0) return 'ignored';
   return findings.some((finding) => finding.reason) ? 'unreadable' : 'read';
@@ -488,126 +263,109 @@ function outcomeOf(findings) {
 function templateFailures() {
   const failures = [];
 
-  for (const fixture of TEMPLATE_FIXTURES) {
+  for (const [because, template, expectedFindings, expectedOutcome, reason] of TEMPLATE_PROBES) {
     let findings;
     try {
-      findings = queryCalls(compiledSource(fixture.template, 'self-check.ejs'));
+      findings = queryCalls(compiledSource(template, 'self-check.ejs'));
     } catch (error) {
-      failures.push(`QUERY() discovery threw on ${fixture.because}: ${String(error.message).split('\n')[0]}`);
+      failures.push(`QUERY() discovery threw on ${because}: ${String(error.message).split('\n')[0]}`);
       continue;
     }
 
-    if (findings.length !== fixture.findings) {
+    if (findings.length !== expectedFindings) {
       failures.push(
-        `QUERY() discovery made ${findings.length} findings instead of ${fixture.findings} for ${fixture.because}`
+        `QUERY() discovery made ${findings.length} findings instead of ${expectedFindings} for ${because}`
       );
       continue;
     }
 
     const outcome = outcomeOf(findings);
-    if (outcome !== fixture.outcome) {
-      failures.push(`QUERY() discovery treats ${fixture.because} as ${outcome} rather than ${fixture.outcome}`);
+    if (outcome !== expectedOutcome) {
+      failures.push(`QUERY() discovery treats ${because} as ${outcome} rather than ${expectedOutcome}`);
       continue;
     }
 
     const violations = findings.flatMap((finding) =>
-      finding.reason ? [finding.reason] : readOnlyViolations(finding.sql).map(({ reason }) => reason)
+      finding.reason ? [finding.reason] : readOnlyViolations(finding.sql, QUERY_ONE).map((v) => v.reason)
     );
 
-    if (fixture.names && !violations.some((reason) => reason.includes(fixture.names))) {
+    if (reason === null) {
+      if (violations.length > 0) failures.push(`QUERY() validation rejects ${because}: ${violations.join('; ')}`);
+    } else if (!violations.some((violation) => violation.includes(reason))) {
       failures.push(
-        `QUERY() validation no longer rejects ${fixture.because} by the rule that says ` +
-          `"${fixture.names}": ${violations.join('; ') || 'nothing was reported'}`
+        `QUERY() validation no longer rejects ${because} by the rule that says ` +
+          `"${reason}": ${violations.join('; ') || 'nothing was reported'}`
       );
-      continue;
     }
+  }
 
-    if (violations.length > 0 === fixture.rejected) continue;
+  return failures;
+}
+
+// What an encoded value may still contain. A quote cannot end the SQL literal,
+// a backslash cannot escape, a semicolon cannot start a statement, and a
+// solidus or asterisk cannot open a comment, because none of them are here.
+const SAFE_CHARACTER = /^[A-Za-z0-9_-]$/;
+
+// The recognized encoders are two constants, so what each keeps is measured
+// rather than described. Scanning the first 256 code points is enough: each
+// class body is plain ASCII, so a negated class removes every character above
+// it without having to enumerate them.
+function encoderFailures() {
+  const failures = [];
+
+  for (const [pattern, type] of recognizedEncoders) {
+    const matcher = new RegExp(pattern);
+    const kept = [];
+    for (let code = 0; code < 256; code += 1) {
+      const character = String.fromCharCode(code);
+      if (!matcher.test(character) && !SAFE_CHARACTER.test(character)) kept.push(JSON.stringify(character));
+    }
+    if (kept.length === 0) continue;
 
     failures.push(
-      fixture.rejected
-        ? `QUERY() validation no longer rejects ${fixture.because}`
-        : `QUERY() validation rejects ${fixture.because}: ${violations.join('; ')}`
+      `the recognized encoder for ${type}, /${pattern}/, keeps ${kept.join(', ')}, which can leave the ` +
+        'quoted literal it is interpolated into'
     );
   }
 
   return failures;
 }
 
-// Every markup fixture is rendered and judged the same way a real template is,
-// through the same renderer and the same host document, so what the fixtures
-// prove is the check that actually runs.
-async function markupFailures(validator) {
+function markupFailures() {
   const failures = [];
 
-  for (const fixture of MARKUP_FIXTURES) {
-    const { renders } = await renderScenarios(fixture.template, 'self-check.ejs', [DEFAULT_SCENARIO]);
-    const [rendered] = renders;
-    if (rendered.error) {
-      failures.push(`markup fixture for ${fixture.because} does not render: ${rendered.error}`);
-      continue;
-    }
-
-    const report = await validator.validateString(hostDocument(rendered.html), 'self-check.html');
-    if (report.valid === fixture.valid) continue;
+  for (const [because, declared, template, valid] of MARKUP_PROBES) {
+    const violations = markupViolationsAgainst(declared, template);
+    if (violations.length === 0 === valid) continue;
 
     failures.push(
-      fixture.valid
-        ? `rendered markup validation rejects ${fixture.because}`
-        : `rendered markup validation no longer rejects ${fixture.because}`
+      valid
+        ? `markup validation rejects ${because}: ${violations.join('; ')}`
+        : `markup validation no longer rejects ${because}`
     );
   }
 
-  return failures;
-}
-
-async function coverageFailures() {
-  const failures = [];
-
-  for (const fixture of COVERAGE_FIXTURES) {
-    const { renders, uncovered } = await renderScenarios(
-      fixture.template,
-      'self-check.ejs',
-      fixture.scenarios
-    );
-
-    const broken = renders.find((rendered) => rendered.error);
-    if (broken) {
-      failures.push(`coverage fixture for ${fixture.because} does not render: ${broken.error}`);
-      continue;
-    }
-
-    if ((uncovered.length === 0) === fixture.covered) continue;
-
-    failures.push(
-      fixture.covered
-        ? `branch coverage reports ${fixture.because} as unreached: lines ${uncovered
-            .map(({ line }) => line)
-            .join(', ')}`
-        : `branch coverage no longer reports ${fixture.because}`
-    );
+  // A template nobody declared is a failure rather than a skip, which is what
+  // keeps a new example from opting out of having its markup checked.
+  if (markupViolations('never-declared.ejs', '<p>text</p>').length === 0) {
+    failures.push('markup validation no longer rejects a template with no markup declaration');
   }
 
   return failures;
 }
 
 // Returns { failures, total } — the reasons the contracts are no longer sound,
-// and how many fixtures were exercised. `validator` is the same html-validate
-// instance the repository's rendered output is held to, so the fixtures prove
-// the configuration in use rather than a copy of it.
-export async function selfCheck(validator) {
+// and how many probes were exercised.
+export function selfCheck() {
   return {
-    failures: [
-      ...sqlFailures(),
-      ...templateFailures(),
-      ...(await markupFailures(validator)),
-      ...(await coverageFailures())
-    ],
+    failures: [...sqlFailures(), ...templateFailures(), ...encoderFailures(), ...markupFailures()],
     total:
       REJECTED_SQL.length +
       ACCEPTED_SQL.length +
-      TEMPLATE_FIXTURES.length +
-      MARKUP_FIXTURES.length +
-      COVERAGE_FIXTURES.length
+      TEMPLATE_PROBES.length +
+      recognizedEncoders.size +
+      MARKUP_PROBES.length +
+      1
   };
 }

@@ -10,11 +10,11 @@
 # legacy and current example inventories are exact.
 #
 # Everything that needs a parser — HTML, inline scripts and styles, EJS, CSS,
-# JSON, JavaScript, the read-only SQL contract, and the structural validity of
-# what a report template renders — belongs to tools/format-validator, which uses
-# established parsers pinned in its lockfile and proves its own contracts
-# against bypass fixtures. This file invokes it and requires its evidence rather
-# than carrying a second implementation of the same rules.
+# JSON, JavaScript, and the read-only SQL contract — belongs to
+# tools/format-validator, which uses established parsers pinned in its lockfile
+# and proves its own contracts against bypass probes. It parses; it never runs
+# anything this repository authors. This file invokes it and requires its
+# evidence rather than carrying a second implementation of the same rules.
 #
 # Exhaustive cross-package App MCP contract parity remains layer 6's job.
 
@@ -68,21 +68,18 @@ COMMENTLESS_EXTENSIONS = %w[.json].freeze
 # The evidence tools/format-validator must report back, so delegating the
 # parsing work cannot quietly become skipping it.
 #
-#   contract-fixture  bypass fixtures the SQL, QUERY(), interpolation, markup,
-#                     and branch-coverage contracts prove themselves against
+#   contract-probe    bypass probes the SQL, QUERY(), interpolation, intrinsic,
+#                     and markup contracts prove themselves against
 #   embedded-sql      QUERY() statements read out of a report template's syntax
 #                     tree
-#   rendered-html     report templates rendered with fixture data and validated
-#                     as markup
-#   branch-covered    report templates whose fixtures were measured to reach
-#                     every branch, which is what makes rendering proof rather
-#                     than a sample
+#   markup-asserted   report templates whose markup matched the element
+#                     declaration and nesting rules held for them
 #
 # The first two are floors, so adding an example does not fail this layer. The
-# last two are counted against the report templates this layer already found,
-# so a template that is never rendered — or rendered without reaching all of
-# its markup — is missing evidence rather than merely below a round number.
-MINIMUM_CONTRACT_FIXTURES = 60
+# last is counted against the report templates this layer already found, so a
+# template whose markup is never checked — or that has no declaration at all —
+# is missing evidence rather than merely below a round number.
+MINIMUM_CONTRACT_PROBES = 85
 MINIMUM_EMBEDDED_SQL = 5
 
 # The single Reference File name the publish sequence uploads and every trigger
@@ -321,11 +318,10 @@ sql_files.each do |path|
   )
 end
 
-# 8. Structural, SQL, and rendered-markup validation run in
-#    tools/format-validator, whose parsers are pinned by its lockfile. Its
-#    contracts prove themselves against bypass fixtures on every run, and this
-#    layer requires that proof rather than repeating it in a second SQL
-#    implementation.
+# 8. Structural, SQL, and markup validation run in tools/format-validator,
+#    whose parsers are pinned by its lockfile. Its contracts prove themselves
+#    against bypass probes on every run, and this layer requires that proof
+#    rather than repeating it in a second SQL implementation.
 ejs_files = external_files.select { |path| File.extname(path).casecmp(".ejs").zero? }
 assert(!ejs_files.empty?, "no report templates were externalized")
 node = ENV["NODE"] || "node"
@@ -344,14 +340,13 @@ if node_available && dependencies_installed
     "format validator did not report a pass: #{stdout.strip}"
   )
   # The counts below are the evidence that the work this layer delegated was
-  # actually done: the bypass fixtures ran, every QUERY() statement was read out
-  # of a syntax tree, and every report template was rendered, checked, and
-  # measured to have had all of its branches reached.
+  # actually done: the bypass probes ran, every QUERY() statement was read out
+  # of a syntax tree, and every report template's markup was checked against
+  # the declaration held for it.
   {
-    "contract-fixture" => MINIMUM_CONTRACT_FIXTURES,
+    "contract-probe" => MINIMUM_CONTRACT_PROBES,
     "embedded-sql" => MINIMUM_EMBEDDED_SQL,
-    "rendered-html" => ejs_files.length,
-    "branch-covered" => ejs_files.length,
+    "markup-asserted" => ejs_files.length,
     "sql" => sql_files.length
   }.each do |kind, minimum|
     reported = stdout[/\b#{Regexp.escape(kind)}=(\d+)/, 1]
@@ -648,6 +643,19 @@ assert(
   File.file?(File.join(SKILLS, "fulcrum-report-building", "assets", "report-print-layout.css")),
   "report assets lack a copyable stylesheet"
 )
+# Every SQL gap is encoded in the gap itself, through a conversion that names no
+# binding a template could rebind. `String` is an ordinary name inside a
+# template — `catch (String)` rebinds it — so an example must not lean on it.
+# Which encoders count is decided on the parsed tree by tools/format-validator;
+# this layer states the policy the examples are written to.
+assert(
+  !report_corpus.match?(/\$\{\s*String\s*\(/),
+  "report examples encode a SQL gap through the ambient String binding"
+)
+assert(
+  report_corpus.include?("('' + status).replace(/[^A-Za-z0-9_-]/g, '')"),
+  "report examples do not show the recognized identifier encoder in the gap"
+)
 
 date_range = File.read(File.join(report_examples, "params-date-range.ejs"))
 assert(
@@ -671,8 +679,8 @@ assert(
 )
 assert(
   date_range.include?("addDays(endDay, 1)") &&
-    date_range.include?("_created_at >= '${String(startDate)") &&
-    date_range.include?("_created_at < '${String(endExclusiveDate)"),
+    date_range.include?("_created_at >= '${('' + startDate)") &&
+    date_range.include?("_created_at < '${('' + endExclusiveDate)"),
   "date-range example does not query a half-open interval"
 )
 assert(

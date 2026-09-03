@@ -7,15 +7,20 @@
   Reduce the value to an allowlisted character class before interpolating it.
 
   Encode in the gap itself, not in a variable further up. A reader — and any
-  checker — can see that `String(status).replace(/[^a-zA-Z_]/g, '')` yields
-  letters and underscores, and that those cannot close the quote around them.
-  The same filter written twenty lines earlier proves nothing at the point
-  where the value reaches SQL, because the name in the gap could have been
-  reassigned in between.
+  checker — can see that `('' + status).replace(/[^A-Za-z0-9_-]/g, '')` yields
+  letters, digits, underscores, and hyphens, and that none of those can close
+  the quote around them. The same filter written twenty lines earlier proves
+  nothing at the point where the value reaches SQL, because the name in the gap
+  could have been reassigned in between.
+
+  `('' + value)` converts without naming `String`. That matters: `String` is an
+  ordinary binding inside a template, so `catch (String)` or a parameter of that
+  name would silently change what a `String(value)` conversion means, while an
+  empty-string concatenation has no name to rebind.
 %>
 
 <% const status = $params.status || ''; %>
 <% const result = QUERY(
-  `SELECT * FROM "App" WHERE _status = '${String(status).replace(/[^a-zA-Z_]/g, '')}'`,
+  `SELECT * FROM "App" WHERE _status = '${('' + status).replace(/[^A-Za-z0-9_-]/g, '')}'`,
   { format: 'json' }
 ); %>

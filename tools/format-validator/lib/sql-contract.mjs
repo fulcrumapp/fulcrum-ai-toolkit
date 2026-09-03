@@ -2,22 +2,21 @@
 //
 // Fulcrum's Query API is read-only, so every SQL statement this repository
 // distributes — in a `.sql` asset or in a report template's QUERY() call — must
-// be read-only too. That used to be decided by a hand-written lexer. It is now
-// decided by `pgsql-ast-parser`, pinned in package-lock.json, so there is one
-// SQL implementation in the repository rather than two.
+// be read-only too. `pgsql-ast-parser`, pinned in package-lock.json, parses it;
+// nothing is executed and no database is reached.
 //
-// Four rules, applied to every statement and every node beneath it. All of them
-// fail closed: the allowlists hold only the forms the repository's own
-// read-only examples produce, so an unlisted form is rejected whether or not it
-// happens to write.
+// Every allowlist below holds exactly what the repository's own examples
+// produce, and nothing else, so an unlisted form is rejected whether or not it
+// happens to write. That is the point: `_geometry::geography` is a cast this
+// package uses, while `x::application_side_effect_type` names a type whose
+// input function is outside this contract's knowledge, so it fails closed.
 //
-//   1. Every top-level statement is a form in READ_ONLY_STATEMENTS.
-//   2. Nothing anywhere in the tree writes INTO a table. `INSERT INTO` is
-//      caught here as well as by rule 1, and `SELECT ... INTO` would be caught
-//      here if the parser ever accepted it — today the parser refuses it, which
-//      is itself a violation.
-//   3. Every `type` anywhere in the tree is in READ_ONLY_AST_TYPES.
-//   4. Every function call anywhere in the tree is in READ_ONLY_FUNCTIONS.
+//   1. Every top-level statement is a SELECT.
+//   2. A QUERY() argument holds exactly one statement, so a second one cannot
+//      ride along behind a semicolon.
+//   3. Nothing anywhere in the tree writes INTO a table.
+//   4. Every node `type`, every operator, every cast target, and every called
+//      function anywhere in the tree is on its allowlist.
 //
 // SQL the parser cannot parse is a violation, because a statement that cannot
 // be parsed cannot be proven read-only. Comments, string literals, and quoted
@@ -26,15 +25,15 @@
 // `pg_catalog."setval"(1, 2)` both arrive as ordinary calls with the quoting
 // removed, so neither can hide behind quotes.
 //
-// Every violation carries a `kind`, so the fixtures in self-check.mjs can pin
-// the rule that caught it rather than only the fact that something did.
+// Every violation carries a `kind`, so the probes in self-check.mjs can pin the
+// rule that caught it rather than only the fact that something did.
 
 import { parse as parsePostgres } from 'pgsql-ast-parser';
 
 // A caller-supplied literal — `:name` in a SQL asset, `${...}` in a report
 // template — is replaced with NULL so the surrounding statement can be parsed
-// for its shape. Encoding that literal is a separate contract, which the
-// examples carry in prose.
+// for its shape. Encoding that literal is a separate contract, enforced on the
+// template side by ejs-queries.mjs.
 const BIND_PLACEHOLDER = /(?<![:\w]):[A-Za-z_][A-Za-z0-9_]*/g;
 
 export const INTERPOLATION_PLACEHOLDER = 'NULL';
@@ -58,6 +57,15 @@ const READ_ONLY_AST_TYPES = new Set([
   'string',
   'table'
 ]);
+
+// Every operator the examples use. Absent, and so rejected: `@@` and the rest
+// of full-text search, the JSON operators, `||`, and every custom operator,
+// each of which can invoke a function this contract has never seen.
+const READ_ONLY_OPERATORS = new Set(['<', '=', '>=', 'AND']);
+
+// The one cast the examples take: metre-based PostGIS distance. A cast runs the
+// target type's input function, so an unlisted type is rejected by name.
+const READ_ONLY_CAST_TYPES = new Set(['geography']);
 
 // The read-only functions the examples actually call. The parser lowercases and
 // unquotes every function name, so one spelling covers every way of writing it.
@@ -87,19 +95,77 @@ function treeNodes(value, found = []) {
   return found;
 }
 
-function functionName(node) {
-  const name = node.function?.name;
-  if (node.function?.schema) return null;
-  return typeof name === 'string' ? name.toLowerCase() : null;
+// The name a call or cast target spells, or null when it is schema-qualified or
+// unnamed. A schema qualifier is never resolved here, so it never matches.
+function plainName(named) {
+  if (!named || named.schema) return null;
+  return typeof named.name === 'string' ? named.name.toLowerCase() : null;
 }
 
 function violation(kind, reason) {
   return { kind, reason };
 }
 
+function nodeViolations(node, where) {
+  const found = [];
+
+  if (node.into) found.push(violation('into', `${where} writes INTO a table`));
+
+  if (typeof node.op === 'string') {
+    if (node.opSchema) {
+      found.push(
+        violation(
+          'operator-schema',
+          `${where} uses schema-qualified operator ${node.opSchema}.${node.op}, which is not allowed`
+        )
+      );
+    }
+    if (INCLUSIVE_RANGE_OPERATORS.has(node.op)) {
+      return [
+        violation(
+          'inclusive-range',
+          `${where} uses ${node.op}, whose upper bound is inclusive; use a half-open >= and < range`
+        )
+      ];
+    }
+    if (!READ_ONLY_OPERATORS.has(node.op)) {
+      found.push(
+        violation('operator', `${where} uses the ${node.op} operator, which is not on the read-only allowlist`)
+      );
+    }
+  }
+
+  if (typeof node.type === 'string' && !READ_ONLY_AST_TYPES.has(node.type)) {
+    found.push(
+      violation('node-form', `${where} uses the ${node.type} form, which is not on the read-only allowlist`)
+    );
+  }
+
+  if (node.type === 'cast' && !READ_ONLY_CAST_TYPES.has(plainName(node.to))) {
+    const target = node.to?.schema ? `${node.to.schema}.${node.to.name}` : (node.to?.name ?? 'an unnamed type');
+    found.push(
+      violation('cast', `${where} casts to ${target}, which is not on the read-only cast allowlist`)
+    );
+  }
+
+  if (node.type === 'call' && !READ_ONLY_FUNCTIONS.has(plainName(node.function))) {
+    const name = node.function?.schema
+      ? `${node.function.schema}.${node.function.name}`
+      : (node.function?.name ?? 'an unnamed function');
+    found.push(
+      violation('function', `${where} calls ${name}, which is not on the read-only function allowlist`)
+    );
+  }
+
+  return found;
+}
+
 // Returns [] when every statement in `sql` is proven read-only, and one
 // { kind, reason } per violation otherwise.
-export function readOnlyViolations(sql) {
+//
+// `single` is set for a report template's QUERY() argument, which the Query API
+// runs as one statement; a `.sql` asset is a catalogue and holds several.
+export function readOnlyViolations(sql, { single = false } = {}) {
   const normalized = String(sql ?? '').replace(BIND_PLACEHOLDER, INTERPOLATION_PLACEHOLDER);
 
   let statements;
@@ -119,6 +185,12 @@ export function readOnlyViolations(sql) {
   }
 
   const violations = [];
+  if (single && statements.length > 1) {
+    violations.push(
+      violation('statement-count', `holds ${statements.length} statements where the Query API takes one`)
+    );
+  }
+
   statements.forEach((statement, offset) => {
     const where = `statement ${offset + 1}`;
 
@@ -128,32 +200,7 @@ export function readOnlyViolations(sql) {
       );
     }
 
-    for (const node of treeNodes(statement)) {
-      if (node.into) {
-        violations.push(violation('into', `${where} writes INTO a table`));
-      }
-      if (INCLUSIVE_RANGE_OPERATORS.has(node.op)) {
-        violations.push(
-          violation(
-            'inclusive-range',
-            `${where} uses ${node.op}, whose upper bound is inclusive; use a half-open >= and < range`
-          )
-        );
-      }
-      if (typeof node.type === 'string' && !READ_ONLY_AST_TYPES.has(node.type)) {
-        violations.push(
-          violation('node-form', `${where} uses the ${node.type} form, which is not on the read-only allowlist`)
-        );
-      }
-      if (node.type === 'call' && !READ_ONLY_FUNCTIONS.has(functionName(node))) {
-        const name = node.function?.schema
-          ? `${node.function.schema}.${node.function.name}`
-          : (functionName(node) ?? 'an unnamed function');
-        violations.push(
-          violation('function', `${where} calls ${name}, which is not on the read-only function allowlist`)
-        );
-      }
-    }
+    for (const node of treeNodes(statement)) violations.push(...nodeViolations(node, where));
   });
 
   const seen = new Set();

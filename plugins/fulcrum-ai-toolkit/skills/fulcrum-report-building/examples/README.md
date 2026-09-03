@@ -49,9 +49,13 @@ template.
 The Query API is read-only and accepts one complete SQL string with no
 server-side bind parameters. Encode every interpolated value in the `${...}`
 gap where it reaches `QUERY()`, and keep that gap inside quotes:
-`'${String(value).replace(/[^a-zA-Z0-9_-]/g, '')}'` leaves letters, digits,
-underscores, and hyphens, none of which can close the literal around them. A
-filter applied further up the template proves nothing about the name that is
-actually interpolated. Call `QUERY()` by name rather than through the locals
-object or a string passed to `eval`. Never write a statement that mutates
+`'${('' + value).replace(/[^A-Za-z0-9_-]/g, '')}'` leaves letters, digits,
+underscores, and hyphens, none of which can close the literal around them, and
+`'${('' + day).replace(/[^0-9-]/g, '')}'` does the same for a date. Convert with
+`('' + value)` rather than `String(value)`: `String` is an ordinary binding
+inside a template, so `catch (String)` or a parameter of that name would change
+what the conversion means, while an empty-string concatenation has no name to
+rebind. A filter applied further up the template proves nothing about the name
+that is actually interpolated. Call `QUERY()` by name rather than through the
+locals object or a string passed to `eval`. Never write a statement that mutates
 data; a report template has no business issuing one.

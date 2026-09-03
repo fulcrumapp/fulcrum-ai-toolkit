@@ -167,8 +167,9 @@ rendering nothing. See
 [`examples/params-date-range.ejs`](examples/params-date-range.ejs).
 
 ### Missing escaping in SQL strings
-The Query API accepts one complete SQL string and has no server-side bind parameters, so the template owns encoding. Sanitize a `$params` value in the gap it is interpolated into — `'${String(value).replace(/[^a-zA-Z_]/g, '')}'` — rather than in a variable further up, so the filter is visible at the point the value reaches SQL:
+The Query API accepts one complete SQL string and has no server-side bind parameters, so the template owns encoding. Sanitize a `$params` value in the gap it is interpolated into — `'${('' + value).replace(/[^A-Za-z0-9_-]/g, '')}'` — rather than in a variable further up, so the filter is visible at the point the value reaches SQL:
 [`examples/sanitize-params-for-sql.ejs`](examples/sanitize-params-for-sql.ejs).
+Convert with `('' + value)` rather than `String(value)`; `String` is an ordinary binding inside a template, so a `catch (String)` or a parameter of that name silently changes what the conversion does.
 Reach `QUERY()` by its own name; a call written as `locals.QUERY(...)` or assembled through `eval` is not reviewable.
 Reports are read-only consumers; never write a `QUERY()` statement that modifies data.
 

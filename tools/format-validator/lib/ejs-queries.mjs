@@ -1,39 +1,33 @@
-// Finding every QUERY() call in a report template, without running it.
+// Finding every QUERY() call in a report template, and deciding what each
+// `${...}` gap in its SQL is allowed to be — all without running anything.
 //
-// A report template's SQL used to be found by matching `QUERY(` followed by a
-// backtick. That misses more than it catches: `QUERY("DELETE ...")` uses a
-// double-quoted string, `QUERY /* comment */ (`...`)` puts a comment between
-// the name and its parenthesis, and a newline does the same thing with
-// whitespace. Anything it misses ships unchecked.
+// The template is turned into the JavaScript `ejs` would run by
+// `Template#generateSource()`, and that JavaScript is parsed by `acorn` and
+// walked by `acorn-walk`. Generating source and parsing it are both static
+// steps: no function is built from the template and no template is rendered, so
+// no example code in this repository ever executes during validation.
 //
-// So the template is compiled by `ejs` into the JavaScript it would run, that
-// JavaScript is parsed by `acorn`, and the tree is walked by `acorn-walk` — all
-// three pinned in package-lock.json. A call is found because it is a call in
-// the syntax tree, so comments and whitespace are already gone by the time this
-// module looks, and the name is compared exactly: the runtime helper is
-// spelled QUERY, and a lowercase `query()` is a different function.
+// A call is found because it is a call in the syntax tree, so comments and
+// whitespace are already gone by the time this module looks, and the name is
+// compared exactly: the runtime helper is spelled QUERY, and a lowercase
+// `query()` is a different function. The helper is not reachable only by its
+// bare name — `ejs` puts the report runtime in scope with `with (locals)`, so
+// `locals.QUERY` and `locals['QUERY']` are read the same way.
 //
-// The helper is not reachable only by its bare name. `ejs` puts the report
-// runtime in scope with `with (locals)`, so the same function is also
-// `locals.QUERY` and `locals['QUERY']`, and a member call is still a call.
-// Those are read here exactly like a bare one. What cannot be read is refused
-// instead: a name referenced without being called, a computed property that is
-// not a literal, the `locals` bag used as a value, and `eval` or the Function
-// constructor. Each of those can put a query where a syntax tree cannot follow
-// it, so each fails closed.
+// Everything that could put a query where a syntax tree cannot follow it is
+// refused instead of guessed at: a name referenced without being called, a
+// computed property that is not a literal, the locals bag used as a value, and
+// any name that reaches code or an object's internals.
 //
-// The template is never rendered here and no query is ever issued: compiling
-// produces source text, and parsing produces a tree. The SQL argument is read
-// out of the tree statically, and anything that cannot be read statically is a
-// failure rather than something to guess at, so a dynamically built statement
-// fails closed instead of shipping unchecked.
+// The SQL argument is read out of the tree statically. Anything that cannot be
+// read statically is a failure rather than something to guess at, so a
+// dynamically built statement fails closed instead of shipping unchecked.
 
 import * as acorn from 'acorn';
 import * as walk from 'acorn-walk';
 import ejs from 'ejs';
 
 import { INTERPOLATION_PLACEHOLDER } from './sql-contract.mjs';
-import { interpolationViolation } from './sql-interpolation.mjs';
 
 // The Fulcrum report runtime spells its helper in capitals.
 const QUERY_HELPER = 'QUERY';
@@ -42,11 +36,27 @@ const QUERY_HELPER = 'QUERY';
 // runtime helper including QUERY.
 const LOCALS_BAG = ejs.localsName;
 
-// Names that turn text into code, and so turn a query into something no syntax
-// tree can find.
-const DYNAMIC_CODE = new Set(['eval', 'Function']);
-const REQUIRED_INTRINSIC = 'String';
-const ARGUMENTS_OBJECT = 'arguments';
+// Names — whether written as a variable or as a static property — that reach
+// code, an object's internals, or the scope this module cannot see. Each one
+// can put a statement somewhere no syntax tree follows, so each fails closed.
+const FORBIDDEN_NAMES = new Map([
+  ['eval', 'turns text into code, which no syntax tree can follow'],
+  ['Function', 'turns text into code, which no syntax tree can follow'],
+  ['arguments', 'exposes the locals bag indirectly, so QUERY could be taken out unseen'],
+  ['constructor', 'reaches a constructor, which can create code outside the parsed template'],
+  ['prototype', 'reaches a prototype, where an intrinsic method could be replaced'],
+  ['__proto__', 'reaches a prototype, where an intrinsic method could be replaced'],
+  ['globalThis', 'reaches the global object, where any name can be resolved indirectly'],
+  ['Reflect', 'can read or write a property this contract cannot name'],
+  ['Proxy', 'can make any property lookup run code'],
+  ['Object', 'exposes reflection methods that can replace intrinsic encoder behavior']
+]);
+
+// The intrinsics the recognized SQL encoders below are written in terms of.
+// `('' + value).replace(...)` names neither of them, which is why the examples
+// are written that way — but a template that rebinds or rewrites one of them
+// would still change what a future encoder means, so both are guarded.
+const GUARDED_INTRINSICS = new Set(['String', 'RegExp']);
 
 const REFERENCED_NOT_CALLED =
   `${QUERY_HELPER} is referenced somewhere other than a direct call, so an alias could carry SQL past this check`;
@@ -56,25 +66,22 @@ const DYNAMIC_PROPERTY =
 const LOCALS_AS_VALUE =
   `the ${LOCALS_BAG} object is used as a value rather than read through a named property, so ` +
   `${QUERY_HELPER} could be taken out of it unseen`;
-const ARGUMENTS_AS_VALUE =
-  `${ARGUMENTS_OBJECT} exposes the locals bag indirectly, so QUERY could be taken out unseen`;
-const CONSTRUCTOR_ACCESS =
-  'constructor access can create code outside the parsed template and is not allowed';
-const STRING_SHADOWED =
-  `${REQUIRED_INTRINSIC} is shadowed or reassigned, so SQL allowlist filtering cannot trust the intrinsic`;
+
+const shadowed = (name) =>
+  `${name} is rebound, so the intrinsic the SQL encoders are written against is no longer the one that runs`;
+const mutated = (name) =>
+  `${name} is assigned to, so the intrinsic the SQL encoders are written against could be replaced`;
 
 // The JavaScript `ejs` would run for this template, with every scriptlet in
-// place. `generateSource()` is the same step `compile()` takes before it builds
-// a function; stopping here means nothing is ever called.
+// place. `generateSource()` is the step `compile()` takes before it builds a
+// function; stopping here means no function is ever built and nothing is run.
 export function compiledSource(text, filename) {
   const template = new ejs.Template(text, { filename });
   template.generateSource();
   return template.source;
 }
 
-// One parser configuration for compiled template source, shared by everything
-// that reads it.
-export function parseSource(source) {
+function parseSource(source) {
   return acorn.parse(source, {
     ecmaVersion: 'latest',
     sourceType: 'script',
@@ -82,29 +89,111 @@ export function parseSource(source) {
   });
 }
 
+// A SQL string literal is delimited by single quotes, and PostgreSQL treats a
+// backslash inside one as an ordinary character.
+const SQL_QUOTE = "'";
+
+// The encoders a `${...}` gap may use, one per literal type the examples build.
+// Each is recognized as an exact expression shape rather than analysed, so
+// "this gap is safe" is a spelling a reader can check by eye:
+//
+//   '${('' + day).replace(/[^0-9-]/g, '')}'      a date literal
+//   '${('' + name).replace(/[^A-Za-z0-9_-]/g, '')}'   an identifier literal
+//
+// `('' + value)` converts without naming an intrinsic, so no binding can be
+// shadowed to change what it means. The character class then decides what can
+// survive: none of these keep the quote that would end the literal, the
+// backslash that would escape, the semicolon that would start a statement, or
+// the solidus and asterisk that would open a comment. Anything else — a
+// variable sanitized further up, a different class, a helper of the template's
+// own — is refused, because the value a placeholder stands for would no longer
+// be one this file can name.
+const SQL_ENCODERS = new Map([
+  ['[^0-9-]', 'a date literal'],
+  ['[^A-Za-z0-9_-]', 'an identifier literal']
+]);
+
+// Exported so self-check.mjs can hold each class to what it actually keeps,
+// rather than to the description written beside it.
+export const recognizedEncoders = SQL_ENCODERS;
+
+const ENCODER_FLAGS = 'g';
+const ENCODER_METHOD = 'replace';
+
+const ENCODER_FORMS = [...SQL_ENCODERS]
+  .map(([pattern, type]) => `('' + value).replace(/${pattern}/${ENCODER_FLAGS}, '') for ${type}`)
+  .join(', or ');
+
+function isEmptyStringLiteral(node) {
+  return node.type === 'Literal' && node.value === '';
+}
+
+// Returns null when `node` is one of the recognized encoders, and a reason
+// otherwise.
+function encoderViolation(node) {
+  const generic = `is not one of the recognized SQL encoders: ${ENCODER_FORMS}`;
+
+  if (node.type !== 'CallExpression') return generic;
+
+  const { callee } = node;
+  if (callee.type !== 'MemberExpression' || callee.computed) return generic;
+  if (callee.property.type !== 'Identifier' || callee.property.name !== ENCODER_METHOD) return generic;
+
+  const receiver = callee.object;
+  const convertedWithoutABinding =
+    receiver.type === 'BinaryExpression' &&
+    receiver.operator === '+' &&
+    isEmptyStringLiteral(receiver.left);
+  if (!convertedWithoutABinding) {
+    return (
+      `converts with ${ENCODER_METHOD}() applied to something other than ('' + value), so the receiver ` +
+      'is not known to be a string built without a binding this template could rebind'
+    );
+  }
+
+  if (node.arguments.length !== 2 || !isEmptyStringLiteral(node.arguments[1])) {
+    return `does not remove what it matches by replacing it with '', so the removed characters are not gone`;
+  }
+
+  const [pattern] = node.arguments;
+  if (pattern.type !== 'Literal' || !pattern.regex) {
+    return 'filters with something other than a regular expression literal, so what it keeps cannot be read';
+  }
+  if (pattern.regex.flags !== ENCODER_FLAGS) {
+    return `filters with /${pattern.regex.pattern}/${pattern.regex.flags}, and only the ${ENCODER_FLAGS} flag removes every occurrence`;
+  }
+  if (!SQL_ENCODERS.has(pattern.regex.pattern)) {
+    return `filters with /${pattern.regex.pattern}/, which is not a recognized encoder: ${ENCODER_FORMS}`;
+  }
+
+  return null;
+}
+
 // A template literal contributes its fixed text; each `${...}` gap becomes the
 // same placeholder a `:name` gets, but only once the gap has been read as a
-// safe encoding of whatever it will hold. A gap that has not earned a
-// placeholder is a reason, because substituting one would describe a statement
-// other than the one that runs.
+// recognized encoder sitting inside a quoted SQL literal. A gap that has not
+// earned a placeholder is a reason, because substituting one would describe a
+// statement other than the one that runs: `'${$params.q}'` parses as `'NULL'`
+// and looks read-only, while at run time the value is whatever the URL says.
 function templateLiteralSql(node) {
   if (node.quasis.some((quasi) => quasi.value.cooked == null)) {
     return { reason: 'the SQL argument uses a template literal with an invalid escape sequence' };
   }
 
   for (const [index, expression] of node.expressions.entries()) {
-    const reason = interpolationViolation(
-      expression,
-      node.quasis[index].value.cooked,
-      node.quasis[index + 1].value.cooked
-    );
+    const before = node.quasis[index].value.cooked;
+    const after = node.quasis[index + 1].value.cooked;
+    const reason = !before.endsWith(SQL_QUOTE) || !after.startsWith(SQL_QUOTE)
+      ? 'is interpolated outside a quoted SQL string literal, where even encoded characters change the ' +
+        'shape of the statement'
+      : encoderViolation(expression);
     if (reason) return { reason: `the SQL argument interpolates a value that ${reason}` };
   }
 
   return { sql: node.quasis.map((quasi) => quasi.value.cooked).join(INTERPOLATION_PLACEHOLDER) };
 }
 
-// Returns { sql } when the argument is a statically classifiable string, and
+// Returns { sql } when the argument is a statically readable string, and
 // { reason } when it is anything else.
 function staticSql(node) {
   if (!node) return { reason: `a ${QUERY_HELPER}() call has no SQL argument` };
@@ -132,16 +221,9 @@ function calleeName(node) {
   return null;
 }
 
-function isStaticProperty(node) {
-  return node.type === 'Literal' && (typeof node.value === 'string' || typeof node.value === 'number');
-}
-
-function dynamicCodeReason(node) {
-  return node.callee.type === 'Identifier' && DYNAMIC_CODE.has(node.callee.name)
-    ? `${node.callee.name} turns text into code, which no syntax tree can follow`
-    : null;
-}
-
+// Every identifier a binding form introduces, through whatever pattern spells
+// it. A parameter, a destructured property, a rest element, a default, and a
+// catch parameter all bind a name the same way.
 function boundIdentifiers(node, found = []) {
   if (!node) return found;
   if (node.type === 'Identifier') {
@@ -159,6 +241,19 @@ function boundIdentifiers(node, found = []) {
   }
   return found;
 }
+
+// Every form that introduces a binding, so a guarded intrinsic cannot be
+// rebound by any of them. `catch (String)` binds exactly as a parameter does
+// and is listed here for the same reason.
+const BINDING_FORMS = {
+  VariableDeclarator: (node) => [node.id],
+  FunctionDeclaration: (node) => [node.id, ...node.params],
+  FunctionExpression: (node) => [node.id, ...node.params],
+  ArrowFunctionExpression: (node) => node.params,
+  ClassDeclaration: (node) => [node.id],
+  ClassExpression: (node) => [node.id],
+  CatchClause: (node) => [node.param]
+};
 
 // Every QUERY() call in `source`, plus everything that could hide one, in
 // source order.
@@ -184,7 +279,7 @@ export function queryCalls(source) {
   };
 
   // Calls first, so a name that turns out to be a QUERY() callee is already
-  // accounted for when the passes below look for names that are not.
+  // accounted for when the pass below looks for names that are not.
   walk.simple(tree, {
     CallExpression(node) {
       readCall(node.callee, node.arguments[0]);
@@ -197,92 +292,51 @@ export function queryCalls(source) {
     }
   });
 
-  walk.simple(tree, {
-    CallExpression(node) {
-      const reason = dynamicCodeReason(node);
-      if (reason) note(node.callee.start, reason);
-    },
-    NewExpression(node) {
-      const reason = dynamicCodeReason(node);
-      if (reason) note(node.callee.start, reason);
-    },
-    MemberExpression(node) {
-      if (!node.computed) {
-        if (node.property.name === 'constructor') {
-          note(node.property.start, CONSTRUCTOR_ACCESS);
-        }
-        if (DYNAMIC_CODE.has(node.property.name)) {
-          note(node.property.start, `${node.property.name} can create or execute code outside the parsed template`);
-        }
-        if (node.property.name === QUERY_HELPER && !resolved.has(node.property)) {
-          note(node.property.start, REFERENCED_NOT_CALLED);
-        }
-        return;
-      }
-      if (!isStaticProperty(node.property)) {
-        note(node.property.start, DYNAMIC_PROPERTY);
-      } else if (node.property.value === 'constructor') {
-        note(node.property.start, CONSTRUCTOR_ACCESS);
-      } else if (DYNAMIC_CODE.has(node.property.value)) {
-        note(
-          node.property.start,
-          `${node.property.value} can create or execute code outside the parsed template`
-        );
-      } else if (node.property.value === QUERY_HELPER && !resolved.has(node.property)) {
-        note(node.property.start, REFERENCED_NOT_CALLED);
-      }
-    }
-  });
+  // One pass for everything else. A name is judged the same way wherever it is
+  // written: as a variable, as a static property, or as a binding.
+  const checkName = (node, name) => {
+    const forbidden = FORBIDDEN_NAMES.get(name);
+    if (forbidden) note(node.start, `${name} ${forbidden}`);
+    if (name === QUERY_HELPER && !resolved.has(node)) note(node.start, REFERENCED_NOT_CALLED);
+  };
 
   walk.full(tree, (node) => {
-    if (node.type !== 'Identifier') return;
-    if (DYNAMIC_CODE.has(node.name)) {
-      note(node.start, `${node.name} can create or execute code outside the parsed template`);
+    const bindings = BINDING_FORMS[node.type];
+    if (bindings) {
+      for (const pattern of bindings(node)) {
+        for (const identifier of boundIdentifiers(pattern)) {
+          if (GUARDED_INTRINSICS.has(identifier.name)) note(identifier.start, shadowed(identifier.name));
+        }
+      }
     }
-    if (node.name === QUERY_HELPER && !resolved.has(node)) {
-      note(node.start, REFERENCED_NOT_CALLED);
-    }
-    if (node.name === LOCALS_BAG && !memberObjects.has(node)) {
-      note(node.start, LOCALS_AS_VALUE);
-    }
-    if (node.name === ARGUMENTS_OBJECT) {
-      note(node.start, ARGUMENTS_AS_VALUE);
-    }
-  });
 
-  walk.simple(tree, {
-    VariableDeclarator(node) {
-      for (const identifier of boundIdentifiers(node.id)) {
-        if (identifier.name === REQUIRED_INTRINSIC) note(identifier.start, STRING_SHADOWED);
+    if (node.type === 'Identifier') {
+      checkName(node, node.name);
+      if (node.name === LOCALS_BAG && !memberObjects.has(node)) note(node.start, LOCALS_AS_VALUE);
+      return;
+    }
+
+    if (node.type === 'MemberExpression') {
+      if (!node.computed) {
+        checkName(node.property, node.property.name);
+      } else if (node.property.type === 'Literal' && typeof node.property.value === 'string') {
+        checkName(node.property, node.property.value);
+      } else if (node.property.type !== 'Literal' || typeof node.property.value !== 'number') {
+        note(node.property.start, DYNAMIC_PROPERTY);
       }
-    },
-    FunctionDeclaration(node) {
-      if (node.id?.name === REQUIRED_INTRINSIC) note(node.id.start, STRING_SHADOWED);
-      for (const parameter of node.params)
-        for (const identifier of boundIdentifiers(parameter))
-          if (identifier.name === REQUIRED_INTRINSIC) note(identifier.start, STRING_SHADOWED);
-    },
-    FunctionExpression(node) {
-      if (node.id?.name === REQUIRED_INTRINSIC) note(node.id.start, STRING_SHADOWED);
-      for (const parameter of node.params)
-        for (const identifier of boundIdentifiers(parameter))
-          if (identifier.name === REQUIRED_INTRINSIC) note(identifier.start, STRING_SHADOWED);
-    },
-    ArrowFunctionExpression(node) {
-      for (const parameter of node.params)
-        for (const identifier of boundIdentifiers(parameter))
-          if (identifier.name === REQUIRED_INTRINSIC) note(identifier.start, STRING_SHADOWED);
-    },
-    ClassDeclaration(node) {
-      if (node.id?.name === REQUIRED_INTRINSIC) note(node.id.start, STRING_SHADOWED);
-    },
-    AssignmentExpression(node) {
-      if (node.left.type === 'Identifier' && node.left.name === REQUIRED_INTRINSIC) {
-        note(node.left.start, STRING_SHADOWED);
+      return;
+    }
+
+    // An assignment cannot rebind a guarded intrinsic, and cannot write through
+    // one either: `String.raw = ...` and `String.prototype.replace = ...` both
+    // land here, the second having already been refused for naming a prototype.
+    if (node.type === 'AssignmentExpression' || node.type === 'UpdateExpression') {
+      const target = node.type === 'AssignmentExpression' ? node.left : node.argument;
+      if (target.type === 'Identifier' && GUARDED_INTRINSICS.has(target.name)) {
+        note(target.start, mutated(target.name));
       }
-      if (node.left.type === 'MemberExpression') {
-        const property = calleeName(node.left);
-        if (property?.name === REQUIRED_INTRINSIC) note(property.spelling.start, STRING_SHADOWED);
+      if (target.type === 'MemberExpression' && target.object.type === 'Identifier') {
+        if (GUARDED_INTRINSICS.has(target.object.name)) note(target.object.start, mutated(target.object.name));
       }
     }
   });
