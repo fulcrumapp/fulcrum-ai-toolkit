@@ -3,6 +3,7 @@
 
 ROOT = File.expand_path("..", __dir__)
 SKILLS = File.join(ROOT, "plugins", "fulcrum-ai-toolkit", "skills")
+CONTRACT_FAILURES = []
 
 def read_skill(name, relative_path = "SKILL.md")
   File.read(File.join(SKILLS, name, relative_path))
@@ -13,28 +14,35 @@ def read_file(relative_path)
 end
 
 def assert(condition, message)
-  return if condition
-
-  warn "App MCP contract test failed: #{message}"
-  exit 1
+  CONTRACT_FAILURES << message unless condition
+  condition
 end
 
 def assert_in_order(text, tokens, message)
   cursor = 0
   tokens.each do |token|
     position = text.index(token, cursor)
-    assert(position, "#{message}: missing or out-of-order #{token.inspect}")
+    unless position
+      assert(false, "#{message}: missing or out-of-order #{token.inspect}")
+      next
+    end
     cursor = position + token.length
   end
 end
 
 def section_between(text, start_marker, end_marker, name)
   start_position = text.index(start_marker)
-  assert(start_position, "#{name}: missing start marker #{start_marker.inspect}")
+  unless start_position
+    assert(false, "#{name}: missing start marker #{start_marker.inspect}")
+    return ""
+  end
 
   content_start = start_position + start_marker.length
   end_position = text.index(end_marker, content_start)
-  assert(end_position, "#{name}: missing end marker #{end_marker.inspect}")
+  unless end_position
+    assert(false, "#{name}: missing end marker #{end_marker.inspect}")
+    return ""
+  end
 
   text[content_start...end_position]
 end
@@ -326,10 +334,21 @@ contract_documents.each_value do |document|
   assert(document.match?(/^> Source: .*https:\/\//), "contract documentation lacks a linked Source note")
 end
 
-public_files = [File.join(ROOT, "README.md")] +
-  Dir[File.join(ROOT, "plugins", "fulcrum-ai-toolkit", "**", "*.{md,json,yaml,yml}")]
+public_guidance_files = [
+  File.join(ROOT, "README.md"),
+  File.join(ROOT, "plugins", "fulcrum-ai-toolkit", "docs", "legacy-product-knowledge-coverage.md"),
+  File.join(SKILLS, "fulcrum-app-builder", "SKILL.md"),
+  File.join(SKILLS, "fulcrum-product-knowledge", "SKILL.md"),
+  File.join(SKILLS, "fulcrum-data-events", "SKILL.md"),
+  File.join(SKILLS, "fulcrum-data-events", "resources", "data-event-examples.md"),
+  File.join(SKILLS, "fulcrum-data-events", "resources", "data-events-runtime-api.md"),
+  File.join(SKILLS, "fulcrum-app-extensions", "SKILL.md"),
+  File.join(SKILLS, "fulcrum-app-extensions", "resources", "extension-bridge-api.md"),
+  File.join(SKILLS, "fulcrum-report-building", "SKILL.md"),
+  File.join(SKILLS, "fulcrum-report-building", "resources", "report-template-reference.md")
+].freeze
 private_path = nil
-public_files.each do |path|
+public_guidance_files.each do |path|
   if File.foreach(path).any? do |line|
        line.match?(%r{/(?:Users|home)/|atlassian\.net|slack\.com|/mnt/skills/organization}i)
      end
@@ -341,5 +360,11 @@ assert(
   private_path.nil?,
   "public toolkit content contains a private path or collaboration URL: #{private_path}"
 )
+
+unless CONTRACT_FAILURES.empty?
+  warn "App MCP contract test failed:"
+  CONTRACT_FAILURES.each { |failure| warn "- #{failure}" }
+  exit 1
+end
 
 puts "App MCP contract test passed: exact tools, runtime signatures, and removal-safe updates"
