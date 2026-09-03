@@ -8,6 +8,7 @@ require "tmpdir"
 
 ROOT = File.expand_path("..", __dir__)
 SKILLS = File.join(ROOT, "plugins", "fulcrum-ai-toolkit", "skills")
+CONTRACT_FAILURES = []
 
 def read_skill(name, relative_path = "SKILL.md")
   File.read(File.join(SKILLS, name, relative_path))
@@ -18,28 +19,35 @@ def read_file(relative_path)
 end
 
 def assert(condition, message)
-  return if condition
-
-  warn "App MCP contract test failed: #{message}"
-  exit 1
+  CONTRACT_FAILURES << message unless condition
+  condition
 end
 
 def assert_in_order(text, tokens, message)
   cursor = 0
   tokens.each do |token|
     position = text.index(token, cursor)
-    assert(position, "#{message}: missing or out-of-order #{token.inspect}")
+    unless position
+      assert(false, "#{message}: missing or out-of-order #{token.inspect}")
+      next
+    end
     cursor = position + token.length
   end
 end
 
 def section_between(text, start_marker, end_marker, name)
   start_position = text.index(start_marker)
-  assert(start_position, "#{name}: missing start marker #{start_marker.inspect}")
+  unless start_position
+    assert(false, "#{name}: missing start marker #{start_marker.inspect}")
+    return ""
+  end
 
   content_start = start_position + start_marker.length
   end_position = text.index(end_marker, content_start)
-  assert(end_position, "#{name}: missing end marker #{end_marker.inspect}")
+  unless end_position
+    assert(false, "#{name}: missing end marker #{end_marker.inspect}")
+    return ""
+  end
 
   text[content_start...end_position]
 end
@@ -538,6 +546,12 @@ Dir.mktmpdir("toolkit-hidden-privacy") do |directory|
     end,
     "privacy traversal does not inspect hidden fixture content"
   )
+end
+
+unless CONTRACT_FAILURES.empty?
+  warn "App MCP contract test failed:"
+  CONTRACT_FAILURES.each { |failure| warn "- #{failure}" }
+  exit 1
 end
 
 puts "App MCP contract test passed: exact tools, runtime signatures, and removal-safe updates"

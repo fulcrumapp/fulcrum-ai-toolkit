@@ -257,6 +257,10 @@ Always sanitize values used in QUERY() strings to prevent injection via `$params
 <%# Avoid direct interpolation of user-controlled params in SQL %>
 <% const safeStatus = ($params.status || '').replace(/[^a-zA-Z_]/g, ''); %>
 <% const result = QUERY(`SELECT * FROM "App" WHERE _status = '${safeStatus}'`, {format:'json'}); %>
+<% const rows = result.rows; %>
+<% rows.forEach(function(row) { %>
+  <%# Render fields from row here. %>
+<% }); %>
 ```
 
 ## Code Organization
