@@ -220,11 +220,37 @@ const MARKUP_PROBES = [
   ['a void element that needs no closing tag', ['img'], '<img src="<%= url %>" alt="Example">', true],
   ['raw EJS output that could emit undeclared markup', [], '<%- "<script>alert(1)</script>" %>', false],
   ['EJS output internals emitting undeclared markup', [], '<% __append("<script>x</script>") %>', false],
+  ['escapeFn reassigned before escaped output', [], '<% escapeFn = (value) => value; %><%= userHtml %>', false],
+  ['escapeFn aliased before escaped output', [], '<% const emit = escapeFn; %><%= userHtml %>', false],
+  [
+    'an escaped output-internal identifier',
+    [],
+    '<% const emit = \\u005f\\u005fappend; emit("<script>x</script>"); %>',
+    false
+  ],
   ['an EJS expression constructing tag names', [], '<<%= tag %>>x</<%= tag %>>', false],
   [
     'a table container opened only in one control-flow branch',
     ['table', 'tbody', 'td', 'tr'],
     '<% if (show) { %><table><tbody><% } %><tr><td>x</td></tr>',
+    false
+  ],
+  [
+    'mutually exclusive table and bare-row branches',
+    ['table', 'thead', 'tbody', 'td', 'th', 'tr'],
+    '<% if (show) { %><table><thead><tr><th>x</th></tr></thead><tbody><% } else { %><tr><td>x</td></tr><% } %></tbody></table>',
+    false
+  ],
+  [
+    'a row split across mutually exclusive branches',
+    ['table', 'thead', 'tbody', 'td', 'th', 'tr'],
+    '<table><thead><tr><th>x</th></tr></thead><tbody><tr><% if (show) { %><td>x</td><% } else { %><td>y</td><% } %></tr></tbody></table>',
+    false
+  ],
+  [
+    'a conditional table hidden behind nested control flow',
+    ['table', 'thead', 'tbody', 'td', 'th', 'tr'],
+    '<% try { if (show) { %><table><thead><tr><th>x</th></tr></thead><tbody><tr><td>x</td></tr></tbody></table><% } } catch (error) { } %>',
     false
   ]
 ];

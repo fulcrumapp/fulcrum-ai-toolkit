@@ -13,6 +13,9 @@
 // means saying so here. A template with no entry is a failure rather than a
 // skip, so a new example cannot quietly opt out of having its markup checked.
 
+import * as acorn from 'acorn';
+import * as walk from 'acorn-walk';
+
 const VOID_ELEMENTS = new Set([
   'area',
   'base',
@@ -49,7 +52,7 @@ const TEMPLATE_ELEMENTS = {
   'api-fulcrum-rest.ejs': [],
   'conditional-section.ejs': ['div'],
   'html-filter-form.ejs': ['button', 'form', 'input', 'label'],
-  'params-date-range.ejs': ['p', 'table', 'tbody', 'td', 'th', 'thead', 'tr'],
+  'params-date-range.ejs': ['table', 'tbody', 'td', 'th', 'thead', 'tr'],
   'photo-url-signed-src.ejs': ['img'],
   'query-related-records.ejs': ['table', 'tbody', 'td', 'th', 'thead', 'tr'],
   'query-repeatable-join.ejs': [],
@@ -63,6 +66,48 @@ const TEMPLATE_ELEMENTS = {
 // literal markup the template writes, every branch of it.
 const EJS_TAG = /<%[\s\S]*?%>/g;
 const HTML_TAG = /<(\/?)([a-zA-Z][a-zA-Z0-9-]*)\b([^>]*)>/g;
+const CONTROL_START = /<%\s*(?:(?:if|for|while|switch)\b|[\w.]+\.forEach\s*\()/gi;
+const CONTROL_END = /<%\s*(?:}|}\s*else\b|}\);)/gi;
+const OUTPUT_INTERNALS = new Set(['escapeFn', '__append', '__output']);
+
+function spansControlBoundary(tag) {
+  if (tag.startsWith('<%#', '<%=', '<%-')) return false;
+  const code = tag.slice(2, -2).trim();
+  if (code.startsWith('}')) return true;
+  const withoutLiterals = code.replace(/(['"`])(?:\\.|(?!\1)[^\\])*\1/g, '');
+  return (withoutLiterals.match(/{/g) ?? []).length !== (withoutLiterals.match(/}/g) ?? []).length;
+}
+
+function authoredJavaScript(text) {
+  const pieces = [];
+  for (const match of text.matchAll(/<%([#=-]?)([\s\S]*?)%>/g)) {
+    const [, kind, body] = match;
+    if (kind === '#') continue;
+    pieces.push(kind === '=' || kind === '-' ? `void (${body});` : body);
+  }
+  return pieces.join('\n');
+}
+
+function outputInternalViolations(text) {
+  let tree;
+  try {
+    tree = acorn.parse(authoredJavaScript(text), {
+      ecmaVersion: 'latest',
+      sourceType: 'script',
+      allowReturnOutsideFunction: true
+    });
+  } catch (error) {
+    return [`author-authored EJS JavaScript is not statically parseable: ${error.message}`];
+  }
+
+  const found = new Set();
+  walk.full(tree, (node) => {
+    if (node.type === 'Identifier' && OUTPUT_INTERNALS.has(node.name)) found.add(node.name);
+  });
+  return [...found].map(
+    (name) => `references EJS output internal ${name}, whose emitted markup cannot be proven statically`
+  );
+}
 
 // Returns [] when the template's markup matches its declaration and nests
 // correctly, and one reason per problem otherwise.
@@ -80,9 +125,8 @@ export function markupViolationsAgainst(declared, text) {
   if (/<%-/.test(text)) {
     return ['uses an unescaped EJS output tag, whose emitted markup cannot be proven statically'];
   }
-  if (/<%[\s\S]*?\b(?:__append|__output)\b[\s\S]*?%>/.test(text)) {
-    return ['writes through EJS output internals, whose emitted markup cannot be proven statically'];
-  }
+  const internalViolations = outputInternalViolations(text);
+  if (internalViolations.length > 0) return internalViolations;
   if (/<\/?<%[=-]/.test(text)) {
     return ['constructs an HTML tag name through EJS output, which cannot be proven statically'];
   }
@@ -98,6 +142,42 @@ export function markupViolationsAgainst(declared, text) {
   const violations = [];
   const written = new Set();
   const open = [];
+
+  if (declared.includes('tr')) {
+    const firstControl = [...text.matchAll(CONTROL_START)][0]?.index;
+    const lastControlEnd = [...text.matchAll(CONTROL_END)].at(-1);
+    const requiredOpenings = ['table', 'thead', 'tbody']
+      .filter((name) => declared.includes(name))
+      .map((name) => `<${name}`);
+    const requiredClosings = ['tbody', 'table']
+      .filter((name) => declared.includes(name))
+      .map((name) => `</${name}>`);
+    const tablePosition = text.indexOf('<table');
+    const prefix = tablePosition < 0 ? text : text.slice(0, tablePosition);
+    if (
+      [...prefix.matchAll(EJS_TAG)].some(([tag]) => spansControlBoundary(tag))
+    ) {
+      violations.push('<table> must not be opened after template control flow');
+    }
+
+    for (const row of text.matchAll(/<tr\b[\s\S]*?<\/tr>/gi)) {
+      const rowControl = [...row[0].matchAll(EJS_TAG)].some(([tag]) => spansControlBoundary(tag));
+      if (rowControl) violations.push('each <tr> must be a complete child node outside control-flow tags');
+    }
+
+    for (const opening of requiredOpenings) {
+      const position = text.indexOf(opening);
+      if (position < 0 || (firstControl !== undefined && position > firstControl)) {
+        violations.push(`${opening}> must open unconditionally before row control flow`);
+      }
+    }
+    for (const closing of requiredClosings) {
+      const position = text.lastIndexOf(closing);
+      if (position < 0 || (lastControlEnd && position < lastControlEnd.index)) {
+        violations.push(`${closing} must close unconditionally after row control flow`);
+      }
+    }
+  }
 
   for (const [, closing, rawName, attributes] of markup.matchAll(HTML_TAG)) {
     const name = rawName.toLowerCase();
