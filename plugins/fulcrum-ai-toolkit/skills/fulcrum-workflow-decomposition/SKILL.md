@@ -17,7 +17,7 @@ Flag decomposition when you see any of these:
 - **Visibility rules hide 50%+ of fields** based on a role or status — Those hidden fields are a separate app trying to escape
 - **Different people fill out different sections** — Inspector fills the top, reviewer fills the bottom. That's two apps.
 - **The same app is duplicated across regions/teams** with slight variations — Shared structure with scoped configuration, not copies
-- **Template standardization failures** — materially different roles and workflows are forced into one schema even when separate apps would be clearer
+- **"Template maturity model" failures** — Every customer wants their version, and "you will not put them in the same box" (Jared Carey, MasTec deep dive)
 
 ## Decomposition Strategy
 

@@ -7,7 +7,7 @@ description: Route cross-cutting Fulcrum platform questions to the owning skill 
 
 Use this skill as the platform router behind the more focused Fulcrum skills. Prefer the narrower skill when it owns the workflow, and use this skill for platform facts, constraints, capability decisions, and cross-cutting architecture. When Fulcrum App MCP is registered, defer schema, expression, extension, and tool-contract questions to its live knowledge and operation schemas instead of duplicating those contracts here.
 
-> Source: [App MCP PR #28](https://github.com/fulcrumapp/app-mcp/pull/28) at commit [`1259888`](https://github.com/fulcrumapp/app-mcp/commit/125988885880b4916ef499cf5ebd535ccfb195f4) is the prerequisite contract snapshot for this toolkit orientation.
+> Source: [App MCP PR #28](https://github.com/fulcrumapp/app-mcp/pull/28) at commit [`43e68bb`](https://github.com/fulcrumapp/app-mcp/commit/43e68bb0a75c9afc6f6ed2b591b66431433737b4) is the prerequisite contract snapshot for this toolkit orientation.
 
 ## Platform Boundaries
 
@@ -103,7 +103,7 @@ Standard reports provide generic PDF output with limited configuration. Advanced
 
 Treat Report Templates as code: test them outside the builder, sanitize parameters before SQL interpolation, never hardcode tokens, and keep a local copy.
 
-With App MCP, manage templates through `fulcrum_report_templates_*` and generate a report for a supplied record ID with `fulcrum_reports_create`. App MCP does not provide general record, Query API, or media CRUD.
+With App MCP, manage templates through its registered Report Template list, get, create, update, and delete tools, and generate a report for a supplied record ID with `fulcrum_reports_create`. App MCP does not provide general record, Query API, or media CRUD.
 
 > Source: [Fulcrum Report Builder functions](https://docs.fulcrumapp.com/docs/functions) and [App MCP PR #28](https://github.com/fulcrumapp/app-mcp/pull/28).
 
@@ -166,12 +166,13 @@ For a new form:
 For an existing-form element change:
 
 1. Fetch the current form with `fulcrum_forms_get`.
-2. Preserve every existing element and inline-choice key.
+2. Treat preservation as the default: copy the complete element tree and preserve every existing element and inline-choice key.
 3. Build only new field additions with `fulcrum_schema_build_field` and insert them into the copied element tree.
-4. Validate the composed full definition with `fulcrum_forms_validate`.
-5. Update the complete assembled elements with `fulcrum_forms_update`.
+4. For an element removal, explain the impact and obtain explicit user confirmation. Omit the approved subtree from the copy and pass only its existing root key in `removed_element_keys`; the root declaration covers its descendants.
+5. Validate the composed full definition with `fulcrum_forms_validate`.
+6. Call `fulcrum_forms_update` with the complete assembled `elements` array and any approved `removed_element_keys`. Omit `removed_element_keys` when no elements were removed.
 
-Never rebuild an existing schema wholesale with `fulcrum_schema_build_form`; doing so regenerates keys. Before destructive operations, obtain explicit confirmation. Surface approval and API errors rather than silently retrying.
+Never rebuild an existing schema wholesale with `fulcrum_schema_build_form`; doing so regenerates keys. Never declare a removed key that remains in `elements`. Surface approval and API errors rather than silently retrying.
 
 If form creation succeeds but returns `report_template_error`, report a successful form and a non-fatal default-template failure. Do not retry form creation.
 
