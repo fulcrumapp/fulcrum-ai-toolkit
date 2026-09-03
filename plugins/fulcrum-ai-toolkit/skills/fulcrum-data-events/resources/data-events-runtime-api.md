@@ -1,7 +1,7 @@
 # Data Events Runtime API Reference
 
-> Source: https://docs.fulcrumapp.com/docs/data-events-reference.md
-> Source: https://docs.fulcrumapp.com/docs/data-events-loadfile.md
+> Source: https://docs.fulcrumapp.com/docs/data-events-reference
+> Source: https://docs.fulcrumapp.com/docs/data-events-loadfile
 > Source: https://github.com/fulcrumapp/app-mcp/pull/28
 > Verified: 2026-09-02
 

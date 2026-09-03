@@ -28,6 +28,17 @@ def assert_in_order(text, tokens, message)
   end
 end
 
+def section_between(text, start_marker, end_marker, name)
+  start_position = text.index(start_marker)
+  assert(start_position, "#{name}: missing start marker #{start_marker.inspect}")
+
+  content_start = start_position + start_marker.length
+  end_position = text.index(end_marker, content_start)
+  assert(end_position, "#{name}: missing end marker #{end_marker.inspect}")
+
+  text[content_start...end_position]
+end
+
 app_builder = read_skill("fulcrum-app-builder")
 product_knowledge = read_skill("fulcrum-product-knowledge")
 data_events = read_skill("fulcrum-data-events")
@@ -123,11 +134,12 @@ end
   assert(app_builder.include?(boundary), "app builder omits unsupported boundary #{boundary}")
 end
 
-update_workflow = app_builder
-  .split("For an existing app:", 2)
-  .last
-  .split("### Data Event scripts", 2)
-  .first
+update_workflow = section_between(
+  app_builder,
+  "For an existing app:",
+  "### Data Event scripts",
+  "existing-form workflow"
+)
 assert_in_order(
   update_workflow,
   [
@@ -156,11 +168,12 @@ assert(
     update_workflow.include?("Omit `removed_element_keys` when nothing was removed"),
   "existing-form workflow does not keep preservation as the default"
 )
-product_update_workflow = product_knowledge
-  .split("For an existing-form element change:", 2)
-  .last
-  .split("If form creation succeeds", 2)
-  .first
+product_update_workflow = section_between(
+  product_knowledge,
+  "For an existing-form element change:",
+  "If form creation succeeds",
+  "product router existing-form workflow"
+)
 assert_in_order(
   product_update_workflow,
   [
