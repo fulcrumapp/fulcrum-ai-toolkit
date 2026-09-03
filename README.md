@@ -87,7 +87,8 @@ not a claim that every host has been tested in this repository yet.
 
 ## Local validation
 
-Run the dependency-free alpha checks from the repository root:
+Ruby 3.2.11 is required; compatible version managers can provision it from
+`.ruby-version`. Run the dependency-free alpha checks from the repository root:
 
 ```bash
 ruby scripts/validate.rb
