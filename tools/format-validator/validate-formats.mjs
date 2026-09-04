@@ -32,7 +32,7 @@ import process from 'node:process';
 import { fileURLToPath } from 'node:url';
 
 import * as acorn from 'acorn';
-import { HtmlValidate } from 'html-validate';
+import { Config, HtmlValidate, Parser } from 'html-validate';
 import postcss from 'postcss';
 
 import { compiledSource, queryCalls } from './lib/ejs-queries.mjs';
@@ -53,9 +53,7 @@ const PROSE_EXTENSIONS = new Set(['.md', '.txt']);
 const DOCUMENT_LABEL = /(?:^|[^A-Za-z])Document:/;
 const FRAGMENT_LABEL = /(?:^|[^A-Za-z])Fragment:/;
 
-const INLINE_SCRIPT = /<script\b([^>]*)>([\s\S]*?)<\/script\s*>/gi;
-const INLINE_STYLE = /<style\b[^>]*>([\s\S]*?)<\/style\s*>/gi;
-const SCRIPT_SRC = /(?:^|\s)src\s*=/i;
+let resolvedHtmlConfig;
 
 // Repository example checks for the report templates this repository ships.
 // Both are literal: the raw output tag is spelled one way, and each output
@@ -161,6 +159,13 @@ function parseSql(file, sql, what, options) {
   return false;
 }
 
+async function parseHtmlTree(html) {
+  if (!resolvedHtmlConfig) {
+    resolvedHtmlConfig = await Config.empty().resolve();
+  }
+  return new Parser(resolvedHtmlConfig).parseHtml(html);
+}
+
 async function validateHtml(file, text) {
   const label = labelOf(text);
   if (!label) {
@@ -178,20 +183,24 @@ async function validateHtml(file, text) {
     }
   }
 
+  const tree = await parseHtmlTree(text);
+
   let inlineScripts = 0;
-  for (const match of text.matchAll(INLINE_SCRIPT)) {
-    if (SCRIPT_SRC.test(match[1])) continue;
-    if (match[2].trim() === '') continue;
+  for (const el of tree.querySelectorAll('script')) {
+    if (el.hasAttribute('src')) continue;
+    const code = el.textContent ?? '';
+    if (code.trim() === '') continue;
     inlineScripts += 1;
-    parseScript(file, match[2], `inline <script> #${inlineScripts}`);
+    parseScript(file, code, `inline <script> #${inlineScripts}`);
     count('inline-script');
   }
 
   let inlineStyles = 0;
-  for (const match of text.matchAll(INLINE_STYLE)) {
-    if (match[1].trim() === '') continue;
+  for (const el of tree.querySelectorAll('style')) {
+    const css = el.textContent ?? '';
+    if (css.trim() === '') continue;
     inlineStyles += 1;
-    parseCss(file, match[1], `inline <style> #${inlineStyles}`);
+    parseCss(file, css, `inline <style> #${inlineStyles}`);
     count('inline-style');
   }
 
