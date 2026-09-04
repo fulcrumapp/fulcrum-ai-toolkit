@@ -1,9 +1,0 @@
-{
-  "name": "fulcrum-ai-toolkit",
-  "version": "0.1.0",
-  "description": "AI skills for building apps, data events, reports, and workflows on the Fulcrum platform",
-  "author": { "name": "Fulcrum" },
-  "homepage": "https://github.com/fulcrumapp/fulcrum-ai-toolkit",
-  "repository": "https://github.com/fulcrumapp/fulcrum-ai-toolkit",
-  "license": "MIT"
-}
