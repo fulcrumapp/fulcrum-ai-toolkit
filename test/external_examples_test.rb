@@ -31,7 +31,9 @@ require "fileutils"
 require "json"
 require "open3"
 require "rbconfig"
+require "set"
 require "tmpdir"
+require "uri"
 
 ROOT = File.expand_path("..", __dir__)
 PLUGIN = File.join(ROOT, "plugins", "fulcrum-ai-toolkit")
@@ -137,6 +139,21 @@ end
 
 def credential_shapes(text)
   CREDENTIAL_SHAPES.select { |shape| text.match?(shape) }
+end
+
+def exact_http_urls(text)
+  URI.extract(text, %w[http https]).filter_map do |candidate|
+    uri = URI.parse(candidate)
+    next unless uri.is_a?(URI::HTTP) && uri.host
+
+    uri = uri.normalize
+    uri.scheme = uri.scheme.downcase
+    uri.host = uri.host.downcase
+    uri.port = nil if (uri.scheme == "http" && uri.port == 80) || (uri.scheme == "https" && uri.port == 443)
+    uri.to_s
+  rescue URI::InvalidURIError
+    nil
+  end.to_set
 end
 
 def manifest_link_targets(cell)
@@ -530,12 +547,23 @@ assert(
     "storage example does not clear its key on the documented #{event} lifecycle exit"
   )
 end
+required_storage_sources = Set[
+  "https://docs.fulcrumapp.com/docs/data-events-storage",
+  "https://docs.fulcrumapp.com/docs/data-events-reference",
+  "https://docs.fulcrumapp.com/docs/data-events-loadrecords",
+  "https://docs.fulcrumapp.com/docs/app-extensions-introduction"
+]
+storage_source_urls = exact_http_urls(storage_example)
 assert(
-  storage_example.include?("https://docs.fulcrumapp.com/docs/data-events-storage") &&
-    storage_example.include?("https://docs.fulcrumapp.com/docs/data-events-reference") &&
-    storage_example.include?("https://docs.fulcrumapp.com/docs/data-events-loadrecords") &&
-    storage_example.include?("https://docs.fulcrumapp.com/docs/app-extensions-introduction"),
+  required_storage_sources.subset?(storage_source_urls),
   "storage example does not source its storage, lifecycle, FORM(), and RECORDID() behavior"
+)
+embedded_required_url = "https://example.invalid/redirect/https://docs.fulcrumapp.com/docs/data-events-storage"
+assert(
+  !exact_http_urls(embedded_required_url).include?(
+    "https://docs.fulcrumapp.com/docs/data-events-storage"
+  ),
+  "exact source matching accepts a required URL embedded in an arbitrary URL"
 )
 
 # Every runtime function the Data Event examples call is in the portable
