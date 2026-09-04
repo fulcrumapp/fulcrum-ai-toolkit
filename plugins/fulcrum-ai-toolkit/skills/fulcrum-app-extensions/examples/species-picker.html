@@ -6,11 +6,16 @@
   <title>Species picker</title>
   <!-- Source: https://docs.fulcrumapp.com/docs/app-extensions-introduction -->
   <!-- Document: a complete standalone extension page. Upload it as the Reference File named species-picker.html so attachment://species-picker.html resolves. -->
+  <!-- Reference: https://docs.fulcrumapp.com/docs/app-extensions-lifecycle-and-events -->
+  <!-- Reference: https://docs.fulcrumapp.com/docs/app-extensions-reference-files -->
+
   <!-- Required Fulcrum extension bootstrap; keep intact for offline use. -->
   <script type="text/javascript">
     (() => {
+      // Detect if running inside a Fulcrum extension container (?extension=1)
       const searchParams = new URLSearchParams(window.location.search);
 
+      // Safe JSON parser helper for postMessage payload decoding
       function parseJson(data) {
         try {
           return JSON.parse(data);
@@ -19,9 +24,18 @@
         }
       }
 
+      /**
+       * Fulcrum extension bridge interface.
+       * Provides bidirectional communication between custom HTML extensions
+       * and the host Fulcrum mobile or web client.
+       * @see https://docs.fulcrumapp.com/docs/app-extensions-introduction
+       */
       window.Fulcrum={
         isExtension: searchParams.get('extension') === '1',
 
+        /**
+         * Unpacks host context and notifies registered load listeners.
+         */
         initialize() {
           const params = window.Fulcrum.params;
           window.Fulcrum.id = params?.id;
@@ -34,6 +48,10 @@
           }
         },
 
+        /**
+         * Register a callback to receive initial record data from Fulcrum.
+         * @param {function({data: object}): void} callback
+         */
         load(callback) {
           window.Fulcrum.onLoadOnce = () => {
             if (window.Fulcrum.params && !window.Fulcrum.isLoaded) {
@@ -44,6 +62,12 @@
           window.Fulcrum.onLoadOnce();
         },
 
+        /**
+         * Send a message payload back to the Fulcrum parent app.
+         * Routes through WebKit message handlers on iOS or postMessage on web.
+         * @param {object} payload - Data to return to the host Data Event
+         * @param {object} options - Options such as { close: true }
+         */
         send(payload = {}, { close = false } = {}) {
           const message = {
             id: window.Fulcrum.id,
@@ -61,6 +85,10 @@
           }
         },
 
+        /**
+         * Listener for inbound host messages with origin verification.
+         * @param {MessageEvent} event
+         */
         receive(event) {
           if (
             event.origin &&
@@ -78,11 +106,16 @@
           }
         },
 
+        /**
+         * Deliver final output and instruct the Fulcrum host to close the modal.
+         * @param {object} payload - The selection or form data to deliver to onMessage
+         */
         finish(payload) {
           window.Fulcrum.send(payload, { close: true });
         }
       };
 
+      // Register event listeners based on runtime context
       if (window.Fulcrum.isExtension) {
         window.addEventListener('message', window.Fulcrum.receive, false);
       } else {
@@ -173,20 +206,28 @@
     </select>
     <button id="save-btn" type="button">Save Selection</button>
   </main>
+  <!-- Application Logic -->
   <script type="text/javascript">
     const select = document.getElementById('my-select');
     const saveBtn = document.getElementById('save-btn');
 
+    // Subscribe to host initialization payload
     Fulcrum.load((payload) => {
       initialize(payload.data || {});
     });
 
+    /**
+     * Populate form elements with existing field values if present.
+     * @param {object} data - Values passed in OPENEXTENSION({ data: ... })
+     */
     function initialize(data) {
       select.value = data.current_value || '';
     }
 
+    // Handle user selection and return data to the calling Data Event
     saveBtn.addEventListener('click', () => {
       const selectedValue = select.value;
+      // Delivers { value: selectedValue } to the onMessage callback in the Data Event
       Fulcrum.finish({ value: selectedValue });
     });
   </script>
