@@ -90,21 +90,10 @@ Constraints reveal priorities. Regulatory requirements are gates — they don't 
 
 ## After the Interview
 
-Summarize what you learned in this structure:
-
-```
-## Discovery Summary
-
-**App Goal:** [one sentence]
-**Deliverable:** [what comes out]
-**Users:** [who, where, what device]
-**Process:** [key steps in sequence]
-**Entities:** [the nouns — sites, inspections, equipment, etc.]
-**Relationships:** [how entities connect]
-**Safety:** [applicable / not applicable]
-**Constraints:** [must-haves, deadlines, regulations]
-**Recommended Structure:** [single app / linked apps / lookup apps]
-```
+Summarize what you learned using
+[`assets/discovery-summary-template.md`](assets/discovery-summary-template.md).
+It captures the app goal, deliverable, users, process, entities, relationships,
+safety applicability, constraints, and the recommended structure.
 
 Present this to the builder. Confirm before building. Then proceed with `fulcrum-app-design`.
 
@@ -121,4 +110,5 @@ Present this to the builder. Confirm before building. Then proceed with `fulcrum
 
 - [Fulcrum developer documentation](https://docs.fulcrumapp.com/)
 - [Fulcrum offline capabilities](https://docs.fulcrumapp.com/docs/offline-capabilities)
+- [Discovery template index](assets/README.md)
 - [Agent Skills specification](https://agentskills.io/specification)

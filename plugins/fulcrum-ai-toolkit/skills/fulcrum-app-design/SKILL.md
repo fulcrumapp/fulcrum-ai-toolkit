@@ -163,22 +163,8 @@ Fulcrum has **two ways to show/hide fields:**
 
 ## Calculation Fields
 
-A **calculation field** evaluates an expression to produce a derived value. The expression syntax is like Excel — it evaluates to a value directly. It is NOT a JavaScript function body.
-
-```
-// CORRECT — expression that evaluates to a value
-$length * $width
-
-// CORRECT — conditional expression
-IF($status = "Complete", USERFULLNAME(), "")
-
-// WRONG — JavaScript function syntax does not work in calculation fields
-return $length * $width;   // ❌ 'return' locks the field
-
-function calculate() {     // ❌ function declarations not valid here
-  return $length * $width;
-}
-```
+A **calculation field** evaluates an expression to produce a derived value. The expression syntax is like Excel — it evaluates to a value directly. It is NOT a JavaScript function body. Correct and incorrect forms are in
+[`assets/calculation-field-expressions.txt`](assets/calculation-field-expressions.txt).
 
 **Calculation field rules:**
 - No `return` statement — the expression IS the return value
@@ -206,3 +192,5 @@ The app design is complete when:
 ## References
 
 - [Fulcrum developer documentation](https://docs.fulcrumapp.com/)
+- [Field type reference](resources/field-type-reference.md)
+- [Schema asset index](assets/README.md)

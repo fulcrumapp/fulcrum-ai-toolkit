@@ -3,6 +3,7 @@
 
 require "open3"
 require "rbconfig"
+require_relative "../scripts/file_contracts"
 ROOT = File.expand_path("..", __dir__)
 
 
@@ -24,9 +25,19 @@ app_builder = File.read(File.join(skills_dir, "fulcrum-app-builder", "SKILL.md")
 product_knowledge = File.read(File.join(skills_dir, "fulcrum-product-knowledge", "SKILL.md"))
 app_design = File.read(File.join(skills_dir, "fulcrum-app-design", "SKILL.md"))
 safety = File.read(File.join(skills_dir, "fulcrum-safety", "SKILL.md"))
-data_events = File.read(File.join(skills_dir, "fulcrum-data-events", "SKILL.md"))
-app_extensions = File.read(File.join(skills_dir, "fulcrum-app-extensions", "SKILL.md"))
-report_building = File.read(File.join(skills_dir, "fulcrum-report-building", "SKILL.md"))
+
+# Layer 4 externalized executable examples, so behavior assertions read the
+# whole skill tree rather than SKILL.md alone.
+def read_skill_tree(skills_dir, name)
+  FileContracts
+    .files_under(File.join(skills_dir, name))
+    .map { |path| FileContracts.read_text(path) }
+    .join("\n")
+end
+
+data_events = read_skill_tree(skills_dir, "fulcrum-data-events")
+app_extensions = read_skill_tree(skills_dir, "fulcrum-app-extensions")
+report_building = read_skill_tree(skills_dir, "fulcrum-report-building")
 
 assert(readme.include?("## References"), "README lacks references")
 skill_paths.each do |skill_path|
@@ -51,7 +62,7 @@ assert(product_knowledge.include?("Plan and licensing gates"), "product knowledg
 assert(app_design.include?("repeatable") && app_design.include?("Record Link"), "app design lacks architecture guidance")
 assert(safety.include?("hazard") || safety.include?("Safety"), "safety skill is not discoverable for field work")
 assert(data_events.include?("ON('change', 'field'"), "data events lacks field-change guidance")
-assert(data_events.include?("LOADRECORDS({") && data_events.include?("function(error, result)"), "data events lacks callback-based LOADRECORDS guidance")
+assert(data_events.include?("LOADRECORDS({") && data_events.match?(/function\s*\(error, result\)/), "data events lacks callback-based LOADRECORDS guidance")
 assert(data_events.include?("var storage = STORAGE()") && data_events.include?("storage.setItem"), "data events lacks object-based storage guidance")
 assert(data_events.include?("REQUEST({") && !data_events.include?("fetch("), "data events uses an obsolete HTTP API")
 assert(!data_events.match?(/LOADRECORDS\('[^']/), "data events contains positional LOADRECORDS guidance")

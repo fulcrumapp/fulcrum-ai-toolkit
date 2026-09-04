@@ -14,6 +14,15 @@ jobs:
         uses: ruby/setup-ruby@v1
         with:
           ruby-version: '.ruby-version'
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22.22.0
+          cache: npm
+          cache-dependency-path: tools/format-validator/package-lock.json
+      - name: Install pinned format validator dependencies
+        run: npm ci
+        working-directory: tools/format-validator
       - name: Validate skills and manifests
         run: ruby scripts/validate.rb
       - name: Check App MCP contract guidance
@@ -22,5 +31,9 @@ jobs:
         run: ruby test/manifest_contract_test.rb
       - name: Check product knowledge decomposition
         run: ruby test/product_knowledge_decomposition_test.rb
+      - name: Check externalized examples and assets
+        env:
+          REQUIRE_NODE: "1"
+        run: ruby test/external_examples_test.rb
       - name: Run smoke test
         run: ruby test/smoke_test.rb

@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Species picker</title>
+  <!-- Source: https://docs.fulcrumapp.com/docs/app-extensions-introduction -->
+  <!-- Document: a complete standalone extension page. Upload it as the Reference File named species-picker.html so attachment://species-picker.html resolves. -->
+  <!-- Required Fulcrum extension bootstrap; keep intact for offline use. -->
+  <script>(()=>{var s=(e,i)=>()=>(i||e((i={exports:{}}).exports,i),i.exports);var o=s((a,r)=>{var l=new URLSearchParams(location.search);function c(e){try{return JSON.parse(e)}catch(i){return null}}r.exports=window.Fulcrum={isExtension:l.get("extension")==="1",initialize:()=>{var i;let{params:e}=Fulcrum;Fulcrum.id=e==null?void 0:e.id,Fulcrum.url=e==null?void 0:e.url,Fulcrum.data=e==null?void 0:e.data,Fulcrum.origin=e==null?void 0:e.origin,(i=Fulcrum.onLoadOnce)==null||i.call(Fulcrum)},load:e=>{Fulcrum.onLoadOnce=()=>{Fulcrum.params&&!Fulcrum.isLoaded&&(Fulcrum.isLoaded=!0,e({data:Fulcrum.data}))},Fulcrum.onLoadOnce()},send:(e,{close:i=!1}={})=>{var u;e=e!=null?e:{};let n={id:Fulcrum.id,url:Fulcrum.url,data:e,close:i};(u=window.webkit)!=null&&u.messageHandlers?window.webkit.messageHandlers.extensionListener.postMessage(JSON.stringify(n)):window.parent&&window.parent.postMessage({extensionMessage:n},Fulcrum.origin)},receive:e=>{let i=c(e.data);i&&i.command==="initialize"&&!Fulcrum.params&&(Fulcrum.params=i.params,Fulcrum.initialize())},finish:e=>{Fulcrum.send(e,{close:!0})}};Fulcrum.isExtension?window.addEventListener("message",Fulcrum.receive,!1):window.addEventListener("DOMContentLoaded",Fulcrum.initialize)});o();})();</script>
+  <style>
+    /* Keep styles self-contained — no external stylesheets at runtime. */
+    body { font-family: sans-serif; margin: 0; padding: 16px; }
+    select, button { font-size: 1rem; padding: 8px; }
+  </style>
+</head>
+<body>
+  <label for="my-select">Species</label>
+  <select id="my-select">
+    <option value="">-- choose --</option>
+    <option value="option_a">Option A</option>
+    <option value="option_b">Option B</option>
+  </select>
+  <button id="save-btn" type="button">Save</button>
+  <script>
+    var select = document.getElementById('my-select');
+
+    Fulcrum.load(function (payload) {
+      initialize(payload.data || {});
+    });
+
+    function initialize(data) {
+      select.value = data.current_value || '';
+    }
+
+    document.getElementById('save-btn').addEventListener('click', function () {
+      var selectedValue = document.getElementById('my-select').value;
+      Fulcrum.finish({ value: selectedValue });
+    });
+  </script>
+</body>
+</html>
