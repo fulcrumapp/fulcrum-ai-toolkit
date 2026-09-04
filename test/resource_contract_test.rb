@@ -7,6 +7,7 @@ require "json"
 require "open3"
 require "pathname"
 require "tmpdir"
+require "uri"
 require_relative "../scripts/content_contracts"
 require_relative "../scripts/file_contracts"
 
@@ -71,8 +72,9 @@ end
 def markdown_anchors(text)
   counts = Hash.new(0)
   text.scan(/^\#{1,6}\s+(.+?)\s*\#*\s*$/).flatten.map do |heading|
+    # This value is only normalized into a Markdown fragment identifier; it is never rendered as HTML.
     base = heading
-      .gsub(/<[^>]+>/, "")
+      .delete("<>")
       .gsub(/\[([^\]]+)\]\([^)]+\)/, '\1')
       .delete("`*_")
       .downcase
@@ -83,6 +85,12 @@ def markdown_anchors(text)
     counts[base] += 1
     ordinal.zero? ? base : "#{base}-#{ordinal}"
   end
+end
+
+def normalized_public_urls(text)
+  markdown_links(text)
+    .flat_map { |target| URI.extract(target, %w[http https]) }
+    .map { |url| URI.parse(url).normalize }
 end
 
 def resource_policy_violations(entries, forbidden_digest:, approvals:)
@@ -195,9 +203,11 @@ product_router = File.read(File.join(SKILLS, "fulcrum-product-knowledge", "SKILL
 governance = File.read(
   File.join(SKILLS, "fulcrum-product-knowledge", "resources", "resource-governance.md")
 )
+required_public_urls = [PUBLIC_OPENAPI, PUBLIC_OPENAPI_DOCS].map { |url| URI.parse(url).normalize }
 [product_router, governance].each do |text|
-  assert(text.include?(PUBLIC_OPENAPI), "REST authority lacks the canonical public OpenAPI URL")
-  assert(text.include?(PUBLIC_OPENAPI_DOCS), "REST authority lacks the public OpenAPI documentation")
+  public_urls = normalized_public_urls(text)
+  assert(public_urls.include?(required_public_urls[0]), "REST authority lacks the canonical public OpenAPI URL")
+  assert(public_urls.include?(required_public_urls[1]), "REST authority lacks the public OpenAPI documentation")
 end
 assert(
   governance.downcase.include?("live installed app mcp schemas"),
