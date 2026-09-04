@@ -5,3 +5,5 @@
 # Editor
 *.code-workspace
 
+# Node dependencies for the pinned format validator
+node_modules/

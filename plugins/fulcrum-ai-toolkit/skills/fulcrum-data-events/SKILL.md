@@ -12,6 +12,8 @@ A **data event** is JavaScript that runs inside a Fulcrum app in response to rec
 When Fulcrum App MCP is registered, call `fulcrum_expressions_data_events_reference` for the current hook and function contract before authoring a script. The knowledge categories worth requesting are listed in
 [`assets/data-events-reference-categories.txt`](assets/data-events-reference-categories.txt).
 Treat the local runtime resources as an offline fallback, not as a replacement for the registered knowledge tool.
+The compact fallback is
+[`resources/data-events-runtime-api.md`](resources/data-events-runtime-api.md).
 
 There are no standalone Data Event CRUD tools. Read the form and its current `script` with `fulcrum_forms_get`, compose the approved handler with the existing script, and write the complete script with `fulcrum_forms_update`. Do not overwrite unrelated handlers.
 
@@ -58,15 +60,19 @@ Stamp derived values on a lifecycle event with `SETVALUE()`:
 [`examples/set-field-values-on-status-change.js`](examples/set-field-values-on-status-change.js).
 
 ### Conditional visibility
-Hide a dependent field from a choice answer with `SETHIDDEN()`:
+Use the documented `SETHIDDEN()` pattern for field and section visibility:
 [`examples/conditional-visibility-sethidden.js`](examples/conditional-visibility-sethidden.js).
-For field and section visibility, use the documented `SETHIDDEN()` pattern:
-[`examples/conditional-visibility-sethidden.js`](examples/conditional-visibility-sethidden.js).
-Neither is a security control.
+Neither is a security control. Register the rule on `new-record` and
+`edit-record` as well as on `change`: default values fire no change event on a
+new record, and reopening a saved record fires none either, so a change handler
+alone leaves the dependent field at its designed visibility.
 
 ### Cascading choices
 Narrow one choice field from another with `SETCHOICES()`:
-[`examples/cascading-choices.js`](examples/cascading-choices.js).
+[`examples/cascading-choices.js`](examples/cascading-choices.js). Apply the
+filter on `new-record` and `edit-record` too, for the same reason: without it
+the dependent field shows its full designed option list until the controlling
+field is touched.
 
 ### Load reference data
 `LOADRECORDS()` takes an options object and an asynchronous callback; it does not return records directly. See
@@ -85,7 +91,7 @@ Store shared JavaScript in a Reference File, then load it into multiple apps at 
 > **Platform Requirement — Elite plan:** `LOADFILE()` requires Elite or Developer Pack. See note above.
 
 ### Session state with STORAGE
-`STORAGE()` returns a local-storage-like object with `getItem`, `setItem`, `removeItem`, and `clear` methods. Values must be strings, so serialize objects with `JSON.stringify()`. See
+`STORAGE()` returns a local-storage-like object with `getItem`, `setItem`, `removeItem`, and `clear` methods. Values must be strings, so serialize objects with `JSON.stringify()`. The store is device-wide and persistent, so a bare key such as `baseline` is still there when the next record opens. Scope every key with `FORM().id` and the record it belongs to, and remove it on `cancel-record` and `unload-record`. `RECORDID()` is null until a new record has been saved, so it cannot separate one unsaved record from the next on its own: give an unsaved record a nonce generated once per editing session, so a session that crashed before its cleanup ran leaves a key the next session never computes. See
 [`examples/storage-session-state.js`](examples/storage-session-state.js).
 
 ### Validate before save
@@ -184,7 +190,9 @@ The full expressions reference is available in `resources/` as `expressions-refe
 
 ## Platform Constraints
 
-- **No server execution** — Data events run on-device. No persistent state between sessions.
+- **No server execution** — Data events run on-device. Ordinary script state is
+  ephemeral; `STORAGE()` is the explicit device-persistent exception and must
+  use scoped keys with lifecycle cleanup.
 - **No module imports** — No `require()`, no `import`. All code is a single script.
 - **Callback-based async, no async/await** — `REQUEST()`, `LOADRECORDS()`, and callback-based `LOADFILE()` work asynchronously. `validate-record`, `validate-repeatable`, and `save-record` cannot perform asynchronous work.
 - **Single script per form** — All event handlers share one script. Naming collisions are possible.
@@ -194,7 +202,7 @@ The full expressions reference is available in `resources/` as `expressions-refe
 
 ## Completion Criteria
 
-- [ ] Field-change logic uses `ON('change', 'field', ...)`, not `edit-record`
+- [ ] Field-change logic listens on `ON('change', 'field', ...)` rather than treating `edit-record` as a change event, and any rule that must also hold when a record opens is applied from `new-record` and `edit-record` as well
 - [ ] All field data names are verified against the live form — wrong names can fail silently
 - [ ] `LOADRECORDS()` and `REQUEST()` are treated as asynchronous callback APIs
 - [ ] No hardcoded IDs — all resources discovered at runtime
@@ -219,4 +227,5 @@ The full expressions reference is available in `resources/` as `expressions-refe
 - [Fulcrum `STORAGE()` reference](https://docs.fulcrumapp.com/docs/data-events-storage)
 - [Runnable example index](examples/README.md)
 - [Example catalog by pattern](resources/data-event-examples.md)
+- [Offline runtime fallback](resources/data-events-runtime-api.md)
 - [Agent Skills specification](https://agentskills.io/specification)

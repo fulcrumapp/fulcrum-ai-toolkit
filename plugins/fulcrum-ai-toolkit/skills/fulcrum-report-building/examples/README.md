@@ -15,7 +15,7 @@ template.
 | File | What it shows |
 | --- | --- |
 | [`record-field-access.ejs`](record-field-access.ejs) | `record.formValues.find()` with `value` and `displayValue`. |
-| [`repeatable-table-rows.ejs`](repeatable-table-rows.ejs) | Iterating a repeatable through `items`. |
+| [`repeatable-table-rows.ejs`](repeatable-table-rows.ejs) | Iterating a repeatable through `items` into a complete table. |
 | [`conditional-section.ejs`](conditional-section.ejs) | Branching on a stored choice `value`. |
 | [`photo-url-signed-src.ejs`](photo-url-signed-src.ejs) | `PHOTOURL()` for a usable image `src`. |
 
@@ -23,7 +23,7 @@ template.
 
 | File | What it shows |
 | --- | --- |
-| [`query-related-records.ejs`](query-related-records.ejs) | `QUERY(sql, options)` and reading `rows`. |
+| [`query-related-records.ejs`](query-related-records.ejs) | `QUERY(sql, options)` and reading `rows` into a complete table. |
 | [`query-rows-iteration.ejs`](query-rows-iteration.ejs) | The minimal `rows` iteration form. |
 | [`query-repeatable-join.ejs`](query-repeatable-join.ejs) | Joining a repeatable table on `_parent_id`. |
 | [`api-fulcrum-rest.ejs`](api-fulcrum-rest.ejs) | `API(path, options)` for Fulcrum REST resources. |
@@ -32,9 +32,9 @@ template.
 
 | File | What it shows |
 | --- | --- |
-| [`params-date-range.ejs`](params-date-range.ejs) | Validating `$params` before use. |
+| [`params-date-range.ejs`](params-date-range.ejs) | Validating `$params` before use, with empty and error markup. |
 | [`html-filter-form.ejs`](html-filter-form.ejs) | An HTML report that re-submits to its own URL. |
-| [`sanitize-params-for-sql.ejs`](sanitize-params-for-sql.ejs) | Encoding a parameter before interpolation. |
+| [`sanitize-params-for-sql.ejs`](sanitize-params-for-sql.ejs) | Encoding a parameter in the gap where it reaches SQL. |
 
 ## Assets
 
@@ -47,6 +47,15 @@ template.
 ## SQL safety
 
 The Query API is read-only and accepts one complete SQL string with no
-server-side bind parameters. Encode or allowlist every interpolated value in
-the template before it reaches `QUERY()`. Never write a statement that mutates
+server-side bind parameters. Encode every interpolated value in the `${...}`
+gap where it reaches `QUERY()`, and keep that gap inside quotes:
+`'${('' + value).replace(/[^A-Za-z0-9_-]/g, '')}'` leaves letters, digits,
+underscores, and hyphens, none of which can close the literal around them, and
+`'${('' + day).replace(/[^0-9-]/g, '')}'` does the same for a date. Convert with
+`('' + value)` rather than `String(value)`: `String` is an ordinary binding
+inside a template, so `catch (String)` or a parameter of that name would change
+what the conversion means, while an empty-string concatenation has no name to
+rebind. A filter applied further up the template proves nothing about the name
+that is actually interpolated. Call `QUERY()` by name rather than through the
+locals object or a string passed to `eval`. Never write a statement that mutates
 data; a report template has no business issuing one.

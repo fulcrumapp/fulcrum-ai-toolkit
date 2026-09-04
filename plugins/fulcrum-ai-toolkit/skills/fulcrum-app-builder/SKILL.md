@@ -137,7 +137,10 @@ For an existing app:
 5. Preservation is the default. Preserve every unrequested element and choice. Omit `removed_element_keys` when nothing was removed.
 6. If the user requests an element removal, explain the data and integration impact and obtain explicit approval. After approval, omit the removed subtree from the copied tree and collect only that subtree root's existing key in `removed_element_keys`; one root key authorizes its descendants. Choice removals also require approval, but choice keys do not belong in `removed_element_keys`.
 7. Validate the composed full form with `fulcrum_forms_validate`.
-8. Send the complete composed payload and approved removal declarations together — `fulcrum_forms_update({ id: formId, elements: composedElements, removed_element_keys: removedElementKeys })`. The annotated call is
+8. Start the update payload with `elements: composedElements`. Only
+   `if (removedElementKeys.length > 0)`, set
+   `updatePayload.removed_element_keys = removedElementKeys`, then send the
+   complete payload with `fulcrum_forms_update(updatePayload)`. The annotated call is
    [`examples/forms-update-preserving-keys.js`](examples/forms-update-preserving-keys.js).
 
 Omit `removed_element_keys` when `removedElementKeys` is empty. Never declare a key that is still present in `elements`.

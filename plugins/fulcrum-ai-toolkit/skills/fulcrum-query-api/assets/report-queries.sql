@@ -24,9 +24,15 @@ SELECT r.*
 FROM "Work Orders/line_items" r
 WHERE r._parent_id = :record_id;
 
--- A bounded date-range report driven by validated $params values.
+-- A bounded date-range report driven by validated $params values. The range is
+-- half-open: >= start and < the day after the end day. BETWEEN is inclusive of
+-- its upper bound, so against a timestamp column it keeps only midnight on the
+-- end day and drops every later reading that day. See
+-- ../../fulcrum-report-building/examples/params-date-range.ejs, which parses
+-- and round-trips both days before emitting these literals.
 SELECT *
 FROM "Inspections"
-WHERE _created_at BETWEEN :start_date AND :end_date
+WHERE _created_at >= :start_date
+  AND _created_at < :end_date_exclusive
 ORDER BY _created_at DESC
 LIMIT 500;

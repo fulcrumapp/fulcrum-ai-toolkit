@@ -1,6 +1,7 @@
 <%# Source: https://docs.fulcrumapp.com/docs/reports-introduction %>
-<%# Purpose: the three EJS tag forms and what each one emits. %>
+<%# Fragment: paste into a Report Template; this is not a standalone template. %>
+<%# Purpose: the escaped-output and code-only EJS forms used by this toolkit. %>
 
 <%= expression %>   <%# Outputs the value — HTML-escaped %>
-<%- expression %>   <%# Outputs raw HTML — use only for trusted HTML content %>
+<%# Raw unescaped output is intentionally omitted because emitted markup cannot be validated statically. %>
 <% statement %>     <%# Executes JavaScript — no output %>

@@ -47,8 +47,8 @@ These are available in every report without any setup:
 | `record` | The current record — metadata plus field values under `record.formValues` |
 | `form` | The app/form definition — field labels, data names, element structure |
 | `QUERY(sql, options)` | Execute SQL against the Query API from template EJS |
-| `PHOTOURL(mediaID)` | Signed URL for a photo field value |
-| `SIGNATUREURL(id)` | Signed URL for a signature field value |
+| `PHOTOURL(id, options)` | Signed URL for a photo field value |
+| `SIGNATUREURL(id, options)` | Signed URL for a signature field value |
 | `STATICMAP(options)` | Generates a static map image (Google or Esri) |
 | `RENDER(feature, options, eachFunction)` | Recursively renders form elements with nesting context |
 | `RENDERVALUES(feature, options, eachFunction)` | Recursively renders form values |
@@ -57,10 +57,10 @@ These are available in every report without any setup:
 
 ## EJS Patterns
 
-EJS uses three tag types. Use them correctly — they produce very different output. The three forms are shown in
-[`assets/ejs-tag-types.ejs`](assets/ejs-tag-types.ejs):
-`<%= %>` outputs an escaped value, `<%- %>` outputs raw HTML, and `<% %>`
-executes JavaScript without output.
+EJS supports escaped output, raw output, and code-only tags. This toolkit's
+copyable examples use escaped output and code-only tags, shown in
+[`assets/ejs-tag-types.ejs`](assets/ejs-tag-types.ejs). Raw `<%- %>` output is
+omitted because its emitted markup cannot be validated statically.
 
 Every fragment below is a separate file under
 [`examples/`](examples/README.md), each with its own `<%# Source: %>` comment.
@@ -76,7 +76,8 @@ Look a field up with `record.formValues.find('data_name')`, guard the result, th
 
 > Source: [Fulcrum Report Builder variables](https://docs.fulcrumapp.com/docs/variables#record) documents form-value lookup. The [RENDER function reference](https://docs.fulcrumapp.com/docs/functions#render) documents repeatable item `formValues`.
 
-A repeatable form value exposes `items`, and each item has its own `formValues`:
+A repeatable form value exposes `items`, and each item has its own `formValues`.
+Emit the table around the rows in the same fragment:
 [`examples/repeatable-table-rows.ejs`](examples/repeatable-table-rows.ejs).
 
 ### Conditional blocks
@@ -155,9 +156,21 @@ Trying to pass all data through the single record context (via very long JSON bl
 A media ID alone is not a usable `src`. Compare both forms in
 [`examples/photo-url-signed-src.ejs`](examples/photo-url-signed-src.ejs).
 
+### Rows emitted outside a table
+A `<tr>` is only valid inside a `<table>`. A loop that emits rows and leaves the
+table to the surrounding template produces invalid markup the moment it is
+pasted anywhere else, and a browser silently discards the rows. Emit the whole
+structure — `<table>`, `<thead>`, `<tbody>` — from the same fragment that emits
+the rows, and give the zero-row and error cases their own markup rather than
+rendering nothing. See
+[`examples/repeatable-table-rows.ejs`](examples/repeatable-table-rows.ejs) and
+[`examples/params-date-range.ejs`](examples/params-date-range.ejs).
+
 ### Missing escaping in SQL strings
-The Query API accepts one complete SQL string and has no server-side bind parameters, so the template owns encoding. Always sanitize values used in `QUERY()` strings to prevent injection via `$params`:
+The Query API accepts one complete SQL string and has no server-side bind parameters, so the template owns encoding. Sanitize a `$params` value in the gap it is interpolated into — `'${('' + value).replace(/[^A-Za-z0-9_-]/g, '')}'` — rather than in a variable further up, so the filter is visible at the point the value reaches SQL:
 [`examples/sanitize-params-for-sql.ejs`](examples/sanitize-params-for-sql.ejs).
+Convert with `('' + value)` rather than `String(value)`; `String` is an ordinary binding inside a template, so a `catch (String)` or a parameter of that name silently changes what the conversion does.
+Reach `QUERY()` by its own name; a call written as `locals.QUERY(...)` or assembled through `eval` is not reviewable.
 Reports are read-only consumers; never write a `QUERY()` statement that modifies data.
 
 ## Code Organization
@@ -175,7 +188,8 @@ A report template is a single EJS file. As it grows:
 - [ ] No credentials are embedded in the Report Template
 - [ ] Fulcrum REST calls use documented `API(path, options)` syntax
 - [ ] Photo and signature fields use `PHOTOURL()` / `SIGNATUREURL()` — not raw media IDs
-- [ ] `$params` values are sanitized before use in SQL strings
+- [ ] `$params` values are sanitized in the `${...}` gap where they reach SQL, and every interpolated value sits inside quotes
+- [ ] Every fragment that emits table rows also emits the table around them, and has markup for the zero-row and error cases
 - [ ] Template was authored and tested outside the report builder before pasting in
 - [ ] Rendered output was checked for both content and geometry — text comparison alone is insufficient
 - [ ] Representative short, long, and multi-page fixtures were rendered when layout matters

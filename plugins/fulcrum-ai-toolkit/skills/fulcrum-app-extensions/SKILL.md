@@ -48,8 +48,10 @@ Do not substitute an old external bootstrap URL. Start from the complete HTML re
 
 A self-contained page with inline styles, the current public inline bootstrap,
 and an inline picker script is in
-[`examples/species-picker-extension.html`](examples/species-picker-extension.html).
-The full example index is [`examples/README.md`](examples/README.md).
+[`examples/species-picker.html`](examples/species-picker.html). Upload that
+exact file name as the Reference File, because the Data Event opens it as
+`attachment://species-picker.html`; the two names must match character for
+character. The full example index is [`examples/README.md`](examples/README.md).
 
 > Source: The payload and inline-bootstrap semantics above follow the [public App Extensions quick start](https://docs.fulcrumapp.com/docs/app-extensions-introduction#quick-start);
 > live installed App MCP schemas govern generated artifacts.
