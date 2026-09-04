@@ -13,7 +13,7 @@ module ContentContracts
   ATTRIBUTION = /(?:#{ENTITY.source}#{ATTRIBUTION_SEPARATOR.source}(?i:#{RESEARCH_EVENT.source})|(?i:#{RESEARCH_EVENT.source})#{ATTRIBUTION_SEPARATOR.source}#{ENTITY.source}|(?i:#{RESEARCH_EVENT.source})\s+notes?\s+(?:from|by)\s+#{ENTITY.source})/
   AFFILIATION = /#{ENTITY.source}\s+(?:at|from)\s+(?:#{ENTITY.source}|#{PROPER_TOKEN.source})/
   PRIVATE_PATH = %r{\A/(?:Users|home|mnt)(?:/|\z)}i
-  PRIVATE_WINDOWS_PATH = %r{\A[A-Za-z]:[\\/]Users[\\/]|[A-Za-z]:[\\/]home[\\/]}i
+  PRIVATE_WINDOWS_PATH = %r{\A(?:[A-Za-z]:[\\/]Users[\\/]|[A-Za-z]:[\\/]home[\\/])}i
   PRIVATE_HOST_SUFFIXES = %w[
     corp
     example
