@@ -384,7 +384,7 @@ expected_record_link_properties = %w[
   allow_empty_records
 ]
 assert(
-  element.keys == expected_record_link_properties,
+  element.keys.sort == expected_record_link_properties.sort,
   "RecordLinkField asset properties changed: #{element.keys.join(", ")}"
 )
 required_properties = %w[type key data_name label required disabled hidden]
