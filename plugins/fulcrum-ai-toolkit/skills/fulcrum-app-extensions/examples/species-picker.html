@@ -7,7 +7,89 @@
   <!-- Source: https://docs.fulcrumapp.com/docs/app-extensions-introduction -->
   <!-- Document: a complete standalone extension page. Upload it as the Reference File named species-picker.html so attachment://species-picker.html resolves. -->
   <!-- Required Fulcrum extension bootstrap; keep intact for offline use. -->
-  <script>(()=>{var s=(e,i)=>()=>(i||e((i={exports:{}}).exports,i),i.exports);var o=s((a,r)=>{var l=new URLSearchParams(location.search);function c(e){try{return JSON.parse(e)}catch(i){return null}}r.exports=window.Fulcrum={isExtension:l.get("extension")==="1",initialize:()=>{var i;let{params:e}=Fulcrum;Fulcrum.id=e==null?void 0:e.id,Fulcrum.url=e==null?void 0:e.url,Fulcrum.data=e==null?void 0:e.data,Fulcrum.origin=e==null?void 0:e.origin,(i=Fulcrum.onLoadOnce)==null||i.call(Fulcrum)},load:e=>{Fulcrum.onLoadOnce=()=>{Fulcrum.params&&!Fulcrum.isLoaded&&(Fulcrum.isLoaded=!0,e({data:Fulcrum.data}))},Fulcrum.onLoadOnce()},send:(e,{close:i=!1}={})=>{var u;e=e!=null?e:{};let n={id:Fulcrum.id,url:Fulcrum.url,data:e,close:i};(u=window.webkit)!=null&&u.messageHandlers?window.webkit.messageHandlers.extensionListener.postMessage(JSON.stringify(n)):window.parent&&window.parent.postMessage({extensionMessage:n},Fulcrum.origin)},receive:e=>{if(e.origin&&!e.origin.endsWith("fulcrumapp.com")&&e.origin!==window.location.origin&&e.origin!=="null")return;let i=c(e.data);i&&i.command==="initialize"&&!Fulcrum.params&&(Fulcrum.params=i.params,Fulcrum.initialize())},finish:e=>{Fulcrum.send(e,{close:!0})}};Fulcrum.isExtension?window.addEventListener("message",Fulcrum.receive,!1):window.addEventListener("DOMContentLoaded",Fulcrum.initialize)});o();})();</script>
+  <script>
+    (() => {
+      const searchParams = new URLSearchParams(window.location.search);
+
+      function parseJson(data) {
+        try {
+          return JSON.parse(data);
+        } catch {
+          return null;
+        }
+      }
+
+      window.Fulcrum={
+        isExtension: searchParams.get('extension') === '1',
+
+        initialize() {
+          const params = window.Fulcrum.params;
+          window.Fulcrum.id = params?.id;
+          window.Fulcrum.url = params?.url;
+          window.Fulcrum.data = params?.data;
+          window.Fulcrum.origin = params?.origin;
+
+          if (typeof window.Fulcrum.onLoadOnce === 'function') {
+            window.Fulcrum.onLoadOnce();
+          }
+        },
+
+        load(callback) {
+          window.Fulcrum.onLoadOnce = () => {
+            if (window.Fulcrum.params && !window.Fulcrum.isLoaded) {
+              window.Fulcrum.isLoaded = true;
+              callback({ data: window.Fulcrum.data });
+            }
+          };
+          window.Fulcrum.onLoadOnce();
+        },
+
+        send(payload = {}, { close = false } = {}) {
+          const message = {
+            id: window.Fulcrum.id,
+            url: window.Fulcrum.url,
+            data: payload,
+            close
+          };
+
+          if (window.webkit?.messageHandlers?.extensionListener) {
+            window.webkit.messageHandlers.extensionListener.postMessage(
+              JSON.stringify(message)
+            );
+          } else if (window.parent) {
+            window.parent.postMessage({ extensionMessage: message }, window.Fulcrum.origin);
+          }
+        },
+
+        receive(event) {
+          if (
+            event.origin &&
+            !event.origin.endsWith('fulcrumapp.com') &&
+            event.origin !== window.location.origin &&
+            event.origin !== 'null'
+          ) {
+            return;
+          }
+
+          const parsed = parseJson(event.data);
+          if (parsed && parsed.command === 'initialize' && !window.Fulcrum.params) {
+            window.Fulcrum.params = parsed.params;
+            window.Fulcrum.initialize();
+          }
+        },
+
+        finish(payload) {
+          window.Fulcrum.send(payload, { close: true });
+        }
+      };
+
+      if (window.Fulcrum.isExtension) {
+        window.addEventListener('message', window.Fulcrum.receive, false);
+      } else {
+        window.addEventListener('DOMContentLoaded', window.Fulcrum.initialize);
+      }
+    })();
+  </script>
   <style>
     /* Keep styles self-contained — no external stylesheets at runtime. */
     body { font-family: sans-serif; margin: 0; padding: 16px; }
