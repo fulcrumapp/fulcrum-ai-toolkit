@@ -1,0 +1,219 @@
+{
+  "info": {
+    "title": "Fulcrum REST API OpenAPI component subset",
+    "description": "Checked-in subset of https://raw.githubusercontent.com/fulcrumapp/api/v2/reference/rest-api.json covering SCHEMA_MAPPINGS in tools/format-validator/lib/schema-contract.mjs. When adding a mapping, copy that component schema and every $ref it reaches.",
+    "version": "v2"
+  },
+  "components": {
+    "schemas": {
+      "FormRecordLinkFieldElement": {
+        "description": "A field that links to records in another Fulcrum form.",
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/FormBaseElement"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "type": {
+                "type": "string",
+                "enum": [
+                  "RecordLinkField"
+                ]
+              },
+              "allow_existing_records": {
+                "type": "boolean",
+                "description": "Allow linking to existing records",
+                "default": true
+              },
+              "allow_creating_records": {
+                "type": "boolean",
+                "description": "Allow creating new linked records inline",
+                "default": false
+              },
+              "allow_updating_records": {
+                "type": "boolean",
+                "description": "Allow editing linked records inline",
+                "default": false
+              },
+              "allow_empty_records": {
+                "type": "boolean",
+                "description": "Allow saving without selecting a linked record",
+                "default": true
+              },
+              "linked_form_id": {
+                "type": "string",
+                "description": "ID of the form that records can be linked from"
+              }
+            }
+          }
+        ]
+      },
+      "FormBaseElement": {
+        "type": "object",
+        "description": "Common properties shared by all form elements",
+        "required": [
+          "type",
+          "key",
+          "data_name",
+          "label"
+        ],
+        "properties": {
+          "type": {
+            "type": "string",
+            "description": "The element type discriminator",
+            "enum": [
+              "TextField",
+              "ChoiceField",
+              "ClassificationField",
+              "YesNoField",
+              "PhotoField",
+              "VideoField",
+              "AudioField",
+              "SignatureField",
+              "BarcodeField",
+              "DateTimeField",
+              "DateField",
+              "TimeField",
+              "Repeatable",
+              "Section",
+              "AddressField",
+              "HyperlinkField",
+              "CalculatedField",
+              "RecordLinkField",
+              "AttachmentField",
+              "CheckboxField",
+              "DynamicField",
+              "LocationField",
+              "ButtonField",
+              "SketchField",
+              "Label",
+              "StatusField"
+            ]
+          },
+          "key": {
+            "type": "string",
+            "description": "Unique 4-character hex key identifying this element within the form (e.g. 'af72')"
+          },
+          "label": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Display label for the field"
+          },
+          "data_name": {
+            "type": "string",
+            "description": "Snake-case column name used in exports and the query API (e.g. 'park_name')"
+          },
+          "description": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Help text shown below the field label"
+          },
+          "required": {
+            "type": "boolean",
+            "description": "Whether a value is required to save the record",
+            "default": false
+          },
+          "disabled": {
+            "type": "boolean",
+            "description": "Whether the field is read-only in the mobile app",
+            "default": false
+          },
+          "hidden": {
+            "type": "boolean",
+            "description": "Whether the field is hidden by default",
+            "default": false
+          },
+          "default_value": {
+            "description": "Default value pre-populated when a new record is created. Type depends on the element type."
+          },
+          "visible_conditions_type": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Whether ALL or ANY visible conditions must be met. Null means no conditions.",
+            "enum": [
+              "all",
+              "any"
+            ]
+          },
+          "visible_conditions": {
+            "type": [
+              "array",
+              "null"
+            ],
+            "description": "Conditions that control when this element is visible",
+            "items": {
+              "$ref": "#/components/schemas/FormElementCondition"
+            }
+          },
+          "required_conditions_type": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Whether ALL or ANY required conditions must be met. Null means no conditions.",
+            "enum": [
+              "all",
+              "any"
+            ]
+          },
+          "required_conditions": {
+            "type": [
+              "array",
+              "null"
+            ],
+            "description": "Conditions that control when this element becomes required",
+            "items": {
+              "$ref": "#/components/schemas/FormElementCondition"
+            }
+          }
+        }
+      },
+      "FormElementCondition": {
+        "type": "object",
+        "description": "A visibility or required condition rule applied to a form element",
+        "required": [
+          "field_key",
+          "operator",
+          "value"
+        ],
+        "properties": {
+          "field_key": {
+            "type": "string",
+            "description": "The key of the field being tested"
+          },
+          "operator": {
+            "type": "string",
+            "description": "Comparison operator",
+            "enum": [
+              "equal_to",
+              "not_equal_to",
+              "is_empty",
+              "is_not_empty",
+              "contains",
+              "does_not_contain",
+              "starts_with",
+              "greater_than",
+              "less_than",
+              "greater_than_or_equal_to",
+              "less_than_or_equal_to"
+            ]
+          },
+          "value": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "The value to compare against (may be null for is_empty/is_not_empty operators)"
+          }
+        }
+      }
+    }
+  }
+}
