@@ -37,11 +37,11 @@
          * Unpacks host context and notifies registered load listeners.
          */
         initialize() {
-          const params = window.Fulcrum.params;
-          window.Fulcrum.id = params?.id;
-          window.Fulcrum.url = params?.url;
-          window.Fulcrum.data = params?.data;
-          window.Fulcrum.origin = params?.origin;
+          const { id, url, data, origin } = window.Fulcrum.params || {};
+          window.Fulcrum.id = id;
+          window.Fulcrum.url = url;
+          window.Fulcrum.data = data;
+          window.Fulcrum.origin = origin;
 
           if (typeof window.Fulcrum.onLoadOnce === 'function') {
             window.Fulcrum.onLoadOnce();
