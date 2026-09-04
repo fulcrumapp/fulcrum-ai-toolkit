@@ -3,6 +3,7 @@
 
 require "json"
 require "pathname"
+require "uri"
 require "yaml"
 require_relative "content_contracts"
 require_relative "file_contracts"
@@ -264,7 +265,7 @@ coverage_map = File.join(ROOT, COVERAGE_MAP_RELATIVE_PATH)
 if File.file?(coverage_map)
   coverage_text = File.read(coverage_map)
   REQUIRED_COVERAGE_DOMAINS.each do |domain|
-    unless coverage_text.include?("| **#{domain}**")
+    unless coverage_text.match?(/^\|\s+\*\*#{Regexp.escape(domain)}\*\*/)
       failures << "#{COVERAGE_MAP_RELATIVE_PATH}: missing coverage row for #{domain}"
     end
   end
@@ -273,11 +274,31 @@ if File.file?(coverage_map)
     failures << "#{COVERAGE_MAP_RELATIVE_PATH}: missing source hierarchy"
   end
 
-  unless coverage_text.match?(/SHA-256:\s*\n?>?\s*`[0-9a-f]{64}`/)
+  unless coverage_text.include?("## Review and retirement")
+    failures << "#{COVERAGE_MAP_RELATIVE_PATH}: missing review and retirement criteria"
+  end
+
+  unless coverage_text.match?(/SHA-256:\s*(?:>\s*)?`[0-9a-f]{64}`/i)
     failures << "#{COVERAGE_MAP_RELATIVE_PATH}: missing legacy artifact SHA-256"
   end
 
-  if coverage_text.match?(%r{/(?:Users|home)/|atlassian\.net|slack\.com}i)
+  local_path_pattern = %r{
+    (?:^|[[:space:]`"'(])
+    (?:
+      file:// |
+      /(?:Users|home|mnt|Volumes)(?:/|\b) |
+      [A-Z]:\\Users(?:\\|\b)
+    )
+  }ix
+  private_collaboration_hosts = ["atlassian.net", "slack.com"].freeze
+  private_collaboration_url = URI.extract(coverage_text, %w[http https]).any? do |url|
+    host = URI.parse(url).host&.downcase
+    private_collaboration_hosts.any? do |private_host|
+      host == private_host || host&.end_with?(".#{private_host}")
+    end
+  end
+  if coverage_text.match?(local_path_pattern) ||
+     private_collaboration_url
     failures << "#{COVERAGE_MAP_RELATIVE_PATH}: contains a local path or private collaboration URL"
   end
 else
