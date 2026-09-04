@@ -8,6 +8,7 @@ require "tmpdir"
 
 ROOT = File.expand_path("..", __dir__)
 SKILLS = File.join(ROOT, "plugins", "fulcrum-ai-toolkit", "skills")
+CONTRACT_FAILURES = []
 
 def read_skill(name, relative_path = "SKILL.md")
   File.read(File.join(SKILLS, name, relative_path))
@@ -27,28 +28,35 @@ def read_file(relative_path)
 end
 
 def assert(condition, message)
-  return if condition
-
-  warn "App MCP contract test failed: #{message}"
-  exit 1
+  CONTRACT_FAILURES << message unless condition
+  condition
 end
 
 def assert_in_order(text, tokens, message)
   cursor = 0
   tokens.each do |token|
     position = text.index(token, cursor)
-    assert(position, "#{message}: missing or out-of-order #{token.inspect}")
+    unless position
+      assert(false, "#{message}: missing or out-of-order #{token.inspect}")
+      next
+    end
     cursor = position + token.length
   end
 end
 
 def section_between(text, start_marker, end_marker, name)
   start_position = text.index(start_marker)
-  assert(start_position, "#{name}: missing start marker #{start_marker.inspect}")
+  unless start_position
+    assert(false, "#{name}: missing start marker #{start_marker.inspect}")
+    return ""
+  end
 
   content_start = start_position + start_marker.length
   end_position = text.index(end_marker, content_start)
-  assert(end_position, "#{name}: missing end marker #{end_marker.inspect}")
+  unless end_position
+    assert(false, "#{name}: missing end marker #{end_marker.inspect}")
+    return ""
+  end
 
   text[content_start...end_position]
 end
@@ -203,8 +211,9 @@ assert(
 )
 assert(
   update_workflow.include?("elements: composedElements") &&
-    update_workflow.include?("removed_element_keys: removedElementKeys"),
-  "existing-form update does not pass the complete elements payload with removed_element_keys"
+    update_workflow.include?("if (removedElementKeys.length > 0)") &&
+    update_workflow.include?("updatePayload.removed_element_keys = removedElementKeys"),
+  "existing-form update does not conditionally pass removed_element_keys with the complete elements payload"
 )
 assert(
   update_workflow.include?("Preservation is the default") &&
@@ -239,6 +248,20 @@ assert(
   "LOADFILE object and callback signature is missing"
 )
 assert(!data_events_tree.match?(/LOADFILE\(\s*['"]/), "positional LOADFILE guidance remains")
+assert(
+  data_events_runtime.include?("LOADFILE(options, callback)") &&
+    data_events_runtime.include?("optional `form_name` or `form_id`"),
+  "LOADFILE runtime guidance does not distinguish the optional form_name and form_id keys"
+)
+assert(
+  product_knowledge.include?("Data Event runtime behavior or code") &&
+    product_knowledge.include?("fulcrum-data-events"),
+  "product knowledge router does not route Data Event runtime questions"
+)
+assert(
+  [data_events_runtime, product_knowledge].none? { |document| document.include?("form_name/form_id") },
+  "ambiguous combined LOADFILE form key remains"
+)
 assert(
   data_events.include?("fulcrum_expressions_data_events_reference"),
   "Data Event guidance does not defer to the registered knowledge tool"
@@ -310,6 +333,11 @@ assert(
   "report function signatures do not match the public reference"
 )
 assert(
+  report_building.include?("| `PHOTOURL(id, options)` |") &&
+    report_building.include?("| `SIGNATUREURL(id, options)` |"),
+  "report workflow media URL signatures do not match the public reference"
+)
+assert(
   !report_guidance.match?(/JSONREQUEST\(url\)|RENDER\(elements, callback\)|RENDERVALUES\(callback\)/),
   "obsolete report function signatures remain"
 )
@@ -369,7 +397,9 @@ public_files = [
   File.join(ROOT, ".claude-plugin", "marketplace.json"),
   File.join(ROOT, ".github", "plugin", "marketplace.json"),
   File.join(ROOT, ".agents", "plugins", "marketplace.json")
-] + FileContracts.files_under(File.join(ROOT, "plugins", "fulcrum-ai-toolkit"))
+] .concat(FileContracts.files_under(File.join(ROOT, "plugins", "fulcrum-ai-toolkit")))
+  .select { |path| File.file?(path) }
+  .uniq
 required_hidden_adapters = %w[
   .claude-plugin/plugin.json
   .codex-plugin/plugin.json
@@ -408,6 +438,11 @@ assert(
     "private provenance detector misses a neutral attribution fixture"
   )
 end
+assert(
+  ["C:\\Users\\example\\file.md", "C:/home/example/file.md"].all? { |path| ContentContracts.private_filesystem_path?(path) },
+  "privacy detector does not catch Windows local paths"
+)
+
 assert(
   !ContentContracts.private_provenance?("(public workshop on API design)"),
   "private provenance detector rejects a neutral public event"
@@ -547,6 +582,12 @@ Dir.mktmpdir("toolkit-hidden-privacy") do |directory|
     end,
     "privacy traversal does not inspect hidden fixture content"
   )
+end
+
+unless CONTRACT_FAILURES.empty?
+  warn "App MCP contract test failed:"
+  CONTRACT_FAILURES.each { |failure| warn "- #{failure}" }
+  exit 1
 end
 
 puts "App MCP contract test passed: exact tools, runtime signatures, and removal-safe updates"
