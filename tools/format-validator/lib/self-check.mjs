@@ -16,6 +16,7 @@
 // exactly as a repository file is.
 
 import { compiledSource, queryCalls, recognizedEncoders } from './ejs-queries.mjs';
+import { validateDocument, validateInventory } from './schema-contract.mjs';
 import { readOnlyViolations } from './sql-contract.mjs';
 
 const QUERY_ONE = { single: true };
@@ -119,7 +120,7 @@ const gap = (expression) =>
 //             probe must be accepted with no violation at all
 const TEMPLATE_PROBES = [
   // The call itself, however it is spelled.
-  ['a double-quoted string argument', writes(`QUERY("${WRITE.replace(/"/g, '\\"')}")`), 1, 'read', 'only SELECT'],
+  ['a double-quoted string argument', writes(`QUERY("${WRITE.replace(/\\/g, '\\\\').replace(/"/g, '\\"')}")`), 1, 'read', 'only SELECT'],
   ['a single-quoted string argument', writes(`QUERY('${WRITE}')`), 1, 'read', 'only SELECT'],
   ['a comment between the name and its parenthesis', writes(`QUERY /* c */ (\`${WRITE}\`)`), 1, 'read', 'only SELECT'],
   ['a newline between the name and its parenthesis', writes(`QUERY\n  (\`${WRITE}\`)`), 1, 'read', 'only SELECT'],
@@ -313,11 +314,84 @@ function encoderFailures() {
   return failures;
 }
 
+const SCHEMA_PROBES = [
+  [
+    'valid FormRecordLinkFieldElement',
+    {
+      type: 'RecordLinkField',
+      key: 'a1b2',
+      label: 'Linked Site',
+      data_name: 'linked_site',
+      linked_form_id: '00000000-0000-4000-8000-000000000000',
+      allow_existing_records: true
+    },
+    'FormRecordLinkFieldElement',
+    null
+  ],
+  [
+    'undocumented property',
+    {
+      type: 'RecordLinkField',
+      key: 'a1b2',
+      label: 'Linked Record',
+      data_name: 'linked_record',
+      linked_form_id: 'the-form-id',
+      unknown_setting: true
+    },
+    'FormRecordLinkFieldElement',
+    'undocumented property "unknown_setting"'
+  ],
+  [
+    'invalid value type',
+    {
+      type: 'RecordLinkField',
+      key: 'a1b2',
+      label: 'Linked Record',
+      data_name: 'linked_record',
+      linked_form_id: 'the-form-id',
+      allow_existing_records: 'yes'
+    },
+    'FormRecordLinkFieldElement',
+    'expected boolean'
+  ]
+];
+
+function schemaFailures() {
+  const failures = [];
+  for (const [name, doc, schemaName, expectedError] of SCHEMA_PROBES) {
+    const errors = validateDocument(doc, schemaName);
+    if (expectedError === null) {
+      if (errors.length > 0) {
+        failures.push(`OpenAPI schema contract rejected ${name}: ${errors.join('; ')}`);
+      }
+    } else if (!errors.some((err) => err.includes(expectedError))) {
+      failures.push(
+        `OpenAPI schema contract did not reject ${name} with "${expectedError}": ${errors.join('; ') || 'no errors'}`
+      );
+    }
+  }
+
+  // Inventory probe
+  const unlistedPath = 'plugins/fulcrum-ai-toolkit/skills/future-skill/examples/unlisted.json';
+  const inventoryErrors = validateInventory([unlistedPath]);
+  if (!inventoryErrors.some((err) => err.includes('must map to an OpenAPI component schema'))) {
+    failures.push('OpenAPI inventory validation did not reject unmapped JSON example');
+  }
+
+  return failures;
+}
+
 // Returns { failures, total } — the reasons the contracts are no longer sound,
 // and how many probes were exercised.
 export function selfCheck() {
   return {
-    failures: [...sqlFailures(), ...templateFailures(), ...encoderFailures()],
-    total: REJECTED_SQL.length + ACCEPTED_SQL.length + TEMPLATE_PROBES.length + recognizedEncoders.size
+    failures: [...sqlFailures(), ...templateFailures(), ...encoderFailures(), ...schemaFailures()],
+    total:
+      REJECTED_SQL.length +
+      ACCEPTED_SQL.length +
+      TEMPLATE_PROBES.length +
+      recognizedEncoders.size +
+      SCHEMA_PROBES.length +
+      1
   };
 }

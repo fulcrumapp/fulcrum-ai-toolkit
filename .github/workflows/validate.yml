@@ -28,6 +28,9 @@ jobs:
       - name: Install pinned format validator dependencies
         run: npm ci
         working-directory: tools/format-validator
+      - name: Run format and schema validator
+        run: npm run validate
+        working-directory: tools/format-validator
       - name: Validate skills and manifests
         run: ruby scripts/validate.rb
       - name: Check App MCP contract guidance
@@ -40,8 +43,6 @@ jobs:
         env:
           REQUIRE_NODE: "1"
         run: ruby test/external_examples_test.rb
-      - name: Check OpenAPI example contracts
-        run: ruby test/openapi_example_contracts_test.rb
       - name: Check distributable resource contracts
         run: ruby test/resource_contract_test.rb
       - name: Run smoke test
