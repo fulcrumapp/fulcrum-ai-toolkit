@@ -1,9 +1,0 @@
-{
-  "type": "RecordLinkField",
-  "key": "a1b2",
-  "data_name": "linked_record",
-  "label": "Linked Record",
-  "linked_form_id": "the-form-id",
-  "allow_existing_records": true,
-  "unknown_setting": true
-}

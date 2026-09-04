@@ -36,6 +36,7 @@ import { HtmlValidate } from 'html-validate';
 import postcss from 'postcss';
 
 import { compiledSource, queryCalls } from './lib/ejs-queries.mjs';
+import { SCHEMA_MAPPINGS, validateDocument, validateInventory } from './lib/schema-contract.mjs';
 import { selfCheck } from './lib/self-check.mjs';
 import { readOnlyViolations } from './lib/sql-contract.mjs';
 
@@ -52,8 +53,8 @@ const PROSE_EXTENSIONS = new Set(['.md', '.txt']);
 const DOCUMENT_LABEL = /(?:^|[^A-Za-z])Document:/;
 const FRAGMENT_LABEL = /(?:^|[^A-Za-z])Fragment:/;
 
-const INLINE_SCRIPT = /<script\b([^>]*)>([\s\S]*?)<\/script>/gi;
-const INLINE_STYLE = /<style\b[^>]*>([\s\S]*?)<\/style>/gi;
+const INLINE_SCRIPT = /<script\b([^>]*)>([\s\S]*?)<\/script\s*>/gi;
+const INLINE_STYLE = /<style\b[^>]*>([\s\S]*?)<\/style\s*>/gi;
 const SCRIPT_SRC = /(?:^|\s)src\s*=/i;
 
 // Repository example checks for the report templates this repository ships.
@@ -243,11 +244,23 @@ function validateCss(file, text) {
 }
 
 function validateJson(file, text) {
+  let document;
   try {
-    JSON.parse(text);
+    document = JSON.parse(text);
     count('json');
   } catch (error) {
     fail(file, `is not valid JSON: ${error.message}`);
+    return;
+  }
+
+  const relative = path.relative(ROOT, file);
+  const schemaName = SCHEMA_MAPPINGS[relative];
+  if (schemaName) {
+    const errors = validateDocument(document, schemaName);
+    for (const err of errors) {
+      fail(file, `schema validation against ${schemaName}: ${err}`);
+    }
+    count('json:schema');
   }
 }
 
@@ -268,6 +281,14 @@ async function main() {
   if (files.length === 0) {
     console.error('Format validation failed: no externalized files were found');
     process.exit(1);
+  }
+
+  const jsonFiles = files
+    .filter((file) => path.extname(file).toLowerCase() === '.json')
+    .map((file) => path.relative(ROOT, file));
+  const inventoryErrors = validateInventory(jsonFiles);
+  for (const err of inventoryErrors) {
+    failures.push(`JSON inventory: ${err}`);
   }
 
   for (const file of files) {
