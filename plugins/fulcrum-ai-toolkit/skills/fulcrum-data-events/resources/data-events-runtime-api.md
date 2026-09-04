@@ -2,6 +2,9 @@
 
 > Source: https://docs.fulcrumapp.com/docs/data-events-reference
 > Source: https://docs.fulcrumapp.com/docs/data-events-loadfile
+> Source: https://docs.fulcrumapp.com/docs/data-events-loadrecords
+> Source: https://docs.fulcrumapp.com/docs/data-events-storage
+> Source: https://docs.fulcrumapp.com/docs/app-extensions-introduction
 > Connector authority: Live installed App MCP schemas define connector
 > operations. Runtime behavior is sourced from the public references below.
 > Verified: 2026-09-02
@@ -112,6 +115,9 @@ add-audio event object: id, size, duration
 | OPENEXTENSION({ url, title, data, onMessage }) | Open an App Extension; use `attachment://filename.html` for a Reference File |
 | SETRESULT(value) | Set the result of a calculation field |
 | FIELD(data_name) | Return field metadata object (key, type, label, etc.) |
+| FORM() | Return the current form (app); `FORM().id` is its identifier |
+| RECORDID() | Return the current record's identifier, or null until a new record has been saved |
+| STORAGE() | Return a device-wide, persistent local-storage-like object with getItem, setItem, removeItem, and clear |
 | CONFIG() | Access the current configuration/results object |
 
 ## Key Constraints
@@ -123,3 +129,5 @@ add-audio event object: id, size, duration
 5. Data events run on mobile devices — keep code lightweight, avoid heavy computation
 6. console.log is not available — use ALERT or INSPECT for debugging
 7. LOADFILE takes an options object, not a URL or positional filename
+8. STORAGE() is device-wide and persistent — scope every key with `FORM().id` and the record it belongs to, and remove it on `cancel-record` and `unload-record`
+9. RECORDID() is null until a new record has been saved, so it cannot distinguish one unsaved record from the next

@@ -61,53 +61,9 @@ Builder's honest take on breadth. PM validates later.
 
 Once you have enough context, produce the one-pager. Save it as `<kebab-case-solution-name>-solution.md` in the current workspace.
 
-```markdown
-# [Solution Name] — Fulcrum Builder One-Pager
-
-**Submitted by:** [Builder name]
-**Date:** [Today's date]
-**Status:** Awaiting PM Categorization
-
----
-
-## Problem
-
-**Who has it:** [Who specifically — customer name, segment, internal team]
-**Current workaround:** [What they do today without this solution]
-**Customer impact:** [Time saved, data quality, workflow unblocked, etc.]
-**Fulcrum business impact:** [Revenue, churn prevention, new use case — or "PM to assess"]
-**Why the builder took it on:** [Why not wait for engineering]
-
-**Problem statement:** [1-2 sentence synthesis: "[Who] struggle with [what] because [why], which results in [impact]."]
-
----
-
-## What Was Built
-
-**What it does:** [1-2 plain-English sentences]
-**Limitations:** [What it doesn't do / where it breaks]
-**Platform dependencies:** [Fulcrum features it relies on]
-**Delivery mechanism:** [How it reaches the customer — or "Needs guidance from PM/engineering"]
-**Readiness:** [Builder's assessment + what "done" would look like]
-
----
-
-## Scale Assessment (Builder's Take)
-
-**Breadth:** [One customer / multiple customers / broadly applicable]
-**Utility potential:** [Could be a shared utility / Too custom for now / Unsure — PM to assess]
-
----
-
-## PM Review
-
-*For Product Management to complete.*
-
-- [ ] Categorization: Tribe-owned / PS utility / Customer-specific / Demote
-- [ ] Scale validated
-- [ ] Ownership assigned
-- [ ] Signal check complete
-```
+Use [`assets/solution-one-pager-template.md`](assets/solution-one-pager-template.md)
+as the structure. It covers the problem framing, what was built, the
+builder's scale assessment, and the PM review checklist.
 
 ---
 
@@ -130,20 +86,8 @@ Only use a Slack, Teams, email, GitHub, or other connector when it is configured
 
 If no connector is available, provide the selected share format for manual copying or attachment. Never imply that a message was sent when the connector is unavailable.
 
-For a chat or email summary, use a concise format such as:
-
-```
-🔨 *New Builder One-Pager: [Solution Name]*
-
-*Submitted by:* [Builder name]
-*Problem:* [Problem statement — 1-2 sentences]
-*What was built:* [What it does — 1-2 sentences]
-*Platform dependencies:* [Fulcrum features used]
-*Readiness:* [Builder's readiness assessment]
-*Scale:* [Builder's breadth/utility take]
-
-Full one-pager saved to workspace. Review checklist is in the document.
-```
+For a chat or email summary, use the concise format in
+[`assets/solution-share-summary.txt`](assets/solution-share-summary.txt).
 
 After a connector send, report the destination and result. After a manual handoff, tell the builder exactly what to copy or attach and what follow-up to expect.
 
@@ -164,4 +108,5 @@ After a connector send, report the destination and result. After a manual handof
 ## References
 
 - [Fulcrum developer documentation](https://docs.fulcrumapp.com/)
+- [Document template index](assets/README.md)
 - [Agent Skills specification](https://agentskills.io/specification)

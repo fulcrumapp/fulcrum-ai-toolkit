@@ -1,0 +1,15 @@
+# Source: https://docs.fulcrumapp.com/
+# Purpose: the short chat or email summary that accompanies a one-pager.
+# Replace every bracket. Send only after the builder approves the content,
+# the redactions, and the destination.
+
+🔨 *New Builder One-Pager: [Solution Name]*
+
+*Submitted by:* [Builder name]
+*Problem:* [Problem statement — 1-2 sentences]
+*What was built:* [What it does — 1-2 sentences]
+*Platform dependencies:* [Fulcrum features used]
+*Readiness:* [Builder's readiness assessment]
+*Scale:* [Builder's breadth/utility take]
+
+Full one-pager saved to workspace. Review checklist is in the document.

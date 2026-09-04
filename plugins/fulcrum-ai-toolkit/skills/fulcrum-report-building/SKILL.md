@@ -57,63 +57,33 @@ These are available in every report without any setup:
 
 ## EJS Patterns
 
-EJS uses three tag types. Use them correctly — they produce very different output:
+EJS supports escaped output, raw output, and code-only tags. This toolkit's
+copyable examples use escaped output and code-only tags, shown in
+[`assets/ejs-tag-types.ejs`](assets/ejs-tag-types.ejs). Raw `<%- %>` output is
+omitted because its emitted markup cannot be validated statically.
 
-```ejs
-<%= expression %>   <%# Outputs the value — HTML-escaped %>
-<%- expression %>   <%# Outputs raw HTML — use for trusted HTML content %>
-<% statement %>     <%# Executes JavaScript — no output %>
-```
+Every fragment below is a separate file under
+[`examples/`](examples/README.md), each with its own `<%# Source: %>` comment.
 
 ### Accessing record fields
 
 > Source: [Fulcrum Report Builder variables](https://docs.fulcrumapp.com/docs/variables#record) documents `record.formValues.find('data_name')`, `value`, and `displayValue`. The [Record Links guide](https://docs.fulcrumapp.com/docs/record-links) documents item access.
 
-```ejs
-<%# Single-value field — use the field's data_name %>
-<% const inspectorName = record.formValues.find('inspector_name'); %>
-<%= inspectorName ? inspectorName.displayValue : '' %>
-
-<%# Choice field — value is stored; displayValue is the rendered label %>
-<% const siteCondition = record.formValues.find('site_condition'); %>
-<%= siteCondition ? siteCondition.displayValue : '' %>
-<% const storedSiteCondition = siteCondition ? siteCondition.value : null; %>
-
-<%# Yes/No field %>
-<% const photosTaken = record.formValues.find('photos_taken'); %>
-<%= photosTaken ? photosTaken.displayValue : '' %>
-
-<%# Date field %>
-<% const inspectionDate = record.formValues.find('inspection_date'); %>
-<%= inspectionDate && inspectionDate.value ? FORMATDATE(new Date(inspectionDate.value)) : '' %>
-```
+Look a field up with `record.formValues.find('data_name')`, guard the result, then read `value` for the stored value or `displayValue` for the rendered label:
+[`examples/record-field-access.ejs`](examples/record-field-access.ejs).
 
 ### Iterating repeatables
 
 > Source: [Fulcrum Report Builder variables](https://docs.fulcrumapp.com/docs/variables#record) documents form-value lookup. The [RENDER function reference](https://docs.fulcrumapp.com/docs/functions#render) documents repeatable item `formValues`.
 
-```ejs
-<% const observations = record.formValues.find('observations'); %>
-<% const observationItems = observations ? observations.items : []; %>
-<% observationItems.forEach(function(observation) { %>
-  <% const species = observation.formValues.find('species'); %>
-  <% const count = observation.formValues.find('count'); %>
-  <tr>
-    <td><%= species ? species.displayValue : '' %></td>
-    <td><%= count ? count.value : '' %></td>
-  </tr>
-<% }); %>
-```
+A repeatable form value exposes `items`, and each item has its own `formValues`.
+Emit the table around the rows in the same fragment:
+[`examples/repeatable-table-rows.ejs`](examples/repeatable-table-rows.ejs).
 
 ### Conditional blocks
 
-```ejs
-<% const followupStatus = record.formValues.find('followup_status'); %>
-<% const followupReason = record.formValues.find('followup_reason'); %>
-<% if (followupStatus && followupStatus.value === 'required') { %>
-  <div class="alert">Follow-up required: <%= followupReason ? followupReason.displayValue : '' %></div>
-<% } %>
-```
+Branch on the stored `value`, not the editable label:
+[`examples/conditional-section.ejs`](examples/conditional-section.ejs).
 
 ## QUERY() — Multi-Record and Multi-App Reports
 
@@ -121,90 +91,37 @@ The standard report context loads **one record**. `QUERY()` is how you go beyond
 
 > Source: [Fulcrum Report Builder `QUERY()` reference](https://docs.fulcrumapp.com/docs/functions#query) documents the call signature. The public [Sketches report example](https://docs.fulcrumapp.com/docs/sketches#add-metadata-to-sketches) demonstrates reading query results from `.rows`.
 
-```ejs
-<%# Fetch related records from the same app %>
-<%# Sanitize record values before interpolating into SQL to prevent injection %>
-<% const siteIdField = record.formValues.find('site_id'); %>
-<% const siteId = ((siteIdField && siteIdField.value) || '').replace(/[^a-zA-Z0-9_-]/g, ''); %>
-<% const relatedInspections = QUERY(
-  `SELECT * FROM "Site Inspections"
-   WHERE site_id = '${siteId}'
-   ORDER BY _created_at DESC`,
-  { format: 'json' }
-); %>
-
-<%# Access the rows %>
-<% relatedInspections.rows.forEach(function(row) { %>
-  <tr>
-    <td><%= row.inspector_name %></td>
-    <td><%= row.inspection_date %></td>
-    <td><%= row.status %></td>
-  </tr>
-<% }); %>
-```
+`QUERY(sql, options)` returns a result object whose `rows` array holds the row objects. Fetch related records with
+[`examples/query-related-records.ejs`](examples/query-related-records.ejs),
+and see the minimal iteration form in
+[`examples/query-rows-iteration.ejs`](examples/query-rows-iteration.ejs).
+The read-only SQL shapes themselves are in
+[`report-queries.sql`](../fulcrum-query-api/assets/report-queries.sql).
 
 ### QUERY() with repeatables
-Repeatable data is in a separate table, joined to the parent by `fulcrum_parent_id`:
-
-```ejs
-<% const itemResults = QUERY(
-  `SELECT r.*
-   FROM "Work Orders/line_items" r
-   WHERE r.fulcrum_parent_id = '${record.id}'`,
-  { format: 'json' }
-); %>
-<% const items = itemResults.rows; %>
-```
+Repeatable data is in a separate table, joined to the parent by `_parent_id`:
+[`examples/query-repeatable-join.ejs`](examples/query-repeatable-join.ejs).
 
 ### API() for Fulcrum REST resources
 
 > Source: [Fulcrum Report Builder `API()` reference](https://docs.fulcrumapp.com/docs/functions#api)
 
-```ejs
-<% const choiceLists = API('/choice_lists', {
-  qs: { per_page: 1 }
-}); %>
-<%= choiceLists.choice_lists[0].name %>
-```
-
-`API()` takes a Fulcrum API path and options. For external URLs, use only a documented Report Builder function such as `GET()` or `JSONREQUEST(options)` and never place credentials in the template.
+`API(path, options)` takes a Fulcrum API path and options:
+[`examples/api-fulcrum-rest.ejs`](examples/api-fulcrum-rest.ejs).
+For external URLs, use only a documented Report Builder function such as `GET(url, options)` or `JSONREQUEST(options)`, and never place credentials in the template.
 
 ## Parameterized Reports — the `$params` Interface
 
-When a report URL includes query parameters, they arrive in `$params`. This is the input interface for parameterized and filterable reports.
-
-```ejs
-<%# URL: .../run/template_id?start_date=2024-01-01&end_date=2024-03-31 %>
-<% const datePattern = /^\d{4}-\d{2}-\d{2}$/; %>
-<% const requestedStartDate = $params.start_date || ''; %>
-<% const requestedEndDate = $params.end_date || ''; %>
-<% const startDate = datePattern.test(requestedStartDate) ? requestedStartDate : '2024-01-01'; %>
-<% const today = new Date().toISOString().slice(0, 10); %>
-<% const endDate = datePattern.test(requestedEndDate) ? requestedEndDate : today; %>
-
-<% const recordResults = QUERY(
-  `SELECT * FROM "Inspections"
-   WHERE _created_at BETWEEN '${startDate}' AND '${endDate}'`,
-  { format: 'json' }
-); %>
-<% const records = recordResults.rows; %>
-```
+When a report URL includes query parameters, they arrive in `$params`. This is the input interface for parameterized and filterable reports, and it is user-controlled. Validate each value against an expected shape before use:
+[`examples/params-date-range.ejs`](examples/params-date-range.ejs).
 
 ### HTML report as a filter UI
 When output type is HTML, you can render a form that re-submits to the same report URL:
+[`examples/html-filter-form.ejs`](examples/html-filter-form.ejs).
 
-```ejs
-<form method="GET">
-  <label>Start Date: <input type="date" name="start_date" value="<%= startDate %>"></label>
-  <label>End Date: <input type="date" name="end_date" value="<%= endDate %>"></label>
-  <button type="submit">Generate</button>
-</form>
-
-<%# Render results only after params are provided %>
-<% if ($params.start_date) { %>
-  <%# ... render the table ... %>
-<% } %>
-```
+### Print layout
+A PDF report renders in a headless browser, so page-break and table-layout control belong in the template. A starting stylesheet is
+[`assets/report-print-layout.css`](assets/report-print-layout.css).
 
 ## Verifying Rendered Output
 
@@ -227,10 +144,8 @@ The report builder has poor error messages — a syntax error may show a blank w
 **Workflow:** Write and test all logic in VS Code first. Use Node.js to validate JavaScript. Paste into the report builder only when the logic is confirmed working. Keep a local copy of every report template.
 
 ### Inventing runtime functions or embedding credentials
-```ejs
-<%# Use the documented Fulcrum API helper and a relative API path. %>
-<% const forms = API('/forms', { qs: { per_page: 1 } }); %>
-```
+Use the documented Fulcrum API helper and a relative API path, as in
+[`examples/api-fulcrum-rest.ejs`](examples/api-fulcrum-rest.ejs).
 
 Do not invent helper names or embed API tokens, passwords, or other credentials in report source. Check the current public functions reference before using a runtime function.
 
@@ -238,30 +153,25 @@ Do not invent helper names or embed API tokens, passwords, or other credentials 
 Trying to pass all data through the single record context (via very long JSON blobs in fields) instead of using `QUERY()`. This breaks as data grows.
 
 ### Photo references without PHOTOURL()
-```ejs
-<% const sitePhoto = record.formValues.find('site_photo'); %>
-<% const sitePhotoItems = sitePhoto && Array.isArray(sitePhoto.items) ? sitePhoto.items : []; %>
-<% const firstSitePhoto = sitePhotoItems[0]; %>
+A media ID alone is not a usable `src`. Compare both forms in
+[`examples/photo-url-signed-src.ejs`](examples/photo-url-signed-src.ejs).
 
-<%# BAD — the media_id alone is not a usable URL %>
-<img src="<%= firstSitePhoto ? firstSitePhoto.mediaID : '' %>">
-
-<%# GOOD — wrap in PHOTOURL() to get a signed URL %>
-<img src="<%= firstSitePhoto ? PHOTOURL(firstSitePhoto.mediaID) : '' %>">
-```
+### Rows emitted outside a table
+A `<tr>` is only valid inside a `<table>`. A loop that emits rows and leaves the
+table to the surrounding template produces invalid markup the moment it is
+pasted anywhere else, and a browser silently discards the rows. Emit the whole
+structure — `<table>`, `<thead>`, `<tbody>` — from the same fragment that emits
+the rows, and give the zero-row and error cases their own markup rather than
+rendering nothing. See
+[`examples/repeatable-table-rows.ejs`](examples/repeatable-table-rows.ejs) and
+[`examples/params-date-range.ejs`](examples/params-date-range.ejs).
 
 ### Missing escaping in SQL strings
-Always sanitize values used in QUERY() strings to prevent injection via `$params`:
-
-```ejs
-<%# Avoid direct interpolation of user-controlled params in SQL %>
-<% const safeStatus = ($params.status || '').replace(/[^a-zA-Z_]/g, ''); %>
-<% const result = QUERY(`SELECT * FROM "App" WHERE _status = '${safeStatus}'`, {format:'json'}); %>
-<% const rows = result.rows; %>
-<% rows.forEach(function(row) { %>
-  <%# Render fields from row here. %>
-<% }); %>
-```
+The Query API accepts one complete SQL string and has no server-side bind parameters, so the template owns encoding. Sanitize a `$params` value in the gap it is interpolated into — `'${('' + value).replace(/[^A-Za-z0-9_-]/g, '')}'` — rather than in a variable further up, so the filter is visible at the point the value reaches SQL:
+[`examples/sanitize-params-for-sql.ejs`](examples/sanitize-params-for-sql.ejs).
+Convert with `('' + value)` rather than `String(value)`; `String` is an ordinary binding inside a template, so a `catch (String)` or a parameter of that name silently changes what the conversion does.
+Reach `QUERY()` by its own name; a call written as `locals.QUERY(...)` or assembled through `eval` is not reviewable.
+Reports are read-only consumers; never write a `QUERY()` statement that modifies data.
 
 ## Code Organization
 
@@ -278,7 +188,8 @@ A report template is a single EJS file. As it grows:
 - [ ] No credentials are embedded in the Report Template
 - [ ] Fulcrum REST calls use documented `API(path, options)` syntax
 - [ ] Photo and signature fields use `PHOTOURL()` / `SIGNATUREURL()` — not raw media IDs
-- [ ] `$params` values are sanitized before use in SQL strings
+- [ ] `$params` values are sanitized in the `${...}` gap where they reach SQL, and every interpolated value sits inside quotes
+- [ ] Every fragment that emits table rows also emits the table around them, and has markup for the zero-row and error cases
 - [ ] Template was authored and tested outside the report builder before pasting in
 - [ ] Rendered output was checked for both content and geometry — text comparison alone is insufficient
 - [ ] Representative short, long, and multi-page fixtures were rendered when layout matters
@@ -291,4 +202,6 @@ A report template is a single EJS file. As it grows:
 - [Fulcrum Query API introduction](https://docs.fulcrumapp.com/reference/query-intro)
 - [Fulcrum report templates API](https://docs.fulcrumapp.com/reference/report-templates-api)
 - [Fulcrum Report Builder functions](https://docs.fulcrumapp.com/docs/functions)
+- [Report example index](examples/README.md)
+- [Report function reference](resources/report-template-reference.md)
 - [Agent Skills specification](https://agentskills.io/specification)

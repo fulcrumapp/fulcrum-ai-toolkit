@@ -14,6 +14,15 @@ def read_skill(name, relative_path = "SKILL.md")
   File.read(File.join(SKILLS, name, relative_path))
 end
 
+# Layer 4 moved executable examples out of Markdown into examples/ and assets/.
+# Contract assertions follow the content, so they read the whole skill tree.
+def read_skill_tree(name)
+  FileContracts
+    .files_under(File.join(SKILLS, name))
+    .map { |path| FileContracts.read_text(path) }
+    .join("\n")
+end
+
 def read_file(relative_path)
   File.read(File.join(ROOT, relative_path))
 end
@@ -61,6 +70,10 @@ app_extensions = read_skill("fulcrum-app-extensions")
 extension_bridge = read_skill("fulcrum-app-extensions", "resources/extension-bridge-api.md")
 report_building = read_skill("fulcrum-report-building")
 report_reference = read_skill("fulcrum-report-building", "resources/report-template-reference.md")
+data_events_tree = read_skill_tree("fulcrum-data-events")
+app_extensions_tree = read_skill_tree("fulcrum-app-extensions")
+report_building_tree = read_skill_tree("fulcrum-report-building")
+app_builder_tree = read_skill_tree("fulcrum-app-builder")
 integration_patterns = read_skill("fulcrum-integration-patterns")
 gis_mapping = read_skill("fulcrum-gis-mapping")
 query_api = read_skill("fulcrum-query-api")
@@ -87,7 +100,13 @@ contract_documents = {
 tool_guidance_documents = contract_documents.merge(
   "README" => readme,
   "coverage map" => coverage_map,
-  "Data Event examples" => data_event_examples
+  "Data Event examples" => data_event_examples,
+  "Data Events tree" => data_events_tree,
+  "App Extensions tree" => app_extensions_tree,
+  "report building tree" => report_building_tree,
+  "app builder tree" => app_builder_tree,
+  "Query API tree" => read_skill_tree("fulcrum-query-api"),
+  "app design tree" => read_skill_tree("fulcrum-app-design")
 ).freeze
 
 # This is the exact subset referenced by layer-2 guidance, not the exhaustive
@@ -223,12 +242,12 @@ assert(
 end
 
 assert(
-  data_events.match?(
-    /LOADFILE\(\{\s*name: 'shared-helpers\.js',\s*form_id: FORM\(\)\.id,\s*variable: 'sharedHelpers'\s*\}, function\(error, data\)/m
+  data_events_tree.match?(
+    /LOADFILE\(\{\s*name: 'shared-helpers\.js',\s*form_id: FORM\(\)\.id,\s*variable: 'sharedHelpers'\s*\}, function \(error, data\)/m
   ),
   "LOADFILE object and callback signature is missing"
 )
-assert(!data_events.match?(/LOADFILE\(\s*['"]/), "positional LOADFILE guidance remains")
+assert(!data_events_tree.match?(/LOADFILE\(\s*['"]/), "positional LOADFILE guidance remains")
 assert(
   data_events_runtime.include?("LOADFILE(options, callback)") &&
     data_events_runtime.include?("optional `form_name` or `form_id`"),
@@ -258,13 +277,17 @@ assert_in_order(
   "extension knowledge workflow"
 )
 assert(
-  app_extensions.match?(/OPENEXTENSION\(\{.*url:.*title:.*data:.*onMessage:/m),
+  app_extensions_tree.match?(/OPENEXTENSION\(\{.*url:.*title:.*data:.*onMessage:/m),
   "object-form OPENEXTENSION contract is missing"
 )
 assert(
-  app_extensions.include?("attachment://species_picker.html") &&
-    app_extensions.include?("initialize(payload.data || {})"),
+  app_extensions_tree.include?("attachment://species-picker.html") &&
+    app_extensions_tree.include?("initialize(payload.data || {})"),
   "generated extension target or payload semantics are missing"
+)
+assert(
+  !app_extensions_tree.match?(/attachment:\/\/species_picker\.html|species-picker-extension\.html/),
+  "a stale spelling of the extension Reference File name remains"
 )
 assert(
   extension_bridge.include?("fulcrum_reference_files_upload({ form_id, file_name, content })"),
@@ -287,18 +310,18 @@ assert(
   assert(report_building.include?(tool), "report workflow omits #{tool}")
 end
 assert(
-  report_building.include?("API(path, options)") &&
-    report_building.include?("API('/choice_lists'"),
+  report_building_tree.include?("API(path, options)") &&
+    report_building_tree.include?("API('/choice_lists'"),
   "report workflow does not use the documented API runtime"
 )
 assert(
-  report_building.include?("record.formValues.find('inspector_name')") &&
-    report_building.include?(".displayValue") &&
-    report_building.include?(".value") &&
-    report_building.include?(".items"),
+  report_building_tree.include?("record.formValues.find('inspector_name')") &&
+    report_building_tree.include?(".displayValue") &&
+    report_building_tree.include?(".value") &&
+    report_building_tree.include?(".items"),
   "report examples do not use documented form-value access"
 )
-report_guidance = [product_knowledge, report_building, report_reference].join("\n")
+report_guidance = [product_knowledge, report_building_tree, report_reference].join("\n")
 assert(
   !report_guidance.match?(/record\.(?:getValue|getDisplayValue|getRepeatableValues)\s*\(/),
   "nonexistent record field helpers remain in report examples"
@@ -319,13 +342,18 @@ assert(
   "obsolete report function signatures remain"
 )
 assert(
-  report_reference.include?("result.rows.forEach(function(row)") &&
+  report_building_tree.include?("result.rows.forEach(function (row)") &&
     report_reference.include?("`rows` array") &&
     !report_guidance.include?("Returns an array of row objects"),
   "QUERY result guidance does not use the documented rows property"
 )
 
-combined_contract = contract_documents.values.join("\n")
+combined_contract = (contract_documents.values + [
+  data_events_tree,
+  app_extensions_tree,
+  report_building_tree,
+  app_builder_tree
+]).join("\n")
 assert(!combined_contract.include?("APIREQUEST"), "invented report runtime remains")
 assert(!combined_contract.include?("file_content"), "obsolete Reference File content argument remains")
 assert(!combined_contract.include?("filename="), "obsolete Reference File filename argument remains")

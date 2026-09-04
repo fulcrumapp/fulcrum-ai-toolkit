@@ -1,0 +1,43 @@
+# Source: https://docs.fulcrumapp.com/docs/app-extensions-introduction
+# Purpose: the automation path for publishing an extension with App MCP.
+# Live installed App MCP schemas define the exact arguments; the order below is
+# the part that matters. This is an automation convenience, not a prerequisite:
+# the manual Reference File upload in the Fulcrum UI reaches the same result.
+
+Step 1  fulcrum_extensions_list_patterns()
+        Review the registered patterns before choosing one.
+
+Step 2  fulcrum_extensions_explain(pattern="picker")
+        Confirm the pattern's field and bridge expectations.
+
+Step 3  fulcrum_extensions_generate(
+          pattern="picker",
+          name="species-picker",
+          description="Select a species",
+          field_name="open_species_picker"
+        )
+        Returns the Data Event, the complete HTML including the current inline
+        bootstrap, and setup notes. Keep the generated bootstrap intact.
+
+Step 4  fulcrum_reference_files_upload(
+          form_id=...,
+          file_name="species-picker.html",
+          content=<generated HTML>
+        )
+        The file name must match the attachment:// URL in the Data Event
+        exactly: attachment://species-picker.html. See
+        ../examples/open-species-picker.js.
+
+Step 5  fulcrum_forms_get(id=...)
+        Read the form's existing script before changing it.
+
+Step 6  fulcrum_forms_update(
+          id=...,
+          script=<existing script plus the generated Data Event>
+        )
+        There is no standalone Data Event update tool. Merge; do not overwrite
+        unrelated handlers.
+
+# The focused connector contract exposes list, get, and upload operations, not a
+# delete tool. Follow the registered upload contract for replacement, and use
+# the supported product UI or manual flow when removal is required.

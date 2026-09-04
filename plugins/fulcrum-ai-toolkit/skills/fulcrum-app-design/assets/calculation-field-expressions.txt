@@ -1,0 +1,29 @@
+# Source: https://docs.fulcrumapp.com/docs/calculations-ref-concatenate
+# Purpose: what a calculation-field expression may and may not contain.
+#
+# A calculation field evaluates ONE expression to a value. It is not a
+# JavaScript function body. When the logic needs statements, use a Data Event
+# `change` handler and SETVALUE() instead; see
+# ../../fulcrum-data-events/examples/set-field-values-on-status-change.js.
+
+# CORRECT — an expression that evaluates to a value.
+$length * $width
+
+# CORRECT — a conditional expression.
+IF($status = "Complete", USERFULLNAME(), "")
+
+# WRONG — `return` locks the field.
+return $length * $width;
+
+# WRONG — function declarations are not valid here.
+function calculate() {
+  return $length * $width;
+}
+
+# Rules
+# - No `return` statement; the expression IS the result.
+# - No `function` declarations.
+# - No `var`, `let`, or `const`.
+# - Use Fulcrum expression functions (IF, CONCATENATE, FORMAT, USERFULLNAME),
+#   not JavaScript methods.
+# - Reference field values with $data_name.

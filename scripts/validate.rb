@@ -37,6 +37,15 @@ COVERAGE_MAP_RELATIVE_PATH = File.join(
   "docs",
   "legacy-product-knowledge-coverage.md"
 )
+EXAMPLE_COVERAGE_RELATIVE_PATH = File.join(
+  PLUGIN_RELATIVE_PATH,
+  "docs",
+  "legacy-example-coverage.md"
+)
+FINGERPRINT_ALLOWED_PATHS = [
+  COVERAGE_MAP_RELATIVE_PATH,
+  EXAMPLE_COVERAGE_RELATIVE_PATH
+].freeze
 REQUIRED_COVERAGE_DOMAINS = [
   "Platform overview",
   "Plans and licensing",
@@ -166,9 +175,9 @@ public_text_paths.uniq.select { |path| File.file?(path) }.each do |path|
   ContentContracts.invalid_inventory_fingerprints(
     text,
     relative_path: repo_relative_path(path),
-    allowed_path: COVERAGE_MAP_RELATIVE_PATH
+    allowed_path: FINGERPRINT_ALLOWED_PATHS
   ).each do
-    failures << "#{repo_relative_path(path)}: Inventory fingerprint is allowed only in #{COVERAGE_MAP_RELATIVE_PATH}"
+    failures << "#{repo_relative_path(path)}: Inventory fingerprint is allowed only in #{FINGERPRINT_ALLOWED_PATHS.join(" or ")}"
   end
 end
 
@@ -313,6 +322,25 @@ if File.file?(coverage_map)
   end
 else
   failures << "#{COVERAGE_MAP_RELATIVE_PATH}: coverage manifest is missing"
+end
+
+example_coverage = File.join(ROOT, EXAMPLE_COVERAGE_RELATIVE_PATH)
+if File.file?(example_coverage)
+  example_coverage_text = File.read(example_coverage)
+
+  unless example_coverage_text.match?(/SHA-256:\s*\n?>?\s*`[0-9a-f]{64}`/)
+    failures << "#{EXAMPLE_COVERAGE_RELATIVE_PATH}: missing legacy artifact SHA-256"
+  end
+
+  unless example_coverage_text.include?("## Source rules for executable files")
+    failures << "#{EXAMPLE_COVERAGE_RELATIVE_PATH}: missing executable source rules"
+  end
+
+  if example_coverage_text.match?(%r{/(?:Users|home)/|atlassian\.net|slack\.com}i)
+    failures << "#{EXAMPLE_COVERAGE_RELATIVE_PATH}: contains a local path or private collaboration URL"
+  end
+else
+  failures << "#{EXAMPLE_COVERAGE_RELATIVE_PATH}: example coverage manifest is missing"
 end
 
 if failures.empty?

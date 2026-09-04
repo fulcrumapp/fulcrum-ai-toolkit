@@ -1,0 +1,41 @@
+# Source: https://docs.fulcrumapp.com/reference/forms-intro
+# Purpose: the order to follow when creating a NEW form with App MCP.
+# Live installed App MCP schemas define the current arguments; the order and
+# the preservation rules are what matter here. This sequence is for new forms
+# only — see ../examples/forms-update-preserving-keys.js for existing forms.
+
+Step 1  fulcrum_schema_field_types()
+        Optional. Use only when the right field type is unclear.
+
+Step 2  fulcrum_schema_build_field(...)
+        Build each field one at a time. The builder generates correct keys,
+        booleans, and type-specific defaults. Common arguments:
+          type          field type string, for example TextField, ChoiceField,
+                        PhotoField, Repeatable, Section, CalculatedField,
+                        RecordLinkField
+          label         display name
+          data_name     programmatic name, snake_case
+          required      boolean
+          choices       inline choice labels for a ChoiceField
+          expression    calculation expression for a CalculatedField
+          display_style number, currency, or string for a CalculatedField
+          elements      child fields for a Section or Repeatable
+
+Step 3  fulcrum_schema_build_form(name=..., elements=[...all built fields...])
+        Assembles the API-ready payload.
+
+Step 4  fulcrum_forms_validate(name=..., elements=[...from step 3...])
+        Validate the complete payload before any creation side effect.
+
+Step 5  fulcrum_forms_create(name=..., elements=[...from step 3...])
+        Optionally include a `script` value with the form's Data Events.
+        Creation also creates a default Report Template unless
+        skip_default_report is explicitly true.
+
+# Shared choice lists are referenced by ID rather than inline choices when the
+# same list is used by several forms. Resolve the choice-list tool contract from
+# the live App MCP schema; do not assume a remembered signature. A choice
+# `value` is what gets stored, and a `label` is what displays; they can differ.
+
+# Never rebuild an existing schema wholesale with fulcrum_schema_build_form. It
+# generates new keys, and removing a field permanently deletes its data.

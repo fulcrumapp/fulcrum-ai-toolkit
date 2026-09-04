@@ -60,7 +60,7 @@ module ContentContracts
       normalized = normalize_container_prefix(line)
       line.strip if normalized.match?(INVENTORY_LABEL)
     end
-    relative_path == allowed_path ? [] : lines
+    Array(allowed_path).include?(relative_path) ? [] : lines
   end
 
   def private_filesystem_path?(text)
