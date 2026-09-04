@@ -32,6 +32,31 @@ connector contract, use public product documentation for platform behavior,
 and surface the discrepancy for review. Each focused rewrite must retain a
 nearby `Source:` note for copied or materially adapted documentation.
 
+## Review and retirement
+
+The committed artifact hash identifies the exact legacy snapshot used to build
+this map. Before approving the migration contract, a reviewer with authorized
+access to that snapshot must:
+
+1. Confirm its SHA-256 matches the hash above.
+2. Compare every substantive heading and subheading with the coverage rows.
+3. Confirm each disposition sends public material to the intended toolkit
+   owner and quarantines private-only material.
+4. Check the cited public sources independently; the legacy snapshot is not
+   evidence that a platform or plan claim is still current.
+
+Repository validation protects the 18-domain inventory and public/private
+boundary after that review, but it cannot attest to an unavailable source
+artifact or judge the correctness of a disposition.
+
+This manifest is temporary migration governance, not a permanent runtime
+resource. Retire it, its README link, and its manifest-specific validator rules
+in the final stack layer only after every `move`, `rewrite-around-app-mcp`, and
+`new-skill` row has landed or been explicitly re-dispositioned, every
+`private-or-drop` row has been reviewed, and the vendored OpenAPI snapshot has
+been removed or replaced. The resulting skills and sourced capability
+resources remain distributable; this migration ledger does not.
+
 ## Dispositions
 
 - `existing`: an existing public toolkit skill already owns the domain.
