@@ -117,8 +117,16 @@ end
 assert(router.include?("field-choice-optimizer"), "router drops the shared field-choice optimizer handoff")
 assert(router.include?("feasibility-check"), "router drops the shared feasibility handoff")
 assert(source_index.include?("Every URL below was present in the upstream `llms.txt`"), "source index does not define upstream provenance")
-assert(!source_index.include?("help.fulcrumapp.com"), "source index mixes curated Help Center supplements with llms.txt entries")
-assert(!source_index.include?("www.fulcrumapp.com/pricing"), "source index mixes pricing supplements with llms.txt entries")
-assert(!source_index.include?("raw.githubusercontent.com"), "source index mixes OpenAPI supplements with llms.txt entries")
+forbidden_source_hosts = %w[
+  help.fulcrumapp.com
+  www.fulcrumapp.com
+  raw.githubusercontent.com
+]
+assert(
+  URI.extract(source_index, %w[http https]).none? do |url|
+    forbidden_source_hosts.include?(URI.parse(url).host&.downcase)
+  end,
+  "source index mixes curated supplements with llms.txt entries"
+)
 
 puts "Product knowledge decomposition test passed: five focused skills are sourced, routed, and packaged"
