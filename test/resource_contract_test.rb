@@ -87,10 +87,14 @@ def markdown_anchors(text)
   end
 end
 
-def normalized_public_urls(text)
+def normalized_public_urls(text, source:)
   markdown_links(text)
     .flat_map { |target| URI.extract(target, %w[http https]) }
-    .map { |url| URI.parse(url).normalize }
+    .map do |url|
+      URI.parse(url).normalize
+    rescue URI::InvalidURIError
+      assert(false, "invalid public URL in #{source}: #{url}")
+    end
 end
 
 def resource_policy_violations(entries, forbidden_digest:, approvals:)
@@ -114,14 +118,14 @@ def manifest_targets(cell)
 end
 
 def plugin_relative_from_coverage(target)
-  File.expand_path(target, File.join(PLUGIN, "docs")).sub("#{PLUGIN}/", "")
+  Pathname.new(File.expand_path(target, File.join(PLUGIN, "docs")))
+    .relative_path_from(Pathname.new(PLUGIN))
+    .to_s
 end
 
 snapshot_name = ["fulcrum-rest-api", ".json"].join
-snapshot_digest = [
-  "2befa5b402d371627cffea0423ec26ff1",
-  "96d12b3b014d37e83e1dbe4acedef81"
-].join
+snapshot_digest = "2befa5b402d371627cffea0423ec26ff196d12b3b014d37e83e1dbe4acedef81"
+assert(snapshot_digest.match?(/\A[0-9a-f]{64}\z/), "retired snapshot digest is not a SHA-256 hex value")
 snapshot_relative_path = File.join(
   "plugins",
   "fulcrum-ai-toolkit",
@@ -177,7 +181,7 @@ Dir.mktmpdir("resource-contract-mutations") do |directory|
   end
   mutation_entries = FileContracts.files_under(mutation_root).map { |path| file_entry(path) }
   assert(
-    mutation_entries.map { |entry| entry.fetch(:path) } == mutation_paths.sort,
+    mutation_entries.map { |entry| entry.fetch(:path) }.sort == mutation_paths.sort,
     "shared traversal misses a renamed hidden or non-resource snapshot copy"
   )
   mutation_violations = resource_policy_violations(
@@ -186,11 +190,11 @@ Dir.mktmpdir("resource-contract-mutations") do |directory|
     approvals: APPROVED_OVERSIZED_RESOURCES
   )
   assert(
-    mutation_violations.fetch(:retired_digest).map { |entry| entry.fetch(:path) } == mutation_paths.sort,
+    mutation_violations.fetch(:retired_digest).map { |entry| entry.fetch(:path) }.sort == mutation_paths.sort,
     "retired snapshot digest policy misses renamed hidden or non-resource copies"
   )
   assert(
-    mutation_violations.fetch(:oversized).map { |entry| entry.fetch(:path) } == mutation_paths.sort,
+    mutation_violations.fetch(:oversized).map { |entry| entry.fetch(:path) }.sort == mutation_paths.sort,
     "distributable size policy misses hidden or non-resource copies"
   )
 end
@@ -204,8 +208,8 @@ governance = File.read(
   File.join(SKILLS, "fulcrum-product-knowledge", "resources", "resource-governance.md")
 )
 required_public_urls = [PUBLIC_OPENAPI, PUBLIC_OPENAPI_DOCS].map { |url| URI.parse(url).normalize }
-[product_router, governance].each do |text|
-  public_urls = normalized_public_urls(text)
+{ "product router" => product_router, "resource governance" => governance }.each do |source, text|
+  public_urls = normalized_public_urls(text, source: source)
   assert(public_urls.include?(required_public_urls[0]), "REST authority lacks the canonical public OpenAPI URL")
   assert(public_urls.include?(required_public_urls[1]), "REST authority lacks the public OpenAPI documentation")
 end
