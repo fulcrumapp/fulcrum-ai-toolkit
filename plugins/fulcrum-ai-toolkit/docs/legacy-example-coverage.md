@@ -76,109 +76,133 @@ and stays out of this package.
 Layer 4 removed all 49 fenced blocks from the distributable skills. No fenced
 code block remains anywhere under `plugins/fulcrum-ai-toolkit/skills/`.
 
+Every block carries a stable identifier, the source document it came from, and
+its ordinal within that document. The identifier set, the source-and-ordinal
+set, and the target set are all exact: `test/data/example-block-inventory.json`
+records them independently, so adding, dropping, renumbering, or duplicating a
+row fails the suite.
+
 ### fulcrum-data-events — 18 blocks
 
-| Source document | Block purpose | Disposition | Canonical target |
-| --- | --- | --- | --- |
-| `SKILL.md` | Set values on `change-status` | `externalized` | [`set-field-values-on-status-change.js`](../skills/fulcrum-data-events/examples/set-field-values-on-status-change.js) |
-| `SKILL.md` | Conditional visibility with `SETHIDDEN()` | `externalized` | [`conditional-visibility-sethidden.js`](../skills/fulcrum-data-events/examples/conditional-visibility-sethidden.js) |
-| `SKILL.md` | Cascading choices with `SETCHOICES()` | `externalized` | [`cascading-choices.js`](../skills/fulcrum-data-events/examples/cascading-choices.js) |
-| `SKILL.md` | `LOADRECORDS()` callback contract | `externalized` | [`load-reference-records.js`](../skills/fulcrum-data-events/examples/load-reference-records.js) |
-| `SKILL.md` | `LOADFILE()` shared helpers | `externalized` | [`loadfile-shared-helpers.js`](../skills/fulcrum-data-events/examples/loadfile-shared-helpers.js) |
-| `SKILL.md` | `STORAGE()` session state | `externalized` | [`storage-session-state.js`](../skills/fulcrum-data-events/examples/storage-session-state.js) |
-| `SKILL.md` | Validate before save | `externalized` | [`validate-record-photo-required.js`](../skills/fulcrum-data-events/examples/validate-record-photo-required.js) |
-| `SKILL.md` | Geometry trigger anti-pattern | `externalized` | [`geometry-trigger-guard.js`](../skills/fulcrum-data-events/examples/geometry-trigger-guard.js) |
-| `SKILL.md` | Hardcoded field-list anti-pattern | `externalized` | [`field-names-bulk-readonly.js`](../skills/fulcrum-data-events/examples/field-names-bulk-readonly.js) |
-| `SKILL.md` | Hardcoded identifier anti-pattern | `rewrite` | [`avoid-hardcoded-ids.js`](../skills/fulcrum-data-events/examples/avoid-hardcoded-ids.js) |
-| `SKILL.md` | Secrets-in-code anti-pattern | `rewrite` | [`no-secrets-in-scripts.js`](../skills/fulcrum-data-events/examples/no-secrets-in-scripts.js) |
-| `SKILL.md` | CDN version pinning | `externalized` | [`pin-cdn-library-versions.js`](../skills/fulcrum-data-events/examples/pin-cdn-library-versions.js) |
-| `resources/data-event-examples.md` | Capture timestamp from a toggle | `externalized` | [`capture-timestamp-toggle.js`](../skills/fulcrum-data-events/examples/capture-timestamp-toggle.js) |
-| `resources/data-event-examples.md` | Comment summary trail | `externalized` | [`comment-summary-audit-trail.js`](../skills/fulcrum-data-events/examples/comment-summary-audit-trail.js) |
-| `resources/data-event-examples.md` | Sort repeatable children | `rewrite` | [`sort-repeatable-children.js`](../skills/fulcrum-data-events/examples/sort-repeatable-children.js) |
-| `resources/data-event-examples.md` | Create repeatable entries | `rewrite` | [`create-repeatable-entries.js`](../skills/fulcrum-data-events/examples/create-repeatable-entries.js) |
-| `resources/data-event-examples.md` | Record completeness validation | `externalized` | [`validate-record-completeness.js`](../skills/fulcrum-data-events/examples/validate-record-completeness.js) |
-| `resources/data-event-examples.md` | Visibility via unsupported `SETFORMATTRIBUTES()` shape | `rewrite` | [`conditional-visibility-sethidden.js`](../skills/fulcrum-data-events/examples/conditional-visibility-sethidden.js) |
+| ID | Source document | Block | Purpose | Disposition | Canonical target |
+| --- | --- | --- | --- | --- | --- |
+| C01 | `fulcrum-data-events/SKILL.md` | 1 | Set values on `change-status` | `externalized` | [`set-field-values-on-status-change.js`](../skills/fulcrum-data-events/examples/set-field-values-on-status-change.js) |
+| C02 | `fulcrum-data-events/SKILL.md` | 2 | Conditional visibility with `SETHIDDEN()` | `rewrite` | [`conditional-visibility-sethidden.js`](../skills/fulcrum-data-events/examples/conditional-visibility-sethidden.js) |
+| C03 | `fulcrum-data-events/SKILL.md` | 3 | Cascading choices with `SETCHOICES()` | `rewrite` | [`cascading-choices.js`](../skills/fulcrum-data-events/examples/cascading-choices.js) |
+| C04 | `fulcrum-data-events/SKILL.md` | 4 | `LOADRECORDS()` callback contract | `externalized` | [`load-reference-records.js`](../skills/fulcrum-data-events/examples/load-reference-records.js) |
+| C05 | `fulcrum-data-events/SKILL.md` | 5 | `LOADFILE()` shared helpers | `externalized` | [`loadfile-shared-helpers.js`](../skills/fulcrum-data-events/examples/loadfile-shared-helpers.js) |
+| C06 | `fulcrum-data-events/SKILL.md` | 6 | `STORAGE()` session state | `rewrite` | [`storage-session-state.js`](../skills/fulcrum-data-events/examples/storage-session-state.js) |
+| C07 | `fulcrum-data-events/SKILL.md` | 7 | Validate before save | `externalized` | [`validate-record-photo-required.js`](../skills/fulcrum-data-events/examples/validate-record-photo-required.js) |
+| C08 | `fulcrum-data-events/SKILL.md` | 8 | Geometry trigger anti-pattern | `externalized` | [`geometry-trigger-guard.js`](../skills/fulcrum-data-events/examples/geometry-trigger-guard.js) |
+| C09 | `fulcrum-data-events/SKILL.md` | 9 | Hardcoded field-list anti-pattern | `externalized` | [`field-names-bulk-readonly.js`](../skills/fulcrum-data-events/examples/field-names-bulk-readonly.js) |
+| C10 | `fulcrum-data-events/SKILL.md` | 10 | Hardcoded identifier anti-pattern | `rewrite` | [`avoid-hardcoded-ids.js`](../skills/fulcrum-data-events/examples/avoid-hardcoded-ids.js) |
+| C11 | `fulcrum-data-events/SKILL.md` | 11 | Secrets-in-code anti-pattern | `rewrite` | [`no-secrets-in-scripts.js`](../skills/fulcrum-data-events/examples/no-secrets-in-scripts.js) |
+| C12 | `fulcrum-data-events/SKILL.md` | 12 | CDN version pinning | `externalized` | [`pin-cdn-library-versions.js`](../skills/fulcrum-data-events/examples/pin-cdn-library-versions.js) |
+| C13 | `fulcrum-data-events/resources/data-event-examples.md` | 1 | Capture timestamp from a toggle | `externalized` | [`capture-timestamp-toggle.js`](../skills/fulcrum-data-events/examples/capture-timestamp-toggle.js) |
+| C14 | `fulcrum-data-events/resources/data-event-examples.md` | 2 | Comment summary trail | `externalized` | [`comment-summary-audit-trail.js`](../skills/fulcrum-data-events/examples/comment-summary-audit-trail.js) |
+| C15 | `fulcrum-data-events/resources/data-event-examples.md` | 3 | Sort repeatable children | `rewrite` | [`sort-repeatable-children.js`](../skills/fulcrum-data-events/examples/sort-repeatable-children.js) |
+| C16 | `fulcrum-data-events/resources/data-event-examples.md` | 4 | Create repeatable entries | `rewrite` | [`create-repeatable-entries.js`](../skills/fulcrum-data-events/examples/create-repeatable-entries.js) |
+| C17 | `fulcrum-data-events/resources/data-event-examples.md` | 5 | Record completeness validation | `externalized` | [`validate-record-completeness.js`](../skills/fulcrum-data-events/examples/validate-record-completeness.js) |
+| C18 | `fulcrum-data-events/resources/data-event-examples.md` | 6 | Visibility via unsupported `SETFORMATTRIBUTES()` shape | `rewrite` | [`conditional-visibility-sethidden.js`](../skills/fulcrum-data-events/examples/conditional-visibility-sethidden.js) |
 
-`avoid-hardcoded-ids.js`, `no-secrets-in-scripts.js`, and the visibility row are
-rewrites because the
-originals embedded a literal-looking identifier and a credential-shaped string;
-the first two now use neutral placeholders, the secrets file adds the middleware
-alternative, and visibility now uses documented `SETHIDDEN()` rather than an
-unsupported `SETFORMATTRIBUTES({ hidden: ... })` shape.
-`sort-repeatable-children.js` and `create-repeatable-entries.js`
+C02, C03, and C06 are rewrites because the originals registered no
+initialization: a `change` handler alone leaves a dependent field's
+visibility and a cascaded option list untouched when a record is opened,
+and `STORAGE()` is device-wide, so an unscoped key carried one record's
+baseline into the next. Each now applies an idempotent function on
+`new-record`, on `edit-record`, and on change, and the storage example
+scopes its key to the record and clears it on `cancel-record` and
+`unload-record`. C10 and C11 are rewrites because the originals embedded a
+literal-looking identifier and a credential-shaped string; both now use
+neutral placeholders, and C11 adds the middleware alternative. C18 is a
+rewrite because visibility now uses documented `SETHIDDEN()` rather than an
+unsupported `SETFORMATTRIBUTES({ hidden: ... })` shape. C15 and C16
 replaced in-place array mutation and spread syntax with non-mutating forms.
 
 ### fulcrum-app-extensions — 10 blocks
 
-| Source document | Block purpose | Disposition | Canonical target |
-| --- | --- | --- | --- |
-| `SKILL.md` | Complete extension HTML page | `externalized` | [`species-picker-extension.html`](../skills/fulcrum-app-extensions/examples/species-picker-extension.html) |
-| `SKILL.md` | `OPENEXTENSION` passing values in | `externalized` | [`open-extension-pass-values.js`](../skills/fulcrum-app-extensions/examples/open-extension-pass-values.js) |
-| `SKILL.md` | `Fulcrum.load` reading the payload | `externalized` | [`extension-load-payload.js`](../skills/fulcrum-app-extensions/examples/extension-load-payload.js) |
-| `SKILL.md` | `OPENEXTENSION` with `onMessage` write-back | `merged` | [`open-extension-pass-values.js`](../skills/fulcrum-app-extensions/examples/open-extension-pass-values.js) |
-| `SKILL.md` | `Fulcrum.load` reading one context value | `merged` | [`extension-load-payload.js`](../skills/fulcrum-app-extensions/examples/extension-load-payload.js) |
-| `SKILL.md` | Picker-pattern trigger | `externalized` | [`open-species-picker.js`](../skills/fulcrum-app-extensions/examples/open-species-picker.js) |
-| `SKILL.md` | CDN version pinning in HTML | `externalized` | [`cdn-version-pinning.html`](../skills/fulcrum-app-extensions/assets/cdn-version-pinning.html) |
-| `SKILL.md` | App MCP generate/upload/attach sequence | `rewrite` | [`app-mcp-extension-publish-sequence.txt`](../skills/fulcrum-app-extensions/assets/app-mcp-extension-publish-sequence.txt) |
-| `resources/extension-bridge-api.md` | Minimal `OPENEXTENSION` trigger | `externalized` | [`open-extension-editor.js`](../skills/fulcrum-app-extensions/examples/open-extension-editor.js) |
-| `resources/extension-bridge-api.md` | Load/finish lifecycle | `rewrite` | [`extension-bootstrap-lifecycle.js`](../skills/fulcrum-app-extensions/examples/extension-bootstrap-lifecycle.js) |
+| ID | Source document | Block | Purpose | Disposition | Canonical target |
+| --- | --- | --- | --- | --- | --- |
+| C19 | `fulcrum-app-extensions/SKILL.md` | 1 | Complete extension HTML page | `rewrite` | [`species-picker.html`](../skills/fulcrum-app-extensions/examples/species-picker.html) |
+| C20 | `fulcrum-app-extensions/SKILL.md` | 2 | `OPENEXTENSION` passing values in | `externalized` | [`open-extension-pass-values.js`](../skills/fulcrum-app-extensions/examples/open-extension-pass-values.js) |
+| C21 | `fulcrum-app-extensions/SKILL.md` | 3 | `Fulcrum.load` reading the payload | `externalized` | [`extension-load-payload.js`](../skills/fulcrum-app-extensions/examples/extension-load-payload.js) |
+| C22 | `fulcrum-app-extensions/SKILL.md` | 4 | `OPENEXTENSION` with `onMessage` write-back | `merged` | [`open-extension-pass-values.js`](../skills/fulcrum-app-extensions/examples/open-extension-pass-values.js) |
+| C23 | `fulcrum-app-extensions/SKILL.md` | 5 | `Fulcrum.load` reading one context value | `merged` | [`extension-load-payload.js`](../skills/fulcrum-app-extensions/examples/extension-load-payload.js) |
+| C24 | `fulcrum-app-extensions/SKILL.md` | 6 | Picker-pattern trigger | `externalized` | [`open-species-picker.js`](../skills/fulcrum-app-extensions/examples/open-species-picker.js) |
+| C25 | `fulcrum-app-extensions/SKILL.md` | 7 | CDN version pinning in HTML | `externalized` | [`cdn-version-pinning.html`](../skills/fulcrum-app-extensions/assets/cdn-version-pinning.html) |
+| C26 | `fulcrum-app-extensions/SKILL.md` | 8 | App MCP generate/upload/attach sequence | `rewrite` | [`app-mcp-extension-publish-sequence.txt`](../skills/fulcrum-app-extensions/assets/app-mcp-extension-publish-sequence.txt) |
+| C27 | `fulcrum-app-extensions/resources/extension-bridge-api.md` | 1 | Minimal `OPENEXTENSION` trigger | `externalized` | [`open-extension-editor.js`](../skills/fulcrum-app-extensions/examples/open-extension-editor.js) |
+| C28 | `fulcrum-app-extensions/resources/extension-bridge-api.md` | 2 | Load/finish lifecycle | `rewrite` | [`extension-bootstrap-lifecycle.js`](../skills/fulcrum-app-extensions/examples/extension-bootstrap-lifecycle.js) |
 
-The two `merged` rows were near-duplicates of the canonical trigger and payload
-files; both call sites now link to one file. `extension-bootstrap-lifecycle.js`
-adds explicit message and origin handling.
+C22 and C23 were near-duplicates of the canonical trigger and payload files;
+both call sites now link to one file. C19 is a rewrite: the page is named
+`species-picker.html`, the single file name the publish sequence uploads and
+the triggers open as `attachment://species-picker.html`, and its markup now
+declares a document language and labels its control. C26 is a rewrite for
+the read-before-update step; C28 adds explicit message and origin handling.
 
 ### fulcrum-report-building — 13 blocks
 
-| Source document | Block purpose | Disposition | Canonical target |
-| --- | --- | --- | --- |
-| `SKILL.md` | EJS tag types | `externalized` | [`ejs-tag-types.ejs`](../skills/fulcrum-report-building/assets/ejs-tag-types.ejs) |
-| `SKILL.md` | Record field access | `externalized` | [`record-field-access.ejs`](../skills/fulcrum-report-building/examples/record-field-access.ejs) |
-| `SKILL.md` | Repeatable iteration | `externalized` | [`repeatable-table-rows.ejs`](../skills/fulcrum-report-building/examples/repeatable-table-rows.ejs) |
-| `SKILL.md` | Conditional block | `externalized` | [`conditional-section.ejs`](../skills/fulcrum-report-building/examples/conditional-section.ejs) |
-| `SKILL.md` | `QUERY()` for related records | `rewrite` | [`query-related-records.ejs`](../skills/fulcrum-report-building/examples/query-related-records.ejs) |
-| `SKILL.md` | `QUERY()` repeatable join | `rewrite` | [`query-repeatable-join.ejs`](../skills/fulcrum-report-building/examples/query-repeatable-join.ejs) |
-| `SKILL.md` | `API()` for choice lists | `externalized` | [`api-fulcrum-rest.ejs`](../skills/fulcrum-report-building/examples/api-fulcrum-rest.ejs) |
-| `SKILL.md` | `$params` date range | `externalized` | [`params-date-range.ejs`](../skills/fulcrum-report-building/examples/params-date-range.ejs) |
-| `SKILL.md` | HTML filter form | `externalized` | [`html-filter-form.ejs`](../skills/fulcrum-report-building/examples/html-filter-form.ejs) |
-| `SKILL.md` | `API()` for forms, anti-pattern contrast | `merged` | [`api-fulcrum-rest.ejs`](../skills/fulcrum-report-building/examples/api-fulcrum-rest.ejs) |
-| `SKILL.md` | `PHOTOURL()` signed image source | `externalized` | [`photo-url-signed-src.ejs`](../skills/fulcrum-report-building/examples/photo-url-signed-src.ejs) |
-| `SKILL.md` | Sanitizing `$params` for SQL | `externalized` | [`sanitize-params-for-sql.ejs`](../skills/fulcrum-report-building/examples/sanitize-params-for-sql.ejs) |
-| `resources/report-template-reference.md` | `QUERY()` rows iteration | `externalized` | [`query-rows-iteration.ejs`](../skills/fulcrum-report-building/examples/query-rows-iteration.ejs) |
+| ID | Source document | Block | Purpose | Disposition | Canonical target |
+| --- | --- | --- | --- | --- | --- |
+| C29 | `fulcrum-report-building/SKILL.md` | 1 | EJS tag types | `externalized` | [`ejs-tag-types.ejs`](../skills/fulcrum-report-building/assets/ejs-tag-types.ejs) |
+| C30 | `fulcrum-report-building/SKILL.md` | 2 | Record field access | `externalized` | [`record-field-access.ejs`](../skills/fulcrum-report-building/examples/record-field-access.ejs) |
+| C31 | `fulcrum-report-building/SKILL.md` | 3 | Repeatable iteration | `externalized` | [`repeatable-table-rows.ejs`](../skills/fulcrum-report-building/examples/repeatable-table-rows.ejs) |
+| C32 | `fulcrum-report-building/SKILL.md` | 4 | Conditional block | `externalized` | [`conditional-section.ejs`](../skills/fulcrum-report-building/examples/conditional-section.ejs) |
+| C33 | `fulcrum-report-building/SKILL.md` | 5 | `QUERY()` for related records | `rewrite` | [`query-related-records.ejs`](../skills/fulcrum-report-building/examples/query-related-records.ejs) |
+| C34 | `fulcrum-report-building/SKILL.md` | 6 | `QUERY()` repeatable join | `rewrite` | [`query-repeatable-join.ejs`](../skills/fulcrum-report-building/examples/query-repeatable-join.ejs) |
+| C35 | `fulcrum-report-building/SKILL.md` | 7 | `API()` for choice lists | `externalized` | [`api-fulcrum-rest.ejs`](../skills/fulcrum-report-building/examples/api-fulcrum-rest.ejs) |
+| C36 | `fulcrum-report-building/SKILL.md` | 8 | `$params` date range | `rewrite` | [`params-date-range.ejs`](../skills/fulcrum-report-building/examples/params-date-range.ejs) |
+| C37 | `fulcrum-report-building/SKILL.md` | 9 | HTML filter form | `externalized` | [`html-filter-form.ejs`](../skills/fulcrum-report-building/examples/html-filter-form.ejs) |
+| C38 | `fulcrum-report-building/SKILL.md` | 10 | `API()` for forms, anti-pattern contrast | `merged` | [`api-fulcrum-rest.ejs`](../skills/fulcrum-report-building/examples/api-fulcrum-rest.ejs) |
+| C39 | `fulcrum-report-building/SKILL.md` | 11 | `PHOTOURL()` signed image source | `externalized` | [`photo-url-signed-src.ejs`](../skills/fulcrum-report-building/examples/photo-url-signed-src.ejs) |
+| C40 | `fulcrum-report-building/SKILL.md` | 12 | Sanitizing `$params` for SQL | `externalized` | [`sanitize-params-for-sql.ejs`](../skills/fulcrum-report-building/examples/sanitize-params-for-sql.ejs) |
+| C41 | `fulcrum-report-building/resources/report-template-reference.md` | 1 | `QUERY()` rows iteration | `externalized` | [`query-rows-iteration.ejs`](../skills/fulcrum-report-building/examples/query-rows-iteration.ejs) |
 
-The two `QUERY()` rewrites bound their result sets, select named columns, and
-encode the interpolated record value. A print stylesheet,
+C33 and C34 bound their result sets, select named columns, and encode the
+interpolated record value. C36 is a rewrite because a shape test alone
+accepted non-calendar dates such as `2024-02-31` and a reversed range, and
+because `BETWEEN` dropped same-day readings after midnight on the end day;
+it now round-trips each day through a real date and queries a half-open
+interval. A print stylesheet,
 [`report-print-layout.css`](../skills/fulcrum-report-building/assets/report-print-layout.css),
 was added for the page-break and table-layout control that PDF output needs;
-it is new material, sourced to the public reports introduction, not a migrated
-block.
+it is new material, sourced to the public reports introduction, not a
+migrated block.
 
 ### fulcrum-app-design — 3 blocks
 
-| Source document | Block purpose | Disposition | Canonical target |
-| --- | --- | --- | --- |
-| `SKILL.md` | Calculation field expression forms | `externalized` | [`calculation-field-expressions.txt`](../skills/fulcrum-app-design/assets/calculation-field-expressions.txt) |
-| `resources/field-type-reference.md` | Required-boolean 422 messages | `externalized` | [`required-boolean-errors.txt`](../skills/fulcrum-app-design/assets/required-boolean-errors.txt) |
-| `resources/field-type-reference.md` | RecordLinkField element JSON | `externalized` | [`record-link-field.json`](../skills/fulcrum-app-design/assets/record-link-field.json) |
+| ID | Source document | Block | Purpose | Disposition | Canonical target |
+| --- | --- | --- | --- | --- | --- |
+| C42 | `fulcrum-app-design/SKILL.md` | 1 | Calculation field expression forms | `externalized` | [`calculation-field-expressions.txt`](../skills/fulcrum-app-design/assets/calculation-field-expressions.txt) |
+| C43 | `fulcrum-app-design/resources/field-type-reference.md` | 1 | Required-boolean 422 messages | `externalized` | [`required-boolean-errors.txt`](../skills/fulcrum-app-design/assets/required-boolean-errors.txt) |
+| C44 | `fulcrum-app-design/resources/field-type-reference.md` | 2 | RecordLinkField element JSON | `rewrite` | [`record-link-field.json`](../skills/fulcrum-app-design/assets/record-link-field.json) |
 
-`record-link-field.json` is strict JSON, so its exact public source is recorded
-in [`assets/README.md`](../skills/fulcrum-app-design/assets/README.md).
+C44 is a rewrite: the original element carried an `allow_multiple_records`
+property that the public Forms schema does not define and omitted the
+required common properties. It is now a complete element. It is strict JSON,
+so its exact public source is recorded in
+[`assets/README.md`](../skills/fulcrum-app-design/assets/README.md).
 
 ### fulcrum-app-builder, fulcrum-discovery, fulcrum-workflow-decomposition, fulcrum-solution-document — 5 blocks
 
-| Source document | Block purpose | Disposition | Canonical target |
-| --- | --- | --- | --- |
-| `fulcrum-app-builder/SKILL.md` | Preservation-safe form update call | `externalized` | [`forms-update-preserving-keys.js`](../skills/fulcrum-app-builder/examples/forms-update-preserving-keys.js) |
-| `fulcrum-discovery/SKILL.md` | Discovery summary template | `externalized` | [`discovery-summary-template.md`](../skills/fulcrum-discovery/assets/discovery-summary-template.md) |
-| `fulcrum-workflow-decomposition/SKILL.md` | Entity relationship map | `externalized` | [`entity-relationship-map.txt`](../skills/fulcrum-workflow-decomposition/assets/entity-relationship-map.txt) |
-| `fulcrum-solution-document/SKILL.md` | Builder one-pager template | `externalized` | [`solution-one-pager-template.md`](../skills/fulcrum-solution-document/assets/solution-one-pager-template.md) |
-| `fulcrum-solution-document/SKILL.md` | Chat and email share summary | `externalized` | [`solution-share-summary.txt`](../skills/fulcrum-solution-document/assets/solution-share-summary.txt) |
+| ID | Source document | Block | Purpose | Disposition | Canonical target |
+| --- | --- | --- | --- | --- | --- |
+| C45 | `fulcrum-app-builder/SKILL.md` | 1 | Preservation-safe form update call | `externalized` | [`forms-update-preserving-keys.js`](../skills/fulcrum-app-builder/examples/forms-update-preserving-keys.js) |
+| C46 | `fulcrum-discovery/SKILL.md` | 1 | Discovery summary template | `externalized` | [`discovery-summary-template.md`](../skills/fulcrum-discovery/assets/discovery-summary-template.md) |
+| C47 | `fulcrum-workflow-decomposition/SKILL.md` | 1 | Entity relationship map | `externalized` | [`entity-relationship-map.txt`](../skills/fulcrum-workflow-decomposition/assets/entity-relationship-map.txt) |
+| C48 | `fulcrum-solution-document/SKILL.md` | 1 | Builder one-pager template | `externalized` | [`solution-one-pager-template.md`](../skills/fulcrum-solution-document/assets/solution-one-pager-template.md) |
+| C49 | `fulcrum-solution-document/SKILL.md` | 2 | Chat and email share summary | `externalized` | [`solution-share-summary.txt`](../skills/fulcrum-solution-document/assets/solution-share-summary.txt) |
 
 ## Boundaries preserved
 
 - The five-skill decomposition, the 16-skill inventory, and every host manifest
   are unchanged.
-- The vendored OpenAPI snapshot and other heavy resources are retained; layer 4
-  did not retire them.
+- Layer 5 retired the heavyweight vendored REST contract in favor of the named
+  [public OpenAPI](https://raw.githubusercontent.com/fulcrumapp/api/v2/reference/rest-api.json)
+  and its [documentation](https://docs.fulcrumapp.com/reference/openapi-and-postman-collection).
+  Layer-4 example identities, sources, hashes, and focused offline guidance are
+  retained.
 - Source and guidance boundaries survive the move. A file that documents a
   toolkit convention says so, and a file that reproduces documented platform
   behavior links the documentation that establishes it.

@@ -8,8 +8,13 @@
 // root key of an approved removed subtree, and never declare a key that is
 // still present in elements.
 
-fulcrum_forms_update({
+var updatePayload = {
   id: formId,
-  elements: composedElements,
-  removed_element_keys: removedElementKeys
-});
+  elements: composedElements
+};
+
+if (removedElementKeys.length > 0) {
+  updatePayload.removed_element_keys = removedElementKeys;
+}
+
+fulcrum_forms_update(updatePayload);

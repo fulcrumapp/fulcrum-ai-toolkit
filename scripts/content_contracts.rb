@@ -13,6 +13,7 @@ module ContentContracts
   ATTRIBUTION = /(?:#{ENTITY.source}#{ATTRIBUTION_SEPARATOR.source}(?i:#{RESEARCH_EVENT.source})|(?i:#{RESEARCH_EVENT.source})#{ATTRIBUTION_SEPARATOR.source}#{ENTITY.source}|(?i:#{RESEARCH_EVENT.source})\s+notes?\s+(?:from|by)\s+#{ENTITY.source})/
   AFFILIATION = /#{ENTITY.source}\s+(?:at|from)\s+(?:#{ENTITY.source}|#{PROPER_TOKEN.source})/
   PRIVATE_PATH = %r{\A/(?:Users|home|mnt)(?:/|\z)}i
+  PRIVATE_WINDOWS_PATH = %r{\A(?:[A-Za-z]:[\\/]Users[\\/]|[A-Za-z]:[\\/]home[\\/])}i
   PRIVATE_HOST_SUFFIXES = %w[
     corp
     example
@@ -26,6 +27,11 @@ module ContentContracts
     onion
     test
   ].freeze
+  PRIVATE_COLLABORATION_URL = %r{
+    atlassian\.net|
+    slack\.com|
+    github\.com/fulcrumapp/app-mcp
+  }ix
 
   module_function
 
@@ -71,7 +77,11 @@ module ContentContracts
       .reduce(text) { |content, candidate| content.gsub(candidate, "") }
     without_web_urls.scan(%r{(?:\A|[\s"'`(\[\{:=>])(/[^\s"'`<>]*)}).flatten.any? do |path|
       path.match?(PRIVATE_PATH)
-    end
+    end || without_web_urls.match?(PRIVATE_WINDOWS_PATH)
+  end
+
+  def private_collaboration_url?(text)
+    text.match?(PRIVATE_COLLABORATION_URL)
   end
 
   # Layer 3 deliberately bans fence marker tokens rather than parsing Markdown.

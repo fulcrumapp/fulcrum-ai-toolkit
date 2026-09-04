@@ -46,8 +46,9 @@ Reports use EJS (Embedded JavaScript) templates:
 - `<%- expression %>` — Output unescaped HTML
 - `<% code %>` — Execute JavaScript (no output)
 
-The same three forms, with comments, are in
-[`ejs-tag-types.ejs`](../assets/ejs-tag-types.ejs). Fragments for record
+The escaped-output and code-only forms used by this toolkit are in
+[`ejs-tag-types.ejs`](../assets/ejs-tag-types.ejs); raw output is intentionally
+omitted. Fragments for record
 access, repeatables, queries, parameters, and media are indexed in
 [`examples/README.md`](../examples/README.md).
 

@@ -24,7 +24,9 @@ Step 4  fulcrum_reference_files_upload(
           file_name="species-picker.html",
           content=<generated HTML>
         )
-        The file name must match the attachment:// URL in the Data Event.
+        The file name must match the attachment:// URL in the Data Event
+        exactly: attachment://species-picker.html. See
+        ../examples/open-species-picker.js.
 
 Step 5  fulcrum_forms_get(id=...)
         Read the form's existing script before changing it.
@@ -36,5 +38,6 @@ Step 6  fulcrum_forms_update(
         There is no standalone Data Event update tool. Merge; do not overwrite
         unrelated handlers.
 
-# Replacing a Reference File requires a deliberate delete and re-upload through
-# the registered Reference File tools. Confirm the destructive delete first.
+# The focused connector contract exposes list, get, and upload operations, not a
+# delete tool. Follow the registered upload contract for replacement, and use
+# the supported product UI or manual flow when removal is required.
