@@ -1,15 +1,26 @@
 // OpenAPI component schema validation for externalized JSON examples and assets.
 //
-// Pulls schemas dynamically from the official Fulcrum OpenAPI reference:
-// https://raw.githubusercontent.com/fulcrumapp/api/v2/reference/rest-api.json
-// Keep the fetched document in memory only. Do not write network bytes to
-// disk. Override with OPENAPI_SPEC_PATH when a local spec file is available.
+// Default source is the checked-in subset of the official Fulcrum REST API
+// OpenAPI document. Override with OPENAPI_SPEC_PATH. Network fetch of the
+// official spec is opt-in via OPENAPI_FETCH=1 and never writes the response
+// to disk.
 
 import fs from 'node:fs';
+import path from 'node:path';
 import process from 'node:process';
+import { fileURLToPath } from 'node:url';
 
 import Ajv from 'ajv';
 import addFormats from 'ajv-formats';
+
+const HERE = path.dirname(fileURLToPath(import.meta.url));
+
+export const VENDORED_OPENAPI_SPEC_PATH = path.resolve(
+  HERE,
+  '..',
+  'schemas',
+  'fulcrum-rest-api.json'
+);
 
 export const OFFICIAL_OPENAPI_URL =
   'https://raw.githubusercontent.com/fulcrumapp/api/v2/reference/rest-api.json';
@@ -24,33 +35,39 @@ function schemasFromSpec(raw) {
   return schemas;
 }
 
+function readSpecFile(filePath, label) {
+  try {
+    return schemasFromSpec(JSON.parse(fs.readFileSync(filePath, 'utf8')));
+  } catch (error) {
+    throw new Error(`Failed to load OpenAPI spec from ${label} (${filePath}): ${error.message}`);
+  }
+}
+
 export async function loadSchemas() {
   if (cachedSchemas) return cachedSchemas;
 
   if (process.env.OPENAPI_SPEC_PATH) {
+    cachedSchemas = readSpecFile(process.env.OPENAPI_SPEC_PATH, 'OPENAPI_SPEC_PATH');
+    return cachedSchemas;
+  }
+
+  if (process.env.OPENAPI_FETCH === '1') {
     try {
-      const raw = JSON.parse(fs.readFileSync(process.env.OPENAPI_SPEC_PATH, 'utf8'));
-      cachedSchemas = schemasFromSpec(raw);
+      const response = await fetch(OFFICIAL_OPENAPI_URL);
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status} ${response.statusText}`);
+      }
+      cachedSchemas = schemasFromSpec(await response.json());
       return cachedSchemas;
     } catch (error) {
       throw new Error(
-        `Failed to load OpenAPI spec from OPENAPI_SPEC_PATH (${process.env.OPENAPI_SPEC_PATH}): ${error.message}`
+        `Failed to load official OpenAPI spec from ${OFFICIAL_OPENAPI_URL}: ${error.message}`
       );
     }
   }
 
-  try {
-    const response = await fetch(OFFICIAL_OPENAPI_URL);
-    if (!response.ok) {
-      throw new Error(`HTTP ${response.status} ${response.statusText}`);
-    }
-    cachedSchemas = schemasFromSpec(await response.json());
-    return cachedSchemas;
-  } catch (error) {
-    throw new Error(
-      `Failed to load official OpenAPI spec from ${OFFICIAL_OPENAPI_URL}: ${error.message}`
-    );
-  }
+  cachedSchemas = readSpecFile(VENDORED_OPENAPI_SPEC_PATH, 'vendored OpenAPI subset');
+  return cachedSchemas;
 }
 
 export const SCHEMA_MAPPINGS = {
@@ -60,10 +77,11 @@ export const SCHEMA_MAPPINGS = {
 
 export const NON_OPENAPI_JSON = {};
 
-let ajvInstance = null;
+const ajvBySchemas = new WeakMap();
 
 function getAjv(schemas) {
-  if (ajvInstance) return ajvInstance;
+  const existing = ajvBySchemas.get(schemas);
+  if (existing) return existing;
 
   const ajv = new Ajv({
     allErrors: true,
@@ -75,8 +93,8 @@ function getAjv(schemas) {
     ajv.addSchema(schema, `#/components/schemas/${name}`);
   }
 
-  ajvInstance = ajv;
-  return ajvInstance;
+  ajvBySchemas.set(schemas, ajv);
+  return ajv;
 }
 
 function resolveRef(ref, schemas) {
@@ -87,9 +105,18 @@ function resolveRef(ref, schemas) {
   return null;
 }
 
+function deref(schema, schemas, seen = new Set()) {
+  if (!schema || typeof schema !== 'object' || Array.isArray(schema)) return schema;
+  const ref = schema.$ref;
+  if (!ref) return schema;
+  if (seen.has(ref)) return schema;
+  seen.add(ref);
+  return deref(resolveRef(ref, schemas), schemas, seen);
+}
+
 function getAllowedProperties(schema, schemas) {
+  schema = deref(schema, schemas);
   if (!schema) return new Set();
-  if (schema.$ref) return getAllowedProperties(resolveRef(schema.$ref, schemas), schemas);
   const props = new Set(Object.keys(schema.properties || {}));
   if (Array.isArray(schema.allOf)) {
     for (const sub of schema.allOf) {
@@ -101,8 +128,49 @@ function getAllowedProperties(schema, schemas) {
   return props;
 }
 
+function getPropertySchema(schema, key, schemas) {
+  schema = deref(schema, schemas);
+  if (!schema) return null;
+  if (schema.properties && Object.prototype.hasOwnProperty.call(schema.properties, key)) {
+    return schema.properties[key];
+  }
+  if (Array.isArray(schema.allOf)) {
+    for (const sub of schema.allOf) {
+      const found = getPropertySchema(sub, key, schemas);
+      if (found) return found;
+    }
+  }
+  return null;
+}
+
+function getItemsSchema(schema, schemas) {
+  schema = deref(schema, schemas);
+  if (!schema) return null;
+  if (schema.items) return schema.items;
+  if (Array.isArray(schema.allOf)) {
+    for (const sub of schema.allOf) {
+      const found = getItemsSchema(sub, schemas);
+      if (found) return found;
+    }
+  }
+  return null;
+}
+
 function checkClosedSet(document, schema, schemas, path = '$') {
-  if (!document || typeof document !== 'object' || Array.isArray(document)) return [];
+  schema = deref(schema, schemas);
+  if (!schema) return [];
+
+  if (Array.isArray(document)) {
+    const itemSchema = getItemsSchema(schema, schemas);
+    if (!itemSchema) return [];
+    const errors = [];
+    for (let index = 0; index < document.length; index += 1) {
+      errors.push(...checkClosedSet(document[index], itemSchema, schemas, `${path}[${index}]`));
+    }
+    return errors;
+  }
+
+  if (!document || typeof document !== 'object') return [];
 
   const errors = [];
   const allowed = getAllowedProperties(schema, schemas);
@@ -113,6 +181,12 @@ function checkClosedSet(document, schema, schemas, path = '$') {
         errors.push(`${path}: undocumented property "${key}"`);
       }
     }
+  }
+
+  for (const key of Object.keys(document)) {
+    const childSchema = getPropertySchema(schema, key, schemas);
+    if (!childSchema) continue;
+    errors.push(...checkClosedSet(document[key], childSchema, schemas, `${path}.${key}`));
   }
 
   return errors;
@@ -145,9 +219,13 @@ export function validateDocument(document, schemaName, schemas = cachedSchemas) 
   return errors;
 }
 
-export function validateInventory(discoveredPaths) {
+export function validateInventory(
+  discoveredPaths,
+  mappings = SCHEMA_MAPPINGS,
+  excluded = NON_OPENAPI_JSON
+) {
   const errors = [];
-  const configuredPaths = new Set([...Object.keys(SCHEMA_MAPPINGS), ...Object.keys(NON_OPENAPI_JSON)]);
+  const configuredPaths = new Set([...Object.keys(mappings), ...Object.keys(excluded)]);
   const discoveredSet = new Set(discoveredPaths);
 
   for (const discovered of discoveredPaths) {
@@ -162,15 +240,15 @@ export function validateInventory(discoveredPaths) {
     }
   }
 
-  for (const mapped of Object.keys(SCHEMA_MAPPINGS)) {
-    if (mapped in NON_OPENAPI_JSON) {
+  for (const mapped of Object.keys(mappings)) {
+    if (mapped in excluded) {
       errors.push(`${mapped}: cannot be both schema-mapped and excluded`);
     }
   }
 
-  for (const [excluded, reason] of Object.entries(NON_OPENAPI_JSON)) {
+  for (const [excludedPath, reason] of Object.entries(excluded)) {
     if (!reason || !reason.trim()) {
-      errors.push(`${excluded}: NON_OPENAPI_JSON reason must be specific`);
+      errors.push(`${excludedPath}: NON_OPENAPI_JSON reason must be specific`);
     }
   }
 
