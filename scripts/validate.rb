@@ -191,6 +191,10 @@ if File.file?(coverage_map)
     failures << "#{COVERAGE_MAP_RELATIVE_PATH}: missing source hierarchy"
   end
 
+  unless coverage_text.include?("## Review and retirement")
+    failures << "#{COVERAGE_MAP_RELATIVE_PATH}: missing review and retirement criteria"
+  end
+
   unless coverage_text.match?(/SHA-256:\s*(?:>\s*)?`[0-9a-f]{64}`/i)
     failures << "#{COVERAGE_MAP_RELATIVE_PATH}: missing legacy artifact SHA-256"
   end
