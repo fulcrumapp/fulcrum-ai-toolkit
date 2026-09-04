@@ -38,10 +38,7 @@
          */
         initialize() {
           const { id, url, data, origin } = window.Fulcrum.params || {};
-          window.Fulcrum.id = id;
-          window.Fulcrum.url = url;
-          window.Fulcrum.data = data;
-          window.Fulcrum.origin = origin;
+          Object.assign(window.Fulcrum, { id, url, data, origin });
 
           if (typeof window.Fulcrum.onLoadOnce === 'function') {
             window.Fulcrum.onLoadOnce();
