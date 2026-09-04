@@ -560,9 +560,7 @@ assert(
 )
 embedded_required_url = "https://example.invalid/redirect/https://docs.fulcrumapp.com/docs/data-events-storage"
 assert(
-  !exact_http_urls(embedded_required_url).include?(
-    "https://docs.fulcrumapp.com/docs/data-events-storage"
-  ),
+  exact_http_urls(embedded_required_url) == Set[embedded_required_url],
   "exact source matching accepts a required URL embedded in an arbitrary URL"
 )
 
