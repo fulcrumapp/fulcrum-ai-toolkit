@@ -1,11 +1,30 @@
 ---
 name: fulcrum-report-building
-description: Use when building, modifying, or debugging Fulcrum report templates. Covers report types, EJS patterns, context objects, QUERY() for multi-record reports, the HTML-as-backend-service pattern, and common mistakes. Also use when a builder asks about generating PDFs, custom outputs, or parameterized reports.
+description: Use when building, modifying, generating, or debugging Fulcrum reports and Report Templates. Covers the documented Report Builder runtime, App MCP template CRUD and report generation, EJS patterns, context objects, QUERY() for multi-record reports, and common mistakes.
 ---
 
 A Fulcrum **report template** is EJS (Embedded JavaScript) that runs server-side inside a headless Chrome instance (Puppeteer). The output is a PDF or HTML page — not a live view. Every report starts from a single record's context and expands from there via `QUERY()`.
 
 > **Provenance:** Report APIs and template behavior should be checked against current Fulcrum documentation. The rendering workflow below is a toolkit convention, not a guarantee of public product support.
+
+## App MCP Control Plane
+
+When Fulcrum App MCP is registered, use its live schemas for Report Template management and report generation:
+
+| Goal | App MCP tool |
+|---|---|
+| List templates, optionally by form | `fulcrum_report_templates_list` |
+| Read a template | `fulcrum_report_templates_get` |
+| Create a Report Builder template | `fulcrum_report_templates_create` |
+| Update a template | `fulcrum_report_templates_update` |
+| Delete a template after confirmation | `fulcrum_report_templates_delete` |
+| Generate a report for a record | `fulcrum_reports_create` |
+
+`fulcrum_reports_create` requires `record_id` and accepts optional `template_id`. App MCP does not provide record CRUD, Query API execution, or media CRUD; obtain record IDs through an authorized interface and use the Report Builder's documented runtime functions only inside template EJS.
+
+`fulcrum_forms_create` creates a default Report Template unless `skip_default_report` is explicitly `true`. If form creation returns a form plus `report_template_error`, the form succeeded and only template creation failed. Do not create the form again; use `fulcrum_report_templates_create` for the missing template.
+
+> Source: [App MCP PR #28](https://github.com/fulcrumapp/app-mcp/pull/28) at commit [`f8c041e`](https://github.com/fulcrumapp/app-mcp/commit/f8c041ee309c61c6154cce1a7b2cb84fc4c4cf10) defines the registered report tools and default-template result. Runtime names come from the [Fulcrum Report Builder functions reference](https://docs.fulcrumapp.com/docs/functions).
 
 ## Report Types
 
@@ -15,7 +34,7 @@ Pre-built generic output with toggle controls (header, footer, cover page, field
 ### Advanced report (PDF or HTML)
 Unlocks the full EJS code behind the standard report. You can modify the standard template or build from scratch. **This is where report building happens.**
 
-To switch to HTML output: change report type to HTML in settings. This enables the report as a custom UI or backend service.
+To switch to HTML output, set the Report Template output to HTML through the supported template settings.
 
 ## Core Context Objects
 
@@ -23,14 +42,15 @@ These are available in every report without any setup:
 
 | Object/Function | What it gives you |
 |----------------|-------------------|
-| `record` | The current record (from fulcrum-core) — fields, status, timestamps, geometry |
+| `record` | The current record — metadata plus field values under `record.formValues` |
 | `form` | The app/form definition — field labels, data names, element structure |
-| `QUERY(sql, options)` | Execute SQL against the Query API — the key to multi-record reports |
-| `PHOTOURL(mediaID)` | Signed URL for a photo field value |
-| `SIGNATUREURL(id)` | Signed URL for a signature field value |
+| `QUERY(sql, options)` | Execute SQL against the Query API from template EJS |
+| `PHOTOURL(id, options)` | Signed URL for a photo field value |
+| `SIGNATUREURL(id, options)` | Signed URL for a signature field value |
 | `STATICMAP(options)` | Generates a static map image (Google or Esri) |
-| `RENDER(feature, options, eachFn)` | Recursively renders all form elements — used in the standard template |
-| `APIREQUEST(options)` | HTTP request with auto-injected auth token when `api: true` |
+| `RENDER(feature, options, eachFunction)` | Recursively renders form elements with nesting context |
+| `RENDERVALUES(feature, options, eachFunction)` | Recursively renders form values |
+| `API(path, options)` | Call a Fulcrum REST API path from template EJS |
 | `$params` | URL parameters passed to the report — the interface for parameterized reports |
 
 ## EJS Patterns
@@ -45,29 +65,40 @@ EJS uses three tag types. Use them correctly — they produce very different out
 
 ### Accessing record fields
 
+> Source: [Fulcrum Report Builder variables](https://docs.fulcrumapp.com/docs/variables#record) documents `record.formValues.find('data_name')`, `value`, and `displayValue`. The [Record Links guide](https://docs.fulcrumapp.com/docs/record-links) documents item access.
+
 ```ejs
 <%# Single-value field — use the field's data_name %>
-<%= record.getDisplayValue('inspector_name') %>
+<% const inspectorName = record.formValues.find('inspector_name'); %>
+<%= inspectorName ? inspectorName.displayValue : '' %>
 
-<%# Choice field — getValue() returns the stored value, getDisplayValue() returns the label %>
-<%= record.getDisplayValue('site_condition') %>
+<%# Choice field — value is stored; displayValue is the rendered label %>
+<% const siteCondition = record.formValues.find('site_condition'); %>
+<%= siteCondition ? siteCondition.displayValue : '' %>
+<% const storedSiteCondition = siteCondition ? siteCondition.value : null; %>
 
 <%# Yes/No field %>
-<%= record.getValue('photos_taken') === 'true' ? 'Yes' : 'No' %>
+<% const photosTaken = record.formValues.find('photos_taken'); %>
+<%= photosTaken ? photosTaken.displayValue : '' %>
 
 <%# Date field %>
-<%= new Date(record.getValue('inspection_date')).toLocaleDateString() %>
+<% const inspectionDate = record.formValues.find('inspection_date'); %>
+<%= inspectionDate && inspectionDate.value ? FORMATDATE(new Date(inspectionDate.value)) : '' %>
 ```
 
 ### Iterating repeatables
 
+> Source: [Fulcrum Report Builder variables](https://docs.fulcrumapp.com/docs/variables#record) documents form-value lookup. The [RENDER function reference](https://docs.fulcrumapp.com/docs/functions#render) documents repeatable item `formValues`.
+
 ```ejs
-<%# Repeatable items are accessed via record.getRepeatableValues() %>
-<% const observations = record.getRepeatableValues('observations'); %>
-<% observations.forEach(function(obs) { %>
+<% const observations = record.formValues.find('observations'); %>
+<% const observationItems = observations ? observations.items : []; %>
+<% observationItems.forEach(function(observation) { %>
+  <% const species = observation.formValues.find('species'); %>
+  <% const count = observation.formValues.find('count'); %>
   <tr>
-    <td><%= obs.getDisplayValue('species') %></td>
-    <td><%= obs.getValue('count') %></td>
+    <td><%= species ? species.displayValue : '' %></td>
+    <td><%= count ? count.value : '' %></td>
   </tr>
 <% }); %>
 ```
@@ -75,8 +106,10 @@ EJS uses three tag types. Use them correctly — they produce very different out
 ### Conditional blocks
 
 ```ejs
-<% if (record.getValue('requires_followup') === 'true') { %>
-  <div class="alert">Follow-up required: <%= record.getDisplayValue('followup_reason') %></div>
+<% const followupStatus = record.formValues.find('followup_status'); %>
+<% const followupReason = record.formValues.find('followup_reason'); %>
+<% if (followupStatus && followupStatus.value === 'required') { %>
+  <div class="alert">Follow-up required: <%= followupReason ? followupReason.displayValue : '' %></div>
 <% } %>
 ```
 
@@ -84,10 +117,13 @@ EJS uses three tag types. Use them correctly — they produce very different out
 
 The standard report context loads **one record**. `QUERY()` is how you go beyond it.
 
+> Source: [Fulcrum Report Builder `QUERY()` reference](https://docs.fulcrumapp.com/docs/functions#query) documents the call signature. The public [Sketches report example](https://docs.fulcrumapp.com/docs/sketches#add-metadata-to-sketches) demonstrates reading query results from `.rows`.
+
 ```ejs
 <%# Fetch related records from the same app %>
 <%# Sanitize record values before interpolating into SQL to prevent injection %>
-<% const siteId = (record.getValue('site_id') || '').replace(/[^a-zA-Z0-9_-]/g, ''); %>
+<% const siteIdField = record.formValues.find('site_id'); %>
+<% const siteId = ((siteIdField && siteIdField.value) || '').replace(/[^a-zA-Z0-9_-]/g, ''); %>
 <% const relatedInspections = QUERY(
   `SELECT * FROM "Site Inspections"
    WHERE site_id = '${siteId}'
@@ -109,24 +145,27 @@ The standard report context loads **one record**. `QUERY()` is how you go beyond
 Repeatable data is in a separate table, joined to the parent by `fulcrum_parent_id`:
 
 ```ejs
-<% const items = QUERY(
+<% const itemResults = QUERY(
   `SELECT r.*
    FROM "Work Orders/line_items" r
    WHERE r.fulcrum_parent_id = '${record.id}'`,
   { format: 'json' }
 ); %>
+<% const items = itemResults.rows; %>
 ```
 
-### APIREQUEST() for non-SQL data
+### API() for Fulcrum REST resources
+
+> Source: [Fulcrum Report Builder `API()` reference](https://docs.fulcrumapp.com/docs/functions#api)
 
 ```ejs
-<% const assetData = APIREQUEST({
-  url: 'https://api.example.com/assets/' + record.getValue('asset_id'),
-  method: 'GET',
-  // api: true injects the Fulcrum API token — never hardcode tokens
-  api: true
+<% const choiceLists = API('/choice_lists', {
+  qs: { per_page: 1 }
 }); %>
+<%= choiceLists.choice_lists[0].name %>
 ```
+
+`API()` takes a Fulcrum API path and options. For external URLs, use only a documented Report Builder function such as `GET()` or `JSONREQUEST(options)` and never place credentials in the template.
 
 ## Parameterized Reports — the `$params` Interface
 
@@ -141,11 +180,12 @@ When a report URL includes query parameters, they arrive in `$params`. This is t
 <% const today = new Date().toISOString().slice(0, 10); %>
 <% const endDate = datePattern.test(requestedEndDate) ? requestedEndDate : today; %>
 
-<% const records = QUERY(
+<% const recordResults = QUERY(
   `SELECT * FROM "Inspections"
    WHERE _created_at BETWEEN '${startDate}' AND '${endDate}'`,
   { format: 'json' }
 ); %>
+<% const records = recordResults.rows; %>
 ```
 
 ### HTML report as a filter UI
@@ -177,27 +217,6 @@ Also inspect the template source for processor-sensitive examples. Do not assume
 
 At minimum, verify one short, one long, and one multi-page fixture, plus any layout with tables, ruled lines, images, or repeatable sections.
 
-## Reports as Backend Services
-
-One of the most powerful and underused patterns. A report set to HTML with "raw" response type acts as a server-side script callable via API.
-
-**How it works:**
-1. Set report output to HTML, response type to "raw"
-2. Get the template ID from the report URL after clicking Open
-3. Call via POST: `https://api.fulcrumapp.com/run/{template_id}`
-4. Use `WRITE()` and `SETCONTENTTYPE()` to return structured responses
-
-```ejs
-<%# Return JSON from a report — works as a webhook handler or microservice %>
-<% SETCONTENTTYPE('application/json'); %>
-<% const result = { status: 'ok', count: records.rows.length }; %>
-<% WRITE(JSON.stringify(result)); %>
-```
-
-**Common use case:** Workflow webhook fires → calls report endpoint → report runs server-side logic (updates records, calls external API, queries data) → returns JSON. This lets you build lightweight serverless logic inside Fulcrum without any external hosting.
-
-> Consult your organization's internal report-building guide for platform-specific report settings and deployment details.
-
 ## Anti-Patterns
 
 ### Debugging in the report builder
@@ -205,25 +224,28 @@ The report builder has poor error messages — a syntax error may show a blank w
 
 **Workflow:** Write and test all logic in VS Code first. Use Node.js to validate JavaScript. Paste into the report builder only when the logic is confirmed working. Keep a local copy of every report template.
 
-### Hardcoding API tokens
+### Inventing runtime functions or embedding credentials
 ```ejs
-<%# BAD — token is visible to anyone who can view the report template %>
-<% const data = APIREQUEST({ url: '...', headers: { 'X-ApiToken': 'abc123' } }); %>
-
-<%# GOOD — api: true injects the token from the authenticated context %>
-<% const data = APIREQUEST({ url: '...', api: true }); %>
+<%# Use the documented Fulcrum API helper and a relative API path. %>
+<% const forms = API('/forms', { qs: { per_page: 1 } }); %>
 ```
+
+Do not invent helper names or embed API tokens, passwords, or other credentials in report source. Check the current public functions reference before using a runtime function.
 
 ### Not using QUERY() for multi-record reports
 Trying to pass all data through the single record context (via very long JSON blobs in fields) instead of using `QUERY()`. This breaks as data grows.
 
 ### Photo references without PHOTOURL()
 ```ejs
+<% const sitePhoto = record.formValues.find('site_photo'); %>
+<% const sitePhotoItems = sitePhoto && Array.isArray(sitePhoto.items) ? sitePhoto.items : []; %>
+<% const firstSitePhoto = sitePhotoItems[0]; %>
+
 <%# BAD — the media_id alone is not a usable URL %>
-<img src="<%= record.getValue('site_photo') %>">
+<img src="<%= firstSitePhoto ? firstSitePhoto.mediaID : '' %>">
 
 <%# GOOD — wrap in PHOTOURL() to get a signed URL %>
-<img src="<%= PHOTOURL(record.getValue('site_photo')) %>">
+<img src="<%= firstSitePhoto ? PHOTOURL(firstSitePhoto.mediaID) : '' %>">
 ```
 
 ### Missing escaping in SQL strings
@@ -232,7 +254,11 @@ Always sanitize values used in QUERY() strings to prevent injection via `$params
 ```ejs
 <%# Avoid direct interpolation of user-controlled params in SQL %>
 <% const safeStatus = ($params.status || '').replace(/[^a-zA-Z_]/g, ''); %>
-<% const records = QUERY(`SELECT * FROM "App" WHERE _status = '${safeStatus}'`, {format:'json'}); %>
+<% const result = QUERY(`SELECT * FROM "App" WHERE _status = '${safeStatus}'`, {format:'json'}); %>
+<% const rows = result.rows; %>
+<% rows.forEach(function(row) { %>
+  <%# Render fields from row here. %>
+<% }); %>
 ```
 
 ## Code Organization
@@ -247,18 +273,21 @@ A report template is a single EJS file. As it grows:
 
 - [ ] Report type is explicit — PDF (printer output) or HTML (interactive/API)
 - [ ] `QUERY()` is used for any data beyond the single record context — no JSON-stuffing workarounds
-- [ ] No hardcoded API tokens — use `api: true` for Fulcrum API calls or an authenticated proxy/connector for external services
+- [ ] No credentials are embedded in the Report Template
+- [ ] Fulcrum REST calls use documented `API(path, options)` syntax
 - [ ] Photo and signature fields use `PHOTOURL()` / `SIGNATUREURL()` — not raw media IDs
 - [ ] `$params` values are sanitized before use in SQL strings
 - [ ] Template was authored and tested outside the report builder before pasting in
 - [ ] Rendered output was checked for both content and geometry — text comparison alone is insufficient
 - [ ] Representative short, long, and multi-page fixtures were rendered when layout matters
 - [ ] For parameterized reports: `$params` interface is documented at the top of the template
-- [ ] For backend-service reports: `SETCONTENTTYPE()` and `WRITE()` are used for structured output
+- [ ] Report Templates are managed with the registered tools listed above and record reports are generated with `fulcrum_reports_create` when App MCP is available
 
 ## References
 
 - [Fulcrum reports introduction](https://docs.fulcrumapp.com/docs/reports-introduction)
 - [Fulcrum Query API introduction](https://docs.fulcrumapp.com/reference/query-intro)
 - [Fulcrum report templates API](https://docs.fulcrumapp.com/reference/report-templates-api)
+- [Fulcrum Report Builder functions](https://docs.fulcrumapp.com/docs/functions)
+- [App MCP tool-contract prerequisite](https://github.com/fulcrumapp/app-mcp/pull/28)
 - [Agent Skills specification](https://agentskills.io/specification)

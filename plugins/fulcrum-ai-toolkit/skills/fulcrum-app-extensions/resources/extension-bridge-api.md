@@ -1,124 +1,102 @@
 # App Extension Bridge API Reference
 
-> Source: Fulcrum developer documentation
-> Fetched: 2026-08-19
+> Source: https://docs.fulcrumapp.com/docs/app-extensions-introduction
+> Source: https://github.com/fulcrumapp/app-mcp/pull/28
+> Verified: 2026-09-02
 
-## Overview
+## Authoritative Generation Path
 
-App extensions are custom HTML/CSS/JavaScript UIs embedded inside a Fulcrum record via an iframe. They communicate with the host app through a postMessage bridge.
+When App MCP is registered, use `fulcrum_extensions_list_patterns`,
+`fulcrum_extensions_explain`, and `fulcrum_extensions_generate`. The generator
+returns the Data Event, complete HTML with the current inline bootstrap, and
+setup notes. Do not reconstruct those artifacts from this fallback reference.
 
 ## OPENEXTENSION()
 
-Called from a Data Event to open an extension. **MUST be an object — a bare string is a silent no-op.**
+Call `OPENEXTENSION` from a HyperlinkField `click` handler with an options object
+containing `url`, `title`, `data`, and `onMessage`. A bare filename or positional
+string is not the supported contract.
 
 ```javascript
-// CORRECT — object with url, title, and onMessage callback
-ON('click', 'open_editor', function(event) {
+ON('click', 'open_editor', function() {
   OPENEXTENSION({
     url: 'attachment://my-extension.html',
     title: 'My Extension',
+    data: {
+      current_value: VALUE('target_field')
+    },
     onMessage: function(message) {
-      // message contains data returned by Fulcrum.finish() in the extension
-      if (message && message.type === 'result') {
-        SETVALUE('target_field', message.data.value);
+      var data = message && message.data;
+      if (data) {
+        SETVALUE('target_field', data.value);
       }
     }
   });
 });
-
-// WRONG — bare string. Silent no-op, no error, button does nothing.
-// OPENEXTENSION('my-extension.html');  // DO NOT DO THIS
 ```
 
-### Critical: `attachment://` scheme
+For HTML uploaded as a Reference File, use exactly
+`attachment://<filename>.html`. External HTTPS pages require connectivity.
 
-Uploaded reference files (HTML extensions) MUST use the `attachment://` prefix:
-- **Correct:** `url: 'attachment://my-extension.html'`
-- **Wrong:** `url: 'my-extension.html'` (silent failure)
-- **Wrong:** `url: 'attachments://my-extension.html'` (plural — silent failure)
+## Generated Bootstrap And Payload
 
-### Critical: Bootstrap script required
+The HTML returned by `fulcrum_extensions_generate` embeds the current Fulcrum
+bootstrap inline. Keep that generated script intact so the Reference File
+remains standalone and offline-capable. Do not replace it with an old hosted
+script.
 
-Every extension HTML file MUST include Fulcrum's bootstrap script in `<head>`. Without it, `Fulcrum.load` and `Fulcrum.finish` are `undefined` and nothing works — no error, just silent failure.
+Code after the generated bootstrap receives the options object's `data` value
+through `payload.data`:
 
-```html
-<!DOCTYPE html>
-<html>
-<head>
-  <script src="https://fulcrumapp.com/js/fulcrum-extension.js"></script>
-</head>
-<body>
-  <script>
-    // Fulcrum.load() is called when the extension is ready
-    Fulcrum.load(function(data) {
-      // data.args contains any arguments passed from OPENEXTENSION
-      // Build your custom UI here
-    });
+```javascript
+Fulcrum.load(function(payload) {
+  initialize(payload.data || {});
+});
 
-    // Call Fulcrum.finish() to return data to the form
-    function saveAndClose(result) {
-      Fulcrum.finish({ value: result });
-      // This sends data to the onMessage callback in the Data Event
-      // The Data Event then calls SETVALUE() to write to form fields
-    }
-  </script>
-</body>
-</html>
+function initialize(data) {
+  // Populate the extension UI from data.
+}
+
+function saveAndClose(result) {
+  Fulcrum.finish(result);
+}
 ```
 
-### Data flow: Extension → Form
+`Fulcrum.finish(result)` closes the extension and delivers `{ data: result }` to
+the Data Event's `onMessage` callback. It does not write form fields
+automatically; the callback must call `SETVALUE()` or another supported Data
+Event function.
 
-1. Data Event calls `OPENEXTENSION({ url, onMessage })`
-2. Extension HTML loads, calls `Fulcrum.load(callback)` to initialize
-3. User interacts with the extension UI
-4. Extension calls `Fulcrum.finish(data)` to return results
-5. `onMessage` callback in the Data Event receives the data
-6. Data Event calls `SETVALUE()` to write values to form fields
+## Reference File Workflow
 
-**`Fulcrum.finish()` does NOT automatically write to fields** — you must explicitly call `SETVALUE()` in the `onMessage` handler.
+1. Generate artifacts with `fulcrum_extensions_generate`.
+2. Upload the generated HTML with
+   `fulcrum_reference_files_upload({ form_id, file_name, content })`.
+3. Read the form's existing `script` with `fulcrum_forms_get`.
+4. Append or merge the generated Data Event without replacing unrelated
+   handlers.
+5. Write the complete script with `fulcrum_forms_update`.
 
-## Bridge Communication
-
-Extensions communicate with Fulcrum via the bootstrap script API:
-
-### Extension → Host
-- `Fulcrum.finish(data)` — return results and close the extension
-- `Fulcrum.cancel()` — close without returning data
-
-### Host → Extension
-- `Fulcrum.load(callback)` — receives initial context (record data, form schema, args from OPENEXTENSION)
-
-### Legacy postMessage API (lower level)
-- `window.parent.postMessage({type: 'result', value: data}, '*')` — return data
-- `window.parent.postMessage({type: 'close'}, '*')` — close extension
-- Extensions receive messages via `window.addEventListener('message', handler)`
-
-Use the `Fulcrum.load/finish` API — it's simpler and handles the postMessage protocol for you.
+The layer-2 Reference File tool subset exposes list, get, and upload operations;
+it does not define a delete tool. Do not invent a delete call: use the upload
+workflow according to the registered service contract for replacement, and use
+the supported product UI or manual flow when removal is required. Keep the
+filename synchronized with the `attachment://` URL.
 
 ## Sandbox Constraints
 
-- Extensions run in a sandboxed iframe
-- No direct DOM access to the parent Fulcrum app
-- `window.print()` and direct PDF download are blocked
-- Extensions must be self-contained (inline CSS/JS or bundled)
-- Network requests from extensions are subject to CORS
-- Extensions should work offline when possible (bundle all dependencies)
-- There is no "update a reference file" API — replacing an extension requires delete + re-upload
+- Extensions cannot save files or generated media directly to the device.
+- API calls and dynamically fetched assets require connectivity even when the
+  HTML is a Reference File.
+- Extension state is not persistent unless it is written back to a form field
+  and passed in again.
+- Keep offline-required CSS and JavaScript in the generated HTML or other
+  Reference Files.
 
-## Extension Field Properties
+## Field Pattern
 
-In the form schema, an extension field has:
-- type: "HyperlinkField" with display.style set to "button"
-- The extension HTML is uploaded as a reference file (attachment)
-- The Data Event triggers on `click` of the hyperlink field
-
-## Common Patterns
-
-1. **Picker/Selector**: Open extension, user selects from custom UI, return selection to form field
-2. **Calculator**: Complex calculations with custom UI, return computed values
-3. **Visualization**: Display data in charts/maps/diagrams within the record
-4. **Data Entry**: Custom input interfaces (drawing tools, schematic builders, etc.)
-
-## Anti-Pattern: The Picker Trap
-
-Don't build an extension just to replicate what a choice field or record link can do. Extensions add complexity (offline support, maintenance, testing). Use them when the native field types genuinely can't support the interaction.
+- Use a HyperlinkField as the extension trigger.
+- Use a TextField for a free-form picker result or a RecordLinkField for a
+  selected Fulcrum record.
+- Trigger the extension with `ON('click', 'field_data_name', ...)`.
+- Keep the result in ordinary Fulcrum fields so it syncs normally.

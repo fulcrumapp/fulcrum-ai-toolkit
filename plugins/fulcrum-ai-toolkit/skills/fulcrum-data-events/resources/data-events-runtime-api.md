@@ -1,7 +1,11 @@
 # Data Events Runtime API Reference
 
-> Source: https://docs.fulcrumapp.com/docs/data-events-reference.md
-> Fetched: 2026-08-19
+> Source: https://docs.fulcrumapp.com/docs/data-events-reference
+> Source: https://docs.fulcrumapp.com/docs/data-events-loadfile
+> Source: https://github.com/fulcrumapp/app-mcp/pull/28
+> Verified: 2026-09-02
+
+When App MCP is registered, prefer `fulcrum_expressions_data_events_reference` for the current runtime catalog. This resource is a portable fallback. Data Event JavaScript is stored in a form's `script` and is read or written with `fulcrum_forms_get` and `fulcrum_forms_update`; there are no standalone Data Event CRUD tools.
 
 ## Record Events
 
@@ -103,6 +107,8 @@ add-audio event object: id, size, duration
 | SETFORMATTRIBUTES(attributes) | Customize app behavior (geometry types, auto-sync, etc.) |
 | INSPECT(object) | Output object content for debugging |
 | REQUEST(options, callback) | Make HTTP request (GET, POST, PUT). Async — response processing must be in callback |
+| LOADFILE(options, callback) | Load a Reference File. `options` requires `name` and may include optional `form_name` or `form_id`, plus optional `variable` |
+| OPENEXTENSION({ url, title, data, onMessage }) | Open an App Extension; use `attachment://filename.html` for a Reference File |
 | SETRESULT(value) | Set the result of a calculation field |
 | FIELD(data_name) | Return field metadata object (key, type, label, etc.) |
 | CONFIG() | Access the current configuration/results object |
@@ -115,3 +121,4 @@ add-audio event object: id, size, duration
 4. Default values do NOT trigger change events on new records
 5. Data events run on mobile devices — keep code lightweight, avoid heavy computation
 6. console.log is not available — use ALERT or INSPECT for debugging
+7. LOADFILE takes an options object, not a URL or positional filename

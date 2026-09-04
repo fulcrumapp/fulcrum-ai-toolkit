@@ -1,38 +1,41 @@
 # Report Template Functions Reference
 
-> Source: https://docs.fulcrumapp.com/docs/functions.md
-> Fetched: 2026-08-19
+> Source: [Fulcrum Report Builder functions](https://docs.fulcrumapp.com/docs/functions) for runtime signatures; [Report Builder variables](https://docs.fulcrumapp.com/docs/variables#record) for record value access; and the public [Sketches report example](https://docs.fulcrumapp.com/docs/sketches#add-metadata-to-sketches) for `QUERY()` result handling.
+> Source: [App MCP PR #28](https://github.com/fulcrumapp/app-mcp/pull/28) at commit [`f8c041e`](https://github.com/fulcrumapp/app-mcp/commit/f8c041ee309c61c6154cce1a7b2cb84fc4c4cf10) for Report Template persistence and report generation tools.
+> Verified: 2026-09-02
+
+When App MCP is registered, use `fulcrum_report_templates_list`, `fulcrum_report_templates_get`, `fulcrum_report_templates_create`, `fulcrum_report_templates_update`, and `fulcrum_report_templates_delete` for template persistence, and use `fulcrum_reports_create` for report generation. This file documents functions available inside Report Builder EJS; it does not imply App MCP Query API, record, or media CRUD tools.
 
 ## Available Functions
 
 | Function | Purpose |
 |----------|---------|
-| API(endpoint, options) | Execute REST API calls to Fulcrum endpoints |
-| AUDIOURL(audio_id) | Generate public audio file URL |
+| API(path, options) | Execute REST API calls to Fulcrum paths |
+| AUDIOURL(id, options) | Generate public audio file URL |
 | FORMATDATE(date, options) | Format date values using Intl.DateTimeFormat options |
-| GET(url) | Perform synchronous HTTP GET request |
-| GETBLOB(url) | Fetch binary data via HTTP GET (returns ArrayBuffer) |
-| JSONREQUEST(url) | HTTP GET with automatic JSON parsing |
-| LOG(message) | Output debug messages to report results |
-| PHOTOURL(photo_id, version) | Generate public photo URL. Versions: original, thumbnail, large |
+| GET(url, options) | Perform synchronous HTTP GET request |
+| GETBLOB(url, options) | Fetch binary data via HTTP GET (returns ArrayBuffer) |
+| JSONREQUEST(options) | Perform a request and automatically parse JSON |
+| LOG(string) | Output debug messages to report results |
+| PHOTOURL(id, options) | Generate public photo URL |
 | QS(object) | Convert object into URL query string |
-| QUERY(sql) | Execute SQL query on the Query API. Returns array of row objects |
+| QUERY(sql, options) | Execute a SQL query on the Query API from report EJS |
 | QUERYVALUE(sql) | Run SQL and return first column of first row |
-| RENDER(elements, callback) | Recursively process form elements with custom callbacks (handles nested/repeatable fields) |
-| RENDERVALUES(callback) | Iterate through form values for dynamic report generation |
-| SIGNATUREURL(signature_id) | Generate public signature file URL |
-| SKETCHURL(sketch_id) | Generate public sketch URL |
+| RENDER(feature, options, eachFunction) | Recursively process form elements with nesting context |
+| RENDERVALUES(feature, options, eachFunction) | Recursively process form values |
+| SIGNATUREURL(id, options) | Generate public signature file URL |
+| SKETCHURL(id, options) | Generate public sketch URL |
 | STATICMAP(options) | Create Google or Esri static map image |
-| TOJSON(object) | Stringify JSON object |
-| VIDEOURL(video_id) | Generate public video file URL |
+| TOJSON(json) | Stringify a JSON value |
+| VIDEOURL(id, options) | Generate public video file URL |
 
 ## Report Context Object
 
 Reports have access to:
-- record: The current record object
-- form: The form/app schema
-- record.formValues: All field values
-- Repeatable children via record iteration
+- `record`: the current record object
+- `form`: the form/app schema
+- `record.formValues.find('data_name')`: a field's form-value object
+- `record.formValues.find('repeatable_data_name').items`: repeatable child items
 
 ## EJS Template Basics
 
@@ -43,8 +46,18 @@ Reports use EJS (Embedded JavaScript) templates:
 
 ## QUERY() for Multi-Record Reports
 
-```javascript
-var results = QUERY("SELECT * FROM 'form_id' WHERE status = 'complete' ORDER BY created_at DESC LIMIT 100");
+```ejs
+<% const result = QUERY(
+  `SELECT * FROM "Inspections"
+   WHERE _status = 'complete'
+   ORDER BY _created_at DESC
+   LIMIT 100`,
+  { format: 'json' }
+); %>
+
+<% result.rows.forEach(function(row) { %>
+  <div><%= row.id %></div>
+<% }); %>
 ```
 
-Returns an array of row objects. Use for cross-record analytics, summary reports, and dashboards.
+`QUERY()` returns a result object. Its `rows` array contains the row objects used for cross-record analytics, summary reports, and dashboards.

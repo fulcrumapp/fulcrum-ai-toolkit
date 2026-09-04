@@ -42,10 +42,18 @@ You can also copy or symlink individual skill directories from
 directory. `.agents/` is reserved for repository-scoped agent assets and
 marketplace metadata.
 
-The toolkit installs guidance skills only. It does not include the Fulcrum MCP
-server or Fulcrum credentials. Live app creation and updates require a
-separately configured Fulcrum MCP connector; without one, `fulcrum-app-builder`
-stops at an approved implementation handoff.
+The toolkit installs guidance skills only. It does not include Fulcrum App MCP
+or Fulcrum credentials. When separately registered, App MCP is the toolkit's
+default control plane for supported app configuration and knowledge operations.
+Without it, `fulcrum-app-builder` stops at an approved implementation handoff.
+App MCP covers forms, schema builders and validation, choices, classifications,
+projects, layer metadata, webhooks, Reference Files, memberships and roles,
+Report Templates, and report generation. Query API execution, record CRUD, and
+media CRUD require another authorized interface.
+
+> Source: [App MCP PR #28](https://github.com/fulcrumapp/app-mcp/pull/28) at
+> commit [`f8c041e`](https://github.com/fulcrumapp/app-mcp/commit/f8c041ee309c61c6154cce1a7b2cb84fc4c4cf10)
+> defines the prerequisite tool contract.
 
 ## Start here
 
@@ -53,7 +61,7 @@ stops at an approved implementation handoff.
 2. Define the goal and deliverable with `fulcrum-app-goal`.
 3. Use `fulcrum-app-builder` and `fulcrum-app-design` to propose and approve a schema.
 4. Review safety, offline, integration, and plan constraints.
-5. Build manually in Fulcrum or through an available Fulcrum MCP connector.
+5. Build through Fulcrum App MCP when available, or use the approved handoff.
 6. Test the workflow and document the result with `fulcrum-solution-document`.
 
 ## Alpha install matrix
@@ -79,24 +87,28 @@ not a claim that every host has been tested in this repository yet.
 
 ## Local validation
 
-Run the dependency-free alpha checks from the repository root:
+Ruby 3.2.11 is required; compatible version managers can provision it from
+`.ruby-version`. Run the dependency-free alpha checks from the repository root:
 
 ```bash
 ruby scripts/validate.rb
+ruby test/app_mcp_contract_test.rb
 ruby test/smoke_test.rb
 ```
 
 The validator checks skill frontmatter, directory/name consistency, corporate
 absolute paths, possible credentials, JSON manifests, and README inventory.
-The smoke test exercises a small site-inspection workflow through discovery,
-schema approval, offline review, and the no-MCP handoff path.
+The contract test prevents regressions in App MCP tool names, signatures, and
+preservation-safe form updates. The smoke test exercises a small
+site-inspection workflow through discovery, schema approval, offline review,
+and the no-MCP handoff path.
 
 ## Skills
 
 | Skill | Description | Type |
 | ------- | ------------- | ------ |
-| `fulcrum-product-knowledge` | Canonical Fulcrum platform capabilities, constraints, plans, integrations, GIS, Query API, and MCP build reference | Model-invoked |
-| `fulcrum-app-builder` | Novice-friendly app discovery, schema approval, MCP build orchestration, and connector-independent handoff | Model-invoked |
+| `fulcrum-product-knowledge` | Fulcrum platform capability router, constraints, plans, boundaries, and App MCP build reference | Model-invoked |
+| `fulcrum-app-builder` | Novice-friendly app discovery, schema approval, App MCP orchestration, and connector-independent handoff | Model-invoked |
 | `fulcrum-app-design` | App structure, field types, linked apps vs single app, repeatables | Model-invoked |
 | `fulcrum-app-goal` | Ensure every app has a clear goal and defined deliverable | Model-invoked |
 | `fulcrum-safety` | Flag missing safety steps in field workflows | Model-invoked |
@@ -111,8 +123,8 @@ schema approval, offline review, and the no-MCP handoff path.
 
 Skills are **model-invoked** by default: the agent fires them automatically when building Fulcrum apps. The agent will:
 
-- Use the canonical platform reference for capability, plan, offline, and integration decisions (`fulcrum-product-knowledge`)
-- Guide app discovery, schema approval, and connector-dependent execution (`fulcrum-app-builder`)
+- Use the platform router for capability, plan, offline, integration, and App MCP boundary decisions (`fulcrum-product-knowledge`)
+- Guide app discovery, schema approval, and App MCP-dependent execution (`fulcrum-app-builder`)
 - Check that every app has a clear goal before building (`fulcrum-app-goal`)
 - Select appropriate field types and app structure (`fulcrum-app-design`)
 - Flag missing safety steps in field workflows (`fulcrum-safety`)
@@ -128,22 +140,18 @@ Two skills are **user-invoked** — run them manually:
 
 ## Where this comes from
 
-These skills aren't theoretical — they're distilled from real production work across CS, PS, and platform engineering.
+The toolkit combines public Fulcrum documentation with portable workflow
+guidance. Live App MCP schemas own connector names, arguments, and result
+shapes; public Fulcrum documentation owns product and runtime behavior.
 
 ### Sources
 
-- **Jared Carey's App Build Methodology** — PS methodology doc covering the full build lifecycle: Discovery, Design, Build, Test/Deploy. Informed the skill chain from discovery interview through workflow decomposition. Real-world patterns from MasTec (350-field monolith), Entergy, National Grid, and commercial accounts.
-
-- **Kyle Pennell's fulcrum-tools-share** — 113 curated production examples from Solutions Engineering. Data event patterns, cascading choices, geofencing, role-based permissions, status state machines, and the PDF-to-Form-Report pipeline. The anti-patterns and platform constraints in `fulcrum-data-events` come directly from these production scripts.
-
-- **MasTec deep dive** — A 350-field telecom construction app that tried to capture an entire lifecycle in one form. Five different roles, 60+ data event edge cases, three restructuring attempts. The decomposition example in `fulcrum-workflow-decomposition` is based on this real case. Key lesson: "You will not put them in the same box" — template maturity models fail when customers need different workflows.
-
-- **Permission loophole findings** — Jared Carey identified three permission bypass patterns in production data events: client-side export bypass, bulk update bypass, and visibility rules vs data events conflicts. These are documented as anti-patterns in `fulcrum-data-events`.
-
-- **Digital Transformation Best Practices** — Six practices extracted from PS engagement patterns: process discovery before building, output-first design, decompose by role, iterate don't perfect, change management, governance. These shaped `fulcrum-discovery` and `fulcrum-app-goal`.
-
-- **fulcrum-product-knowledge (SE/PS reference skill)** — A comprehensive platform knowledge base maintained for the Solutions Engineering and Professional Services teams. Covers plans and licensing gates, field type constraints, integration decision frameworks, reporting architecture, GIS limitations, and the full Query API reference. Gap analysis against this source drove the July 2026 updates to `fulcrum-data-events` (LOADFILE, STORAGE, CORS, plan gates), `fulcrum-app-design` (choice value/label distinction, Classification Set constraint, platform limits, predefined vs. ad hoc pattern), and `fulcrum-discovery` (platform boundaries and misconceptions as a pre-build check). Ongoing source for future skills: `fulcrum-report-building`, `fulcrum-app-extensions`, `fulcrum-query-api`, `fulcrum-integration-patterns`, `fulcrum-gis-mapping`.
-- **Corporate Claude Desktop skill packages** — `fulcrum-product-knowledge.skill` and `fulcrum-app-builder.skill` are the source snapshots supplied for this import. Their content is maintained as repository-native copies in `plugins/fulcrum-ai-toolkit/skills/fulcrum-product-knowledge/` and `plugins/fulcrum-ai-toolkit/skills/fulcrum-app-builder/`. The copies remove the corporate `/mnt/skills/organization` dependency, point to the repository-local reference skill, and preserve a connector-independent handoff when no Fulcrum MCP is configured. The repository does not provide a Fulcrum MCP server; live app mutations require a separately configured connector.
+- [Fulcrum developer documentation](https://docs.fulcrumapp.com/) for public
+  platform behavior and runtime functions.
+- [Fulcrum public OpenAPI document](https://raw.githubusercontent.com/fulcrumapp/api/v2/reference/rest-api.json)
+  for REST resource shapes.
+- [App MCP PR #28](https://github.com/fulcrumapp/app-mcp/pull/28) for the
+  prerequisite control-plane contract used by the current workflow guidance.
 
 The [legacy product-knowledge migration coverage map](plugins/fulcrum-ai-toolkit/docs/legacy-product-knowledge-coverage.md)
 tracks every legacy domain, its canonical target, public sources, and material
@@ -189,6 +197,7 @@ installers. Codex marketplace metadata is available at
 - [GitHub Copilot agent skills](https://docs.github.com/en/copilot/how-tos/copilot-on-github/customize-copilot/customize-cloud-agent/add-skills)
 - [Vercel skills CLI](https://github.com/vercel-labs/skills)
 - [Fulcrum developer documentation](https://docs.fulcrumapp.com/)
+- [App MCP tool-contract prerequisite](https://github.com/fulcrumapp/app-mcp/pull/28)
 
 ## Contributing
 

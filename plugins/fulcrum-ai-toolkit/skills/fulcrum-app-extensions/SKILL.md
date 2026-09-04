@@ -1,6 +1,6 @@
 ---
 name: fulcrum-app-extensions
-description: Use when building, modifying, or reviewing Fulcrum app extensions — custom HTML/CSS/JavaScript UIs embedded inside a record. Covers extension anatomy, data exchange patterns, offline support decisions, extension types, and the picker anti-pattern. Also use when a builder asks about custom field types, embedded UIs, or SVG-based inputs inside Fulcrum records.
+description: Use when building, modifying, or reviewing Fulcrum App Extensions. Defers pattern knowledge and artifact generation to App MCP, then covers the generated bridge contract, Reference File workflow, offline decisions, data exchange, and picker anti-pattern.
 ---
 
 An **app extension** is a custom HTML/CSS/JavaScript UI that runs inside a Fulcrum record on iOS, Android, and web. It lets you build data collection interfaces that Fulcrum doesn't support natively — custom pickers, embedded charts, SVG area selection, Bluetooth input, complex validation UIs.
@@ -8,6 +8,12 @@ An **app extension** is a custom HTML/CSS/JavaScript UI that runs inside a Fulcr
 Extensions communicate with the Fulcrum record through the data events API bridge. The data lives in standard Fulcrum fields and syncs normally.
 
 > **Provenance:** The bridge API and event flow in this skill follow Fulcrum's documented extension API. Field-type recommendations, offline decisions, and payload-sizing guidance are toolkit conventions unless explicitly attributed.
+
+## App MCP Knowledge And Generation
+
+When Fulcrum App MCP is registered, use `fulcrum_extensions_list_patterns` and `fulcrum_extensions_explain` to select a supported pattern, then use `fulcrum_extensions_generate` for the Data Event, HTML, and setup notes. Treat those registered tools as the current extension contract instead of recreating a remembered bootstrap or bridge.
+
+> Source: [App MCP PR #28](https://github.com/fulcrumapp/app-mcp/pull/28) at commit [`f8c041e`](https://github.com/fulcrumapp/app-mcp/commit/f8c041ee309c61c6154cce1a7b2cb84fc4c4cf10) defines the generated artifacts used here. The bridge behavior comes from the [Fulcrum App Extensions introduction](https://docs.fulcrumapp.com/docs/app-extensions-introduction).
 
 ## When to Use an Extension vs. a Data Event
 
@@ -32,13 +38,17 @@ Extensions communicate with the Fulcrum record through the data events API bridg
 
 ## Extension Anatomy
 
-An app extension has two parts: a Data Event script that opens the extension, and a custom HTML page that runs in Fulcrum's sandboxed browser panel. The Data Event passes data into the page with `OPENEXTENSION({ ... })`; the page receives it through `Fulcrum.load(...)` and returns results with `Fulcrum.finish(...)`.
+An app extension has two parts: a Data Event script that opens the extension, and a custom HTML page that runs in Fulcrum's sandboxed browser panel. The generated Data Event passes values with `OPENEXTENSION({ url, title, data, onMessage })`. The generated HTML embeds the current Fulcrum bootstrap inline, receives a payload shaped as `{ data }`, and returns results with `Fulcrum.finish(result)`.
+
+Do not substitute an old external bootstrap URL. Start from the complete HTML returned by `fulcrum_extensions_generate`, which includes the current standalone bootstrap needed for Reference File and offline use.
 
 ```html
 <!DOCTYPE html>
 <html>
 <head>
+  <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
+  <!-- The generated artifact contains Fulcrum's current inline bootstrap here. -->
   <style>
     /* Keep styles self-contained — no external stylesheets at runtime */
     body { font-family: sans-serif; margin: 0; padding: 16px; }
@@ -51,19 +61,17 @@ An app extension has two parts: a Data Event script that opens the extension, an
     <option value="option_b">Option B</option>
   </select>
   <button id="save-btn">Save</button>
-
   <script>
-    // Include Fulcrum's extension script as documented by Fulcrum.
-    // It provides the Fulcrum.load/finish extension API.
-
-    // Receive values passed by the Data Event and pre-populate the UI.
     var select = document.getElementById('my-select');
 
     Fulcrum.load(function(payload) {
-      select.value = (payload.data && payload.data.current_value) || '';
+      initialize(payload.data || {});
     });
 
-    // Return the selected value to the Data Event.
+    function initialize(data) {
+      select.value = data.current_value || '';
+    }
+
     document.getElementById('save-btn').addEventListener('click', function() {
       var selectedValue = document.getElementById('my-select').value;
       Fulcrum.finish({ value: selectedValue });
@@ -73,9 +81,11 @@ An app extension has two parts: a Data Event script that opens the extension, an
 </html>
 ```
 
+> Source: The payload and inline-bootstrap semantics above are materially adapted from the generated templates in [App MCP PR #28](https://github.com/fulcrumapp/app-mcp/pull/28) and the [public App Extensions quick start](https://docs.fulcrumapp.com/docs/app-extensions-introduction#quick-start).
+
 ## Data Exchange — Reading and Writing Record Fields
 
-Extensions exchange data with the host through the Data Event that opened them. The HTML page receives a plain data object and returns a plain result object; the Data Event remains responsible for reading and writing Fulcrum fields.
+Extensions exchange data with the host through the Data Event that opened them. `Fulcrum.load(callback)` receives a payload whose `data` property is the object passed to `OPENEXTENSION`. `Fulcrum.finish(result)` returns an `onMessage` payload whose `data` property is that result. The Data Event remains responsible for reading and writing Fulcrum fields.
 
 ### Passing values into the extension
 
@@ -90,7 +100,10 @@ ON('click', 'open_picker_btn', function() {
       record_id: RECORDID()
     },
     onMessage: function(message) {
-      SETVALUE('species_name', message.data.value);
+      var data = message && message.data;
+      if (data) {
+        SETVALUE('species_name', data.value);
+      }
     }
   });
 });
@@ -99,9 +112,10 @@ ON('click', 'open_picker_btn', function() {
 Inside the HTML extension, receive the data with `Fulcrum.load(...)`:
 
 ```javascript
-Fulcrum.load(function(message) {
-  var currentValue = message.data.current_value;
-  var recordId = message.data.record_id;
+Fulcrum.load(function(payload) {
+  var data = payload.data || {};
+  var currentValue = data.current_value;
+  var recordId = data.record_id;
 });
 ```
 
@@ -119,7 +133,10 @@ ON('click', 'open_picker_btn', function() {
       mode: 'picker'
     },
     onMessage: function(message) {
-      SETVALUE('species_name', message.data.value);
+      var data = message && message.data;
+      if (data) {
+        SETVALUE('species_name', data.value);
+      }
     }
   });
 });
@@ -128,8 +145,8 @@ ON('click', 'open_picker_btn', function() {
 Access the context data inside the HTML page:
 
 ```javascript
-Fulcrum.load(function(message) {
-  var currentValue = message.data.current_value;
+Fulcrum.load(function(payload) {
+  var currentValue = (payload.data || {}).current_value;
 });
 ```
 
@@ -156,7 +173,10 @@ ON('click', 'open_species_picker', function(event) {
     url: 'attachment://species_picker.html',
     data: { current_value: VALUE('selected_species') },
     onMessage: function(message) {
-      SETVALUE('selected_species', message.data.value);
+      var data = message && message.data;
+      if (data) {
+        SETVALUE('selected_species', data.value);
+      }
     }
   });
 });
@@ -188,19 +208,34 @@ Whether an extension works offline depends entirely on where its assets are host
 
 ## Uploading and Attaching Extensions
 
-The extension HTML file is uploaded as a **Reference File** on the form. When the Fulcrum MCP is available, it can do this directly:
+The extension HTML file is uploaded as a **Reference File** on the form. When App MCP is available, use the generated artifacts without changing their bridge contract:
+
+> Source: [App MCP PR #28](https://github.com/fulcrumapp/app-mcp/pull/28) defines the exact tool arguments and generated Reference File workflow.
 
 ```
-Step 1: fulcrum_extensions_generate(pattern="picker", ...)  — generate the code
-Step 2: fulcrum_reference_files_upload(form_id=..., file_content=..., filename="picker.html")
-Step 3: fulcrum_forms_update(form_id=..., script=<data_event_JS_with_OPENEXTENSION>)
+Step 1: fulcrum_extensions_generate(
+          pattern="picker",
+          name="species-picker",
+          description="Select a species",
+          field_name="open_species_picker"
+        )
+Step 2: fulcrum_reference_files_upload(
+          form_id=...,
+          file_name="species-picker.html",
+          content=<generated HTML>
+        )
+Step 3: fulcrum_forms_get(id=...)
+Step 4: fulcrum_forms_update(
+          id=...,
+          script=<existing script plus generated Data Event>
+        )
 ```
 
-Or use `fulcrum_extensions_list_patterns` and `fulcrum_extensions_explain(pattern="picker")` to explore available patterns before generating.
+Use `fulcrum_extensions_list_patterns` and `fulcrum_extensions_explain(pattern="picker")` to explore registered patterns before generating. There is no standalone Data Event update tool; preserve the existing form `script` through the form get/update operations.
 
 ### Manual UI fallback
 
-When the Fulcrum MCP is unavailable:
+When App MCP is unavailable:
 
 1. Save the extension as an `.html` file with all offline-required assets embedded or included as Reference Files.
 2. In Fulcrum, open the target form and upload the file under **Reference Files**.
@@ -223,6 +258,9 @@ Do not pass an entire `LOADRECORDS()` result through `OPENEXTENSION()` when the 
 ### External assets for offline extensions
 Loading any script, style, or asset from a URL in an extension intended for offline use. If the device has no connection, the asset fails to load silently — the extension may render blank or broken.
 
+### Handwritten or stale bridge bootstrap
+Do not copy an old hosted bootstrap script or invent the `Fulcrum.load` payload shape. Use the full HTML returned by `fulcrum_extensions_generate`; its inline bootstrap and `{ data }` payload contract are versioned with App MCP.
+
 ### Extension as a data event replacement
 Building an extension for logic that data events handle well (show/hide, cascade, calculate). Extensions add complexity — an app is harder to maintain when logic is split between data events and extension code. Use extensions only when you need a custom UI.
 
@@ -238,8 +276,11 @@ An extension that tries to replicate an entire sub-application. Extensions are p
 - [ ] Data flows are documented: what fields the extension reads, what fields it writes back
 - [ ] `OPENEXTENSION()` call in data events passes any needed context to the extension
 - [ ] Extension returns results with `Fulcrum.finish()` after the user completes the interaction
+- [ ] App MCP-generated HTML retains its inline bootstrap and `payload.data` initialization semantics
+- [ ] Existing form Data Event handlers were preserved when the generated handler was appended
 
 ## References
 
 - [Fulcrum app extensions introduction](https://docs.fulcrumapp.com/docs/app-extensions-introduction)
 - [Fulcrum offline capabilities](https://docs.fulcrumapp.com/docs/offline-capabilities)
+- [App MCP tool-contract prerequisite](https://github.com/fulcrumapp/app-mcp/pull/28)
