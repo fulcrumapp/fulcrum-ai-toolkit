@@ -360,6 +360,7 @@ for (const p of uniqueTextPaths) {
 
 // 5. Manifest checks
 const AGENT_PLUGIN_SCHEMA = 'https://agent-plugins.org/schemas/1.0.0/plugin.schema.json';
+const AGENT_MCP_SCHEMA = 'https://agent-plugins.org/schemas/1.0.0/mcp.schema.json';
 const agentManifest = jsonDocuments[`${PLUGIN_RELATIVE_PATH}/plugin.json`];
 if (agentManifest) {
   if (agentManifest.$schema !== AGENT_PLUGIN_SCHEMA) {
@@ -367,6 +368,13 @@ if (agentManifest) {
   }
   if (!agentManifest.name) {
     failures.push(`${PLUGIN_RELATIVE_PATH}/plugin.json: name is required`);
+  }
+}
+
+const agentMcp = jsonDocuments[`${PLUGIN_RELATIVE_PATH}/mcp.json`];
+if (agentMcp) {
+  if (agentMcp.$schema !== AGENT_MCP_SCHEMA) {
+    failures.push(`${PLUGIN_RELATIVE_PATH}/mcp.json: $schema must identify Agent Plugins MCP 1.0.0`);
   }
 }
 

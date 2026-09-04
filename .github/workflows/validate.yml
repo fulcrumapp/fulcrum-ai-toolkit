@@ -15,10 +15,6 @@ jobs:
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
         with:
           fetch-depth: 0
-      - name: Set up Ruby
-        uses: ruby/setup-ruby@95ef2b042f9d7a56d8268cba8559e2842e2ad01b # v1
-        with:
-          ruby-version: '.ruby-version'
       - name: Set up Node
         uses: actions/setup-node@1d0ff469b7ec7b3cb9d8673fde0c81c44821de2a # v4.2.0
         with:
@@ -33,17 +29,7 @@ jobs:
         working-directory: tools/format-validator
       - name: Validate skills and manifests
         run: node scripts/validate.mjs
-      - name: Check App MCP contract guidance
-        run: ruby test/app_mcp_contract_test.rb
-      - name: Check host manifest contracts
-        run: ruby test/manifest_contract_test.rb
-      - name: Check product knowledge decomposition
-        run: ruby test/product_knowledge_decomposition_test.rb
-      - name: Check externalized examples and assets
-        env:
-          REQUIRE_NODE: "1"
-        run: ruby test/external_examples_test.rb
-      - name: Check distributable resource contracts
-        run: ruby test/resource_contract_test.rb
-      - name: Run smoke test
-        run: ruby test/smoke_test.rb
+      - name: Validate Anthropic Claude plugin marketplace
+        uses: anthropics/claude-plugins-community/.github/actions/validate-plugins@a727be1c7bd6064419b6f60d71993a19198adc17
+        with:
+          marketplace-path: .claude-plugin/marketplace.json
