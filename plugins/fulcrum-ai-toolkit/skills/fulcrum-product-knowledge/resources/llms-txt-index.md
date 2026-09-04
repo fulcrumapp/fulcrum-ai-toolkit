@@ -1,8 +1,12 @@
-# Fulcrum Documentation Index (llms.txt)
+# Selected Fulcrum Developer Documentation Index
 
 > Source: https://docs.fulcrumapp.com/llms.txt
-> Fetched: 2026-08-19
+> Fetched: 2026-09-02
 > Tip: Append .md to any URL for markdown-formatted content
+
+Every URL below was present in the upstream `llms.txt` at the fetched date.
+This is a selected, reorganized index rather than a verbatim or complete copy.
+Refresh it from the named upstream source before relying on discovery coverage.
 
 ## Guides
 
@@ -70,8 +74,3 @@
 - https://docs.fulcrumapp.com/reference/batch-intro.md
 - https://docs.fulcrumapp.com/reference/report-templates-api.md
 - https://docs.fulcrumapp.com/reference/workflows-api.md
-
-## OpenAPI Spec
-
-- https://raw.githubusercontent.com/fulcrumapp/api/v2/reference/rest-api.json (OpenAPI 3.1, 101 endpoints, 47 resources)
-- Vendored copy: fulcrum-rest-api.json in this resources/ directory
