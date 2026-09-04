@@ -3,6 +3,7 @@
 
 require "json"
 require "pathname"
+require "uri"
 require "yaml"
 
 ROOT = File.expand_path("..", __dir__)
@@ -207,8 +208,15 @@ if File.file?(coverage_map)
       [A-Z]:\\Users(?:\\|\b)
     )
   }ix
+  private_collaboration_hosts = ["atlassian.net", "slack.com"].freeze
+  private_collaboration_url = URI.extract(coverage_text, %w[http https]).any? do |url|
+    host = URI.parse(url).host&.downcase
+    private_collaboration_hosts.any? do |private_host|
+      host == private_host || host&.end_with?(".#{private_host}")
+    end
+  end
   if coverage_text.match?(local_path_pattern) ||
-     coverage_text.match?(/atlassian\.net|slack\.com/i)
+     private_collaboration_url
     failures << "#{COVERAGE_MAP_RELATIVE_PATH}: contains a local path or private collaboration URL"
   end
 else
