@@ -27,6 +27,11 @@ module ContentContracts
     onion
     test
   ].freeze
+  PRIVATE_COLLABORATION_URL = %r{
+    atlassian\.net|
+    slack\.com|
+    github\.com/fulcrumapp/app-mcp
+  }ix
 
   module_function
 
@@ -73,6 +78,10 @@ module ContentContracts
     without_web_urls.scan(%r{(?:\A|[\s"'`(\[\{:=>])(/[^\s"'`<>]*)}).flatten.any? do |path|
       path.match?(PRIVATE_PATH)
     end || without_web_urls.match?(PRIVATE_WINDOWS_PATH)
+  end
+
+  def private_collaboration_url?(text)
+    text.match?(PRIVATE_COLLABORATION_URL)
   end
 
   # Layer 3 deliberately bans fence marker tokens rather than parsing Markdown.

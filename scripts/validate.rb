@@ -153,14 +153,9 @@ public_text_paths = [
   File.join(ROOT, ".github", "plugin", "marketplace.json"),
   File.join(ROOT, ".agents", "plugins", "marketplace.json")
 ] + FileContracts.files_under(PLUGIN_DIR)
-private_reference_pattern = %r{
-  atlassian\.net|
-  slack\.com|
-  github\.com/fulcrumapp/app-mcp
-}ix
 public_text_paths.uniq.select { |path| File.file?(path) }.each do |path|
   text = FileContracts.read_text(path)
-  if text.match?(private_reference_pattern) || ContentContracts.private_filesystem_path?(text)
+  if ContentContracts.private_collaboration_url?(text) || ContentContracts.private_filesystem_path?(text)
     failures << "#{repo_relative_path(path)}: contains a private path or collaboration URL"
   end
 

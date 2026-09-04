@@ -12,12 +12,13 @@ comment. Strict JSON cannot hold comments, so its source is recorded here.
 ## Notes
 
 - `record-link-field.json` is a complete element, not a fragment. Every
-  property in it is defined by the public Forms schema vendored at
-  [`fulcrum-rest-api.json`](../../fulcrum-product-knowledge/resources/fulcrum-rest-api.json):
+  property in it is defined by the
+  [public OpenAPI contract](https://raw.githubusercontent.com/fulcrumapp/api/v2/reference/rest-api.json):
   `type`, `key`, `data_name`, and `label` are required for every element, and
   `linked_form_id`, `allow_existing_records`, `allow_creating_records`,
   `allow_updating_records`, and `allow_empty_records` are the RecordLinkField
   properties. There is no `allow_multiple_records` property.
+  Source: [OpenAPI and Postman collection](https://docs.fulcrumapp.com/reference/openapi-and-postman-collection).
 - `record-link-field.json` uses `linked_form_id`, not `form_id` or
   `record_link_form_id`, and at least one of `allow_existing_records` or
   `allow_creating_records` must be `true`.
