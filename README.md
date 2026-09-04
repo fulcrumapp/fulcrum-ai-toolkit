@@ -250,9 +250,8 @@ shapes; public Fulcrum documentation owns product and runtime behavior.
 Distributable provenance uses `> Source:` notes with a public URL. The legacy
 coverage manifest may instead use its neutral `Inventory fingerprint:` label.
 Named people, customers, and non-public research attribution are not valid
-public
-provenance. Validation enforces these structural cues across packaged text,
-including dotfiles; it is not a general-purpose personal-data detector.
+public provenance. Validation enforces these structural cues across packaged
+text, including dotfiles; it is not a general-purpose personal-data detector.
 
 The five layer-3 product skills prohibit any triple-backtick or triple-tilde
 token anywhere in a packaged regular file. This intentionally simple rule is

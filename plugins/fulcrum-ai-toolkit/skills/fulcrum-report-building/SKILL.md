@@ -47,8 +47,8 @@ These are available in every report without any setup:
 | `record` | The current record — metadata plus field values under `record.formValues` |
 | `form` | The app/form definition — field labels, data names, element structure |
 | `QUERY(sql, options)` | Execute SQL against the Query API from template EJS |
-| `PHOTOURL(mediaID)` | Signed URL for a photo field value |
-| `SIGNATUREURL(id)` | Signed URL for a signature field value |
+| `PHOTOURL(id, options)` | Signed URL for a photo field value |
+| `SIGNATUREURL(id, options)` | Signed URL for a signature field value |
 | `STATICMAP(options)` | Generates a static map image (Google or Esri) |
 | `RENDER(feature, options, eachFunction)` | Recursively renders form elements with nesting context |
 | `RENDERVALUES(feature, options, eachFunction)` | Recursively renders form values |
