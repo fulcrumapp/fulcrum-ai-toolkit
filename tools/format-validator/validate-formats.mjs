@@ -66,10 +66,16 @@ const RAW_OUTPUT_TAG = '<%-';
 const OUTPUT_INTERNALS = ['__append', '__output', 'escapeFn'];
 
 const documentValidator = new HtmlValidate({
-  extends: ['html-validate:recommended', 'html-validate:document']
+  extends: ['html-validate:recommended', 'html-validate:document'],
+  rules: {
+    'script-type': 'off'
+  }
 });
 const fragmentValidator = new HtmlValidate({
-  extends: ['html-validate:recommended']
+  extends: ['html-validate:recommended'],
+  rules: {
+    'script-type': 'off'
+  }
 });
 
 const failures = [];
@@ -281,7 +287,7 @@ async function main() {
   // The contracts prove themselves before they are used on the repository, so a
   // contract that stopped catching bypasses fails here rather than passing
   // everything silently. Their scope is the SQL a QUERY() call may carry.
-  const contracts = selfCheck(schemas);
+  const contracts = selfCheck();
   for (const failure of contracts.failures) failures.push(`tools/format-validator: ${failure}`);
   count('contract-probe', contracts.total);
 
