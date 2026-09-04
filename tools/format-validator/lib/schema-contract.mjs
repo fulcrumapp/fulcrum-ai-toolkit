@@ -24,6 +24,7 @@ export const VENDORED_OPENAPI_SPEC_PATH = path.resolve(
 
 export const OFFICIAL_OPENAPI_URL =
   'https://raw.githubusercontent.com/fulcrumapp/api/v2/reference/rest-api.json';
+export const OPENAPI_FETCH_TIMEOUT_MS = 30_000;
 
 let cachedSchemas = null;
 
@@ -53,7 +54,9 @@ export async function loadSchemas() {
 
   if (process.env.OPENAPI_FETCH === '1') {
     try {
-      const response = await fetch(OFFICIAL_OPENAPI_URL);
+      const response = await fetch(OFFICIAL_OPENAPI_URL, {
+        signal: AbortSignal.timeout(OPENAPI_FETCH_TIMEOUT_MS)
+      });
       if (!response.ok) {
         throw new Error(`HTTP ${response.status} ${response.statusText}`);
       }
