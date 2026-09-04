@@ -78,7 +78,8 @@
               JSON.stringify(message)
             );
           } else if (window.parent) {
-            window.parent.postMessage({ extensionMessage: message }, window.Fulcrum.origin);
+            const targetOrigin = window.Fulcrum.origin || '*';
+            window.parent.postMessage({ extensionMessage: message }, targetOrigin);
           }
         },
 
@@ -87,13 +88,17 @@
          * @param {MessageEvent} event
          */
         receive(event) {
-          if (
-            event.origin &&
-            !event.origin.endsWith('fulcrumapp.com') &&
-            event.origin !== window.location.origin &&
-            event.origin !== 'null'
-          ) {
-            return;
+          if (event.origin && event.origin !== 'null' && event.origin !== window.location.origin) {
+            try {
+              const url = new URL(event.origin);
+              const host = url.hostname.toLowerCase();
+              const isFulcrumHost = host === 'fulcrumapp.com' || host.endsWith('.fulcrumapp.com');
+              if (!isFulcrumHost) {
+                return;
+              }
+            } catch {
+              return;
+            }
           }
 
           const parsed = parseJson(event.data);

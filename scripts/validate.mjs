@@ -112,7 +112,7 @@ const ENTITY = `(?:(?:${PROPER_TOKEN}(?:\\s+${PROPER_TOKEN}){1,3})|[A-Z][a-z0-9]
 const ATTRIBUTION_SEPARATOR = '[\\s,;:()—-]{1,8}';
 const ATTRIBUTION = new RegExp(`(?:${ENTITY}${ATTRIBUTION_SEPARATOR}${RESEARCH_EVENT}|${RESEARCH_EVENT}${ATTRIBUTION_SEPARATOR}${ENTITY}|${RESEARCH_EVENT}\\s+[Nn]otes?\\s+(?:from|by)\\s+${ENTITY})`, 'u');
 const AFFILIATION = new RegExp(`${ENTITY}\\s+(?:at|from)\\s+(?:${ENTITY}|${PROPER_TOKEN})`, 'u');
-const PRIVATE_PATH = /^\/(?:Users|home|mnt)(?:\/|\z)/i;
+const PRIVATE_PATH = /^\/(?:Users|home|mnt)(?:\/|$)/i;
 const PRIVATE_WINDOWS_PATH = /^(?:[A-Za-z]:[/\\]Users[/\\]|[A-Za-z]:[/\\]home[/\\])/i;
 const PRIVATE_COLLABORATION_URL = /(?:atlassian\.net|slack\.com|github\.com\/fulcrumapp\/app-mcp)/i;
 const PRIVATE_HOST_SUFFIXES = [
@@ -158,7 +158,7 @@ function publicUrl(text) {
   return urls.some((url) => {
     try {
       const parsed = new URL(url);
-      const host = parsed.hostname.toLowerCase().replace(/\.\z/, '');
+      const host = parsed.hostname.toLowerCase().replace(/\.$/, '');
       if (!publicDnsName(host)) return false;
       const isNumeric = host.split('.').every((label) => /^(\d+|0x[0-9a-f]+)$/i.test(label));
       return !isNumeric && !host.includes(':');
