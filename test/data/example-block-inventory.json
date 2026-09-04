@@ -367,7 +367,7 @@
     {
       "path": "skills/fulcrum-report-building/assets/ejs-tag-types.ejs",
       "kind": "fragment",
-      "sha256": "d9d0b7d0c2e781dd1c482141f86b1494d8998cbb67cd43deb7c371bd4a53c5c3"
+      "sha256": "6d702b468114a2879157e57d1813dfde0acccb3b93a3eac0d97ade01b36c1875"
     },
     {
       "path": "skills/fulcrum-report-building/examples/api-fulcrum-rest.ejs",
@@ -392,7 +392,7 @@
     {
       "path": "skills/fulcrum-report-building/examples/photo-url-signed-src.ejs",
       "kind": "fragment",
-      "sha256": "b3da720a8de029a077003e994caa6853642f5a6ae4e3cac21e95d45398a0656c"
+      "sha256": "cfec798ff4bb9a401ef222b10d01dbc0b70710fbd358b8ce119269297ba1e7d3"
     },
     {
       "path": "skills/fulcrum-report-building/examples/query-related-records.ejs",

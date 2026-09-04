@@ -57,10 +57,10 @@ These are available in every report without any setup:
 
 ## EJS Patterns
 
-EJS uses three tag types. Use them correctly — they produce very different output. The three forms are shown in
-[`assets/ejs-tag-types.ejs`](assets/ejs-tag-types.ejs):
-`<%= %>` outputs an escaped value, `<%- %>` outputs raw HTML, and `<% %>`
-executes JavaScript without output.
+EJS supports escaped output, raw output, and code-only tags. This toolkit's
+copyable examples use escaped output and code-only tags, shown in
+[`assets/ejs-tag-types.ejs`](assets/ejs-tag-types.ejs). Raw `<%- %>` output is
+omitted because its emitted markup cannot be validated statically.
 
 Every fragment below is a separate file under
 [`examples/`](examples/README.md), each with its own `<%# Source: %>` comment.
