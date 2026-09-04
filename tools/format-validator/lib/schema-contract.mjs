@@ -2,40 +2,40 @@
 //
 // Pulls schemas dynamically from the official Fulcrum OpenAPI reference:
 // https://raw.githubusercontent.com/fulcrumapp/api/v2/reference/rest-api.json
-// Caches to node_modules/.cache to avoid redundant network round-trips.
+// Keep the fetched document in memory only. Do not write network bytes to
+// disk. Override with OPENAPI_SPEC_PATH when a local spec file is available.
 
 import fs from 'node:fs';
-import path from 'node:path';
 import process from 'node:process';
-import { fileURLToPath } from 'node:url';
 
 import Ajv from 'ajv';
 import addFormats from 'ajv-formats';
-
-const HERE = path.dirname(fileURLToPath(import.meta.url));
-const CACHE_DIR = path.resolve(HERE, '..', 'node_modules', '.cache');
-const CACHE_FILE = path.join(CACHE_DIR, 'fulcrum-openapi-schemas.json');
 
 export const OFFICIAL_OPENAPI_URL =
   'https://raw.githubusercontent.com/fulcrumapp/api/v2/reference/rest-api.json';
 
 let cachedSchemas = null;
 
+function schemasFromSpec(raw) {
+  const schemas = raw?.components?.schemas || raw;
+  if (!schemas || typeof schemas !== 'object' || Array.isArray(schemas)) {
+    throw new Error('No components.schemas found in OpenAPI document');
+  }
+  return schemas;
+}
+
 export async function loadSchemas() {
   if (cachedSchemas) return cachedSchemas;
 
-  if (process.env.OPENAPI_SPEC_PATH && fs.existsSync(process.env.OPENAPI_SPEC_PATH)) {
-    const raw = JSON.parse(fs.readFileSync(process.env.OPENAPI_SPEC_PATH, 'utf8'));
-    cachedSchemas = raw.components?.schemas || raw;
-    return cachedSchemas;
-  }
-
-  if (fs.existsSync(CACHE_FILE)) {
+  if (process.env.OPENAPI_SPEC_PATH) {
     try {
-      cachedSchemas = JSON.parse(fs.readFileSync(CACHE_FILE, 'utf8'));
+      const raw = JSON.parse(fs.readFileSync(process.env.OPENAPI_SPEC_PATH, 'utf8'));
+      cachedSchemas = schemasFromSpec(raw);
       return cachedSchemas;
-    } catch {
-      // Cache unreadable; refetch below
+    } catch (error) {
+      throw new Error(
+        `Failed to load OpenAPI spec from OPENAPI_SPEC_PATH (${process.env.OPENAPI_SPEC_PATH}): ${error.message}`
+      );
     }
   }
 
@@ -44,21 +44,7 @@ export async function loadSchemas() {
     if (!response.ok) {
       throw new Error(`HTTP ${response.status} ${response.statusText}`);
     }
-    const spec = await response.json();
-    cachedSchemas = spec.components?.schemas;
-    if (!cachedSchemas) {
-      throw new Error('No components.schemas found in OpenAPI document');
-    }
-
-    try {
-      if (!fs.existsSync(CACHE_DIR)) {
-        fs.mkdirSync(CACHE_DIR, { recursive: true });
-      }
-      fs.writeFileSync(CACHE_FILE, JSON.stringify(cachedSchemas), 'utf8');
-    } catch {
-      // Non-fatal cache write failure
-    }
-
+    cachedSchemas = schemasFromSpec(await response.json());
     return cachedSchemas;
   } catch (error) {
     throw new Error(

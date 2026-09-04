@@ -114,11 +114,12 @@ const ATTRIBUTION = new RegExp(`(?:${ENTITY}${ATTRIBUTION_SEPARATOR}${RESEARCH_E
 const AFFILIATION = new RegExp(`${ENTITY}\\s+(?:at|from)\\s+(?:${ENTITY}|${PROPER_TOKEN})`, 'u');
 const PRIVATE_PATH = /^\/(?:Users|home|mnt)(?:\/|$)/i;
 const PRIVATE_WINDOWS_PATH = /^(?:[A-Za-z]:[/\\]Users[/\\]|[A-Za-z]:[/\\]home[/\\])/i;
-const PRIVATE_COLLABORATION_URL = /(?:atlassian\.net|slack\.com|github\.com\/fulcrumapp\/app-mcp)/i;
+const PRIVATE_COLLABORATION_HOSTS = ['atlassian.net', 'slack.com'];
 const PRIVATE_HOST_SUFFIXES = [
   'corp', 'example', 'home', 'home.arpa', 'internal',
   'invalid', 'lan', 'local', 'localhost', 'onion', 'test'
 ];
+const HTTP_URL = /https?:\/\/[^\s"'`<>)]+/gi;
 
 function normalizeContainerPrefix(sourceLine) {
   let line = sourceLine.trimStart();
@@ -153,18 +154,50 @@ function publicDnsName(host) {
   );
 }
 
-function publicUrl(text) {
-  const urls = text.match(/https?:\/\/[^\s"'`<>)]+/gi) || [];
-  return urls.some((url) => {
+function parsedHttpUrls(text) {
+  const urls = text.match(HTTP_URL) || [];
+  const parsed = [];
+  for (const url of urls) {
     try {
-      const parsed = new URL(url);
-      const host = parsed.hostname.toLowerCase().replace(/\.$/, '');
-      if (!publicDnsName(host)) return false;
-      const isNumeric = host.split('.').every((label) => /^(\d+|0x[0-9a-f]+)$/i.test(label));
-      return !isNumeric && !host.includes(':');
+      parsed.push(new URL(url));
     } catch {
-      return false;
+      // Ignore values that look like URLs but are not parseable.
     }
+  }
+  return parsed;
+}
+
+function hostnameOf(url) {
+  return url.hostname.toLowerCase().replace(/\.$/, '');
+}
+
+function hostEqualsOrPublicSuffix(host, domain) {
+  return host === domain || host.endsWith(`.${domain}`);
+}
+
+function isPrivateAppMcpUrl(url) {
+  const host = hostnameOf(url);
+  if (host !== 'github.com' && host !== 'www.github.com') return false;
+  const parts = url.pathname.split('/').filter(Boolean).map((part) => part.toLowerCase());
+  return parts[0] === 'fulcrumapp' && parts[1] === 'app-mcp';
+}
+
+function privateCollaborationUrl(text) {
+  return parsedHttpUrls(text).some((url) => {
+    const host = hostnameOf(url);
+    return (
+      PRIVATE_COLLABORATION_HOSTS.some((domain) => hostEqualsOrPublicSuffix(host, domain)) ||
+      isPrivateAppMcpUrl(url)
+    );
+  });
+}
+
+function publicUrl(text) {
+  return parsedHttpUrls(text).some((parsed) => {
+    const host = hostnameOf(parsed);
+    if (!publicDnsName(host)) return false;
+    const isNumeric = host.split('.').every((label) => /^(\d+|0x[0-9a-f]+)$/i.test(label));
+    return !isNumeric && !host.includes(':');
   });
 }
 
@@ -281,7 +314,7 @@ for (const skillPath of skillPaths) {
     failures.push(`${relativePath}: contains a corporate absolute skill path`);
   }
 
-  if (text.includes('github.com/fulcrumapp/app-mcp')) {
+  if (parsedHttpUrls(text).some(isPrivateAppMcpUrl)) {
     failures.push(`${relativePath}: contains a private App MCP repository URL`);
   }
 
@@ -341,7 +374,7 @@ for (const p of uniqueTextPaths) {
   const relative = repoRelativePath(p);
   const text = fs.readFileSync(p, 'utf8');
 
-  if (PRIVATE_COLLABORATION_URL.test(text) || privateFilesystemPath(text)) {
+  if (privateCollaborationUrl(text) || privateFilesystemPath(text)) {
     failures.push(`${relative}: contains a private path or collaboration URL`);
   }
 
@@ -473,7 +506,7 @@ if (fs.existsSync(exampleCoverage)) {
   if (!exampleText.includes('## Source rules for executable files')) {
     failures.push(`${EXAMPLE_COVERAGE_RELATIVE_PATH}: missing executable source rules`);
   }
-  if (/(?:\/(?:Users|home)\/|atlassian\.net|slack\.com)/i.test(exampleText)) {
+  if (privateCollaborationUrl(exampleText) || privateFilesystemPath(exampleText)) {
     failures.push(`${EXAMPLE_COVERAGE_RELATIVE_PATH}: contains a local path or private collaboration URL`);
   }
 } else {
