@@ -209,7 +209,7 @@ if File.file?(coverage_map)
     )
   }ix
   private_collaboration_hosts = ["atlassian.net", "slack.com"].freeze
-  private_collaboration_url = false
+  private_collaboration_host = nil
   URI.extract(coverage_text, %w[http https]).each do |url|
     begin
       host = URI.parse(url).host&.downcase
@@ -218,13 +218,16 @@ if File.file?(coverage_map)
       next
     end
 
-    private_collaboration_url ||= private_collaboration_hosts.any? do |private_host|
+    private_collaboration_host ||= private_collaboration_hosts.find do |private_host|
       host == private_host || host&.end_with?(".#{private_host}")
     end
   end
-  if coverage_text.match?(local_path_pattern) ||
-     private_collaboration_url
-    failures << "#{COVERAGE_MAP_RELATIVE_PATH}: contains a local path or private collaboration URL"
+
+  if coverage_text.match?(local_path_pattern)
+    failures << "#{COVERAGE_MAP_RELATIVE_PATH}: contains a local filesystem path"
+  end
+  if private_collaboration_host
+    failures << "#{COVERAGE_MAP_RELATIVE_PATH}: contains a private collaboration URL for #{private_collaboration_host}"
   end
 else
   failures << "#{COVERAGE_MAP_RELATIVE_PATH}: coverage manifest is missing"
