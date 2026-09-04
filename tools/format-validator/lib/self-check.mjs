@@ -356,10 +356,10 @@ const SCHEMA_PROBES = [
   ]
 ];
 
-function schemaFailures() {
+function schemaFailures(schemas) {
   const failures = [];
   for (const [name, doc, schemaName, expectedError] of SCHEMA_PROBES) {
-    const errors = validateDocument(doc, schemaName);
+    const errors = validateDocument(doc, schemaName, schemas);
     if (expectedError === null) {
       if (errors.length > 0) {
         failures.push(`OpenAPI schema contract rejected ${name}: ${errors.join('; ')}`);
@@ -383,9 +383,9 @@ function schemaFailures() {
 
 // Returns { failures, total } — the reasons the contracts are no longer sound,
 // and how many probes were exercised.
-export function selfCheck() {
+export function selfCheck(schemas) {
   return {
-    failures: [...sqlFailures(), ...templateFailures(), ...encoderFailures(), ...schemaFailures()],
+    failures: [...sqlFailures(), ...templateFailures(), ...encoderFailures(), ...schemaFailures(schemas)],
     total:
       REJECTED_SQL.length +
       ACCEPTED_SQL.length +

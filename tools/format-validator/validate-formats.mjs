@@ -36,7 +36,7 @@ import { HtmlValidate } from 'html-validate';
 import postcss from 'postcss';
 
 import { compiledSource, queryCalls } from './lib/ejs-queries.mjs';
-import { SCHEMA_MAPPINGS, validateDocument, validateInventory } from './lib/schema-contract.mjs';
+import { loadSchemas, SCHEMA_MAPPINGS, validateDocument, validateInventory } from './lib/schema-contract.mjs';
 import { selfCheck } from './lib/self-check.mjs';
 import { readOnlyViolations } from './lib/sql-contract.mjs';
 
@@ -243,7 +243,7 @@ function validateCss(file, text) {
   if (parseCss(file, text, 'stylesheet')) count('css');
 }
 
-function validateJson(file, text) {
+function validateJson(file, text, schemas) {
   let document;
   try {
     document = JSON.parse(text);
@@ -256,7 +256,7 @@ function validateJson(file, text) {
   const relative = path.relative(ROOT, file);
   const schemaName = SCHEMA_MAPPINGS[relative];
   if (schemaName) {
-    const errors = validateDocument(document, schemaName);
+    const errors = validateDocument(document, schemaName, schemas);
     for (const err of errors) {
       fail(file, `schema validation against ${schemaName}: ${err}`);
     }
@@ -270,10 +270,18 @@ async function main() {
     process.exit(1);
   }
 
+  let schemas;
+  try {
+    schemas = await loadSchemas();
+  } catch (error) {
+    console.error(`Format validation failed: ${error.message}`);
+    process.exit(1);
+  }
+
   // The contracts prove themselves before they are used on the repository, so a
   // contract that stopped catching bypasses fails here rather than passing
   // everything silently. Their scope is the SQL a QUERY() call may carry.
-  const contracts = selfCheck();
+  const contracts = selfCheck(schemas);
   for (const failure of contracts.failures) failures.push(`tools/format-validator: ${failure}`);
   count('contract-probe', contracts.total);
 
@@ -312,7 +320,7 @@ async function main() {
         if (parseSql(file, text, 'file')) count('sql');
         break;
       case '.json':
-        validateJson(file, text);
+        validateJson(file, text, schemas);
         break;
       default:
         if (PROSE_EXTENSIONS.has(extension)) {
