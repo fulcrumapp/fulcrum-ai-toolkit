@@ -259,7 +259,7 @@ function validateJson(file, text, schemas) {
     return;
   }
 
-  const relative = path.relative(ROOT, file);
+  const relative = path.relative(ROOT, file).split(path.sep).join('/');
   const schemaName = SCHEMA_MAPPINGS[relative];
   if (schemaName) {
     const errors = validateDocument(document, schemaName, schemas);
@@ -299,7 +299,7 @@ async function main() {
 
   const jsonFiles = files
     .filter((file) => path.extname(file).toLowerCase() === '.json')
-    .map((file) => path.relative(ROOT, file));
+    .map((file) => path.relative(ROOT, file).split(path.sep).join('/'));
   const inventoryErrors = validateInventory(jsonFiles);
   for (const err of inventoryErrors) {
     failures.push(`JSON inventory: ${err}`);

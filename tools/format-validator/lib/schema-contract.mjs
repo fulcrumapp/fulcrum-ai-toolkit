@@ -93,6 +93,45 @@ function getAjv(schemas) {
   return ajvInstance;
 }
 
+function resolveRef(ref, schemas) {
+  const prefix = '#/components/schemas/';
+  if (ref && ref.startsWith(prefix)) {
+    return schemas[ref.slice(prefix.length)];
+  }
+  return null;
+}
+
+function getAllowedProperties(schema, schemas) {
+  if (!schema) return new Set();
+  if (schema.$ref) return getAllowedProperties(resolveRef(schema.$ref, schemas), schemas);
+  const props = new Set(Object.keys(schema.properties || {}));
+  if (Array.isArray(schema.allOf)) {
+    for (const sub of schema.allOf) {
+      for (const p of getAllowedProperties(sub, schemas)) {
+        props.add(p);
+      }
+    }
+  }
+  return props;
+}
+
+function checkClosedSet(document, schema, schemas, path = '$') {
+  if (!document || typeof document !== 'object' || Array.isArray(document)) return [];
+
+  const errors = [];
+  const allowed = getAllowedProperties(schema, schemas);
+
+  if (allowed.size > 0 && schema.additionalProperties !== true) {
+    for (const key of Object.keys(document)) {
+      if (!allowed.has(key)) {
+        errors.push(`${path}: undocumented property "${key}"`);
+      }
+    }
+  }
+
+  return errors;
+}
+
 export function validateDocument(document, schemaName, schemas = cachedSchemas) {
   if (!schemas) {
     throw new Error('OpenAPI schemas must be loaded before calling validateDocument');
@@ -107,11 +146,17 @@ export function validateDocument(document, schemaName, schemas = cachedSchemas) 
   const validate = ajv.compile(schema);
   const valid = validate(document);
 
-  if (valid) return [];
+  const errors = [];
+  if (!valid && validate.errors) {
+    for (const err of validate.errors) {
+      errors.push(`${err.instancePath || '$'}: ${err.message}`);
+    }
+  }
 
-  return (validate.errors || []).map(
-    (err) => `${err.instancePath || '$'}: ${err.message}`
-  );
+  // Treat documented properties as a closed set for example files
+  errors.push(...checkClosedSet(document, schema, schemas));
+
+  return errors;
 }
 
 export function validateInventory(discoveredPaths) {
