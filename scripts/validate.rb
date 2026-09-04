@@ -203,7 +203,7 @@ if File.file?(coverage_map)
     (?:^|[[:space:]`"'(])
     (?:
       file:// |
-      /(?:Users|home)(?:/|\b) |
+      /(?:Users|home|mnt|Volumes)(?:/|\b) |
       [A-Z]:\\Users(?:\\|\b)
     )
   }ix
