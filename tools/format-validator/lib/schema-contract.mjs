@@ -206,7 +206,10 @@ export function validateDocument(document, schemaName, schemas = cachedSchemas) 
   }
 
   const ajv = getAjv(schemas);
-  const validate = ajv.compile(schema);
+  const validate = ajv.getSchema(`#/components/schemas/${schemaName}`);
+  if (!validate) {
+    return [`OpenAPI component schema "${schemaName}" does not exist`];
+  }
   const valid = validate(document);
 
   const errors = [];

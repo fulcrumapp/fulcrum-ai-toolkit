@@ -10,7 +10,13 @@ import { fileURLToPath } from 'node:url';
 import { createRequire } from 'node:module';
 
 const require = createRequire(import.meta.url);
-const YAML = require('../tools/format-validator/node_modules/yaml');
+let YAML;
+try {
+  YAML = require('../tools/format-validator/node_modules/yaml');
+} catch {
+  console.error('Missing yaml. Run `npm ci` in tools/format-validator first.');
+  process.exit(1);
+}
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(HERE, '..');
@@ -92,11 +98,9 @@ function filesUnder(directory) {
 }
 
 function referencesSectionHasUrl(text) {
-  const marker = '\n## References';
-  let idx = text.indexOf(marker);
-  if (idx === -1 && text.startsWith('## References')) idx = 0;
-  if (idx === -1) return false;
-  const content = text.slice(idx + marker.length);
+  const match = text.match(/(?:^|\n)## References(?:\r?\n|$)/);
+  if (!match) return false;
+  const content = text.slice(match.index + match[0].length);
   const nextHeading = content.search(/\n## [^\n]+/);
   const section = nextHeading === -1 ? content : content.slice(0, nextHeading);
   return /\]\(https?:\/\/[^)]+\)/.test(section);
