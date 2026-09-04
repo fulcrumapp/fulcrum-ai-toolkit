@@ -1,21 +1,29 @@
-// Probes that prove the SQL, QUERY(), encoder, and intrinsic contracts still
-// catch what they are for. They run on every validation, so the contracts are
-// exercised by the same command that validates the repository rather than by a
-// separate suite.
+// Probes that prove the SQL, QUERY(), encoder, intrinsic, and schema contracts
+// still catch what they are for. They run on every validation, so the contracts
+// are exercised by the same command that validates the repository rather than
+// by a separate suite.
 //
 // Each probe is a bypass someone could plausibly write, and each names the rule
 // that must catch it. Naming the rule is what makes a probe useful: one that
 // only asserts "rejected" keeps passing when a rule dies and another happens to
 // cover for it, which is how a contract quietly stops working.
 //
-// The scope here is exactly the SQL a QUERY() call may carry. There is no probe
-// for what a template's HTML renders to, because nothing in this tool claims to
-// know that.
+// SQL probes cover the SQL a QUERY() call may carry. Schema probes cover
+// inventory mapping and closed-set example JSON. There is no probe for what a
+// template's HTML renders to, because nothing in this tool claims to know that.
 //
 // Nothing here is executed. A probe template is turned into source and parsed,
 // exactly as a repository file is.
 
+import fs from 'node:fs';
+
 import { compiledSource, queryCalls, recognizedEncoders } from './ejs-queries.mjs';
+import {
+  SCHEMA_MAPPINGS,
+  VENDORED_OPENAPI_SPEC_PATH,
+  validateDocument,
+  validateInventory
+} from './schema-contract.mjs';
 import { readOnlyViolations } from './sql-contract.mjs';
 
 const QUERY_ONE = { single: true };
@@ -119,7 +127,7 @@ const gap = (expression) =>
 //             probe must be accepted with no violation at all
 const TEMPLATE_PROBES = [
   // The call itself, however it is spelled.
-  ['a double-quoted string argument', writes(`QUERY("${WRITE.replace(/"/g, '\\"')}")`), 1, 'read', 'only SELECT'],
+  ['a double-quoted string argument', writes(`QUERY("${WRITE.replace(/\\/g, '\\\\').replace(/"/g, '\\"')}")`), 1, 'read', 'only SELECT'],
   ['a single-quoted string argument', writes(`QUERY('${WRITE}')`), 1, 'read', 'only SELECT'],
   ['a comment between the name and its parenthesis', writes(`QUERY /* c */ (\`${WRITE}\`)`), 1, 'read', 'only SELECT'],
   ['a newline between the name and its parenthesis', writes(`QUERY\n  (\`${WRITE}\`)`), 1, 'read', 'only SELECT'],
@@ -313,11 +321,202 @@ function encoderFailures() {
   return failures;
 }
 
+// In-memory OpenAPI-shaped fixtures. They never set additionalProperties:
+// false, so a probe that names "undocumented property" can only pass if the
+// closed-set walk is still wired. Nested Child properties are a different
+// set from Parent, so a walk that reuses the parent allowed set would miss
+// `name` on a child.
+const SCHEMA_FIXTURES = {
+  Parent: {
+    type: 'object',
+    properties: {
+      name: { type: 'string' },
+      child: { $ref: '#/components/schemas/Child' },
+      items: {
+        type: 'array',
+        items: { $ref: '#/components/schemas/Child' }
+      }
+    }
+  },
+  Child: {
+    type: 'object',
+    properties: {
+      id: { type: 'string' }
+    }
+  },
+  AllOfParent: {
+    allOf: [
+      { $ref: '#/components/schemas/ParentBase' },
+      {
+        type: 'object',
+        properties: {
+          extra: { type: 'string' }
+        }
+      }
+    ]
+  },
+  ParentBase: {
+    type: 'object',
+    properties: {
+      name: { type: 'string' }
+    }
+  }
+};
+
+const VALID_PARENT = { name: 'site', child: { id: 'a1' }, items: [{ id: 'b2' }] };
+
+// [because, document, schemaName, fragment] — fragment is a piece of the
+// rule that must appear, or null when the document must be accepted.
+const SCHEMA_DOCUMENT_PROBES = [
+  [
+    'an undocumented top-level property on a schema that does not declare additionalProperties: false',
+    { ...VALID_PARENT, undocumented: true },
+    'Parent',
+    'undocumented property "undocumented"'
+  ],
+  [
+    'an undocumented property nested in a child object',
+    { name: 'site', child: { id: 'a1', leftover: true } },
+    'Parent',
+    'undocumented property "leftover"'
+  ],
+  [
+    'a parent-only property name reused on a nested object',
+    { name: 'site', child: { id: 'a1', name: 'leaked' } },
+    'Parent',
+    'undocumented property "name"'
+  ],
+  [
+    'an undocumented property nested in an array item',
+    { name: 'site', items: [{ id: 'b2', leftover: true }] },
+    'Parent',
+    'undocumented property "leftover"'
+  ],
+  [
+    'an undocumented property on an allOf schema',
+    { name: 'site', extra: 'ok', leftover: true },
+    'AllOfParent',
+    'undocumented property "leftover"'
+  ],
+  ['a value whose type the schema does not allow', { name: 1 }, 'Parent', 'must be string'],
+  ['a component schema name that is not in the loaded spec', VALID_PARENT, 'Missing', 'does not exist'],
+  ['a document that matches its component schema', VALID_PARENT, 'Parent', null],
+  ['a document that matches an allOf component schema', { name: 'site', extra: 'ok' }, 'AllOfParent', null]
+];
+
+const SCHEMA_INVENTORY_PROBES = [
+  [
+    'an unmapped JSON example',
+    ['orphan.json'],
+    {},
+    {},
+    'must map to an OpenAPI component schema'
+  ],
+  [
+    'a JSON example mapped and excluded at once',
+    ['both.json'],
+    { 'both.json': 'Parent' },
+    { 'both.json': 'not REST shaped' },
+    'cannot be both schema-mapped and excluded'
+  ],
+  [
+    'an exclusion with no durable reason',
+    ['skip.json'],
+    {},
+    { 'skip.json': '  ' },
+    'NON_OPENAPI_JSON reason must be specific'
+  ],
+  [
+    'a configured JSON example that does not exist',
+    [],
+    { 'missing.json': 'Parent' },
+    {},
+    'configured JSON example does not exist'
+  ]
+];
+
+function schemaFailures() {
+  const failures = [];
+
+  for (const [because, document, schemaName, fragment] of SCHEMA_DOCUMENT_PROBES) {
+    let reported;
+    try {
+      reported = validateDocument(document, schemaName, SCHEMA_FIXTURES);
+    } catch (error) {
+      failures.push(`schema validation threw on ${because}: ${error.message}`);
+      continue;
+    }
+
+    if (fragment === null) {
+      if (reported.length > 0) {
+        failures.push(`the schema contract rejects ${because}: ${reported.join('; ')}`);
+      }
+      continue;
+    }
+
+    if (!reported.some((error) => error.includes(fragment))) {
+      failures.push(
+        `the schema contract no longer rejects ${because} by the rule that says ` +
+          `"${fragment}": ${reported.join('; ') || 'nothing was reported'}`
+      );
+    }
+  }
+
+  for (const [because, discovered, mappings, excluded, fragment] of SCHEMA_INVENTORY_PROBES) {
+    const reported = validateInventory(discovered, mappings, excluded);
+    if (!reported.some((error) => error.includes(fragment))) {
+      failures.push(
+        `the schema inventory contract no longer rejects ${because} by the rule that says ` +
+          `"${fragment}": ${reported.join('; ') || 'nothing was reported'}`
+      );
+    }
+  }
+
+  const acceptedInventory = validateInventory(['ok.json'], { 'ok.json': 'Parent' }, {});
+  if (acceptedInventory.length > 0) {
+    failures.push(
+      `the schema inventory contract rejects a mapped JSON example: ${acceptedInventory.join('; ')}`
+    );
+  }
+
+  let vendored;
+  try {
+    vendored = JSON.parse(fs.readFileSync(VENDORED_OPENAPI_SPEC_PATH, 'utf8'));
+  } catch (error) {
+    failures.push(`the vendored OpenAPI subset cannot be read: ${error.message}`);
+    return failures;
+  }
+
+  const vendoredSchemas = vendored?.components?.schemas;
+  if (!vendoredSchemas || typeof vendoredSchemas !== 'object') {
+    failures.push('the vendored OpenAPI subset has no components.schemas');
+    return failures;
+  }
+
+  for (const [file, schemaName] of Object.entries(SCHEMA_MAPPINGS)) {
+    if (!vendoredSchemas[schemaName]) {
+      failures.push(
+        `the vendored OpenAPI subset no longer contains ${schemaName} mapped from ${file}`
+      );
+    }
+  }
+
+  return failures;
+}
+
+const SCHEMA_PROBE_COUNT =
+  SCHEMA_DOCUMENT_PROBES.length + SCHEMA_INVENTORY_PROBES.length + 1 + Object.keys(SCHEMA_MAPPINGS).length;
+
 // Returns { failures, total } — the reasons the contracts are no longer sound,
 // and how many probes were exercised.
 export function selfCheck() {
   return {
-    failures: [...sqlFailures(), ...templateFailures(), ...encoderFailures()],
-    total: REJECTED_SQL.length + ACCEPTED_SQL.length + TEMPLATE_PROBES.length + recognizedEncoders.size
+    failures: [...sqlFailures(), ...templateFailures(), ...encoderFailures(), ...schemaFailures()],
+    total:
+      REJECTED_SQL.length +
+      ACCEPTED_SQL.length +
+      TEMPLATE_PROBES.length +
+      recognizedEncoders.size +
+      SCHEMA_PROBE_COUNT
   };
 }
