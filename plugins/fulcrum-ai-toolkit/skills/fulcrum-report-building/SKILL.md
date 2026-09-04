@@ -5,7 +5,7 @@ description: Use when building, modifying, generating, or debugging Fulcrum repo
 
 A Fulcrum **report template** is EJS (Embedded JavaScript) that runs server-side inside a headless Chrome instance (Puppeteer). The output is a PDF or HTML page — not a live view. Every report starts from a single record's context and expands from there via `QUERY()`.
 
-> **Provenance:** Report APIs and template behavior should be checked against current Fulcrum documentation. The rendering workflow below is a toolkit convention, not a guarantee of public product support.
+> **Guidance boundary:** Report APIs and template behavior should be checked against current Fulcrum documentation. The rendering workflow below is a toolkit convention, not a guarantee of public product support.
 
 ## App MCP Control Plane
 
@@ -24,7 +24,9 @@ When Fulcrum App MCP is registered, use its live schemas for Report Template man
 
 `fulcrum_forms_create` creates a default Report Template unless `skip_default_report` is explicitly `true`. If form creation returns a form plus `report_template_error`, the form succeeded and only template creation failed. Do not create the form again; use `fulcrum_report_templates_create` for the missing template.
 
-> Source: [App MCP PR #28](https://github.com/fulcrumapp/app-mcp/pull/28) at commit [`f8c041e`](https://github.com/fulcrumapp/app-mcp/commit/f8c041ee309c61c6154cce1a7b2cb84fc4c4cf10) defines the registered report tools and default-template result. Runtime names come from the [Fulcrum Report Builder functions reference](https://docs.fulcrumapp.com/docs/functions).
+> Connector authority: Live installed App MCP schemas define registered report
+> tools and result shapes. Runtime names come from the
+> [Fulcrum Report Builder functions reference](https://docs.fulcrumapp.com/docs/functions).
 
 ## Report Types
 
@@ -289,5 +291,4 @@ A report template is a single EJS file. As it grows:
 - [Fulcrum Query API introduction](https://docs.fulcrumapp.com/reference/query-intro)
 - [Fulcrum report templates API](https://docs.fulcrumapp.com/reference/report-templates-api)
 - [Fulcrum Report Builder functions](https://docs.fulcrumapp.com/docs/functions)
-- [App MCP tool-contract prerequisite](https://github.com/fulcrumapp/app-mcp/pull/28)
 - [Agent Skills specification](https://agentskills.io/specification)

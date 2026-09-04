@@ -1,7 +1,8 @@
 # App Extension Bridge API Reference
 
-> Source: https://docs.fulcrumapp.com/docs/app-extensions-introduction
-> Source: https://github.com/fulcrumapp/app-mcp/pull/28
+> Source: https://docs.fulcrumapp.com/docs/app-extensions-introduction.md
+> Connector authority: Live installed App MCP schemas define connector
+> arguments. Bridge behavior is sourced from the public references below.
 > Verified: 2026-09-02
 
 ## Authoritative Generation Path

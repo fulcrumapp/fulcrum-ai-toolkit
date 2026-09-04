@@ -7,13 +7,17 @@ An **app extension** is a custom HTML/CSS/JavaScript UI that runs inside a Fulcr
 
 Extensions communicate with the Fulcrum record through the data events API bridge. The data lives in standard Fulcrum fields and syncs normally.
 
-> **Provenance:** The bridge API and event flow in this skill follow Fulcrum's documented extension API. Field-type recommendations, offline decisions, and payload-sizing guidance are toolkit conventions unless explicitly attributed.
+> **Guidance boundary:** The bridge API and event flow in this skill follow Fulcrum's documented extension API. Field-type recommendations, offline decisions, and payload-sizing guidance are toolkit conventions unless explicitly sourced.
 
 ## App MCP Knowledge And Generation
 
 When Fulcrum App MCP is registered, use `fulcrum_extensions_list_patterns` and `fulcrum_extensions_explain` to select a supported pattern, then use `fulcrum_extensions_generate` for the Data Event, HTML, and setup notes. Treat those registered tools as the current extension contract instead of recreating a remembered bootstrap or bridge.
 
-> Source: [App MCP PR #28](https://github.com/fulcrumapp/app-mcp/pull/28) at commit [`f8c041e`](https://github.com/fulcrumapp/app-mcp/commit/f8c041ee309c61c6154cce1a7b2cb84fc4c4cf10) defines the generated artifacts used here. The bridge behavior comes from the [Fulcrum App Extensions introduction](https://docs.fulcrumapp.com/docs/app-extensions-introduction).
+> Connector authority: Live installed App MCP schemas define generated
+> artifacts. The bridge behavior comes from the
+> [Fulcrum App Extensions introduction](https://docs.fulcrumapp.com/docs/app-extensions-introduction).
+>
+> Source: [Fulcrum App Extensions introduction](https://docs.fulcrumapp.com/docs/app-extensions-introduction).
 
 ## When to Use an Extension vs. a Data Event
 
@@ -81,7 +85,8 @@ Do not substitute an old external bootstrap URL. Start from the complete HTML re
 </html>
 ```
 
-> Source: The payload and inline-bootstrap semantics above are materially adapted from the generated templates in [App MCP PR #28](https://github.com/fulcrumapp/app-mcp/pull/28) and the [public App Extensions quick start](https://docs.fulcrumapp.com/docs/app-extensions-introduction#quick-start).
+> Source: The payload and inline-bootstrap semantics above follow the [public App Extensions quick start](https://docs.fulcrumapp.com/docs/app-extensions-introduction#quick-start);
+> live installed App MCP schemas govern generated artifacts.
 
 ## Data Exchange — Reading and Writing Record Fields
 
@@ -210,7 +215,8 @@ Whether an extension works offline depends entirely on where its assets are host
 
 The extension HTML file is uploaded as a **Reference File** on the form. When App MCP is available, use the generated artifacts without changing their bridge contract:
 
-> Source: [App MCP PR #28](https://github.com/fulcrumapp/app-mcp/pull/28) defines the exact tool arguments and generated Reference File workflow.
+> Connector authority: Live installed App MCP schemas define exact tool
+> arguments and the generated Reference File workflow.
 
 ```
 Step 1: fulcrum_extensions_generate(
@@ -283,4 +289,3 @@ An extension that tries to replicate an entire sub-application. Extensions are p
 
 - [Fulcrum app extensions introduction](https://docs.fulcrumapp.com/docs/app-extensions-introduction)
 - [Fulcrum offline capabilities](https://docs.fulcrumapp.com/docs/offline-capabilities)
-- [App MCP tool-contract prerequisite](https://github.com/fulcrumapp/app-mcp/pull/28)

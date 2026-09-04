@@ -7,7 +7,12 @@ description: Guided, novice-friendly workflow for creating or updating a Fulcrum
 
 This skill is the front door for app-building conversations. Use [fulcrum-product-knowledge](../fulcrum-product-knowledge/SKILL.md) for platform boundaries and use the focused skills for goals, discovery, design, safety, data events, extensions, reports, and decomposition. When Fulcrum App MCP is registered, treat its live tool schemas as the control plane for supported app configuration and knowledge operations.
 
-> Source: [App MCP PR #28](https://github.com/fulcrumapp/app-mcp/pull/28) at commit [`f8c041e`](https://github.com/fulcrumapp/app-mcp/commit/f8c041ee309c61c6154cce1a7b2cb84fc4c4cf10) defines the tool contract used by this workflow.
+> Connector authority: Live installed App MCP schemas define the tool contract
+> used by this workflow.
+>
+> Source: [Fulcrum Forms API](https://docs.fulcrumapp.com/reference/forms-intro)
+> and the [public OpenAPI document](https://raw.githubusercontent.com/fulcrumapp/api/v2/reference/rest-api.json)
+> define public form and resource behavior.
 
 ## Step 0: Check Execution Capability
 
@@ -105,7 +110,9 @@ Get explicit approval before creating or modifying live resources.
 
 When App MCP is available, follow its live schemas exactly. Do not hand-write new element JSON when a registered schema builder owns that shape.
 
-> Source: [App MCP PR #28](https://github.com/fulcrumapp/app-mcp/pull/28) documents the create/update sequence, mixed choice inputs, default report behavior, and preservation guard.
+> Connector authority: Live installed App MCP schemas define the create/update
+> arguments and result shapes. The preservation workflow is a toolkit safety
+> guard around the [public Forms API](https://docs.fulcrumapp.com/reference/forms-intro).
 
 For a new app:
 
@@ -191,6 +198,5 @@ This skill orchestrates app creation and updates. Defer deep platform questions 
 
 - [Fulcrum developer documentation](https://docs.fulcrumapp.com/)
 - [Fulcrum Forms API](https://docs.fulcrumapp.com/reference/forms-intro)
-- [App MCP tool-contract prerequisite](https://github.com/fulcrumapp/app-mcp/pull/28)
 - [Agent Skills specification](https://agentskills.io/specification)
 - [Toolkit platform reference](../fulcrum-product-knowledge/SKILL.md)

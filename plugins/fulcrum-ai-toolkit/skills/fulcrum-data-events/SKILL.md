@@ -5,7 +5,7 @@ description: Use when writing, reviewing, persisting, or debugging Fulcrum Data 
 
 A **data event** is JavaScript that runs inside a Fulcrum app in response to record lifecycle events. It executes on-device (mobile) and in-browser (web) — there is no server. Every data event shares a single `script` field on the form.
 
-> **Provenance:** Event names and function signatures in this skill follow Fulcrum's documented data-events API. Offline recommendations, security cautions, and workflow conventions are toolkit guidance unless explicitly attributed.
+> **Guidance boundary:** Event names and function signatures in this skill follow Fulcrum's documented data-events API. Offline recommendations, security cautions, and workflow conventions are toolkit guidance unless explicitly sourced.
 
 ## App MCP Control Plane
 
@@ -13,7 +13,8 @@ When Fulcrum App MCP is registered, call `fulcrum_expressions_data_events_refere
 
 There are no standalone Data Event CRUD tools. Read the form and its current `script` with `fulcrum_forms_get`, compose the approved handler with the existing script, and write the complete script with `fulcrum_forms_update`. Do not overwrite unrelated handlers.
 
-> Source: [App MCP PR #28](https://github.com/fulcrumapp/app-mcp/pull/28) at commit [`f8c041e`](https://github.com/fulcrumapp/app-mcp/commit/f8c041ee309c61c6154cce1a7b2cb84fc4c4cf10) defines the registered knowledge tool and form-script persistence contract.
+> Connector authority: Live installed App MCP schemas define the registered
+> knowledge tool and form-script persistence contract.
 
 ## Event Lifecycle
 
@@ -302,5 +303,4 @@ The full expressions reference is available in `resources/` as `expressions-refe
 - [Fulcrum `LOADFILE()` reference](https://docs.fulcrumapp.com/docs/data-events-loadfile)
 - [Fulcrum `REQUEST()` reference](https://docs.fulcrumapp.com/docs/data-events-request)
 - [Fulcrum `STORAGE()` reference](https://docs.fulcrumapp.com/docs/data-events-storage)
-- [App MCP tool-contract prerequisite](https://github.com/fulcrumapp/app-mcp/pull/28)
 - [Agent Skills specification](https://agentskills.io/specification)
