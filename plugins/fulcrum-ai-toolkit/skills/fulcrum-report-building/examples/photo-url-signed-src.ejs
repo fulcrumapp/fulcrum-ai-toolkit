@@ -7,7 +7,8 @@
 <%# page, and every image needs alt text. %>
 
 <% const sitePhoto = record.formValues.find('site_photo'); %>
-<% const firstSitePhoto = sitePhoto && sitePhoto.items[0]; %>
+<% const sitePhotoItems = sitePhoto && Array.isArray(sitePhoto.items) ? sitePhoto.items : []; %>
+<% const firstSitePhoto = sitePhotoItems[0]; %>
 
 <% if (firstSitePhoto) { %>
   <%# AVOID — the media ID is not a URL. %>
