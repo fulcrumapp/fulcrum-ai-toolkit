@@ -16,15 +16,6 @@ There are no standalone Data Event CRUD tools. Read the form and its current `sc
 > Connector authority: Live installed App MCP schemas define the registered
 > knowledge tool and form-script persistence contract.
 
-## App MCP Control Plane
-
-When Fulcrum App MCP is registered, call `fulcrum_expressions_data_events_reference` for the current hook and function contract before authoring a script. Treat the local runtime resources as an offline fallback, not as a replacement for the registered knowledge tool.
-
-There are no standalone Data Event CRUD tools. Read the form and its current `script` with `fulcrum_forms_get`, compose the approved handler with the existing script, and write the complete script with `fulcrum_forms_update`. Do not overwrite unrelated handlers.
-
-> Connector authority: Live installed App MCP schemas define the registered
-> knowledge tool and form-script persistence contract.
-
 ## Event Lifecycle
 
 Fulcrum has several event families. The event family matters: `edit-record` is not a field-change event.
