@@ -1,0 +1,11 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-plugin-manifest.json",
+  "name": "fulcrum-ai-toolkit",
+  "version": "0.1.0",
+  "description": "Portable AI skills for Fulcrum app building, integrations, mapping, queries, access, and migrations",
+  "author": { "name": "Fulcrum" },
+  "homepage": "https://github.com/fulcrumapp/fulcrum-ai-toolkit",
+  "repository": "https://github.com/fulcrumapp/fulcrum-ai-toolkit",
+  "license": "MIT",
+  "skills": "./skills/"
+}
