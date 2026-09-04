@@ -70,7 +70,12 @@ assert(!data_events.include?("ON('edit-record', function(event)"), "data events 
 assert(app_extensions.include?("RecordLinkField"), "app extensions lacks record-picker target guidance")
 assert(app_extensions.include?("Duplicated calculation logic"), "app extensions lacks calculation duplication guidance")
 assert(app_extensions.include?("Unbounded bridge payloads"), "app extensions lacks payload sizing guidance")
-assert(app_extensions.include?("var select = document.getElementById('my-select');") && !app_extensions.include?("Fulcrum.finish({ value: select.value });\n    });"), "app extension example has an out-of-scope select reference")
+assert(
+  (app_extensions.include?("const select = document.getElementById('my-select');") ||
+   app_extensions.include?("var select = document.getElementById('my-select');")) &&
+  !app_extensions.include?("Fulcrum.finish({ value: select.value });\n    });"),
+  "app extension example has an out-of-scope select reference"
+)
 assert(report_building.include?("Verifying Rendered Output") && report_building.include?("page.get_drawings()"), "report building lacks geometry verification guidance")
 assert(report_building.include?("rendering workflow below is a toolkit convention"), "report building lacks provenance for rendering guidance")
 

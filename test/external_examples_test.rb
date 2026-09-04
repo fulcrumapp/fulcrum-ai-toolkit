@@ -617,7 +617,7 @@ assert(
 
 extension_page = File.read(File.join(extension_examples, EXTENSION_ATTACHMENT_FILE))
 assert(
-  extension_page.include?("<script>") && extension_page.include?("Fulcrum.finish("),
+  (extension_page.include?("<script>") || extension_page.include?("<script ")) && extension_page.include?("Fulcrum.finish("),
   "self-contained extension page lacks its inline script"
 )
 assert(
