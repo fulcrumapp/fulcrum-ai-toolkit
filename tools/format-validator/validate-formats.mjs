@@ -2,8 +2,8 @@
 // Parser-backed validation for every externalized example and asset in the
 // distributable toolkit plugin.
 //
-// The Ruby suite owns repository policy: inventories, template identity, source
-// attribution, and privacy. This tool owns everything that needs a parser —
+// `scripts/validate.mjs` owns repository policy: inventories, template identity,
+// source attribution, and privacy. This tool owns everything that needs a parser —
 // proving each file is well formed in its own format, that its SQL is
 // read-only, and that its interpolation uses a recognized encoder — with
 // established parsers pinned to exact versions in package.json and
@@ -183,7 +183,14 @@ async function validateHtml(file, text) {
     }
   }
 
-  const tree = await parseHtmlTree(text);
+  let tree;
+  try {
+    tree = await parseHtmlTree(text);
+  } catch (error) {
+    fail(file, `HTML could not be parsed: ${error.message}`);
+    count(`html:${label}`);
+    return;
+  }
 
   let inlineScripts = 0;
   for (const el of tree.querySelectorAll('script')) {
