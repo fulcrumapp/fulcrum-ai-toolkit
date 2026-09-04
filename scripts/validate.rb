@@ -209,9 +209,16 @@ if File.file?(coverage_map)
     )
   }ix
   private_collaboration_hosts = ["atlassian.net", "slack.com"].freeze
-  private_collaboration_url = URI.extract(coverage_text, %w[http https]).any? do |url|
-    host = URI.parse(url).host&.downcase
-    private_collaboration_hosts.any? do |private_host|
+  private_collaboration_url = false
+  URI.extract(coverage_text, %w[http https]).each do |url|
+    begin
+      host = URI.parse(url).host&.downcase
+    rescue URI::InvalidURIError
+      failures << "#{COVERAGE_MAP_RELATIVE_PATH}: invalid public URL #{url.inspect}"
+      next
+    end
+
+    private_collaboration_url ||= private_collaboration_hosts.any? do |private_host|
       host == private_host || host&.end_with?(".#{private_host}")
     end
   end
