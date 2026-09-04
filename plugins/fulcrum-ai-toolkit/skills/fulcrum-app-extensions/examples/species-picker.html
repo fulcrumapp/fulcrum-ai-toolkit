@@ -88,14 +88,14 @@
          * @param {MessageEvent} event
          */
         receive(event) {
-          if (event.origin === window.location.origin) {
-            // Same-origin host messages are trusted.
-          } else if (event.origin === 'null') {
+          if (event.origin === 'null') {
             // Opaque origins are only accepted when this page is also opaque
             // and the sender is the parent frame, not an arbitrary iframe.
             if (window.location.origin !== 'null' || event.source !== window.parent) {
               return;
             }
+          } else if (event.origin === window.location.origin) {
+            // Same-origin host messages are trusted.
           } else {
             try {
               const url = new URL(event.origin);
