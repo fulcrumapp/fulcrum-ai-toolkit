@@ -20,7 +20,7 @@ Why is this Pull Request being created?
 - Not needed for self-explanatory code. Use your best judgement.
 
 # Code Review
-High quality code reviews are expected. You can utilize this [PR review checklist](about:blank) to help you conduct one.
+High quality code reviews are expected. Use the team's approved review checklist to help you conduct one.
 
 # Testing
 
