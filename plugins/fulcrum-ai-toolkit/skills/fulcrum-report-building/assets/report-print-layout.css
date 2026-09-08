@@ -1,0 +1,79 @@
+/* Source: https://docs.fulcrumapp.com/docs/reports-introduction */
+/* Document: a complete stylesheet; paste it into a Report Template style block. */
+/* Purpose: a starting print stylesheet for a PDF Report Template.
+   Reports render in a headless browser, so page-break control and fixed table
+   layout are what separate a correct PDF from a correct-looking preview.
+   Keep styles inline or in the template; an external stylesheet is an offline
+   and supply-chain dependency. */
+
+@page {
+  margin: 18mm 14mm;
+}
+
+body {
+  font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+  font-size: 10pt;
+  line-height: 1.4;
+  color: #1a1a1a;
+  margin: 0;
+}
+
+h1 {
+  font-size: 16pt;
+  margin: 0 0 4mm;
+}
+
+h2 {
+  font-size: 12pt;
+  margin: 6mm 0 2mm;
+  border-bottom: 1px solid #999;
+  padding-bottom: 1mm;
+}
+
+/* Keep a section heading with the content that follows it. */
+h1, h2, h3 {
+  break-after: avoid;
+  page-break-after: avoid;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: fixed;
+  margin-bottom: 4mm;
+}
+
+th, td {
+  border: 1px solid #999;
+  padding: 1.5mm 2mm;
+  text-align: left;
+  vertical-align: top;
+  overflow-wrap: anywhere;
+}
+
+thead {
+  display: table-header-group;
+}
+
+tr {
+  break-inside: avoid;
+  page-break-inside: avoid;
+}
+
+img {
+  max-width: 100%;
+  height: auto;
+}
+
+.alert {
+  border: 1px solid #b00;
+  padding: 2mm 3mm;
+  margin: 3mm 0;
+  break-inside: avoid;
+  page-break-inside: avoid;
+}
+
+.page-break {
+  break-before: page;
+  page-break-before: always;
+}

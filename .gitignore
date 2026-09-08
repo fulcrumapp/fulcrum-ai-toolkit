@@ -15,3 +15,6 @@ secrets.json
 credentials.json
 service-account.json
 config.local.json
+
+# Node dependencies for the pinned format validator
+node_modules/

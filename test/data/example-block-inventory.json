@@ -1,0 +1,428 @@
+{
+  "description": "Independent record of the example inventory the legacy-example-coverage manifest must match exactly, and of the report templates whose identity is pinned by hash. Neutral identifiers and repository-relative paths only. Editing a report template intentionally means updating its sha256 here, in the same change.",
+  "legacy_units": [
+    {
+      "id": "L1",
+      "disposition": "drop",
+      "targets": [
+        "skills/fulcrum-app-builder/assets/app-build-sequence.txt"
+      ]
+    },
+    {
+      "id": "L2",
+      "disposition": "rewrite",
+      "targets": [
+        "skills/fulcrum-app-builder/assets/app-build-sequence.txt"
+      ]
+    },
+    {
+      "id": "L3",
+      "disposition": "drop",
+      "targets": [
+        "skills/fulcrum-app-builder/assets/app-build-sequence.txt",
+        "skills/fulcrum-app-builder/SKILL.md"
+      ]
+    },
+    {
+      "id": "L4",
+      "disposition": "rewrite",
+      "targets": [
+        "skills/fulcrum-data-events/assets/data-events-reference-categories.txt"
+      ]
+    },
+    {
+      "id": "L5",
+      "disposition": "externalized",
+      "targets": [
+        "skills/fulcrum-query-api/assets/query-api-examples.sql"
+      ]
+    },
+    {
+      "id": "L6",
+      "disposition": "externalized",
+      "targets": [
+        "skills/fulcrum-query-api/assets/query-api-examples.sql"
+      ]
+    },
+    {
+      "id": "L7",
+      "disposition": "externalized",
+      "targets": [
+        "skills/fulcrum-query-api/assets/query-api-examples.sql"
+      ]
+    },
+    {
+      "id": "L8",
+      "disposition": "rewrite",
+      "targets": [
+        "skills/fulcrum-report-building/examples/query-related-records.ejs",
+        "skills/fulcrum-query-api/assets/report-queries.sql"
+      ]
+    },
+    {
+      "id": "L9",
+      "disposition": "rewrite",
+      "targets": [
+        "skills/fulcrum-app-extensions/assets/app-mcp-extension-publish-sequence.txt"
+      ]
+    }
+  ],
+  "current_blocks": [
+    {
+      "id": "C01",
+      "source": "fulcrum-data-events/SKILL.md",
+      "ordinal": 1,
+      "target": "skills/fulcrum-data-events/examples/set-field-values-on-status-change.js"
+    },
+    {
+      "id": "C02",
+      "source": "fulcrum-data-events/SKILL.md",
+      "ordinal": 2,
+      "target": "skills/fulcrum-data-events/examples/conditional-visibility-sethidden.js"
+    },
+    {
+      "id": "C03",
+      "source": "fulcrum-data-events/SKILL.md",
+      "ordinal": 3,
+      "target": "skills/fulcrum-data-events/examples/cascading-choices.js"
+    },
+    {
+      "id": "C04",
+      "source": "fulcrum-data-events/SKILL.md",
+      "ordinal": 4,
+      "target": "skills/fulcrum-data-events/examples/load-reference-records.js"
+    },
+    {
+      "id": "C05",
+      "source": "fulcrum-data-events/SKILL.md",
+      "ordinal": 5,
+      "target": "skills/fulcrum-data-events/examples/loadfile-shared-helpers.js"
+    },
+    {
+      "id": "C06",
+      "source": "fulcrum-data-events/SKILL.md",
+      "ordinal": 6,
+      "target": "skills/fulcrum-data-events/examples/storage-session-state.js"
+    },
+    {
+      "id": "C07",
+      "source": "fulcrum-data-events/SKILL.md",
+      "ordinal": 7,
+      "target": "skills/fulcrum-data-events/examples/validate-record-photo-required.js"
+    },
+    {
+      "id": "C08",
+      "source": "fulcrum-data-events/SKILL.md",
+      "ordinal": 8,
+      "target": "skills/fulcrum-data-events/examples/geometry-trigger-guard.js"
+    },
+    {
+      "id": "C09",
+      "source": "fulcrum-data-events/SKILL.md",
+      "ordinal": 9,
+      "target": "skills/fulcrum-data-events/examples/field-names-bulk-readonly.js"
+    },
+    {
+      "id": "C10",
+      "source": "fulcrum-data-events/SKILL.md",
+      "ordinal": 10,
+      "target": "skills/fulcrum-data-events/examples/avoid-hardcoded-ids.js"
+    },
+    {
+      "id": "C11",
+      "source": "fulcrum-data-events/SKILL.md",
+      "ordinal": 11,
+      "target": "skills/fulcrum-data-events/examples/no-secrets-in-scripts.js"
+    },
+    {
+      "id": "C12",
+      "source": "fulcrum-data-events/SKILL.md",
+      "ordinal": 12,
+      "target": "skills/fulcrum-data-events/examples/pin-cdn-library-versions.js"
+    },
+    {
+      "id": "C13",
+      "source": "fulcrum-data-events/resources/data-event-examples.md",
+      "ordinal": 1,
+      "target": "skills/fulcrum-data-events/examples/capture-timestamp-toggle.js"
+    },
+    {
+      "id": "C14",
+      "source": "fulcrum-data-events/resources/data-event-examples.md",
+      "ordinal": 2,
+      "target": "skills/fulcrum-data-events/examples/comment-summary-audit-trail.js"
+    },
+    {
+      "id": "C15",
+      "source": "fulcrum-data-events/resources/data-event-examples.md",
+      "ordinal": 3,
+      "target": "skills/fulcrum-data-events/examples/sort-repeatable-children.js"
+    },
+    {
+      "id": "C16",
+      "source": "fulcrum-data-events/resources/data-event-examples.md",
+      "ordinal": 4,
+      "target": "skills/fulcrum-data-events/examples/create-repeatable-entries.js"
+    },
+    {
+      "id": "C17",
+      "source": "fulcrum-data-events/resources/data-event-examples.md",
+      "ordinal": 5,
+      "target": "skills/fulcrum-data-events/examples/validate-record-completeness.js"
+    },
+    {
+      "id": "C18",
+      "source": "fulcrum-data-events/resources/data-event-examples.md",
+      "ordinal": 6,
+      "target": "skills/fulcrum-data-events/examples/conditional-visibility-sethidden.js"
+    },
+    {
+      "id": "C19",
+      "source": "fulcrum-app-extensions/SKILL.md",
+      "ordinal": 1,
+      "target": "skills/fulcrum-app-extensions/examples/species-picker.html"
+    },
+    {
+      "id": "C20",
+      "source": "fulcrum-app-extensions/SKILL.md",
+      "ordinal": 2,
+      "target": "skills/fulcrum-app-extensions/examples/open-extension-pass-values.js"
+    },
+    {
+      "id": "C21",
+      "source": "fulcrum-app-extensions/SKILL.md",
+      "ordinal": 3,
+      "target": "skills/fulcrum-app-extensions/examples/extension-load-payload.js"
+    },
+    {
+      "id": "C22",
+      "source": "fulcrum-app-extensions/SKILL.md",
+      "ordinal": 4,
+      "target": "skills/fulcrum-app-extensions/examples/open-extension-pass-values.js"
+    },
+    {
+      "id": "C23",
+      "source": "fulcrum-app-extensions/SKILL.md",
+      "ordinal": 5,
+      "target": "skills/fulcrum-app-extensions/examples/extension-load-payload.js"
+    },
+    {
+      "id": "C24",
+      "source": "fulcrum-app-extensions/SKILL.md",
+      "ordinal": 6,
+      "target": "skills/fulcrum-app-extensions/examples/open-species-picker.js"
+    },
+    {
+      "id": "C25",
+      "source": "fulcrum-app-extensions/SKILL.md",
+      "ordinal": 7,
+      "target": "skills/fulcrum-app-extensions/assets/cdn-version-pinning.html"
+    },
+    {
+      "id": "C26",
+      "source": "fulcrum-app-extensions/SKILL.md",
+      "ordinal": 8,
+      "target": "skills/fulcrum-app-extensions/assets/app-mcp-extension-publish-sequence.txt"
+    },
+    {
+      "id": "C27",
+      "source": "fulcrum-app-extensions/resources/extension-bridge-api.md",
+      "ordinal": 1,
+      "target": "skills/fulcrum-app-extensions/examples/open-extension-editor.js"
+    },
+    {
+      "id": "C28",
+      "source": "fulcrum-app-extensions/resources/extension-bridge-api.md",
+      "ordinal": 2,
+      "target": "skills/fulcrum-app-extensions/examples/extension-bootstrap-lifecycle.js"
+    },
+    {
+      "id": "C29",
+      "source": "fulcrum-report-building/SKILL.md",
+      "ordinal": 1,
+      "target": "skills/fulcrum-report-building/assets/ejs-tag-types.ejs"
+    },
+    {
+      "id": "C30",
+      "source": "fulcrum-report-building/SKILL.md",
+      "ordinal": 2,
+      "target": "skills/fulcrum-report-building/examples/record-field-access.ejs"
+    },
+    {
+      "id": "C31",
+      "source": "fulcrum-report-building/SKILL.md",
+      "ordinal": 3,
+      "target": "skills/fulcrum-report-building/examples/repeatable-table-rows.ejs"
+    },
+    {
+      "id": "C32",
+      "source": "fulcrum-report-building/SKILL.md",
+      "ordinal": 4,
+      "target": "skills/fulcrum-report-building/examples/conditional-section.ejs"
+    },
+    {
+      "id": "C33",
+      "source": "fulcrum-report-building/SKILL.md",
+      "ordinal": 5,
+      "target": "skills/fulcrum-report-building/examples/query-related-records.ejs"
+    },
+    {
+      "id": "C34",
+      "source": "fulcrum-report-building/SKILL.md",
+      "ordinal": 6,
+      "target": "skills/fulcrum-report-building/examples/query-repeatable-join.ejs"
+    },
+    {
+      "id": "C35",
+      "source": "fulcrum-report-building/SKILL.md",
+      "ordinal": 7,
+      "target": "skills/fulcrum-report-building/examples/api-fulcrum-rest.ejs"
+    },
+    {
+      "id": "C36",
+      "source": "fulcrum-report-building/SKILL.md",
+      "ordinal": 8,
+      "target": "skills/fulcrum-report-building/examples/params-date-range.ejs"
+    },
+    {
+      "id": "C37",
+      "source": "fulcrum-report-building/SKILL.md",
+      "ordinal": 9,
+      "target": "skills/fulcrum-report-building/examples/html-filter-form.ejs"
+    },
+    {
+      "id": "C38",
+      "source": "fulcrum-report-building/SKILL.md",
+      "ordinal": 10,
+      "target": "skills/fulcrum-report-building/examples/api-fulcrum-rest.ejs"
+    },
+    {
+      "id": "C39",
+      "source": "fulcrum-report-building/SKILL.md",
+      "ordinal": 11,
+      "target": "skills/fulcrum-report-building/examples/photo-url-signed-src.ejs"
+    },
+    {
+      "id": "C40",
+      "source": "fulcrum-report-building/SKILL.md",
+      "ordinal": 12,
+      "target": "skills/fulcrum-report-building/examples/sanitize-params-for-sql.ejs"
+    },
+    {
+      "id": "C41",
+      "source": "fulcrum-report-building/resources/report-template-reference.md",
+      "ordinal": 1,
+      "target": "skills/fulcrum-report-building/examples/query-rows-iteration.ejs"
+    },
+    {
+      "id": "C42",
+      "source": "fulcrum-app-design/SKILL.md",
+      "ordinal": 1,
+      "target": "skills/fulcrum-app-design/assets/calculation-field-expressions.txt"
+    },
+    {
+      "id": "C43",
+      "source": "fulcrum-app-design/resources/field-type-reference.md",
+      "ordinal": 1,
+      "target": "skills/fulcrum-app-design/assets/required-boolean-errors.txt"
+    },
+    {
+      "id": "C44",
+      "source": "fulcrum-app-design/resources/field-type-reference.md",
+      "ordinal": 2,
+      "target": "skills/fulcrum-app-design/assets/record-link-field.json"
+    },
+    {
+      "id": "C45",
+      "source": "fulcrum-app-builder/SKILL.md",
+      "ordinal": 1,
+      "target": "skills/fulcrum-app-builder/examples/forms-update-preserving-keys.js"
+    },
+    {
+      "id": "C46",
+      "source": "fulcrum-discovery/SKILL.md",
+      "ordinal": 1,
+      "target": "skills/fulcrum-discovery/assets/discovery-summary-template.md"
+    },
+    {
+      "id": "C47",
+      "source": "fulcrum-workflow-decomposition/SKILL.md",
+      "ordinal": 1,
+      "target": "skills/fulcrum-workflow-decomposition/assets/entity-relationship-map.txt"
+    },
+    {
+      "id": "C48",
+      "source": "fulcrum-solution-document/SKILL.md",
+      "ordinal": 1,
+      "target": "skills/fulcrum-solution-document/assets/solution-one-pager-template.md"
+    },
+    {
+      "id": "C49",
+      "source": "fulcrum-solution-document/SKILL.md",
+      "ordinal": 2,
+      "target": "skills/fulcrum-solution-document/assets/solution-share-summary.txt"
+    }
+  ],
+  "report_templates": [
+    {
+      "path": "skills/fulcrum-report-building/assets/ejs-tag-types.ejs",
+      "kind": "fragment",
+      "sha256": "6d702b468114a2879157e57d1813dfde0acccb3b93a3eac0d97ade01b36c1875"
+    },
+    {
+      "path": "skills/fulcrum-report-building/examples/api-fulcrum-rest.ejs",
+      "kind": "fragment",
+      "sha256": "9f9380e4df31b72ee4c6fba85bcb18b7a91ed4384ccf018b4f3efeac8945bb71"
+    },
+    {
+      "path": "skills/fulcrum-report-building/examples/conditional-section.ejs",
+      "kind": "fragment",
+      "sha256": "27cc8cfca55304884da439e93504ec699119cf74b568a5306c7e07b9a0abc7f4"
+    },
+    {
+      "path": "skills/fulcrum-report-building/examples/html-filter-form.ejs",
+      "kind": "fragment",
+      "sha256": "a5050a6e2221c498ad9493e714f60b55fe730921fbf935e01061a9e2cb1b1c62"
+    },
+    {
+      "path": "skills/fulcrum-report-building/examples/params-date-range.ejs",
+      "kind": "fragment",
+      "sha256": "51317194b796c970a281c9609b6cf21f157a99b62892132d407731b308a1470b"
+    },
+    {
+      "path": "skills/fulcrum-report-building/examples/photo-url-signed-src.ejs",
+      "kind": "fragment",
+      "sha256": "cfec798ff4bb9a401ef222b10d01dbc0b70710fbd358b8ce119269297ba1e7d3"
+    },
+    {
+      "path": "skills/fulcrum-report-building/examples/query-related-records.ejs",
+      "kind": "fragment",
+      "sha256": "aa4884e0069f2a78a994fc47e8b4b65e18970cc6486c0aa4174f3d39f3688d44"
+    },
+    {
+      "path": "skills/fulcrum-report-building/examples/query-repeatable-join.ejs",
+      "kind": "fragment",
+      "sha256": "3c26a7c7b2e6a1000345a6e8a2735ebad4d42c50c1257cff8dabdbac4bfde622"
+    },
+    {
+      "path": "skills/fulcrum-report-building/examples/query-rows-iteration.ejs",
+      "kind": "fragment",
+      "sha256": "cf97d4e95a09f6d3e22369400da6900143f6b84f7d0dba980d31b75603c53662"
+    },
+    {
+      "path": "skills/fulcrum-report-building/examples/record-field-access.ejs",
+      "kind": "fragment",
+      "sha256": "2c10c8a43339ffc98b43b8451b445e9415cd87dc6b5d1666ce9d9a2baea151ff"
+    },
+    {
+      "path": "skills/fulcrum-report-building/examples/repeatable-table-rows.ejs",
+      "kind": "fragment",
+      "sha256": "44defa35afb268e003bdaaf4db5170757c2d9384cfd4f754c015c75d05c6d6d3"
+    },
+    {
+      "path": "skills/fulcrum-report-building/examples/sanitize-params-for-sql.ejs",
+      "kind": "fragment",
+      "sha256": "994e2bc08056e0254f3230ce85c4d0fa6b0379befa5a71b4ec763cf8818d83fc"
+    }
+  ]
+}

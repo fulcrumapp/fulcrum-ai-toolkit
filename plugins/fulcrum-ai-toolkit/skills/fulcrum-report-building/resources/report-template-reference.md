@@ -46,20 +46,21 @@ Reports use EJS (Embedded JavaScript) templates:
 - `<%- expression %>` — Output unescaped HTML
 - `<% code %>` — Execute JavaScript (no output)
 
+The escaped-output and code-only forms used by this toolkit are in
+[`ejs-tag-types.ejs`](../assets/ejs-tag-types.ejs); raw output is intentionally
+omitted. Fragments for record
+access, repeatables, queries, parameters, and media are indexed in
+[`examples/README.md`](../examples/README.md).
+
 ## QUERY() for Multi-Record Reports
 
-```ejs
-<% const result = QUERY(
-  `SELECT * FROM "Inspections"
-   WHERE _status = 'complete'
-   ORDER BY _created_at DESC
-   LIMIT 100`,
-  { format: 'json' }
-); %>
+`QUERY()` returns a result object. Its `rows` array contains the row objects used for cross-record analytics, summary reports, and dashboards. The minimal
+`result.rows.forEach(function(row)` iteration is in
+[`query-rows-iteration.ejs`](../examples/query-rows-iteration.ejs); a filtered
+version with a sanitized value is in
+[`query-related-records.ejs`](../examples/query-related-records.ejs).
 
-<% result.rows.forEach(function(row) { %>
-  <div><%= row.id %></div>
-<% }); %>
-```
-
-`QUERY()` returns a result object. Its `rows` array contains the row objects used for cross-record analytics, summary reports, and dashboards.
+The Query API is read-only and exposes no server-side bind parameters. Encode
+or allowlist every interpolated value before it reaches `QUERY()`. The SQL
+shapes themselves are in
+[`report-queries.sql`](../../fulcrum-query-api/assets/report-queries.sql).

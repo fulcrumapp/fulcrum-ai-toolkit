@@ -1,0 +1,14 @@
+<%# Source: https://docs.fulcrumapp.com/docs/functions#query %>
+<%# Fragment: paste into a Report Template; this is not a standalone template. %>
+<%# Purpose: join a repeatable table to its parent record. %>
+<%# Repeatable rows live in their own table and carry _parent_id. %>
+<%# The record ID is encoded in the gap it reaches SQL through; `('' + value)` %>
+<%# converts without naming `String`, which a template could rebind. %>
+
+<% const itemResults = QUERY(
+  `SELECT r.*
+   FROM "Work Orders/line_items" r
+   WHERE r._parent_id = '${('' + record.id).replace(/[^A-Za-z0-9_-]/g, '')}'`,
+  { format: 'json' }
+); %>
+<% const items = itemResults.rows; %>
