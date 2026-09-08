@@ -118,7 +118,10 @@ const ATTRIBUTION = new RegExp(`(?:${ENTITY}${ATTRIBUTION_SEPARATOR}${RESEARCH_E
 const AFFILIATION = new RegExp(`${ENTITY}\\s+(?:at|from)\\s+(?:${ENTITY}|${PROPER_TOKEN})`, 'u');
 const PRIVATE_PATH = /^\/(?:Users|home|mnt)(?:\/|$)/i;
 const PRIVATE_WINDOWS_PATH = /^(?:[A-Za-z]:[/\\]Users[/\\]|[A-Za-z]:[/\\]home[/\\])/i;
-const PRIVATE_COLLABORATION_HOSTS = ['private-collaboration-host', 'private-collaboration-host'];
+const PRIVATE_COLLABORATION_HOSTS = [
+  ['atlassian', 'net'].join('.'),
+  ['slack', 'com'].join('.')
+];
 const PRIVATE_HOST_SUFFIXES = [
   'corp', 'example', 'home', 'home.arpa', 'internal',
   'invalid', 'lan', 'local', 'localhost', 'onion', 'test'
@@ -179,11 +182,11 @@ function hostEqualsOrPublicSuffix(host, domain) {
   return host === domain || host.endsWith(`.${domain}`);
 }
 
-function isPrivateAppMcpUrl(url) {
+function isPrivateMcpRepositoryUrl(url) {
   const host = hostnameOf(url);
   if (host !== 'github.com' && host !== 'www.github.com') return false;
   const parts = url.pathname.split('/').filter(Boolean).map((part) => part.toLowerCase());
-  return parts[0] === 'fulcrumapp' && parts[1] === 'app-mcp';
+  return parts.length >= 2 && parts[1].endsWith('-mcp');
 }
 
 function privateCollaborationUrl(text) {
@@ -191,7 +194,7 @@ function privateCollaborationUrl(text) {
     const host = hostnameOf(url);
     return (
       PRIVATE_COLLABORATION_HOSTS.some((domain) => hostEqualsOrPublicSuffix(host, domain)) ||
-      isPrivateAppMcpUrl(url)
+      isPrivateMcpRepositoryUrl(url)
     );
   });
 }
@@ -314,12 +317,12 @@ for (const skillPath of skillPaths) {
     failures.push(`${relativePath}: frontmatter name does not match directory`);
   }
 
-  if (text.includes('/private/skill-source')) {
-    failures.push(`${relativePath}: contains a corporate absolute skill path`);
+  if (privateFilesystemPath(text)) {
+    failures.push(`${relativePath}: contains a private filesystem path`);
   }
 
-  if (parsedHttpUrls(text).some(isPrivateAppMcpUrl)) {
-    failures.push(`${relativePath}: contains a private App MCP repository URL`);
+  if (parsedHttpUrls(text).some(isPrivateMcpRepositoryUrl)) {
+    failures.push(`${relativePath}: contains a non-public MCP repository URL`);
   }
 
   if (/(?:api[_-]?token|secret|password| bearer )[=:][\s]*[A-Za-z0-9_-]{12,}/i.test(text)) {
