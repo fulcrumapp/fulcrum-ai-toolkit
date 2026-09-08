@@ -1,6 +1,6 @@
 {
   "name": "fulcrum-ai-toolkit",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Portable AI skills for Fulcrum app building, integrations, mapping, queries, access management, migrations, extensions, reports, discovery, and field operations.",
   "author": {
     "name": "Fulcrum"

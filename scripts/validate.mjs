@@ -42,6 +42,7 @@ const EXPECTED_SKILLS = [
   'fulcrum-solution-document',
   'fulcrum-workflow-decomposition'
 ];
+const USER_INVOKED_SKILLS = new Set(['fulcrum-discovery', 'fulcrum-solution-document']);
 
 const COVERAGE_MAP_RELATIVE_PATH = path.join(
   PLUGIN_RELATIVE_PATH,
@@ -314,6 +315,25 @@ for (const skillPath of skillPaths) {
     failures.push(`${relativePath}: frontmatter name does not match directory`);
   }
 
+  if (USER_INVOKED_SKILLS.has(directoryName)) {
+    if (frontmatter?.['disable-model-invocation'] !== true) {
+      failures.push(`${relativePath}: user-invoked skills must disable model invocation`);
+    }
+    const policyPath = path.join(path.dirname(skillPath), 'agents', 'openai.yaml');
+    if (!fs.existsSync(policyPath)) {
+      failures.push(`${repoRelativePath(policyPath)}: Codex invocation policy is missing`);
+    } else {
+      try {
+        const config = YAML.parse(fs.readFileSync(policyPath, 'utf8'));
+        if (config?.policy?.allow_implicit_invocation !== false) {
+          failures.push(`${repoRelativePath(policyPath)}: allow_implicit_invocation must be false`);
+        }
+      } catch (err) {
+        failures.push(`${repoRelativePath(policyPath)}: invalid YAML (${err.message.split('\n')[0].trim()})`);
+      }
+    }
+  }
+
   if (text.includes('/private/skill-source')) {
     failures.push(`${relativePath}: contains a corporate absolute skill path`);
   }
@@ -415,6 +435,27 @@ if (agentMcp) {
   }
 }
 
+for (const name of ['mcp.json', '.mcp.json']) {
+  const relativePath = `${PLUGIN_RELATIVE_PATH}/${name}`;
+  const servers = jsonDocuments[relativePath]?.mcpServers;
+  if (!servers || typeof servers !== 'object' || Array.isArray(servers) || Object.keys(servers).length !== 0) {
+    failures.push(`${relativePath}: keep mcpServers empty; users must explicitly select their tenant endpoint`);
+  }
+}
+
+const setupPath = path.join(SKILLS_DIR, 'fulcrum-app-builder', 'resources', 'mcp-setup.md');
+if (!fs.existsSync(setupPath)) {
+  failures.push(`${repoRelativePath(setupPath)}: regional MCP setup guide is missing`);
+} else {
+  const setup = fs.readFileSync(setupPath, 'utf8');
+  for (const domain of ['fulcrumapp.com', 'fulcrumapp-au.com', 'fulcrumapp-eu.com', 'fulcrumapp-ca.com']) {
+    const mapping = `| \`${domain}\` | \`https://mcp.${domain}/app\` |`;
+    if (!setup.includes(mapping)) {
+      failures.push(`${repoRelativePath(setupPath)}: missing tenant-to-endpoint mapping for ${domain}`);
+    }
+  }
+}
+
 const cursorManifestPath = `${PLUGIN_RELATIVE_PATH}/.cursor-plugin/plugin.json`;
 const cursorManifest = jsonDocuments[cursorManifestPath];
 if (cursorManifest) {
@@ -423,18 +464,36 @@ if (cursorManifest) {
   }
 }
 
-const hermesManifest = path.join(PLUGIN_DIR, '.hermes-plugin', 'plugin.yaml');
-if (fs.existsSync(hermesManifest)) {
-  try {
-    const config = YAML.parse(fs.readFileSync(hermesManifest, 'utf8'));
-    if (!config || config.skills_dir !== 'skills') {
-      failures.push(`${PLUGIN_RELATIVE_PATH}/.hermes-plugin/plugin.yaml: skills_dir must point to skills`);
-    }
-  } catch (err) {
-    failures.push(`${PLUGIN_RELATIVE_PATH}/.hermes-plugin/plugin.yaml: invalid YAML (${err.message.split('\n')[0].trim()})`);
+for (const relativePath of [
+  `${PLUGIN_RELATIVE_PATH}/.claude-plugin/plugin.json`,
+  `${PLUGIN_RELATIVE_PATH}/.codex-plugin/plugin.json`,
+  cursorManifestPath,
+  `${PLUGIN_RELATIVE_PATH}/gemini-extension.json`
+]) {
+  const manifest = jsonDocuments[relativePath];
+  if (!manifest || !agentManifest?.version || manifest.version !== agentManifest.version) {
+    failures.push(`${relativePath}: version must match the root plugin manifest`);
   }
+}
+
+const copilotMarketplace = jsonDocuments['.github/plugin/marketplace.json'];
+if (
+  !agentManifest?.version ||
+  copilotMarketplace?.metadata?.version !== agentManifest.version ||
+  copilotMarketplace?.plugins?.[0]?.version !== agentManifest.version
+) {
+  failures.push('.github/plugin/marketplace.json: marketplace and plugin versions must match the root plugin manifest');
+}
+
+const rootLicensePath = path.join(ROOT, 'LICENSE');
+const packageLicensePath = path.join(PLUGIN_DIR, 'LICENSE');
+if (!fs.existsSync(rootLicensePath) || !fs.existsSync(packageLicensePath)) {
+  failures.push('LICENSE: include the MIT license in both the repository and distributable package');
 } else {
-  failures.push(`${PLUGIN_RELATIVE_PATH}/.hermes-plugin/plugin.yaml: manifest is missing`);
+  const license = fs.readFileSync(rootLicensePath, 'utf8');
+  if (!license.startsWith('MIT License\n') || fs.readFileSync(packageLicensePath, 'utf8') !== license) {
+    failures.push(`${PLUGIN_RELATIVE_PATH}/LICENSE: must contain the same MIT license text as the repository`);
+  }
 }
 
 const marketplaceSources = {

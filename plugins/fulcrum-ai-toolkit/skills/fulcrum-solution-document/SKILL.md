@@ -1,6 +1,6 @@
 ---
 name: fulcrum-solution-document
-description: "Guide a Fulcrum builder through documenting a completed app, extension, workflow, report, or integration. Produce a reusable one-pager, review it for privacy and audience suitability, and prepare optional share formats for a destination chosen by the user. Use when someone wants to explain, review, hand off, or share what they built."
+description: "User-invoked workflow to document a completed Fulcrum app, extension, workflow, report, or integration. Produce an audience-appropriate one-pager, review it for privacy, and prepare optional share formats for a destination chosen by the user. Run only when someone requests documentation, review, handoff, or sharing."
 disable-model-invocation: true
 ---
 
@@ -8,23 +8,40 @@ disable-model-invocation: true
 
 Guide a Fulcrum builder through documenting what they've built as a reusable, reviewable one-pager. Help them prepare an appropriate share format and destination, but do not publish automatically.
 
-Builders are typically non-engineers from Professional Services, Customer Success, or partner orgs — they build app extensions, workflows, integrations, reports, or other solutions on the Fulcrum platform, often with AI assistance.
+Builders may be customers, partners, independent builders, or internal teams,
+with any level of technical experience. Adapt the document to their chosen
+audience and ownership model; an internal product review is not a prerequisite.
+
+## Invocation And Consent
+
+This is a manual workflow, even in hosts that ignore `disable-model-invocation`.
+Do not launch an interview or create, save, overwrite, or share a document
+merely because an app was built or another skill ran. Obtain the user's
+request for the action first. Use existing context and ask only for missing
+information needed for the requested document or review. A request to draft
+does not authorize saving a file or sending it externally.
+For a review-only request, return findings without creating a new document
+unless asked.
 
 ## Goal
 
 Walk the builder through a short conversation and produce a clean one-pager that can be reviewed, handed off, or shared with the audience the builder chooses.
 
-The intended reviewer may need to answer:
-1. **Categorize**: Is this reusable, customer-specific, experimental, or ready for ownership?
-2. **Decide next steps**: Does it need testing, hardening, handoff, or broader promotion?
+The intended reader should be able to answer:
+1. **Understand the scope**: Who is this for, what does it do, and what are its limitations?
+2. **Assess readiness**: What has been tested, and what remains unverified?
+3. **Plan the handoff**: Who owns it, what support is available, and what happens next?
 
 ## How to Run the Session
 
-Ask the builder to describe what they built in a sentence or two. Then work through the three areas below.
+Confirm the intended audience and requested output. Ask the builder to
+describe what they built in a sentence or two if that context is missing.
+Then cover the three areas below.
 
 **Have a natural conversation, not a form.** Don't read questions mechanically. If one answer makes another obvious, skip ahead. If an answer is thin, probe. The goal is to understand what they built well enough to write a useful one-pager.
 
-If the builder says "I don't know" — capture it and flag it for PM to assess.
+If the builder says "I don't know", record it as "Unconfirmed" and identify
+who can verify it, if known. Do not invent an owner or a readiness claim.
 
 ---
 
@@ -32,11 +49,11 @@ If the builder says "I don't know" — capture it and flag it for PM to assess.
 
 Builders often skip straight to the solution. Slow them down here — this is the most important section.
 
-- **Who has this problem?** A particular customer, a segment, an internal team?
+- **Who has this problem?** A field team, customer, partner, or other intended user?
 - **What are they doing today without this?** Manual process, workaround, just not doing it?
 - **How does this impact the customer?** Time saved, data quality, workflow unblocked, reduced errors?
-- **What's the Fulcrum business impact?** Revenue, churn prevention, new use case — fine if the builder isn't sure
-- **Why did you build this rather than waiting for engineering?** Urgency, customer relationship, opportunity to prototype?
+- **What outcome matters to this audience?** A faster workflow, reliable deliverable, improved accessibility, or another agreed measure?
+- **What constraints shaped the solution?** Timeline, connectivity, devices, compliance, or available tools?
 
 ### Area 2: What They Built
 
@@ -45,31 +62,42 @@ Document the solution without needing technical depth.
 - **What does it do?** 1-2 plain-English sentences a non-technical person could understand
 - **What doesn't it do, or where does it break?** Limitations, edge cases, fragile areas
 - **What Fulcrum platform features does it rely on?** App extensions, Query API, webhooks, data events, reporting engine, etc.
-- **How would this be delivered to a customer?** Plugin, manual config, workflow handoff
-- **Is it ready to use as-is?** If not, what would "done" look like?
+- **How will the intended users receive and use it?** App access, manual configuration, plugin, or workflow handoff
+- **Is it ready to use as-is?** What has actually been tested, and what would "done" look like?
 
-### Area 3: Scale Gut-Check
+### Area 3: Reuse, Ownership, And Handoff
 
-Builder's honest take on breadth. PM validates later.
+Record the builder's assessment without presenting it as verified evidence.
 
-- **One customer's situation, or a problem multiple customers would have?**
-- **Could this be a shared utility, or too customized to this context?**
+- **Is this specific to one team or reusable elsewhere?** What would need to change?
+- **Who owns configuration, maintenance, and support?** Note any proposed owner whose acceptance is still unconfirmed.
+- **What does the recipient need for a successful handoff?** Access, setup instructions, testing, training, or a named next action?
+
+**Optional internal product intake:** Only if explicitly requested for an
+internal audience, add that team's product-review questions or business
+assessment. Omit this from customer, partner, and independent-builder
+documents unless requested; it is not a required approval or categorization step.
 
 ---
 
 ## Output — the one-pager
 
-Once you have enough context, produce the one-pager. Save it as `<kebab-case-solution-name>-solution.md` in the current workspace.
+Once the user has requested a document and you have enough context, draft the
+one-pager in the conversation. If the user requests a workspace file, confirm
+the filename and location, using `<kebab-case-solution-name>-solution.md` as
+the default. Do not overwrite an existing file without approval.
 
 Use [`assets/solution-one-pager-template.md`](assets/solution-one-pager-template.md)
-as the structure. It covers the problem framing, what was built, the
-builder's scale assessment, and the PM review checklist.
+as the structure. It covers the audience, problem framing, what was built,
+readiness evidence, reuse, ownership, and handoff. Omit the optional internal
+intake section unless requested.
 
 ---
 
 ## Prepare For Sharing
 
-After saving the file, ask who should receive it and what format they need. Offer one or more of these destinations:
+Sharing is optional. If the user wants to share the document, confirm who
+should receive it and what format they need. Offer suitable options:
 
 - Save the Markdown one-pager in the workspace.
 - Produce a concise message for copy-and-paste into Slack, Teams, email, or chat.
@@ -95,15 +123,14 @@ After a connector send, report the destination and result. After a manual handof
 
 ## Completion Criteria
 
-- [ ] Builder walked through all three areas conversationally
-- [ ] One-pager produced with all sections filled (or explicitly marked "PM to assess")
+- [ ] User requested the workflow; existing context or follow-up answers cover the three areas
+- [ ] One-pager produced for the chosen audience, with gaps marked "Unconfirmed" and optional internal intake omitted unless requested
 - [ ] Problem statement synthesized — not just copied from builder's words
-- [ ] File saved as `<kebab-case-solution-name>-solution.md`
-- [ ] Intended audience and sharing destination confirmed
-- [ ] Privacy review completed and redactions approved
-- [ ] Selected share format prepared for the destination
-- [ ] External send explicitly approved before using a configured connector
-- [ ] Builder knows what was shared, where it went, or what to copy manually
+- [ ] Readiness evidence, ownership status, and next handoff actions are explicit
+- [ ] Output provided in the requested format; a file is saved only when requested, at the agreed path
+- [ ] If sharing is requested, the audience and destination are confirmed, privacy review and approved redactions are complete, and the selected format is prepared
+- [ ] Any external send is explicitly approved before using a configured connector
+- [ ] Builder knows what was produced, whether anything was shared, and any next action
 
 ## References
 

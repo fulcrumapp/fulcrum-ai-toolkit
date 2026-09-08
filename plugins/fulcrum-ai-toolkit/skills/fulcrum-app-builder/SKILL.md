@@ -18,6 +18,13 @@ This skill is the front door for app-building conversations. Use [fulcrum-produc
 
 Determine whether the current host has Fulcrum App MCP registered. This toolkit packages guidance only; it does not bundle the server or credentials.
 
+For setup, use the [regional MCP guide](resources/mcp-setup.md). Confirm the
+tenant instance and intended organization before connecting. Hosted App MCP
+uses the organization's existing opaque API token as a Bearer credential;
+OAuth login is not supported. Never assume the US endpoint, probe other
+regions with the token, or request a token in chat. Preserve an existing
+approved connector configuration rather than registering a duplicate.
+
 When App MCP is available, inspect its live tool schemas and use it by default for:
 
 | Domain | App MCP capability |
@@ -184,6 +191,7 @@ After a build or handoff, summarize:
 - Never embed secrets in app scripts, report templates, or extension code.
 - Never regenerate existing element or choice keys during an update.
 - Never claim execution when App MCP is unavailable.
+- Never select or change the tenant's MCP endpoint without confirmation.
 
 ## Scope
 

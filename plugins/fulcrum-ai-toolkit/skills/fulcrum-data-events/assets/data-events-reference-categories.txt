@@ -18,6 +18,6 @@ fulcrum_expressions_data_events_reference(category="ui")
 fulcrum_expressions_data_events_reference(category="validation")
     Save-time validation and required-field control.
 
-# Calculation-field expressions are a different language from Data Event
-# JavaScript. Use fulcrum_expressions_list_functions for those, and see
+# Calculation fields also use JavaScript, but have a different runtime
+# context. Use fulcrum_expressions_list_functions for their built-ins, and see
 # ../../fulcrum-app-design/assets/calculation-field-expressions.txt.

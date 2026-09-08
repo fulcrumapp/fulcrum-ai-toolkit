@@ -6,6 +6,9 @@ mapping, queries, access models, and migrations on the
 
 Built around the open [Agent Skills standard](https://agentskills.io/specification) — skills are portable Markdown workflows with structured metadata that compatible AI agents load on demand.
 
+Use the toolkit for guidance and implementation handoffs without a connector,
+or connect Fulcrum App MCP for approved live app-configuration work.
+
 ## Install
 
 This repository is a marketplace containing the distributable
@@ -23,7 +26,7 @@ In Codex, add the repository marketplace, then install
 
 ```bash
 codex plugin marketplace add fulcrumapp/fulcrum-ai-toolkit
-codex plugin install fulcrum-ai-toolkit@fulcrum-ai-toolkit
+codex plugin add fulcrum-ai-toolkit@fulcrum-ai-toolkit
 ```
 
 In GitHub Copilot CLI, add the marketplace and install the plugin:
@@ -33,19 +36,41 @@ copilot plugin marketplace add fulcrumapp/fulcrum-ai-toolkit
 copilot plugin install fulcrum-ai-toolkit@fulcrum-ai-toolkit
 ```
 
-For a standalone skills loader, target the packaged skills directory:
+For a standalone skills loader, install the complete collection:
 
 ```bash
-npx skills@latest add https://github.com/fulcrumapp/fulcrum-ai-toolkit/tree/main/plugins/fulcrum-ai-toolkit/skills
+npx skills@latest add https://github.com/fulcrumapp/fulcrum-ai-toolkit/tree/main/plugins/fulcrum-ai-toolkit/skills --skill '*'
 ```
 
-You can also copy or symlink individual skill directories from
-`plugins/fulcrum-ai-toolkit/skills/` into a host's documented project skill
-directory. `.agents/` is reserved for repository-scoped agent assets and
-marketplace metadata.
+The supported distribution unit is the **whole 16-skill bundle**. Skills link
+to sibling skills and their resources; an individual directory is not a
+self-contained package, and loaders do not automatically install dependencies.
+For manual installation, copy all directories under
+`plugins/fulcrum-ai-toolkit/skills/` into one host-supported skill directory,
+preserving their names, supporting files, and sibling layout. Retain the
+[package license](plugins/fulcrum-ai-toolkit/LICENSE) with the copied collection.
+In this repository, `.agents/` holds repository-scoped agent assets and
+marketplace metadata, not the distributable skills.
 
-The toolkit installs guidance skills only. It does not include Fulcrum App MCP
-or Fulcrum credentials. When separately registered, App MCP is the toolkit's
+See [host installation details](plugins/fulcrum-ai-toolkit/docs/host-installation.md)
+for Cursor, Gemini, Hermes, and the different Claude Desktop surfaces.
+
+## Connect Fulcrum App MCP
+
+The hosted service is available at `https://mcp.fulcrumapp.com/app`, with
+different hosts for Australian, European, and Canadian tenants. Select the
+endpoint from the **tenant's Fulcrum instance**, not your physical location.
+There is no automatic region fallback.
+
+Follow the [regional MCP setup guide](plugins/fulcrum-ai-toolkit/skills/fulcrum-app-builder/resources/mcp-setup.md)
+to choose the endpoint and configure your agent. Authentication uses your
+existing Fulcrum organization API token in an `Authorization: Bearer` header;
+OAuth login is not supported. Keep the opaque token in the host's secret store
+or an environment variable, never in this repository or a chat message.
+
+The toolkit installs guidance skills only. It does not register a server or
+bundle credentials; its MCP manifests intentionally contain no servers.
+When separately registered for the confirmed tenant, App MCP is the toolkit's
 default control plane for supported app configuration and knowledge operations.
 Without it, `fulcrum-app-builder` stops at an approved implementation handoff.
 App MCP covers forms, schema builders and validation, choices, classifications,
@@ -75,14 +100,15 @@ directory or explicitly point to it when the host contract supports that field.
 
 | Host | Install path | Skills | Live Fulcrum actions | Alpha status |
 | --- | --- | --- | --- | --- |
-| Generic skills loader | Add `plugins/fulcrum-ai-toolkit/skills/` | Yes | No, connector required | Target |
+| Generic skills loader | Add all 16 skills, preserving sibling layout | Yes | No, connector required | Target |
 | Claude Code | Add the Claude marketplace, then install the plugin | Yes | Connector-dependent | Target |
 | Cursor | Install `plugins/fulcrum-ai-toolkit/` as a plugin | Yes | Connector-dependent | Target |
 | Codex | Add the repository marketplace, then install the plugin | Yes | Connector-dependent | Target |
 | GitHub Copilot | Add this marketplace, then install the plugin | Yes | Connector-dependent | Target |
-| Gemini | Install `plugins/fulcrum-ai-toolkit/` as an extension | Verify | Connector-dependent | Verify |
-| Hermes | Install `plugins/fulcrum-ai-toolkit/` as a plugin | Yes | Connector-dependent | Verify |
-| Claude Desktop | Copy `plugins/fulcrum-ai-toolkit/skills/` to the consuming repo and configure MCP separately | Yes | MCP-dependent | Later |
+| Gemini CLI | Clone, then install the local package directory as an extension | Yes | Connector-dependent | Verify |
+| Hermes | Configure the full local `skills/` directory via `skills.external_dirs` | Yes | Connector-dependent | Verify |
+| Claude Code in Desktop | Use Claude Code's marketplace/plugin installation | Yes | Connector-dependent | Target |
+| Claude Desktop chat / Cowork | Requires account-level skill packaging that preserves dependencies; repo copying is insufficient | Not packaged | Host authentication support required | Later |
 
 The `Target` and `Verify` labels describe the toolkit's intended alpha support,
 not a claim that every host has been tested in this repository yet.
@@ -100,6 +126,9 @@ node scripts/validate.mjs
 The repository validator checks the exact 16-skill inventory, skill frontmatter,
 directory/name consistency, corporate absolute paths, privacy and provenance contracts,
 JSON manifests (including Agent Plugins 1.0.0 and client manifests), and README inventory.
+It also keeps release versions aligned, requires the packaged license and
+Codex manual-invocation policies, and guards the regional MCP endpoint map
+and empty default server configuration.
 Structural and schema validation for externalized examples and assets runs via
 `tools/format-validator` using Ajv and pinned parsers.
 In CI, GitHub Actions also validates the Claude plugin marketplace using Anthropic's official
@@ -162,9 +191,8 @@ assertions for the table wrapper that was reviewed by hand: its `<table>`,
 each branch writes a complete row. These are checks on this repository's
 examples; they generalize to nothing else. Bypass probes for the SQL and
 `QUERY()` contracts run on every invocation, on the same code paths the
-repository's own files take. The smoke test exercises a small site-inspection
-workflow through discovery, schema approval, offline review, and the no-MCP
-handoff path.
+repository's own files take. These static checks do not establish host skill
+activation, an authenticated MCP connection, or successful live app creation.
 
 ## Skills
 
@@ -189,7 +217,9 @@ handoff path.
 
 ## Usage
 
-Skills are **model-invoked** by default: the agent fires them automatically when building Fulcrum apps. The agent will:
+Skills are intended to be **model-invoked** by default on hosts that support
+automatic selection. Matching and invocation syntax vary by host. The agent
+uses the focused skill to:
 
 - Use the platform router for capability, plan, public AI, offline, and App MCP
   boundary decisions (`fulcrum-product-knowledge`)
@@ -212,10 +242,16 @@ Skills are **model-invoked** by default: the agent fires them automatically when
 - Apply extension best practices and avoid the picker anti-pattern (`fulcrum-app-extensions`)
 - Guide report template authoring with correct EJS patterns and parameter handling (`fulcrum-report-building`)
 
-Two skills are **user-invoked** — run them manually:
+Two skills are intended to be **user-invoked** — request them explicitly:
 
 - `fulcrum-discovery` — start a new project by interviewing the customer before building
 - `fulcrum-solution-document` — after building, document what was built, review it for privacy, and prepare it for a destination chosen by the user
+
+Claude Code and Cursor use `disable-model-invocation: true`; Codex uses each
+skill's `agents/openai.yaml` policy. These are host adapters, not guarantees
+provided by the Agent Skills standard. On other hosts, invocation behavior may
+differ. The skill bodies also require a user request or consent before an
+interview or document workflow, and explicit approval before an external send.
 
 ## Where this comes from
 
@@ -252,8 +288,8 @@ that must remain private or be dropped.
 Skills follow the [Agent Skills specification](https://agentskills.io/specification):
 each distributable skill under `plugins/fulcrum-ai-toolkit/skills/` is a
 directory containing a `SKILL.md` with YAML frontmatter (`name` and
-`description`) plus a Markdown body. The optional invocation fields are
-retained where supported by a host and ignored elsewhere.
+`description`) plus a Markdown body. Host-specific invocation fields and
+sidecars supplement the portable content; unsupported hosts may ignore them.
 
 ### Platform support
 
@@ -265,9 +301,9 @@ Plugin configs are included for multiple AI platforms:
 | Claude Code | `plugins/fulcrum-ai-toolkit/.claude-plugin/plugin.json` |
 | Cursor | `plugins/fulcrum-ai-toolkit/.cursor-plugin/plugin.json` |
 | Codex | `plugins/fulcrum-ai-toolkit/.codex-plugin/plugin.json` |
-| Hermes | `plugins/fulcrum-ai-toolkit/.hermes-plugin/` |
+| Hermes | Shared `skills/` directory; root `plugin.json` for hosts supporting Agent Plugins v1 |
 | Gemini | `plugins/fulcrum-ai-toolkit/gemini-extension.json` |
-| MCP | `plugins/fulcrum-ai-toolkit/.mcp.json` |
+| MCP | Empty `.mcp.json` and `mcp.json`; configure a tenant-specific server separately |
 
 All hosts discover or reference the package's shared `skills/` directory; they
 do not maintain separate copies of skill content. GitHub Copilot marketplace
@@ -290,10 +326,14 @@ installers. Codex marketplace metadata is available at
 
 ## Contributing
 
-Internal contributors: PS, CS, and platform engineers. Open a PR with new skills or improvements.
+Contributions from Fulcrum customers, partners, independent builders, and
+Fulcrum teams are welcome. Open a PR with new skills or improvements.
 
-Skills should encode patterns you've seen work (or fail) across multiple customer engagements — not one-off configurations. If you've built the same kind of app three times, there's a skill in there.
+Skills should encode reusable patterns, not tenant-specific configurations.
+Use public sources, distinguish workflow recommendations from product
+constraints, and omit customer data, credentials, and private attribution.
 
 ## License
 
-MIT
+[MIT](LICENSE). The distributable plugin includes the same [license
+text](plugins/fulcrum-ai-toolkit/LICENSE).
