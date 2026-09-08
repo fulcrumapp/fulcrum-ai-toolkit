@@ -89,49 +89,21 @@ not a claim that every host has been tested in this repository yet.
 
 ## Local validation
 
-Ruby 3.2.11 is required; compatible version managers can provision it from
-`.ruby-version`. Run the Ruby checks from the repository root:
-
-```bash
-ruby scripts/validate.rb
-ruby test/app_mcp_contract_test.rb
-ruby test/manifest_contract_test.rb
-ruby test/product_knowledge_decomposition_test.rb
-ruby test/external_examples_test.rb
-ruby test/resource_contract_test.rb
-ruby test/smoke_test.rb
-```
-
-Structural and read-only SQL validation for the externalized examples and assets
-lives in `tools/format-validator`, a small Node package whose parsers are pinned
-exactly in `package.json` and `package-lock.json`. Install once, then run it
-directly or let the external examples test invoke it:
+Validation runs entirely on Node.js. Install dependencies for the format validator and run the checks from the repository root:
 
 ```bash
 npm ci --prefix tools/format-validator
 npm run --prefix tools/format-validator validate
+node scripts/validate.mjs
 ```
 
-The Ruby checks are dependency-free and run without Node; only the parser-backed
-pass needs the pinned package, and CI sets `REQUIRE_NODE=1` so it can never be
-skipped there.
-
-The validator checks the exact 16-skill inventory, skill frontmatter,
-directory/name consistency, corporate absolute paths, possible credentials,
-JSON manifests, and README inventory.
-The contract test prevents regressions in App MCP tool names, signatures, and
-preservation-safe form updates. The decomposition test checks focused skill
-discovery, sources, router/coverage links, and package boundaries. The external
-examples test proves that no fenced code block remains in skill Markdown, that
-every `examples/` and `assets/` file is indexed and reachable, that each one
-names a public source URL, that no example, asset, or index carries credential
-or private material, and that the legacy and current example inventories match
-`test/data/example-block-inventory.json` exactly, identifier by identifier. It
-also requires the format validator's own counts back, so the work it delegates
-cannot quietly become work that is skipped. The resource contract test validates
-all distributable local links, resource ownership, public-source precedence,
-privacy boundaries, exact layer-4 inventory and report hashes, and the 100 KB
-skill-resource snapshot limit without network access.
+The repository validator checks the exact 16-skill inventory, skill frontmatter,
+directory/name consistency, corporate absolute paths, privacy and provenance contracts,
+JSON manifests (including Agent Plugins 1.0.0 and client manifests), and README inventory.
+Structural and schema validation for externalized examples and assets runs via
+`tools/format-validator` using Ajv and pinned parsers.
+In CI, GitHub Actions also validates the Claude plugin marketplace using Anthropic's official
+`validate-plugins` composite action.
 
 Validation never runs anything this repository authors. HTML is parsed, its
 inline scripts and styles are parsed, a report template is compiled to source by

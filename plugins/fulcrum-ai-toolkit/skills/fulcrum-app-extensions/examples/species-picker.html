@@ -6,35 +6,238 @@
   <title>Species picker</title>
   <!-- Source: https://docs.fulcrumapp.com/docs/app-extensions-introduction -->
   <!-- Document: a complete standalone extension page. Upload it as the Reference File named species-picker.html so attachment://species-picker.html resolves. -->
+  <!-- Reference: https://docs.fulcrumapp.com/docs/app-extensions-lifecycle-and-events -->
+  <!-- Reference: https://docs.fulcrumapp.com/docs/app-extensions-reference-files -->
+
   <!-- Required Fulcrum extension bootstrap; keep intact for offline use. -->
-  <script>(()=>{var s=(e,i)=>()=>(i||e((i={exports:{}}).exports,i),i.exports);var o=s((a,r)=>{var l=new URLSearchParams(location.search);function c(e){try{return JSON.parse(e)}catch(i){return null}}r.exports=window.Fulcrum={isExtension:l.get("extension")==="1",initialize:()=>{var i;let{params:e}=Fulcrum;Fulcrum.id=e==null?void 0:e.id,Fulcrum.url=e==null?void 0:e.url,Fulcrum.data=e==null?void 0:e.data,Fulcrum.origin=e==null?void 0:e.origin,(i=Fulcrum.onLoadOnce)==null||i.call(Fulcrum)},load:e=>{Fulcrum.onLoadOnce=()=>{Fulcrum.params&&!Fulcrum.isLoaded&&(Fulcrum.isLoaded=!0,e({data:Fulcrum.data}))},Fulcrum.onLoadOnce()},send:(e,{close:i=!1}={})=>{var u;e=e!=null?e:{};let n={id:Fulcrum.id,url:Fulcrum.url,data:e,close:i};(u=window.webkit)!=null&&u.messageHandlers?window.webkit.messageHandlers.extensionListener.postMessage(JSON.stringify(n)):window.parent&&window.parent.postMessage({extensionMessage:n},Fulcrum.origin)},receive:e=>{let i=c(e.data);i&&i.command==="initialize"&&!Fulcrum.params&&(Fulcrum.params=i.params,Fulcrum.initialize())},finish:e=>{Fulcrum.send(e,{close:!0})}};Fulcrum.isExtension?window.addEventListener("message",Fulcrum.receive,!1):window.addEventListener("DOMContentLoaded",Fulcrum.initialize)});o();})();</script>
-  <style>
+  <script type="text/javascript">
+    (() => {
+      // Detect if running inside a Fulcrum extension container (?extension=1)
+      const searchParams = new URLSearchParams(window.location.search);
+
+      // Safe JSON parser helper for postMessage payload decoding
+      function parseJson(data) {
+        try {
+          return JSON.parse(data);
+        } catch {
+          return null;
+        }
+      }
+
+      /**
+       * Fulcrum extension bridge interface.
+       * Provides bidirectional communication between custom HTML extensions
+       * and the host Fulcrum mobile or web client.
+       * @see https://docs.fulcrumapp.com/docs/app-extensions-introduction
+       */
+      window.Fulcrum={
+        isExtension: searchParams.get('extension') === '1',
+
+        /**
+         * Unpacks host context and notifies registered load listeners.
+         */
+        initialize() {
+          const { id, url, data, origin } = window.Fulcrum.params || {};
+          Object.assign(window.Fulcrum, { id, url, data, origin });
+
+          if (typeof window.Fulcrum.onLoadOnce === 'function') {
+            window.Fulcrum.onLoadOnce();
+          }
+        },
+
+        /**
+         * Register a callback to receive initial record data from Fulcrum.
+         * @param {function({data: object}): void} callback
+         */
+        load(callback) {
+          window.Fulcrum.onLoadOnce = () => {
+            if (window.Fulcrum.params && !window.Fulcrum.isLoaded) {
+              window.Fulcrum.isLoaded = true;
+              callback({ data: window.Fulcrum.data });
+            }
+          };
+          window.Fulcrum.onLoadOnce();
+        },
+
+        /**
+         * Send a message payload back to the Fulcrum parent app.
+         * Routes through WebKit message handlers on iOS or postMessage on web.
+         * @param {object} payload - Data to return to the host Data Event
+         * @param {object} options - Options such as { close: true }
+         */
+        send(payload = {}, { close = false } = {}) {
+          const message = {
+            id: window.Fulcrum.id,
+            url: window.Fulcrum.url,
+            data: payload,
+            close
+          };
+
+          if (window.webkit?.messageHandlers?.extensionListener) {
+            window.webkit.messageHandlers.extensionListener.postMessage(
+              JSON.stringify(message)
+            );
+          } else if (window.parent) {
+            const targetOrigin = window.Fulcrum.origin || '*';
+            window.parent.postMessage({ extensionMessage: message }, targetOrigin);
+          }
+        },
+
+        /**
+         * Listener for inbound host messages with origin verification.
+         * @param {MessageEvent} event
+         */
+        receive(event) {
+          if (event.origin === 'null') {
+            // Opaque origins are only accepted when this page is also opaque
+            // and the sender is the parent frame, not an arbitrary iframe.
+            if (window.location.origin !== 'null' || event.source !== window.parent) {
+              return;
+            }
+          } else if (event.origin === window.location.origin) {
+            // Same-origin host messages are trusted.
+          } else {
+            try {
+              const url = new URL(event.origin);
+              const host = url.hostname.toLowerCase();
+              const isFulcrumHost = host === 'fulcrumapp.com' || host.endsWith('.fulcrumapp.com');
+              if (!isFulcrumHost) {
+                return;
+              }
+            } catch {
+              return;
+            }
+          }
+
+          const parsed = parseJson(event.data);
+          if (parsed && parsed.command === 'initialize' && !window.Fulcrum.params) {
+            window.Fulcrum.params = parsed.params;
+            window.Fulcrum.initialize();
+          }
+        },
+
+        /**
+         * Deliver final output and instruct the Fulcrum host to close the modal.
+         * @param {object} payload - The selection or form data to deliver to onMessage
+         */
+        finish(payload) {
+          window.Fulcrum.send(payload, { close: true });
+        }
+      };
+
+      // Register event listeners based on runtime context
+      if (window.Fulcrum.isExtension) {
+        window.addEventListener('message', window.Fulcrum.receive, false);
+      } else {
+        window.addEventListener('DOMContentLoaded', window.Fulcrum.initialize);
+      }
+    })();
+  </script>
+  <style type="text/css">
     /* Keep styles self-contained — no external stylesheets at runtime. */
-    body { font-family: sans-serif; margin: 0; padding: 16px; }
-    select, button { font-size: 1rem; padding: 8px; }
+    :root {
+      --font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      --color-bg: #ffffff;
+      --color-text: #212529;
+      --color-border: #ced4da;
+      --color-primary: #0066cc;
+      --color-primary-hover: #0052a3;
+      --radius: 6px;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: var(--font-family);
+      margin: 0;
+      padding: 16px;
+      color: var(--color-text);
+      background-color: var(--color-bg);
+      line-height: 1.5;
+    }
+
+    .container {
+      max-width: 480px;
+      margin: 0 auto;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    label {
+      font-weight: 600;
+      font-size: 0.95rem;
+    }
+
+    select {
+      width: 100%;
+      padding: 10px 12px;
+      font-size: 1rem;
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius);
+      background-color: #fff;
+    }
+
+    select:focus {
+      outline: 2px solid var(--color-primary);
+      outline-offset: 1px;
+    }
+
+    button {
+      align-self: flex-start;
+      padding: 10px 20px;
+      font-size: 1rem;
+      font-weight: 600;
+      color: #fff;
+      background-color: var(--color-primary);
+      border: none;
+      border-radius: var(--radius);
+      cursor: pointer;
+      transition: background-color 0.15s ease-in-out;
+    }
+
+    button:hover,
+    button:focus {
+      background-color: var(--color-primary-hover);
+    }
   </style>
 </head>
 <body>
-  <label for="my-select">Species</label>
-  <select id="my-select">
-    <option value="">-- choose --</option>
-    <option value="option_a">Option A</option>
-    <option value="option_b">Option B</option>
-  </select>
-  <button id="save-btn" type="button">Save</button>
-  <script>
-    var select = document.getElementById('my-select');
+  <main class="container">
+    <label for="my-select">Tree Species</label>
+    <select id="my-select">
+      <option value="">-- Choose a species --</option>
+      <option value="quercus_alba">Quercus alba (White Oak)</option>
+      <option value="acer_saccharum">Acer saccharum (Sugar Maple)</option>
+      <option value="pinus_strobus">Pinus strobus (Eastern White Pine)</option>
+      <option value="cornus_florida">Cornus florida (Flowering Dogwood)</option>
+    </select>
+    <button id="save-btn" type="button">Save Selection</button>
+  </main>
+  <!-- Application Logic -->
+  <script type="text/javascript">
+    const select = document.getElementById('my-select');
+    const saveBtn = document.getElementById('save-btn');
 
-    Fulcrum.load(function (payload) {
+    // Subscribe to host initialization payload
+    Fulcrum.load((payload) => {
       initialize(payload.data || {});
     });
 
+    /**
+     * Populate form elements with existing field values if present.
+     * @param {object} data - Values passed in OPENEXTENSION({ data: ... })
+     */
     function initialize(data) {
       select.value = data.current_value || '';
     }
 
-    document.getElementById('save-btn').addEventListener('click', function () {
-      var selectedValue = document.getElementById('my-select').value;
+    // Handle user selection and return data to the calling Data Event
+    saveBtn.addEventListener('click', () => {
+      const selectedValue = select.value;
+      // Delivers { value: selectedValue } to the onMessage callback in the Data Event
       Fulcrum.finish({ value: selectedValue });
     });
   </script>

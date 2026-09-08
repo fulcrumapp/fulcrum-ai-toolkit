@@ -2,8 +2,8 @@
 // Parser-backed validation for every externalized example and asset in the
 // distributable toolkit plugin.
 //
-// The Ruby suite owns repository policy: inventories, template identity, source
-// attribution, and privacy. This tool owns everything that needs a parser —
+// `scripts/validate.mjs` owns repository policy: inventories, template identity,
+// source attribution, and privacy. This tool owns everything that needs a parser —
 // proving each file is well formed in its own format, that its SQL is
 // read-only, and that its interpolation uses a recognized encoder — with
 // established parsers pinned to exact versions in package.json and
@@ -32,10 +32,11 @@ import process from 'node:process';
 import { fileURLToPath } from 'node:url';
 
 import * as acorn from 'acorn';
-import { HtmlValidate } from 'html-validate';
+import { Config, HtmlValidate, Parser } from 'html-validate';
 import postcss from 'postcss';
 
 import { compiledSource, queryCalls } from './lib/ejs-queries.mjs';
+import { loadSchemas, SCHEMA_MAPPINGS, validateDocument, validateInventory } from './lib/schema-contract.mjs';
 import { selfCheck } from './lib/self-check.mjs';
 import { readOnlyViolations } from './lib/sql-contract.mjs';
 
@@ -52,9 +53,7 @@ const PROSE_EXTENSIONS = new Set(['.md', '.txt']);
 const DOCUMENT_LABEL = /(?:^|[^A-Za-z])Document:/;
 const FRAGMENT_LABEL = /(?:^|[^A-Za-z])Fragment:/;
 
-const INLINE_SCRIPT = /<script\b([^>]*)>([\s\S]*?)<\/script>/gi;
-const INLINE_STYLE = /<style\b[^>]*>([\s\S]*?)<\/style>/gi;
-const SCRIPT_SRC = /(?:^|\s)src\s*=/i;
+let resolvedHtmlConfig;
 
 // Repository example checks for the report templates this repository ships.
 // Both are literal: the raw output tag is spelled one way, and each output
@@ -65,10 +64,16 @@ const RAW_OUTPUT_TAG = '<%-';
 const OUTPUT_INTERNALS = ['__append', '__output', 'escapeFn'];
 
 const documentValidator = new HtmlValidate({
-  extends: ['html-validate:recommended', 'html-validate:document']
+  extends: ['html-validate:recommended', 'html-validate:document'],
+  rules: {
+    'script-type': 'off'
+  }
 });
 const fragmentValidator = new HtmlValidate({
-  extends: ['html-validate:recommended']
+  extends: ['html-validate:recommended'],
+  rules: {
+    'script-type': 'off'
+  }
 });
 
 const failures = [];
@@ -154,6 +159,13 @@ function parseSql(file, sql, what, options) {
   return false;
 }
 
+async function parseHtmlTree(html) {
+  if (!resolvedHtmlConfig) {
+    resolvedHtmlConfig = await Config.empty().resolve();
+  }
+  return new Parser(resolvedHtmlConfig).parseHtml(html);
+}
+
 async function validateHtml(file, text) {
   const label = labelOf(text);
   if (!label) {
@@ -171,20 +183,31 @@ async function validateHtml(file, text) {
     }
   }
 
+  let tree;
+  try {
+    tree = await parseHtmlTree(text);
+  } catch (error) {
+    fail(file, `HTML could not be parsed: ${error.message}`);
+    count(`html:${label}`);
+    return;
+  }
+
   let inlineScripts = 0;
-  for (const match of text.matchAll(INLINE_SCRIPT)) {
-    if (SCRIPT_SRC.test(match[1])) continue;
-    if (match[2].trim() === '') continue;
+  for (const el of tree.querySelectorAll('script')) {
+    if (el.hasAttribute('src')) continue;
+    const code = el.textContent ?? '';
+    if (code.trim() === '') continue;
     inlineScripts += 1;
-    parseScript(file, match[2], `inline <script> #${inlineScripts}`);
+    parseScript(file, code, `inline <script> #${inlineScripts}`);
     count('inline-script');
   }
 
   let inlineStyles = 0;
-  for (const match of text.matchAll(INLINE_STYLE)) {
-    if (match[1].trim() === '') continue;
+  for (const el of tree.querySelectorAll('style')) {
+    const css = el.textContent ?? '';
+    if (css.trim() === '') continue;
     inlineStyles += 1;
-    parseCss(file, match[1], `inline <style> #${inlineStyles}`);
+    parseCss(file, css, `inline <style> #${inlineStyles}`);
     count('inline-style');
   }
 
@@ -242,18 +265,38 @@ function validateCss(file, text) {
   if (parseCss(file, text, 'stylesheet')) count('css');
 }
 
-function validateJson(file, text) {
+function validateJson(file, text, schemas) {
+  let document;
   try {
-    JSON.parse(text);
+    document = JSON.parse(text);
     count('json');
   } catch (error) {
     fail(file, `is not valid JSON: ${error.message}`);
+    return;
+  }
+
+  const relative = path.relative(ROOT, file).split(path.sep).join('/');
+  const schemaName = SCHEMA_MAPPINGS[relative];
+  if (schemaName) {
+    const errors = validateDocument(document, schemaName, schemas);
+    for (const err of errors) {
+      fail(file, `schema validation against ${schemaName}: ${err}`);
+    }
+    count('json:schema');
   }
 }
 
 async function main() {
   if (!fs.existsSync(SKILLS)) {
     console.error(`Format validation failed: no skills directory at ${SKILLS}`);
+    process.exit(1);
+  }
+
+  let schemas;
+  try {
+    schemas = await loadSchemas();
+  } catch (error) {
+    console.error(`Format validation failed: ${error.message}`);
     process.exit(1);
   }
 
@@ -268,6 +311,14 @@ async function main() {
   if (files.length === 0) {
     console.error('Format validation failed: no externalized files were found');
     process.exit(1);
+  }
+
+  const jsonFiles = files
+    .filter((file) => path.extname(file).toLowerCase() === '.json')
+    .map((file) => path.relative(ROOT, file).split(path.sep).join('/'));
+  const inventoryErrors = validateInventory(jsonFiles);
+  for (const err of inventoryErrors) {
+    failures.push(`JSON inventory: ${err}`);
   }
 
   for (const file of files) {
@@ -291,7 +342,7 @@ async function main() {
         if (parseSql(file, text, 'file')) count('sql');
         break;
       case '.json':
-        validateJson(file, text);
+        validateJson(file, text, schemas);
         break;
       default:
         if (PROSE_EXTENSIONS.has(extension)) {
