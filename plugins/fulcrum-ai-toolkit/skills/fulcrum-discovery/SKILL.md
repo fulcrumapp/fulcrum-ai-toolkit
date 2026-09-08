@@ -1,10 +1,20 @@
 ---
 name: fulcrum-discovery
-description: Process discovery interview for Fulcrum app building. Use before building to understand the field workflow, deliverable, and constraints. User-invoked — run manually when starting a new project.
+description: Process discovery interview for Fulcrum app building. Understand the field workflow, deliverable, and constraints. User-invoked — run only on request or after the user chooses discovery in the app-builder workflow.
 disable-model-invocation: true
 ---
 
 **Discovery before building.** The most common failure mode in Fulcrum app building is starting with fields before understanding the workflow. This skill walks through a structured interview — one question at a time — to build a clear picture before opening the app builder.
+
+## Invocation And Consent
+
+This is a manual workflow, even in hosts that ignore `disable-model-invocation`.
+Do not start a full interview merely because a user asks to build or edit an
+app. Start only when the user requests discovery or chooses it after
+`fulcrum-app-builder` offers the option. Reuse answers already provided.
+Keep the summary in the conversation unless the user requests a saved document.
+An interview request does not authorize file writes, app changes, or external
+sharing; obtain approval for those actions separately.
 
 ## Platform Boundaries — Resolve Before the Interview
 
@@ -24,17 +34,21 @@ Before starting the interview, surface and confirm these boundaries. Mismatched 
 
 If any of these match what the builder has in mind, resolve it now — not after the app is half-built.
 
-### Plan gates — confirm before designing
+### Feature eligibility — confirm before designing
 
-Some platform features require Elite plan or Developer Pack. If the builder is on Professional, these won't work:
+Check the capabilities the proposed workflow actually needs, such as
+`LOADRECORDS()`, `LOADFILE()`, APIs, webhooks, Workflows, or SSO/SCIM. Do not
+infer eligibility from a remembered plan name or a static tier matrix.
 
-- `LOADRECORDS()` and `LOADFILE()` in data events
-- Query API
-- Global webhooks
-- Workflows
-- SSO / SCIM
+Follow the sibling
+[Plan And Licensing Check](../fulcrum-product-knowledge/resources/plan-and-licensing-reference.md):
+consult [current pricing](https://www.fulcrumapp.com/pricing/) and the
+capability's [public documentation](https://docs.fulcrumapp.com/), and confirm
+the organization's applicable plan/add-on, permissions, and configuration.
+If access cannot be verified, record it as unresolved and offer a design
+that does not depend on it; do not promise an entitlement or upgrade path.
 
-> **Ask:** "What plan is your org on? I want to make sure the features we design around are available to you."
+> **Ask:** "Which of these capabilities does your organization currently have access to? Let's verify any dependency before we design around it."
 
 ---
 
@@ -100,8 +114,8 @@ Present this to the builder. Confirm before building. Then proceed with `fulcrum
 ## Completion Criteria
 
 - [ ] Platform boundaries reviewed — any misconceptions resolved before the interview
-- [ ] Plan tier confirmed — builder knows which features are available on their plan
-- [ ] All 8 interview questions have been asked and answered
+- [ ] Required feature eligibility verified against current sources and organization access, or explicitly marked unresolved with a fallback
+- [ ] All 8 interview topics are covered using existing answers or requested follow-up questions
 - [ ] A discovery summary is written and confirmed by the builder
 - [ ] The structural recommendation (single vs linked apps) is stated
 - [ ] Any existing artifacts (paper forms, reports, spreadsheets) have been reviewed

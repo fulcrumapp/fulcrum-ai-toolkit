@@ -11,6 +11,25 @@
 
 When App MCP is registered, prefer `fulcrum_expressions_data_events_reference` for the current runtime catalog. This resource is a portable fallback. Data Event JavaScript is stored in a form's `script` and is read or written with `fulcrum_forms_get` and `fulcrum_forms_update`; there are no standalone Data Event CRUD tools.
 
+This is a compact runtime reference, not a complete expression catalog.
+Use the public [Calculations Reference](https://docs.fulcrumapp.com/docs/calculations-reference)
+for expression functions and the [Data Events Reference](https://docs.fulcrumapp.com/docs/data-events-reference)
+for event-specific APIs.
+
+## Eligibility And Credential Boundaries
+
+Toolkit guidance: verify any required capability, including `LOADRECORDS()`
+and `LOADFILE()`, using the sibling
+[Plan And Licensing Check](../../fulcrum-product-knowledge/resources/plan-and-licensing-reference.md),
+[current pricing](https://www.fulcrumapp.com/pricing/), and the capability's
+public documentation. Confirm organization permissions and configuration;
+this runtime catalog is not evidence of a plan entitlement.
+
+Data events execute on the client. Never embed credentials, even read-only
+keys, in scripts, Reference Files, URLs, or local storage. Use authorized
+server-side mediation that keeps credentials off the client, authenticates
+callers, and enforces access to the requested data and operations.
+
 ## Record Events
 
 | Event | Description | Signature |
@@ -113,12 +132,17 @@ add-audio event object: id, size, duration
 | REQUEST(options, callback) | Make HTTP request (GET, POST, PUT). Async — response processing must be in callback |
 | LOADFILE(options, callback) | Load a Reference File. `options` requires `name` and may include optional `form_name` or `form_id`, plus optional `variable` |
 | OPENEXTENSION({ url, title, data, onMessage }) | Open an App Extension; use `attachment://filename.html` for a Reference File |
-| SETRESULT(value) | Set the result of a calculation field |
 | FIELD(data_name) | Return field metadata object (key, type, label, etc.) |
 | FORM() | Return the current form (app); `FORM().id` is its identifier |
 | RECORDID() | Return the current record's identifier, or null until a new record has been saved |
 | STORAGE() | Return a device-wide, persistent local-storage-like object with getItem, setItem, removeItem, and clear |
 | CONFIG() | Access the current configuration/results object |
+
+For a **calculation field**, rather than an event handler, `SETRESULT(value)`
+sets the result of advanced JavaScript. See the
+[calculation examples](../../fulcrum-app-design/assets/calculation-field-expressions.txt).
+Use `SETVALUE()` in data events when intentionally updating another field;
+the two APIs serve different contexts.
 
 ## Key Constraints
 

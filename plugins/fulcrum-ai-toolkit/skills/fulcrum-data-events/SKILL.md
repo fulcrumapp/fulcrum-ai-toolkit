@@ -78,7 +78,7 @@ field is touched.
 `LOADRECORDS()` takes an options object and an asynchronous callback; it does not return records directly. See
 [`examples/load-reference-records.js`](examples/load-reference-records.js).
 
-> **Platform Requirement — Elite plan:** `LOADRECORDS()` and `LOADFILE()` require an Elite plan or Developer Pack. On Professional, only `REQUEST()` is available for external data. If you write `LOADRECORDS()` on a Professional org it silently fails — no error, no data.
+> **Verify availability:** For `LOADRECORDS()` and `LOADFILE()`, follow the sibling [Plan And Licensing Check](../fulcrum-product-knowledge/resources/plan-and-licensing-reference.md). Check [current pricing](https://www.fulcrumapp.com/pricing/), the function's public documentation, and the organization's permissions/configuration. Do not infer access or failure behavior from a plan name. If access is unresolved, flag the dependency and offer a fallback that does not depend on it.
 
 ### Share code across apps with LOADFILE
 Store shared JavaScript in a Reference File, then load it into multiple apps at runtime. This is the standard code reuse pattern for builders maintaining several apps. See
@@ -88,7 +88,7 @@ Store shared JavaScript in a Reference File, then load it into multiple apps at 
 
 `LOADFILE()` takes an options object with required `name`, optional `form_name` or `form_id`, and optional `variable`, followed by an optional callback — `LOADFILE({ name, form_name | form_id, variable }, callback)`. For App MCP-managed files, use `fulcrum_reference_files_list` or `fulcrum_reference_files_get` to inspect the file and `fulcrum_reference_files_upload` to upload it before updating the form script.
 
-> **Platform Requirement — Elite plan:** `LOADFILE()` requires Elite or Developer Pack. See note above.
+> Verify `LOADFILE()` eligibility as described above before designing around shared Reference Files.
 
 ### Session state with STORAGE
 `STORAGE()` returns a local-storage-like object with `getItem`, `setItem`, `removeItem`, and `clear` methods. Values must be strings, so serialize objects with `JSON.stringify()`. The store is device-wide and persistent, so a bare key such as `baseline` is still there when the next record opens. Scope every key with `FORM().id` and the record it belongs to, and remove it on `cancel-record` and `unload-record`. `RECORDID()` is null until a new record has been saved, so it cannot separate one unsaved record from the next on its own: give an unsaved record a nonce generated once per editing session, so a session that crashed before its cleanup ran leaves a key the next session never computes. See
@@ -145,7 +145,13 @@ Hardcoded form IDs, report template IDs, or record IDs make apps non-portable. *
 ### Secrets in code
 Data events execute where the user is, so anyone who can open the app configuration can read the script. See
 [`examples/no-secrets-in-scripts.js`](examples/no-secrets-in-scripts.js).
-There is currently no secure way to store secrets in Fulcrum data events. This is a known platform gap. Mitigations: move the credential behind a middleware endpoint, use read-only API keys, restrict key permissions to minimum scope, and rotate keys regularly.
+Never embed credentials in client-side scripts, Reference Files, request URLs,
+or local storage, including read-only or least-privileged API keys. Use an
+authorized server-side service that holds the credential, authenticates callers,
+and enforces access to the requested data and operations. Scope and rotate
+credentials on that server; those measures do not make embedding them in a
+client safe. If authorized server-side mediation is unavailable, do not add
+the credential-dependent integration.
 
 ### Permission bypasses
 Data events execute with the **record creator's context**, not the viewing user's context. This means:
@@ -186,7 +192,13 @@ Before writing custom JavaScript logic, call `fulcrum_expressions_list_functions
 
 > **Guidance:** If you find yourself writing more than 5–10 lines of JavaScript to solve a problem, check the registered App MCP expression knowledge first, then the public Fulcrum expressions reference if the tool is unavailable. A built-in function is more reliable, offline-safe, and maintainable than custom logic that reimplements it.
 
-The full expressions reference is available in `resources/` as `expressions-reference.md` or via the Fulcrum documentation.
+For a compact offline runtime fallback, use
+[`resources/data-events-runtime-api.md`](resources/data-events-runtime-api.md);
+it is not a complete expression catalog. Consult the public
+[Calculations Reference](https://docs.fulcrumapp.com/docs/calculations-reference)
+for expression functions and the
+[Data Events Reference](https://docs.fulcrumapp.com/docs/data-events-reference)
+for event-specific APIs.
 
 ## Platform Constraints
 
@@ -206,12 +218,12 @@ The full expressions reference is available in `resources/` as `expressions-refe
 - [ ] All field data names are verified against the live form — wrong names can fail silently
 - [ ] `LOADRECORDS()` and `REQUEST()` are treated as asynchronous callback APIs
 - [ ] No hardcoded IDs — all resources discovered at runtime
-- [ ] No secrets in code — or if unavoidable, documented and using least-privileged keys
+- [ ] No credentials in client code, Reference Files, URLs, or local storage; credential-dependent integrations use authorized server-side mediation
 - [ ] Data events do not implement security controls (use platform permissions)
 - [ ] Offline behavior is considered — `REQUEST()` calls have a fallback or an explicit online-only workflow
 - [ ] Script is organized and readable — functions are named, concerns are grouped
 - [ ] Any CDN library references use locked version numbers — no `latest` or unversioned URLs
-- [ ] If using LOADRECORDS() or LOADFILE() — confirmed org is on Elite plan or Developer Pack
+- [ ] If using `LOADRECORDS()` or `LOADFILE()` — eligibility and organization access verified against current sources; unresolved dependencies are not presented as available
 - [ ] If using REQUEST() on web — confirmed target API supports CORS or middleware proxy is in place
 - [ ] Any location-dependent trigger uses `change-geometry` and guards against empty geometry
 - [ ] Bulk field operations use `FIELD_NAMES()` rather than hardcoded field name arrays

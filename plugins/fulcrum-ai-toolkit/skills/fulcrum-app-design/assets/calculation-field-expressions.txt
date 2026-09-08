@@ -1,29 +1,38 @@
-# Source: https://docs.fulcrumapp.com/docs/calculations-ref-concatenate
-# Purpose: what a calculation-field expression may and may not contain.
+# Source: https://docs.fulcrumapp.com/docs/calculations-reference
+# Source: https://docs.fulcrumapp.com/docs/week-of-the-year
+# Purpose: simple expressions and advanced JavaScript in calculation fields.
 #
-# A calculation field evaluates ONE expression to a value. It is not a
-# JavaScript function body. When the logic needs statements, use a Data Event
-# `change` handler and SETVALUE() instead; see
-# ../../fulcrum-data-events/examples/set-field-values-on-status-change.js.
+# Copy one CORRECT example at a time, without these # explanation lines.
+# These examples require populated numeric fields with data names length
+# and width, measured in the same unit. Decide how missing inputs should be
+# handled before adapting them. Use Number display for area examples and
+# Text display for the conditional example.
 
 # CORRECT — an expression that evaluates to a value.
 $length * $width
 
-# CORRECT — a conditional expression.
-IF($status = "Complete", USERFULLNAME(), "")
+# CORRECT — a numeric comparison, not an assignment.
+IF($length >= 10, "Long", "Short")
 
-# WRONG — `return` locks the field.
-return $length * $width;
-
-# WRONG — function declarations are not valid here.
-function calculate() {
-  return $length * $width;
+# CORRECT — advanced JavaScript with a helper and explicit field result.
+function calculateArea(length, width) {
+  const area = length * width;
+  return Math.round(area * 100) / 100;
 }
 
+const area = calculateArea($length, $width);
+SETRESULT(area);
+
+# WRONG — a top-level return is not valid; this is not a function body.
+return $length * $width;
+
 # Rules
-# - No `return` statement; the expression IS the result.
-# - No `function` declarations.
-# - No `var`, `let`, or `const`.
-# - Use Fulcrum expression functions (IF, CONCATENATE, FORMAT, USERFULLNAME),
-#   not JavaScript methods.
+# - Simple expressions produce a value directly.
+# - Advanced calculations may use declarations, helpers, and JS methods;
+#   use SETRESULT(value) to set the calculation field's result.
+# - A return inside a helper is valid; a top-level return is not.
+# - Prefer a Fulcrum built-in when it already solves the problem.
 # - Reference field values with $data_name.
+# - Use data events for side effects such as SETVALUE() on other fields,
+#   visibility changes, save validation, or network requests, not merely
+#   because a calculation uses a helper function.

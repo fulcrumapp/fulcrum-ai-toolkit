@@ -163,17 +163,20 @@ Fulcrum has **two ways to show/hide fields:**
 
 ## Calculation Fields
 
-A **calculation field** evaluates an expression to produce a derived value. The expression syntax is like Excel — it evaluates to a value directly. It is NOT a JavaScript function body. Correct and incorrect forms are in
+A **calculation field** produces a derived value using standard JavaScript plus Fulcrum's built-in functions and `$data_name` field references. It can be a simple expression or a multi-statement calculation. Copyable forms and required input fields are in
 [`assets/calculation-field-expressions.txt`](assets/calculation-field-expressions.txt).
 
 **Calculation field rules:**
-- No `return` statement — the expression IS the return value
-- No `function` declarations
-- No `var`, `let`, or `const`
-- Uses Fulcrum expression functions (`IF`, `CONCATENATE`, `FORMAT`, `USERFULLNAME`, etc.) not JavaScript methods
-- References field values with `$data_name` syntax
+- For a simple calculation, use an expression that evaluates to the value, such as `$length * $width`.
+- For advanced logic, use JavaScript declarations, helper functions, and methods as needed, then set the field result with `SETRESULT(value)`.
+- Do not use a top-level `return`: the calculation is not a function body. A `return` **inside a helper function** is valid; pass its computed value to `SETRESULT()`.
+- Prefer built-in functions (`IF`, `CONCATENATE`, `FORMAT`, etc.) when they already solve the problem, but JavaScript methods are also supported.
+- Verify referenced fields and their types, handle missing inputs deliberately, and select a display format appropriate to the result.
+- Use comparisons such as `===` or `>=` in conditions, not assignment (`=`). For a single-choice field, compare the stored value from `CHOICEVALUE($data_name)`, not its label.
 
-If the logic is complex enough to need a function, use a data event with a `change` handler instead, and write the result to a text or numeric field via `SETVALUE()`.
+Use calculations for derived values, even when the calculation needs helper functions. Use **data events** for lifecycle-driven side effects such as changing other fields with `SETVALUE()`, changing visibility, validating a save, or making network requests. Function declarations alone are not a reason to move a calculation to a data event.
+
+Sources: [Calculations Reference](https://docs.fulcrumapp.com/docs/calculations-reference) and [Week Number](https://docs.fulcrumapp.com/docs/week-of-the-year). The latter demonstrates a function, `const`, JavaScript methods, and `ONCE(SETRESULT(currentWeekNumber))`.
 
 ## Completion Criteria
 
@@ -187,7 +190,7 @@ The app design is complete when:
 - [ ] Required fields are set for data that must be captured — but sparingly (over-requiring frustrates field crews)
 - [ ] Record status uses the built-in app status system, not a custom choice field
 - [ ] Field visibility uses visibility rules where possible; `SETHIDDEN()` only for complex logic
-- [ ] Calculation field expressions do not use `return`, `function`, `var`, `let`, or `const`
+- [ ] Calculations use a simple result expression or advanced JavaScript with `SETRESULT(value)`; `return` appears only inside helper functions, and side effects belong in data events
 
 ## References
 

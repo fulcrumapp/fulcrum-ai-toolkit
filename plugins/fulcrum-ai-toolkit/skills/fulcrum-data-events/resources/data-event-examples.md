@@ -36,6 +36,13 @@ documentation.
 - A form holds one `script` value. Merge a snippet into the existing script
   instead of replacing it.
 - Repeatable entries must be saved before their child records can be edited.
-- `LOADRECORDS()` and `LOADFILE()` require an Elite plan or Developer Pack.
+- Before using `LOADRECORDS()` or `LOADFILE()`, follow the sibling
+  [Plan And Licensing Check](../../fulcrum-product-knowledge/resources/plan-and-licensing-reference.md).
+  Verify access using [current pricing](https://www.fulcrumapp.com/pricing/),
+  the function's public documentation, and the organization's permissions
+  and configuration. If eligibility is unresolved, flag it rather than
+  assuming a plan entitlement.
 - Nothing in these files is a security control. Use platform permissions for
-  authorization and never embed a credential.
+  authorization and never embed a credential, including a read-only key.
+  Credential-dependent integrations require an authorized server-side
+  service that authenticates callers and enforces access.

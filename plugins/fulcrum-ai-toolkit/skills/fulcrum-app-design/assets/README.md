@@ -5,7 +5,7 @@ comment. Strict JSON cannot hold comments, so its source is recorded here.
 
 | File | What it holds | Public source |
 | --- | --- | --- |
-| [`calculation-field-expressions.txt`](calculation-field-expressions.txt) | Valid and invalid calculation-field expression forms. | [Fulcrum calculation function example](https://docs.fulcrumapp.com/docs/calculations-ref-concatenate) |
+| [`calculation-field-expressions.txt`](calculation-field-expressions.txt) | Simple expressions, advanced JavaScript with `SETRESULT()`, required input fields, and the invalid top-level `return` form. | [Calculations Reference](https://docs.fulcrumapp.com/docs/calculations-reference), [Week Number](https://docs.fulcrumapp.com/docs/week-of-the-year) |
 | [`required-boolean-errors.txt`](required-boolean-errors.txt) | The 422 messages returned when `required`, `hidden`, or `disabled` are omitted. | [Forms API introduction](https://docs.fulcrumapp.com/reference/forms-intro) |
 | [`record-link-field.json`](record-link-field.json) | A complete RecordLinkField element with the common element properties and `linked_form_id`. | [Forms API introduction](https://docs.fulcrumapp.com/reference/forms-intro) |
 

@@ -174,9 +174,17 @@ migrated block.
 
 | ID | Source document | Block | Purpose | Disposition | Canonical target |
 | --- | --- | --- | --- | --- | --- |
-| C42 | `fulcrum-app-design/SKILL.md` | 1 | Calculation field expression forms | `externalized` | [`calculation-field-expressions.txt`](../skills/fulcrum-app-design/assets/calculation-field-expressions.txt) |
+| C42 | `fulcrum-app-design/SKILL.md` | 1 | Calculation field expression forms | `rewrite` | [`calculation-field-expressions.txt`](../skills/fulcrum-app-design/assets/calculation-field-expressions.txt) |
 | C43 | `fulcrum-app-design/resources/field-type-reference.md` | 1 | Required-boolean 422 messages | `externalized` | [`required-boolean-errors.txt`](../skills/fulcrum-app-design/assets/required-boolean-errors.txt) |
 | C44 | `fulcrum-app-design/resources/field-type-reference.md` | 2 | RecordLinkField element JSON | `rewrite` | [`record-link-field.json`](../skills/fulcrum-app-design/assets/record-link-field.json) |
+
+C42 is a rewrite: calculation fields support standard JavaScript, including
+declarations and helper functions with `SETRESULT(value)`, as documented in
+[Calculations Reference](https://docs.fulcrumapp.com/docs/calculations-reference)
+and [Week Number](https://docs.fulcrumapp.com/docs/week-of-the-year).
+The asset distinguishes a top-level `return` from a valid helper return
+and replaces the assignment in the conditional example with a numeric
+comparison.
 
 C44 is a rewrite: the original element carried an `allow_multiple_records`
 property that the public Forms schema does not define and omitted the

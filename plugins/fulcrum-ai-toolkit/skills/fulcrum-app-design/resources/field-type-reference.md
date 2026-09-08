@@ -162,14 +162,23 @@ Used for URL actions, opening external apps, and triggering data event click han
 
 ## CalculatedField
 
-Auto-computed value from an expression.
+Auto-computed value from a simple expression or advanced JavaScript.
 
 | Property | Type | Description |
 |----------|------|-------------|
-| expression | string | Calculation expression using field references and functions |
+| expression | string | Calculation source using JavaScript, field references, and Fulcrum functions |
 | display | object | Display configuration (currency, style, etc.) |
 
-Expressions reference other fields using $data_name syntax. Supports math operations, string functions, conditional logic, and date functions.
+Calculations reference other fields using `$data_name` syntax. Simple
+expressions evaluate to a value directly; advanced JavaScript can use
+declarations, helper functions, and methods, with `SETRESULT(value)` to set
+the field result. A top-level `return` is invalid, but a `return` inside a
+helper function is valid. Use data events for lifecycle-driven side effects,
+not merely because a calculation is complex.
+
+See [Calculations Reference](https://docs.fulcrumapp.com/docs/calculations-reference),
+[Week Number](https://docs.fulcrumapp.com/docs/week-of-the-year), and the
+[copyable calculation examples](../assets/calculation-field-expressions.txt).
 
 ## RecordLinkField
 
