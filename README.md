@@ -129,6 +129,11 @@ JSON manifests (including Agent Plugins 1.0.0 and client manifests), and README 
 It also keeps release versions aligned, requires the packaged license and
 Codex manual-invocation policies, and guards the regional MCP endpoint map
 and empty default server configuration.
+Static text contracts in `test/data/agent-guidance-contracts.json` guard
+safe error disclosure, write reconciliation, partial report success, and
+evidence-based action guidance, including links from companion skills. These
+checks catch removed guidance and known retired instructions; they are not
+model-behavior evaluations or proof of live connector behavior.
 Structural and schema validation for externalized examples and assets runs via
 `tools/format-validator` using Ajv and pinned parsers.
 In CI, GitHub Actions also validates the Claude plugin marketplace using Anthropic's official

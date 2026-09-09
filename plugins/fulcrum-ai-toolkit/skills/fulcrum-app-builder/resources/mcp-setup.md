@@ -133,6 +133,11 @@ host support. Keep all diagnostics redacted. Never automatically change
 regions, broaden permissions, retry destructive operations, or report a
 successful connection after a failure.
 
+Apply [Tool Failure And Recovery](tool-failure-recovery.md) when reporting a
+failure: use approved public guidance and safe trace/reference metadata, not
+raw errors or internal request details. An unexplained rejection is not
+evidence of a transient lock or permission to replay a write.
+
 When working with multiple organizations, keep token/endpoint configurations
 distinct and confirm which one the active connector uses. Account location
 and organization identity are separate decisions.

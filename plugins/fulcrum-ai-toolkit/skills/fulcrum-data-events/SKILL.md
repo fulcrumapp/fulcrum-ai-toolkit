@@ -17,6 +17,10 @@ The compact fallback is
 
 There are no standalone Data Event CRUD tools. Read the form and its current `script` with `fulcrum_forms_get`, compose the approved handler with the existing script, and write the complete script with `fulcrum_forms_update`. Do not overwrite unrelated handlers.
 
+If persistence fails, follow [Tool Failure And Recovery](../fulcrum-app-builder/resources/tool-failure-recovery.md):
+use safe public guidance and a Trace ID/support reference, not raw diagnostics;
+do not automatically replay the write. Read back ambiguous outcomes.
+
 > Connector authority: Live installed App MCP schemas define the registered
 > knowledge tool and form-script persistence contract.
 
@@ -58,6 +62,15 @@ replace unrelated handlers.
 ### Set field values
 Stamp derived values on a lifecycle event with `SETVALUE()`:
 [`examples/set-field-values-on-status-change.js`](examples/set-field-values-on-status-change.js).
+
+### Tappable actions
+
+Use a HyperlinkField with `ON('click', 'data_name', ...)`, then the documented
+`OPENURL` or `OPENEXTENSION` action. Follow
+[field capability evidence and actions](../fulcrum-app-design/SKILL.md#field-capability-evidence-and-actions)
+instead of inventing a Button field. Verify the live data name, preserve
+unrelated handlers and Record Links, and do not equate navigation/prefills with
+saving or creating a relationship.
 
 ### Conditional visibility
 Use the documented `SETHIDDEN()` pattern for field and section visibility:

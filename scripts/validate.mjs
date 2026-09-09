@@ -415,6 +415,124 @@ for (const p of uniqueTextPaths) {
   }
 }
 
+// These are static documentation contracts, not evaluations of model behavior.
+const guidanceFixturePath = path.join(ROOT, 'test', 'data', 'agent-guidance-contracts.json');
+let guidanceContracts;
+let guidanceContractsLoaded = false;
+try {
+  guidanceContracts = JSON.parse(fs.readFileSync(guidanceFixturePath, 'utf8'));
+  guidanceContractsLoaded = true;
+} catch (err) {
+  failures.push(`${repoRelativePath(guidanceFixturePath)}: cannot load guidance contracts (${err.message})`);
+}
+
+const guidanceContractObject = guidanceContractsLoaded &&
+  guidanceContracts !== null &&
+  typeof guidanceContracts === 'object' &&
+  !Array.isArray(guidanceContracts);
+const guidanceContractArrayKeys = ['cases', 'forbidden', 'recoveryConsumers', 'actionConsumers'];
+const validGuidanceContractArrays = guidanceContractObject &&
+  guidanceContractArrayKeys.every(
+    (key) => Array.isArray(guidanceContracts[key]) && guidanceContracts[key].length > 0
+  );
+if (guidanceContractsLoaded && !guidanceContractObject) {
+  failures.push(`${repoRelativePath(guidanceFixturePath)}: guidance contracts must be a JSON object`);
+} else if (guidanceContractsLoaded && !validGuidanceContractArrays) {
+  failures.push(`${repoRelativePath(guidanceFixturePath)}: guidance contract arrays must be nonempty`);
+}
+
+const validGuidanceContractStrings = validGuidanceContractArrays &&
+  ['forbidden', 'recoveryConsumers', 'actionConsumers'].every(
+    (key) => guidanceContracts[key].every((value) => typeof value === 'string' && value.length > 0)
+  );
+if (validGuidanceContractArrays && !validGuidanceContractStrings) {
+  failures.push(
+    `${repoRelativePath(guidanceFixturePath)}: forbidden and consumer entries must be nonempty strings`
+  );
+}
+
+if (validGuidanceContractArrays && validGuidanceContractStrings) {
+  const normalize = (text) => text.replace(/\s+/g, ' ').trim();
+  const requireGuidance = (relativePath, required, name) => {
+    const skillsRoot = path.resolve(SKILLS_DIR);
+    const filePath = path.resolve(skillsRoot, relativePath);
+    const pathFromSkillsRoot = path.relative(skillsRoot, filePath);
+    if (
+      path.isAbsolute(pathFromSkillsRoot) ||
+      pathFromSkillsRoot === '..' ||
+      pathFromSkillsRoot.startsWith(`..${path.sep}`)
+    ) {
+      failures.push(`${repoRelativePath(guidanceFixturePath)}: guidance path for ${name} must stay under the skills directory`);
+      return;
+    }
+
+    let fileDescriptor;
+    try {
+      fileDescriptor = fs.openSync(filePath, 'r');
+    } catch (err) {
+      failures.push(`${repoRelativePath(filePath)}: cannot read guidance for ${name} (${err.message})`);
+      return;
+    }
+
+    let text;
+    try {
+      if (!fs.fstatSync(fileDescriptor).isFile()) {
+        failures.push(`${repoRelativePath(filePath)}: guidance path for ${name} is not a file`);
+        return;
+      }
+      text = normalize(fs.readFileSync(fileDescriptor, 'utf8'));
+    } catch (err) {
+      failures.push(`${repoRelativePath(filePath)}: cannot read guidance for ${name} (${err.message})`);
+      return;
+    } finally {
+      fs.closeSync(fileDescriptor);
+    }
+
+    for (const fragment of required) {
+      if (!text.includes(normalize(fragment))) {
+        failures.push(`${repoRelativePath(filePath)}: ${name}: missing "${fragment}"`);
+      }
+    }
+  };
+
+  const malformedCases = guidanceContracts.cases.filter(
+    (contract) => !contract ||
+      typeof contract !== 'object' ||
+      typeof contract.name !== 'string' ||
+      typeof contract.path !== 'string' ||
+      !Array.isArray(contract.required) ||
+      contract.required.length === 0 ||
+      contract.required.some((fragment) => typeof fragment !== 'string' || fragment.length === 0)
+  );
+  if (malformedCases.length > 0) {
+    failures.push(
+      `${repoRelativePath(guidanceFixturePath)}: each case must include a name, path, and nonempty string required array`
+    );
+  } else {
+    for (const { name, path: relativePath, required } of guidanceContracts.cases) {
+      requireGuidance(relativePath, required, name);
+    }
+  }
+  for (const skill of guidanceContracts.recoveryConsumers) {
+    requireGuidance(`${skill}/SKILL.md`, [
+      '(../fulcrum-app-builder/resources/tool-failure-recovery.md)'
+    ], 'shared safe-error recovery link');
+  }
+  for (const skill of guidanceContracts.actionConsumers) {
+    requireGuidance(`${skill}/SKILL.md`, [
+      '(../fulcrum-app-design/SKILL.md#field-capability-evidence-and-actions)'
+    ], 'evidence-based action guidance link');
+  }
+  for (const filePath of filesUnder(SKILLS_DIR).filter((p) => /\.(md|txt)$/.test(p))) {
+    const text = normalize(fs.readFileSync(filePath, 'utf8')).toLowerCase();
+    for (const fragment of guidanceContracts.forbidden) {
+      if (text.includes(normalize(fragment).toLowerCase())) {
+        failures.push(`${repoRelativePath(filePath)}: retired unsafe guidance "${fragment}"`);
+      }
+    }
+  }
+}
+
 // 5. Manifest checks
 const AGENT_PLUGIN_SCHEMA = 'https://agent-plugins.org/schemas/1.0.0/plugin.schema.json';
 const AGENT_MCP_SCHEMA = 'https://agent-plugins.org/schemas/1.0.0/mcp.schema.json';

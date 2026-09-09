@@ -92,12 +92,17 @@ The ChoiceField has its own picker UI that conflicts with the extension. The cor
 
 1. **TextField** — stores a free-form selected value
 2. **RecordLinkField** — stores a selected Fulcrum record when the picker returns a record link
-3. **HyperlinkField** — the trigger button; user taps it to open the extension
-4. `ON('click', ...)` on the HyperlinkField → `OPENEXTENSION(...)` in data events
+3. **HyperlinkField** — the tappable action link; user taps it to open the extension
+4. `ON('click', 'data_name', ...)` on the HyperlinkField → `OPENEXTENSION(...)` in data events
 5. Extension returns the selected value with `Fulcrum.finish()`; the Data Event writes it back to the target field.
 
 The picker trigger is
 [`examples/open-species-picker.js`](examples/open-species-picker.js).
+
+Follow [field capability evidence and actions](../fulcrum-app-design/SKILL.md#field-capability-evidence-and-actions).
+A button-like appearance is not proof of a creatable Button field.
+Returning a value from an extension is not proof that the record was saved;
+preserve explicit Record Link write-back and the normal save lifecycle.
 
 Getting this wrong means building the extension and the form around the wrong field type — an expensive rework. Lock the field type decision before writing extension code.
 
@@ -129,6 +134,10 @@ It calls `fulcrum_extensions_generate`, `fulcrum_reference_files_upload`,
 `fulcrum_forms_get`, and `fulcrum_forms_update` in that order.
 
 Use `fulcrum_extensions_list_patterns` and `fulcrum_extensions_explain(pattern="picker")` to explore registered patterns before generating. There is no standalone Data Event update tool; preserve the existing form `script` through the form get/update operations.
+
+For failed uploads or form updates, use [Tool Failure And Recovery](../fulcrum-app-builder/resources/tool-failure-recovery.md).
+Report which steps are confirmed, keep diagnostics private, and reconcile
+ambiguous outcomes before attempting another write.
 
 ### Manual UI fallback
 

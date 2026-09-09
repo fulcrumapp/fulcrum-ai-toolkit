@@ -57,6 +57,30 @@ Choose the most constrained field type that captures the data. Constrained field
 | A reference to another record | Record Link | Enables parent-child relationships |
 | A value computed from other fields | Calculation | Keeps derived data consistent |
 
+### Field capability evidence and actions
+
+Model speculation is not capability evidence. Live App MCP schemas establish
+what the connector accepts; public documentation and the target editor
+establish what the user can create and run. A `ButtonField` entry in a schema
+or OpenAPI enum does not prove editor creation support. Do not insist that a
+user has a Button field, or claim that it is universally nonexistent. When
+the user cannot find a field, acknowledge the mismatch and verify support for
+their editor instead of repeating the unsupported instruction.
+
+For a tappable action, prefer the documented **HyperlinkField** with
+`ON('click', 'data_name', ...)`, then `OPENURL(url)` for navigation or
+`OPENEXTENSION({ ... })` for an extension. Verify the field's actual data name
+and current hook/function contract before composing the handler. A "button"
+label or appearance does not change the underlying field type.
+
+Opening a destination with prefilled values is not evidence that a record was
+saved or linked. Preserve existing Record Link fields and configure the
+relationship explicitly when needed. Do not promise that navigation
+implicitly saves the source or destination record; follow the documented
+save/confirmation flow and do not add an automatic save without approval.
+
+> Source: [OPENURL](https://docs.fulcrumapp.com/docs/data-events-openurl), [App Extensions](https://docs.fulcrumapp.com/docs/app-extensions-introduction), and [URL Actions](https://docs.fulcrumapp.com/docs/url-actions).
+
 ### Classification Set — one path only
 A Classification Set field captures a hierarchical taxonomy (e.g., CALVEG vegetation types, soil series, species classifications). The field walks the user down a decision tree.
 

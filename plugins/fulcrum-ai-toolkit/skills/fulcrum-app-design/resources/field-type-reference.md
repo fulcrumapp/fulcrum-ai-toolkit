@@ -160,6 +160,12 @@ Tappable link or button that triggers a URL action or data event.
 
 Used for URL actions, opening external apps, and triggering data event click handlers.
 
+For action controls, use the documented HyperlinkField
+`ON('click', 'data_name', ...)` pattern with `OPENURL` or `OPENEXTENSION`.
+Do not infer editor support for `ButtonField` from an API enum or a model's
+suggestion; verify the target editor and respect the user's available fields.
+See [field capability evidence and actions](../SKILL.md#field-capability-evidence-and-actions).
+
 ## CalculatedField
 
 Auto-computed value from a simple expression or advanced JavaScript.
@@ -252,9 +258,17 @@ Status values drive workflow visibility, filtering, and can trigger data events 
 Every field element **MUST** include `required`, `hidden`, and `disabled` as explicit booleans. Omitting them (even though `forms GET` omits false values) causes a 422 on create or update. The exact messages are in
 [`required-boolean-errors.txt`](../assets/required-boolean-errors.txt).
 
-### forms_update requires the full object
+### Preserve existing form state under the live update contract
 
-`PUT /api/v2/forms/{id}.json` requires the **entire** form object including `name` and all `elements`. Omitting existing elements deletes them. Always GET first, modify, then PUT the full object back.
+Read the current form before editing. When replacing `elements`, compose the
+complete tree, preserving existing keys, Record Links, and all unrequested
+fields. Do not pass a partial tree that drops existing elements. Follow the
+current interface's documented requirements for other form properties:
+App MCP arguments are not necessarily the same as a raw REST request.
+
+Do not blindly PUT a GET response or inject guessed settings to recover from a
+422. Use the [app-builder preservation workflow](../../fulcrum-app-builder/SKILL.md)
+and [tool failure recovery](../../fulcrum-app-builder/resources/tool-failure-recovery.md).
 
 ### RecordLinkField — correct parameter name
 
