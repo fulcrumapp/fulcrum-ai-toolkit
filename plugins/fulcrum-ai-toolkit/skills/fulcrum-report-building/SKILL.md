@@ -22,7 +22,13 @@ When Fulcrum App MCP is registered, use its live schemas for Report Template man
 
 `fulcrum_reports_create` requires `record_id` and accepts optional `template_id`. App MCP does not provide record CRUD, Query API execution, or media CRUD; obtain record IDs through an authorized interface and use the Report Builder's documented runtime functions only inside template EJS.
 
-`fulcrum_forms_create` creates a default Report Template unless `skip_default_report` is explicitly `true`. If form creation returns a form plus `report_template_error`, the form succeeded and only template creation failed. Do not create the form again; use `fulcrum_report_templates_create` for the missing template.
+`fulcrum_forms_create` creates a default Report Template unless `skip_default_report`
+is explicitly `true`. A created form with `report_template_status: "failed"` or a
+legacy `report_template_error` means only the default template failed.
+Do not recreate the form. Use [Tool Failure And Recovery](../fulcrum-app-builder/resources/tool-failure-recovery.md)
+for safe `report_template_failure` guidance and template-only recovery.
+Apply the same public-error, no-automatic-write-retry, and ambiguous-outcome
+read-back rules to template persistence and report generation failures.
 
 > Connector authority: Live installed App MCP schemas define registered report
 > tools and result shapes. Runtime names come from the

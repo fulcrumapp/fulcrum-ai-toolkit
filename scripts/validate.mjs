@@ -415,6 +415,62 @@ for (const p of uniqueTextPaths) {
   }
 }
 
+// These are static documentation contracts, not evaluations of model behavior.
+const guidanceFixturePath = path.join(ROOT, 'test', 'data', 'agent-guidance-contracts.json');
+let guidanceContracts;
+try {
+  guidanceContracts = JSON.parse(fs.readFileSync(guidanceFixturePath, 'utf8'));
+} catch (err) {
+  failures.push(`${repoRelativePath(guidanceFixturePath)}: cannot load guidance contracts (${err.message})`);
+}
+
+const validGuidanceContracts = guidanceContracts &&
+  ['cases', 'forbidden', 'recoveryConsumers', 'actionConsumers'].every(
+    (key) => Array.isArray(guidanceContracts[key]) && guidanceContracts[key].length > 0
+  );
+if (!validGuidanceContracts) {
+  failures.push(`${repoRelativePath(guidanceFixturePath)}: guidance contract arrays must be nonempty`);
+}
+
+if (validGuidanceContracts) {
+  const normalize = (text) => text.replace(/\s+/g, ' ').trim();
+  const requireGuidance = (relativePath, required, name) => {
+    const filePath = path.join(SKILLS_DIR, relativePath);
+    if (!fs.existsSync(filePath)) {
+      failures.push(`${repoRelativePath(filePath)}: missing guidance for ${name}`);
+      return;
+    }
+    const text = normalize(fs.readFileSync(filePath, 'utf8'));
+    for (const fragment of required) {
+      if (!text.includes(normalize(fragment))) {
+        failures.push(`${repoRelativePath(filePath)}: ${name}: missing "${fragment}"`);
+      }
+    }
+  };
+
+  for (const { name, path: relativePath, required } of guidanceContracts.cases) {
+    requireGuidance(relativePath, required, name);
+  }
+  for (const skill of guidanceContracts.recoveryConsumers) {
+    requireGuidance(`${skill}/SKILL.md`, [
+      '(../fulcrum-app-builder/resources/tool-failure-recovery.md)'
+    ], 'shared safe-error recovery link');
+  }
+  for (const skill of guidanceContracts.actionConsumers) {
+    requireGuidance(`${skill}/SKILL.md`, [
+      '(../fulcrum-app-design/SKILL.md#field-capability-evidence-and-actions)'
+    ], 'evidence-based action guidance link');
+  }
+  for (const filePath of filesUnder(SKILLS_DIR).filter((p) => /\.(md|txt)$/.test(p))) {
+    const text = normalize(fs.readFileSync(filePath, 'utf8')).toLowerCase();
+    for (const fragment of guidanceContracts.forbidden) {
+      if (text.includes(normalize(fragment).toLowerCase())) {
+        failures.push(`${repoRelativePath(filePath)}: retired unsafe guidance "${fragment}"`);
+      }
+    }
+  }
+}
+
 // 5. Manifest checks
 const AGENT_PLUGIN_SCHEMA = 'https://agent-plugins.org/schemas/1.0.0/plugin.schema.json';
 const AGENT_MCP_SCHEMA = 'https://agent-plugins.org/schemas/1.0.0/mcp.schema.json';

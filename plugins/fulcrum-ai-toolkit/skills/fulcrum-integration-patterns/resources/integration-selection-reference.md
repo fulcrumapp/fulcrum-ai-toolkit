@@ -18,6 +18,13 @@ Choose from current supported behavior, not from a memorized feature matrix.
 
 ## Delivery Review
 
+For URL Actions, navigation with prefilled attributes does not establish a
+Record Link relationship or prove that a record was saved. Confirm supported
+field types and the target platform's save/confirmation flow before proposing
+an action. Do not replace Record Link fields with text IDs or add an automatic
+save without approval. Use the documented Hyperlink action pattern in
+[field capability evidence and actions](../../fulcrum-app-design/SKILL.md#field-capability-evidence-and-actions).
+
 - Accept and acknowledge events within the currently documented endpoint
   contract; queue slow work outside the request.
 - Assume duplicates are possible and make consumers idempotent.

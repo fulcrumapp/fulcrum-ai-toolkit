@@ -1,0 +1,114 @@
+{
+  "forbidden": [
+    "surface the raw error",
+    "retry at most once when appropriate",
+    "Always GET first, modify, then PUT the full object back."
+  ],
+  "cases": [
+    {
+      "name": "Only approved public errors and support metadata reach the user",
+      "path": "fulcrum-app-builder/resources/tool-failure-recovery.md",
+      "required": [
+        "Use only the connector's approved public `code`, `message`, `recovery`, and `reference` fields.",
+        "When a safe `trace_id` is supplied, show it as **Trace ID** for support; otherwise show the safe support reference.",
+        "Never copy raw errors, stack traces, exception names, internal API URLs, request payloads, credentials, or private diagnostics into an end-user reply.",
+        "For legacy, unstructured, missing, or unsafe error guidance, use a generic message without an invented cause:"
+      ]
+    },
+    {
+      "name": "Status classifications do not invent a lock or backend diagnosis",
+      "path": "fulcrum-app-builder/resources/tool-failure-recovery.md",
+      "required": [
+        "| 401 | Authentication failed |",
+        "| 403 | Permission denied |",
+        "| 404 | Resource not found or unavailable to this request |",
+        "| 409 | Conflict |",
+        "| 429 | Rate limited |",
+        "| 422 | Request rejected |",
+        "Never label a generic 422 as a transient lock.",
+        "Do not assign an HTTP status to a failure that did not supply one."
+      ]
+    },
+    {
+      "name": "Rejected and ambiguous writes do not cause blind replay",
+      "path": "fulcrum-app-builder/resources/tool-failure-recovery.md",
+      "required": [
+        "Never automatically retry an unchanged write, including a form update.",
+        "After a timeout, connection loss, or ambiguous write result, read back the current state through an authorized read operation before retrying or claiming that nothing was saved.",
+        "If the change is already present, do not repeat it.",
+        "If the result cannot be established, report that the outcome is unknown and stop rather than risk a duplicate.",
+        "Do not invent a GET/merge workaround, inject a guessed `status_field`, regenerate keys, or rebuild a form to bypass a rejected write."
+      ]
+    },
+    {
+      "name": "Default report failure retains the successfully created form",
+      "path": "fulcrum-app-builder/resources/tool-failure-recovery.md",
+      "required": [
+        "`report_template_status: \"failed\"`",
+        "`report_template_failure`",
+        "`report_template_error`",
+        "Older connectors may return only the form plus `report_template_error`; treat that as the same partial success, but never echo an unsafe legacy string.",
+        "Do not recreate the form.",
+        "Inspect templates for that form before an approved `fulcrum_report_templates_create` attempt to avoid a duplicate after an uncertain result."
+      ]
+    },
+    {
+      "name": "Action fields are supported by evidence rather than speculation",
+      "path": "fulcrum-app-design/SKILL.md",
+      "required": [
+        "Model speculation is not capability evidence.",
+        "A `ButtonField` entry in a schema or OpenAPI enum does not prove editor creation support.",
+        "Do not insist that a user has a Button field, or claim that it is universally nonexistent.",
+        "**HyperlinkField** with `ON('click', 'data_name', ...)`, then `OPENURL(url)`",
+        "`OPENEXTENSION({ ... })`",
+        "Opening a destination with prefilled values is not evidence that a record was saved or linked.",
+        "Do not promise that navigation implicitly saves the source or destination record;"
+      ]
+    },
+    {
+      "name": "Existing form identity and relationships survive updates",
+      "path": "fulcrum-app-builder/SKILL.md",
+      "required": [
+        "preserve every existing element key and inline-choice key.",
+        "Preserve Record Link targets and configuration, existing data names, and unrequested form settings.",
+        "Compose the approved change with the existing script instead of overwriting unrelated handlers.",
+        "Do not recreate the form.",
+        "`report_template_status: \"failed\"`",
+        "`report_template_failure`",
+        "(resources/tool-failure-recovery.md)"
+      ]
+    },
+    {
+      "name": "Reporting uses both current and legacy partial-success contracts",
+      "path": "fulcrum-report-building/SKILL.md",
+      "required": [
+        "`report_template_status: \"failed\"`",
+        "`report_template_error`",
+        "`report_template_failure`",
+        "Do not recreate the form."
+      ]
+    },
+    {
+      "name": "REST reference cannot prescribe a blind replay workaround",
+      "path": "fulcrum-app-design/resources/field-type-reference.md",
+      "required": [
+        "App MCP arguments are not necessarily the same as a raw REST request.",
+        "Do not blindly PUT a GET response or inject guessed settings to recover from a 422.",
+        "(../../fulcrum-app-builder/resources/tool-failure-recovery.md)"
+      ]
+    }
+  ],
+  "recoveryConsumers": [
+    "fulcrum-data-events",
+    "fulcrum-app-extensions",
+    "fulcrum-integration-patterns",
+    "fulcrum-product-knowledge",
+    "fulcrum-report-building"
+  ],
+  "actionConsumers": [
+    "fulcrum-app-builder",
+    "fulcrum-data-events",
+    "fulcrum-app-extensions",
+    "fulcrum-product-knowledge"
+  ]
+}

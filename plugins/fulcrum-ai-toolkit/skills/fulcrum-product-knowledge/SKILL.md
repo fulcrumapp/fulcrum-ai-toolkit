@@ -26,6 +26,7 @@ answer a focused domain question from this router when an owning skill exists.
 | Goal and deliverable definition | [`fulcrum-app-goal`](../fulcrum-app-goal/SKILL.md) |
 | Approved schema construction or App MCP orchestration | [`fulcrum-app-builder`](../fulcrum-app-builder/SKILL.md) |
 | Hosted App MCP connection, tenant region, or API-token setup | [Regional MCP setup](../fulcrum-app-builder/resources/mcp-setup.md) |
+| App MCP failures, safe support details, retries, or partially completed writes | [Tool Failure And Recovery](../fulcrum-app-builder/resources/tool-failure-recovery.md) |
 | Data Event runtime behavior or code | [`fulcrum-data-events`](../fulcrum-data-events/SKILL.md) |
 | Custom in-record UI | [`fulcrum-app-extensions`](../fulcrum-app-extensions/SKILL.md) |
 | Report Template design or rendering | [`fulcrum-report-building`](../fulcrum-report-building/SKILL.md) |
@@ -60,6 +61,11 @@ Use live installed App MCP schemas for connector names, arguments, required
 fields, and response shapes. Use public Fulcrum docs/OpenAPI for product and API
 behavior, and pricing for plan gates. If these sources disagree, do not blend
 them; report the discrepancy and identify which authority governs each claim.
+
+Model speculation and API enum membership do not establish editor creation
+support. Verify the user's target surface and respect reported availability;
+use the [field capability guidance](../fulcrum-app-design/SKILL.md#field-capability-evidence-and-actions)
+for action controls rather than insisting on an unverified Button field.
 
 > Source: [Fulcrum public OpenAPI](https://raw.githubusercontent.com/fulcrumapp/api/v2/reference/rest-api.json)
 > defines REST behavior; [OpenAPI and Postman collection](https://docs.fulcrumapp.com/reference/openapi-and-postman-collection)

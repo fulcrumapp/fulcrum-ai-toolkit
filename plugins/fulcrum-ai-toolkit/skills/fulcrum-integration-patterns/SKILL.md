@@ -87,9 +87,12 @@ Do not send tenant data to public request inspectors. Treat activation, endpoint
 replacement, disabling delivery, and deletion as consequential changes.
 
 If a source, plan, role, payload, or connector contract is unresolved, stop at
-an implementation-ready design and name the missing evidence. Surface API and
-delivery failures; do not silently retry mutations or report that an
-integration is active without end-to-end evidence.
+an implementation-ready design and name the missing evidence. Surface only
+safe public API and delivery failure guidance, using
+[Tool Failure And Recovery](../fulcrum-app-builder/resources/tool-failure-recovery.md)
+for App MCP operations and legacy unsafe responses. Do not automatically
+replay a write or report that an integration is active without end-to-end
+evidence.
 
 ## References
 
