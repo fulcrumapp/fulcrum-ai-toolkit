@@ -454,7 +454,18 @@ if (validGuidanceContractArrays && !validGuidanceContractStrings) {
 if (validGuidanceContractArrays && validGuidanceContractStrings) {
   const normalize = (text) => text.replace(/\s+/g, ' ').trim();
   const requireGuidance = (relativePath, required, name) => {
-    const filePath = path.join(SKILLS_DIR, relativePath);
+    const skillsRoot = path.resolve(SKILLS_DIR);
+    const filePath = path.resolve(skillsRoot, relativePath);
+    const pathFromSkillsRoot = path.relative(skillsRoot, filePath);
+    if (
+      path.isAbsolute(pathFromSkillsRoot) ||
+      pathFromSkillsRoot === '..' ||
+      pathFromSkillsRoot.startsWith(`..${path.sep}`)
+    ) {
+      failures.push(`${repoRelativePath(guidanceFixturePath)}: guidance path for ${name} must stay under the skills directory`);
+      return;
+    }
+
     let fileDescriptor;
     try {
       fileDescriptor = fs.openSync(filePath, 'r');
