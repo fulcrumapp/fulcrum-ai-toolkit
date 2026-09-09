@@ -418,17 +418,19 @@ for (const p of uniqueTextPaths) {
 // These are static documentation contracts, not evaluations of model behavior.
 const guidanceFixturePath = path.join(ROOT, 'test', 'data', 'agent-guidance-contracts.json');
 let guidanceContracts;
+let guidanceContractsLoaded = false;
 try {
   guidanceContracts = JSON.parse(fs.readFileSync(guidanceFixturePath, 'utf8'));
+  guidanceContractsLoaded = true;
 } catch (err) {
   failures.push(`${repoRelativePath(guidanceFixturePath)}: cannot load guidance contracts (${err.message})`);
 }
 
-const validGuidanceContracts = guidanceContracts &&
+const validGuidanceContracts = guidanceContractsLoaded &&
   ['cases', 'forbidden', 'recoveryConsumers', 'actionConsumers'].every(
     (key) => Array.isArray(guidanceContracts[key]) && guidanceContracts[key].length > 0
   );
-if (!validGuidanceContracts) {
+if (guidanceContractsLoaded && !validGuidanceContracts) {
   failures.push(`${repoRelativePath(guidanceFixturePath)}: guidance contract arrays must be nonempty`);
 }
 
@@ -448,8 +450,23 @@ if (validGuidanceContracts) {
     }
   };
 
-  for (const { name, path: relativePath, required } of guidanceContracts.cases) {
-    requireGuidance(relativePath, required, name);
+  const malformedCases = guidanceContracts.cases.filter(
+    (contract) => !contract ||
+      typeof contract !== 'object' ||
+      typeof contract.name !== 'string' ||
+      typeof contract.path !== 'string' ||
+      !Array.isArray(contract.required) ||
+      contract.required.length === 0 ||
+      contract.required.some((fragment) => typeof fragment !== 'string' || fragment.length === 0)
+  );
+  if (malformedCases.length > 0) {
+    failures.push(
+      `${repoRelativePath(guidanceFixturePath)}: each case must include a name, path, and nonempty string required array`
+    );
+  } else {
+    for (const { name, path: relativePath, required } of guidanceContracts.cases) {
+      requireGuidance(relativePath, required, name);
+    }
   }
   for (const skill of guidanceContracts.recoveryConsumers) {
     requireGuidance(`${skill}/SKILL.md`, [
