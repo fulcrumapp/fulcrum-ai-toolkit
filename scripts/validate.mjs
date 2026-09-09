@@ -426,15 +426,32 @@ try {
   failures.push(`${repoRelativePath(guidanceFixturePath)}: cannot load guidance contracts (${err.message})`);
 }
 
-const validGuidanceContracts = guidanceContractsLoaded &&
-  ['cases', 'forbidden', 'recoveryConsumers', 'actionConsumers'].every(
+const guidanceContractObject = guidanceContractsLoaded &&
+  guidanceContracts !== null &&
+  typeof guidanceContracts === 'object' &&
+  !Array.isArray(guidanceContracts);
+const guidanceContractArrayKeys = ['cases', 'forbidden', 'recoveryConsumers', 'actionConsumers'];
+const validGuidanceContractArrays = guidanceContractObject &&
+  guidanceContractArrayKeys.every(
     (key) => Array.isArray(guidanceContracts[key]) && guidanceContracts[key].length > 0
   );
-if (guidanceContractsLoaded && !validGuidanceContracts) {
+if (guidanceContractsLoaded && !guidanceContractObject) {
+  failures.push(`${repoRelativePath(guidanceFixturePath)}: guidance contracts must be a JSON object`);
+} else if (guidanceContractsLoaded && !validGuidanceContractArrays) {
   failures.push(`${repoRelativePath(guidanceFixturePath)}: guidance contract arrays must be nonempty`);
 }
 
-if (validGuidanceContracts) {
+const validGuidanceContractStrings = validGuidanceContractArrays &&
+  ['forbidden', 'recoveryConsumers', 'actionConsumers'].every(
+    (key) => guidanceContracts[key].every((value) => typeof value === 'string' && value.length > 0)
+  );
+if (validGuidanceContractArrays && !validGuidanceContractStrings) {
+  failures.push(
+    `${repoRelativePath(guidanceFixturePath)}: forbidden and consumer entries must be nonempty strings`
+  );
+}
+
+if (validGuidanceContractArrays && validGuidanceContractStrings) {
   const normalize = (text) => text.replace(/\s+/g, ' ').trim();
   const requireGuidance = (relativePath, required, name) => {
     const filePath = path.join(SKILLS_DIR, relativePath);
