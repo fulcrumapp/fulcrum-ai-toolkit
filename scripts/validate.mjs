@@ -455,11 +455,27 @@ if (validGuidanceContractArrays && validGuidanceContractStrings) {
   const normalize = (text) => text.replace(/\s+/g, ' ').trim();
   const requireGuidance = (relativePath, required, name) => {
     const filePath = path.join(SKILLS_DIR, relativePath);
-    if (!fs.existsSync(filePath)) {
-      failures.push(`${repoRelativePath(filePath)}: missing guidance for ${name}`);
+    let fileStat;
+    try {
+      fileStat = fs.statSync(filePath);
+    } catch (err) {
+      failures.push(`${repoRelativePath(filePath)}: cannot read guidance for ${name} (${err.message})`);
       return;
     }
-    const text = normalize(fs.readFileSync(filePath, 'utf8'));
+
+    if (!fileStat.isFile()) {
+      failures.push(`${repoRelativePath(filePath)}: guidance path for ${name} is not a file`);
+      return;
+    }
+
+    let text;
+    try {
+      text = normalize(fs.readFileSync(filePath, 'utf8'));
+    } catch (err) {
+      failures.push(`${repoRelativePath(filePath)}: cannot read guidance for ${name} (${err.message})`);
+      return;
+    }
+
     for (const fragment of required) {
       if (!text.includes(normalize(fragment))) {
         failures.push(`${repoRelativePath(filePath)}: ${name}: missing "${fragment}"`);
