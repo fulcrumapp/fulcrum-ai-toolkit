@@ -470,7 +470,14 @@ if (cursorManifest) {
   }
 }
 
+const rootClaudeManifestPath = '.claude-plugin/plugin.json';
+const rootClaudeManifest = jsonDocuments[rootClaudeManifestPath];
+if (rootClaudeManifest?.skills !== `./${PLUGIN_RELATIVE_PATH}/skills/`) {
+  failures.push(`${rootClaudeManifestPath}: skills must point to ./${PLUGIN_RELATIVE_PATH}/skills/`);
+}
+
 for (const relativePath of [
+  rootClaudeManifestPath,
   `${PLUGIN_RELATIVE_PATH}/.claude-plugin/plugin.json`,
   `${PLUGIN_RELATIVE_PATH}/.codex-plugin/plugin.json`,
   cursorManifestPath,

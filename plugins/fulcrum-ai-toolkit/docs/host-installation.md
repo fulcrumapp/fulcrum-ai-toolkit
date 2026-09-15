@@ -13,8 +13,14 @@ Installing skills does not connect a Fulcrum tenant.
 
 Use the marketplace commands in the repository README. For Codex the install
 command is `codex plugin add fulcrum-ai-toolkit@fulcrum-ai-toolkit`.
-The marketplace identifies the nested package; do not install the repository
-root as though it were the plugin root.
+
+When a private repository includes this toolkit as a git submodule and registers
+the submodule directory directly as a Claude plugin, use the submodule root.
+Its `.claude-plugin/plugin.json` points to the distributable package's shared
+`skills/` directory. Do not register the parent private repository as the plugin
+root unless its own marketplace entry selects the toolkit submodule path.
+For ordinary marketplace installation, the marketplace continues to select the
+nested package directly.
 
 ## Cursor
 
