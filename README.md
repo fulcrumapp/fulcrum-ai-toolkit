@@ -129,7 +129,9 @@ node scripts/validate.mjs
 
 The repository validator checks the exact 16-skill inventory, skill frontmatter,
 directory/name consistency, corporate absolute paths, privacy and provenance contracts,
-JSON manifests (including Agent Plugins 1.0.0 and client manifests), and README inventory.
+portable and client JSON manifests, and README inventory. The portable
+`plugin.json` intentionally omits `$schema` because Claude's SDK warns on
+unknown top-level fields when it encounters that manifest.
 It also keeps release versions aligned, requires the packaged license and
 Codex manual-invocation policies, and guards the regional MCP endpoint map
 and empty default server configuration.

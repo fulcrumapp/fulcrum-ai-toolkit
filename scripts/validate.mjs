@@ -416,12 +416,11 @@ for (const p of uniqueTextPaths) {
 }
 
 // 5. Manifest checks
-const AGENT_PLUGIN_SCHEMA = 'https://agent-plugins.org/schemas/1.0.0/plugin.schema.json';
 const AGENT_MCP_SCHEMA = 'https://agent-plugins.org/schemas/1.0.0/mcp.schema.json';
 const agentManifest = jsonDocuments[`${PLUGIN_RELATIVE_PATH}/plugin.json`];
 if (agentManifest) {
-  if (agentManifest.$schema !== AGENT_PLUGIN_SCHEMA) {
-    failures.push(`${PLUGIN_RELATIVE_PATH}/plugin.json: $schema must identify Agent Plugins 1.0.0`);
+  if ('$schema' in agentManifest) {
+    failures.push(`${PLUGIN_RELATIVE_PATH}/plugin.json: omit $schema because Claude rejects unknown top-level fields`);
   }
   if (!agentManifest.name) {
     failures.push(`${PLUGIN_RELATIVE_PATH}/plugin.json: name is required`);
