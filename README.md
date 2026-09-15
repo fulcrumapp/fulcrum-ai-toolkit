@@ -57,7 +57,7 @@ for Cursor, Gemini, Hermes, and the different Claude Desktop surfaces.
 
 ## Connect Fulcrum App MCP
 
-The hosted service is available at `https://mcp.fulcrumapp.com/app`, with
+The hosted service is available at `https://mcp.fulcrumapp.com`, with
 different hosts for Australian, European, and Canadian tenants. Select the
 endpoint from the **tenant's Fulcrum instance**, not your physical location.
 There is no automatic region fallback.

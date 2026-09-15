@@ -448,8 +448,14 @@ if (!fs.existsSync(setupPath)) {
   failures.push(`${repoRelativePath(setupPath)}: regional MCP setup guide is missing`);
 } else {
   const setup = fs.readFileSync(setupPath, 'utf8');
-  for (const domain of ['fulcrumapp.com', 'fulcrumapp-au.com', 'fulcrumapp-eu.com', 'fulcrumapp-ca.com']) {
-    const mapping = `| \`${domain}\` | \`https://mcp.${domain}/app\` |`;
+  const endpointMappings = {
+    'fulcrumapp.com': 'https://mcp.fulcrumapp.com',
+    'fulcrumapp-au.com': 'https://mcp.fulcrumapp-au.com',
+    'fulcrumapp-eu.com': 'https://mcp.fulcrumapp-eu.com',
+    'fulcrumapp-ca.com': 'https://mcp.fulcrumapp-ca.com'
+  };
+  for (const [domain, endpoint] of Object.entries(endpointMappings)) {
+    const mapping = `| \`${domain}\` | \`${endpoint}\` |`;
     if (!setup.includes(mapping)) {
       failures.push(`${repoRelativePath(setupPath)}: missing tenant-to-endpoint mapping for ${domain}`);
     }

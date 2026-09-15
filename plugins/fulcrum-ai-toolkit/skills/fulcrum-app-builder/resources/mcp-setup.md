@@ -12,16 +12,17 @@ physical location, or the agent machine's region.
 
 | Tenant instance | Fulcrum domain | App MCP endpoint |
 | --- | --- | --- |
-| US / default instance | `fulcrumapp.com` | `https://mcp.fulcrumapp.com/app` |
-| Australia | `fulcrumapp-au.com` | `https://mcp.fulcrumapp-au.com/app` |
-| Europe | `fulcrumapp-eu.com` | `https://mcp.fulcrumapp-eu.com/app` |
-| Canada | `fulcrumapp-ca.com` | `https://mcp.fulcrumapp-ca.com/app` |
+| US / default instance | `fulcrumapp.com` | `https://mcp.fulcrumapp.com` |
+| Australia | `fulcrumapp-au.com` | `https://mcp.fulcrumapp-au.com` |
+| Europe | `fulcrumapp-eu.com` | `https://mcp.fulcrumapp-eu.com` |
+| Canada | `fulcrumapp-ca.com` | `https://mcp.fulcrumapp-ca.com` |
 
-Keep the `/app` path. These are MCP endpoints, not the REST API's
-`api.<domain>/api/v2/` endpoints. "Default instance" names the US service;
-it is not permission to default an unknown tenant to that endpoint.
+Use the selected endpoint without an additional path. These are MCP endpoints,
+not the REST API's `api.<domain>/api/v2/` endpoints. "Default instance" names
+the US service; it is not permission to default an unknown tenant to that
+endpoint.
 
-> Source: The public [App MCP service](https://mcp.fulcrumapp.com/app) and its
+> Source: The public [App MCP service](https://mcp.fulcrumapp.com) and its
 > regional endpoints above provide the connector. [Fulcrum regional-instance
 > documentation](https://docs.fulcrumapp.com/reference/working-with-other-instances)
 > describes the corresponding Fulcrum instance domains and REST distinction.
@@ -43,7 +44,7 @@ just to make a failed operation succeed.
 
 > Source: [Fulcrum API authentication](https://docs.fulcrumapp.com/reference/rest-api-auth)
 > documents organization-specific API tokens and their access. The hosted
-> [App MCP endpoint](https://mcp.fulcrumapp.com/app) requires Bearer authentication.
+> [App MCP endpoint](https://mcp.fulcrumapp.com) requires Bearer authentication.
 
 The token is the same kind used by the REST API, but the header differs:
 REST documents `X-ApiToken`; App MCP uses `Authorization: Bearer <token>`.
