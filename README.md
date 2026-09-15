@@ -21,6 +21,10 @@ In Claude Code, add the marketplace and install the plugin:
 /plugin install fulcrum-ai-toolkit@fulcrum-ai-toolkit
 ```
 
+Private repositories may also include this repository as a git submodule and
+use the submodule root as a Claude plugin. The root
+`.claude-plugin/plugin.json` points Claude to the nested package's shared skills.
+
 In Codex, add the repository marketplace, then install
 `fulcrum-ai-toolkit` from the Plugins directory:
 
@@ -101,7 +105,7 @@ directory or explicitly point to it when the host contract supports that field.
 | Host | Install path | Skills | Live Fulcrum actions | Alpha status |
 | --- | --- | --- | --- | --- |
 | Generic skills loader | Add all 16 skills, preserving sibling layout | Yes | No, connector required | Target |
-| Claude Code | Add the Claude marketplace, then install the plugin | Yes | Connector-dependent | Target |
+| Claude Code | Add the Claude marketplace, or use the repository/submodule root as a plugin | Yes | Connector-dependent | Target |
 | Cursor | Install `plugins/fulcrum-ai-toolkit/` as a plugin | Yes | Connector-dependent | Target |
 | Codex | Add the repository marketplace, then install the plugin | Yes | Connector-dependent | Target |
 | GitHub Copilot | Add this marketplace, then install the plugin | Yes | Connector-dependent | Target |
@@ -125,7 +129,9 @@ node scripts/validate.mjs
 
 The repository validator checks the exact 16-skill inventory, skill frontmatter,
 directory/name consistency, corporate absolute paths, privacy and provenance contracts,
-JSON manifests (including Agent Plugins 1.0.0 and client manifests), and README inventory.
+portable and client JSON manifests, and README inventory. The portable
+`plugin.json` intentionally omits `$schema` because Claude's SDK warns on
+unknown top-level fields when it encounters that manifest.
 It also keeps release versions aligned, requires the packaged license and
 Codex manual-invocation policies, and guards the regional MCP endpoint map
 and empty default server configuration.
@@ -133,6 +139,15 @@ Structural and schema validation for externalized examples and assets runs via
 `tools/format-validator` using Ajv and pinned parsers.
 In CI, GitHub Actions also validates the Claude plugin marketplace using Anthropic's official
 `validate-plugins` composite action.
+
+## Releases
+
+The toolkit version is defined in
+[`plugins/fulcrum-ai-toolkit/plugin.json`](plugins/fulcrum-ai-toolkit/plugin.json).
+The repository validator requires every host manifest and marketplace entry to
+match it. After a version bump is merged to `main`, the release workflow creates
+the corresponding `v<version>` tag and GitHub Release. Re-running the workflow
+is safe when that release already exists.
 
 Validation never runs anything this repository authors. HTML is parsed, its
 inline scripts and styles are parsed, a report template is compiled to source by
@@ -298,7 +313,7 @@ Plugin configs are included for multiple AI platforms:
 | Platform | Config |
 | ---------- | -------- |
 | GitHub Copilot CLI | `.github/plugin/marketplace.json` and `plugins/fulcrum-ai-toolkit/plugin.json` |
-| Claude Code | `plugins/fulcrum-ai-toolkit/.claude-plugin/plugin.json` |
+| Claude Code | `.claude-plugin/plugin.json` at the repository root, or the nested package manifest at `plugins/fulcrum-ai-toolkit/.claude-plugin/plugin.json` |
 | Cursor | `plugins/fulcrum-ai-toolkit/.cursor-plugin/plugin.json` |
 | Codex | `plugins/fulcrum-ai-toolkit/.codex-plugin/plugin.json` |
 | Hermes | Shared `skills/` directory; root `plugin.json` for hosts supporting Agent Plugins v1 |
@@ -309,8 +324,9 @@ All hosts discover or reference the package's shared `skills/` directory; they
 do not maintain separate copies of skill content. GitHub Copilot marketplace
 metadata is available at `.github/plugin/marketplace.json`; the same catalog is
 also available at `.claude-plugin/marketplace.json` for Claude and Copilot's
-fallback lookup. The legacy root `marketplace.json` is kept for existing
-installers. Codex marketplace metadata is available at
+fallback lookup. A root `.claude-plugin/plugin.json` supports repositories that
+consume this repository as a plugin submodule. The legacy root
+`marketplace.json` is kept for existing installers. Codex marketplace metadata is available at
 `.agents/plugins/marketplace.json` and points to the package under `plugins/`.
 
 ## References

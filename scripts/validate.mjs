@@ -416,12 +416,11 @@ for (const p of uniqueTextPaths) {
 }
 
 // 5. Manifest checks
-const AGENT_PLUGIN_SCHEMA = 'https://agent-plugins.org/schemas/1.0.0/plugin.schema.json';
 const AGENT_MCP_SCHEMA = 'https://agent-plugins.org/schemas/1.0.0/mcp.schema.json';
 const agentManifest = jsonDocuments[`${PLUGIN_RELATIVE_PATH}/plugin.json`];
 if (agentManifest) {
-  if (agentManifest.$schema !== AGENT_PLUGIN_SCHEMA) {
-    failures.push(`${PLUGIN_RELATIVE_PATH}/plugin.json: $schema must identify Agent Plugins 1.0.0`);
+  if ('$schema' in agentManifest) {
+    failures.push(`${PLUGIN_RELATIVE_PATH}/plugin.json: omit $schema because Claude rejects unknown top-level fields`);
   }
   if (!agentManifest.name) {
     failures.push(`${PLUGIN_RELATIVE_PATH}/plugin.json: name is required`);
@@ -470,8 +469,24 @@ if (cursorManifest) {
   }
 }
 
+const rootClaudeManifestPath = '.claude-plugin/plugin.json';
+const rootClaudeManifest = jsonDocuments[rootClaudeManifestPath];
+if (rootClaudeManifest?.skills !== `./${PLUGIN_RELATIVE_PATH}/skills/`) {
+  failures.push(`${rootClaudeManifestPath}: skills must point to ./${PLUGIN_RELATIVE_PATH}/skills/`);
+}
+
+const claudeManifestPaths = [
+  rootClaudeManifestPath,
+  `${PLUGIN_RELATIVE_PATH}/.claude-plugin/plugin.json`
+];
+for (const relativePath of claudeManifestPaths) {
+  if ('$schema' in (jsonDocuments[relativePath] ?? {})) {
+    failures.push(`${relativePath}: omit $schema because Claude rejects unknown top-level fields`);
+  }
+}
+
 for (const relativePath of [
-  `${PLUGIN_RELATIVE_PATH}/.claude-plugin/plugin.json`,
+  ...claudeManifestPaths,
   `${PLUGIN_RELATIVE_PATH}/.codex-plugin/plugin.json`,
   cursorManifestPath,
   `${PLUGIN_RELATIVE_PATH}/gemini-extension.json`
