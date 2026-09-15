@@ -475,9 +475,18 @@ if (rootClaudeManifest?.skills !== `./${PLUGIN_RELATIVE_PATH}/skills/`) {
   failures.push(`${rootClaudeManifestPath}: skills must point to ./${PLUGIN_RELATIVE_PATH}/skills/`);
 }
 
-for (const relativePath of [
+const claudeManifestPaths = [
   rootClaudeManifestPath,
-  `${PLUGIN_RELATIVE_PATH}/.claude-plugin/plugin.json`,
+  `${PLUGIN_RELATIVE_PATH}/.claude-plugin/plugin.json`
+];
+for (const relativePath of claudeManifestPaths) {
+  if ('$schema' in (jsonDocuments[relativePath] ?? {})) {
+    failures.push(`${relativePath}: omit $schema because Claude rejects unknown top-level fields`);
+  }
+}
+
+for (const relativePath of [
+  ...claudeManifestPaths,
   `${PLUGIN_RELATIVE_PATH}/.codex-plugin/plugin.json`,
   cursorManifestPath,
   `${PLUGIN_RELATIVE_PATH}/gemini-extension.json`
