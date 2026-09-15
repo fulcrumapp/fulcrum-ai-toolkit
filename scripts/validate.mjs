@@ -450,9 +450,9 @@ if (!fs.existsSync(setupPath)) {
   const setup = fs.readFileSync(setupPath, 'utf8');
   const endpointMappings = {
     'fulcrumapp.com': 'https://mcp.fulcrumapp.com',
-    'fulcrumapp-au.com': 'https://mcp.fulcrumapp-au.com/app',
-    'fulcrumapp-eu.com': 'https://mcp.fulcrumapp-eu.com/app',
-    'fulcrumapp-ca.com': 'https://mcp.fulcrumapp-ca.com/app'
+    'fulcrumapp-au.com': 'https://mcp.fulcrumapp-au.com',
+    'fulcrumapp-eu.com': 'https://mcp.fulcrumapp-eu.com',
+    'fulcrumapp-ca.com': 'https://mcp.fulcrumapp-ca.com'
   };
   for (const [domain, endpoint] of Object.entries(endpointMappings)) {
     const mapping = `| \`${domain}\` | \`${endpoint}\` |`;

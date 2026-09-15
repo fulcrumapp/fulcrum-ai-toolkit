@@ -13,14 +13,14 @@ physical location, or the agent machine's region.
 | Tenant instance | Fulcrum domain | App MCP endpoint |
 | --- | --- | --- |
 | US / default instance | `fulcrumapp.com` | `https://mcp.fulcrumapp.com` |
-| Australia | `fulcrumapp-au.com` | `https://mcp.fulcrumapp-au.com/app` |
-| Europe | `fulcrumapp-eu.com` | `https://mcp.fulcrumapp-eu.com/app` |
-| Canada | `fulcrumapp-ca.com` | `https://mcp.fulcrumapp-ca.com/app` |
+| Australia | `fulcrumapp-au.com` | `https://mcp.fulcrumapp-au.com` |
+| Europe | `fulcrumapp-eu.com` | `https://mcp.fulcrumapp-eu.com` |
+| Canada | `fulcrumapp-ca.com` | `https://mcp.fulcrumapp-ca.com` |
 
-Use the US/default endpoint without a path, and keep the `/app` path for the
-Australian, European, and Canadian endpoints. These are MCP endpoints, not
-the REST API's `api.<domain>/api/v2/` endpoints. "Default instance" names the
-US service; it is not permission to default an unknown tenant to that endpoint.
+Use the selected endpoint without an additional path. These are MCP endpoints,
+not the REST API's `api.<domain>/api/v2/` endpoints. "Default instance" names
+the US service; it is not permission to default an unknown tenant to that
+endpoint.
 
 > Source: The public [App MCP service](https://mcp.fulcrumapp.com) and its
 > regional endpoints above provide the connector. [Fulcrum regional-instance
