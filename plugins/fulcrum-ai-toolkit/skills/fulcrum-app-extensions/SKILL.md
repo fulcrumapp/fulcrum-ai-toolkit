@@ -15,6 +15,12 @@ lookups, and listener/state lifetime. Include constructive advice and
 distinguish static risks from measured behavior; optimization advice is
 optional, but bridge correctness and authorization remain required.
 
+Follow the performance skill's code-discovery workflow through attached HTML,
+`attachment://` Reference Files, inline/embedded scripts and handlers, bundles,
+and transitively loaded assets. Review the extension contents as well as the
+Data Event that launches it; an upload, filename, or bridge check is not a
+review of the code inside the attachment.
+
 > **Guidance boundary:** The bridge API and event flow in this skill follow Fulcrum's documented extension API. Field-type recommendations, offline decisions, and payload-sizing guidance are toolkit conventions unless explicitly sourced.
 
 ## App MCP Knowledge And Generation

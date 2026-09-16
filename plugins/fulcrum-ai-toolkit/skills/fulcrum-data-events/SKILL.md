@@ -17,6 +17,11 @@ valid. Line count alone neither proves nor rules out a bottleneck.
 Return constructive advice with a static/measured evidence label; users may
 accept performance trade-offs without waiving runtime or safety requirements.
 
+Follow the performance skill's code-discovery workflow into attached source,
+`LOADFILE()` Reference Files, cross-form helpers, and any further code they
+load. Reviewing the loader alone is insufficient. Keep unavailable code
+explicitly unreviewed rather than claiming the whole script is low risk.
+
 > **Guidance boundary:** Event names and function signatures in this skill follow Fulcrum's documented data-events API. Offline recommendations, security cautions, and workflow conventions are toolkit guidance unless explicitly sourced.
 
 ## App MCP Control Plane

@@ -27,6 +27,8 @@ Collect evidence for:
   calculations, and the form's Data Event script.
 - Referenced apps, shared lists, Reference Files/extensions, output templates,
   and effective access where they affect this app.
+- Code inside supplied attachments, embedded configuration/templates, bundles,
+  and transitively loaded files, with their entry points and review coverage.
 - Representative mobile, offline, and output observations, if already available.
 
 Load only the source skills needed to interpret a check. Do not run their
@@ -68,6 +70,9 @@ unknown. The builder owns approval and any subsequent live writes.
    [`fulcrum-performance-review`](../fulcrum-performance-review/SKILL.md).
    Use relevant findings in existing checks; performance risk labels are not
    additional deductions or caps.
+   An unread attachment or unresolved loaded dependency is not evidence of
+   no code. Keep affected checks unknown unless a violation is established,
+   and identify unreviewed artifacts in the approval summary.
 4. **Calculate.** Follow the arithmetic below without inventing weights,
    deductions, exemptions, or additional caps.
 5. **Recommend.** Rank concrete fixes by user impact, then scoring impact.

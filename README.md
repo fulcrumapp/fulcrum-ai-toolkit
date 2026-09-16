@@ -113,6 +113,10 @@ Whenever code is authored, modified, or reviewed, `fulcrum-performance-review`
 evaluates workload growth, repeated I/O, rendering, and memory before delivery.
 It covers Data Events, calculations, reports/SQL, extensions, and other
 toolkit code paths, and distinguishes static risks from measured results.
+The review includes code in attachments, Reference Files, embedded templates,
+bundles, and indirectly loaded dependencies. Anything that cannot be inspected
+remains explicitly unreviewed; reviewing a launcher alone is not a complete
+app or extension assessment.
 
 ## Alpha install matrix
 

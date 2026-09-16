@@ -18,6 +18,11 @@ Include constructive advice and static versus measured evidence. Users may
 accept performance trade-offs; never silently omit required report data to
 make generation faster.
 
+Follow the performance skill's code-discovery workflow into attached
+templates, EJS partials, embedded SQL/scripts/styles, and their dependencies.
+Unread or dynamically resolved code must remain explicitly unreviewed; a
+clean top-level template does not establish the cost of its included content.
+
 > **Guidance boundary:** Report APIs and template behavior should be checked against current Fulcrum documentation. The rendering workflow below is a toolkit convention, not a guarantee of public product support.
 
 ## App MCP Control Plane

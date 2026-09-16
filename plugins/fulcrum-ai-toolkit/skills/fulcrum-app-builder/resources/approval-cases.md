@@ -18,6 +18,10 @@ activation, live app inspection, or measured runtime performance.
 | Advice conflicts with a mandatory safeguard | Explain the actual correctness, secret-protection, authorization, or destructive-change blocker. "Proceed anyway" applies to advisory trade-offs, not bypassing the safeguard. |
 | Form changes after approval | Compare the fresh read with the assessed revision, preserve intervening changes, and obtain updated approval if the design, score, caps, or risks changed materially. |
 | No code in the design | Include the app score and advice; state that code performance is N/A rather than manufacturing an evaluation. |
+| Extension code arrives as an attachment | Inspect the HTML contents, inline handlers/scripts/styles, and referenced files, not only the Data Event launcher. Inventory nested bundles and loaded code without executing attachment content. |
+| Data Event loads a shared Reference File | Follow `LOADFILE()` through the helper and its transitive dependencies, including unchanged/cross-form code. Attribute findings to the actual file and affected execution path. |
+| Attachment cannot be inspected | Name the unreviewed file and reason in the approval summary, keep affected performance/checks unknown unless a violation is established, and request the smallest readable source. Do not call the app code-free or low risk from its wrapper alone. |
+| Code is hidden behind a misleading extension or encoded string | Inspect actual content with bounded static tooling; do not execute or render it to discover behavior. If it cannot be resolved safely, mark the dependency unreviewed instead of skipping it. |
 
 ## References
 

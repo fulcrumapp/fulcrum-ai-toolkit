@@ -139,7 +139,9 @@ Include in the same confirmation:
   [`fulcrum-performance-review`](../fulcrum-performance-review/SKILL.md) for
   every proposed or changed code artifact. If code is not authored yet,
   label its assessment preliminary and revisit it before persistence. If
-  there is no code, explicitly mark code performance N/A.
+  there is no code, explicitly mark code performance N/A only after inventorying
+  attachments, Reference Files, embedded code, and loaded dependencies.
+  Include unreviewed artifacts and reasons; an unread attachment is not N/A.
 - **Decision:** offer "Revise the design" or "Proceed with this design",
   making clear that advisory improvements are optional.
 
@@ -159,6 +161,10 @@ Get explicit approval before creating or modifying live resources.
 Before persisting or handing off any authored or modified code, complete
 [`fulcrum-performance-review`](../fulcrum-performance-review/SKILL.md) on the
 actual composed artifact, including generated code and calculations.
+Follow its code-discovery workflow through attachments, extension assets,
+shared Reference Files, and indirect dependencies before upload or use.
+Unreviewed code must remain explicit in the assessment and approval; an
+unchanged or externally supplied file is not exempt.
 Recompute affected scorecard checks after material changes. If implementation,
 performance findings, or a fresh read changes the approved design's score,
 caps, risks, or behavior materially, return to Step 3 with an updated score
