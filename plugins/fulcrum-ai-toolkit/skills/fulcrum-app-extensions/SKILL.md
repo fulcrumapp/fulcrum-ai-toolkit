@@ -167,9 +167,12 @@ When App MCP is unavailable:
    [the builder's confirmation contract](../fulcrum-app-builder/SKILL.md#score-and-advice-at-every-design-confirmation)
    and obtain explicit approval for the file upload/replacement and script edit.
 4. In Fulcrum, open the target form and upload the reviewed file under **Reference Files**.
-5. Recheck the current form and dependencies before editing its script.
+5. Recheck the current form and dependencies immediately before editing its script,
+   even if no change is known.
    Recompose and re-review any intervening changes, returning to step 3 for
-   updated approval if the design, score, or risks changed materially.
+   updated approval if the design, score, or risks changed materially. Repeat
+   this fresh read after reapproval; repeat the upload only if the approved
+   file content changed.
 6. Save the reviewed, approved composed script with the `OPENEXTENSION()` handler,
    using the uploaded file's exact filename and preserving unrelated handlers.
 7. Test the trigger and the write-back behavior in the form preview, then test again on a device if the workflow must work offline.

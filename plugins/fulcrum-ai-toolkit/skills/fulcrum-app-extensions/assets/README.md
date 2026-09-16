@@ -2,7 +2,7 @@
 
 | File | What it holds | Public source |
 | --- | --- | --- |
-| [`app-mcp-extension-publish-sequence.txt`](app-mcp-extension-publish-sequence.txt) | The generate, upload, read, and update sequence for publishing an extension. | [App Extensions introduction](https://docs.fulcrumapp.com/docs/app-extensions-introduction) |
+| [`app-mcp-extension-publish-sequence.txt`](app-mcp-extension-publish-sequence.txt) | Canonical publishing sequence: review and approve before either live write, then fresh-read/reconcile before the script update. | [App Extensions introduction](https://docs.fulcrumapp.com/docs/app-extensions-introduction) |
 | [`cdn-version-pinning.html`](cdn-version-pinning.html) | Unpinned versus pinned external script references. | [Offline capabilities](https://docs.fulcrumapp.com/docs/offline-capabilities) |
 
 An external asset is both an offline and a supply-chain risk. Inline what an

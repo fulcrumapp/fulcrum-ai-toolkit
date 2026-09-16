@@ -3,9 +3,12 @@
 Runnable reference snippets for the single `script` value on a Fulcrum form.
 Every file carries a `// Source:` comment naming its public documentation.
 
-Compose these with the form's existing script rather than replacing it: read
-the current script with `fulcrum_forms_get`, merge, then write the complete
-script with `fulcrum_forms_update`.
+Compose these with the form's existing script rather than replacing it.
+Follow the [script persistence workflow](../SKILL.md#app-mcp-control-plane):
+review and approve the complete script and dependencies, then always fresh-read,
+reconcile, and re-review immediately before writing. If Reference Files change,
+use the [shared-code workflow](../SKILL.md#share-code-across-apps-with-loadfile),
+which owns both writes and requires approval before upload.
 
 ## Event handlers
 

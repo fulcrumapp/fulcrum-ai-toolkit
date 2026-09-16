@@ -5,6 +5,12 @@ native `Source:` comment naming its public documentation. Prefer the artifacts
 returned by `fulcrum_extensions_generate` when App MCP is registered; use these
 to review a generated artifact or to work without a connector.
 
+Before uploading or attaching an example, follow the
+[canonical publishing sequence](../assets/app-mcp-extension-publish-sequence.txt)
+or [manual UI workflow](../SKILL.md#manual-ui-fallback). Review and approve
+the page, complete script, and dependencies before either live write;
+fresh-read and reconcile the current script immediately before updating it.
+
 ## Extension page
 
 | File | What it shows |
@@ -25,7 +31,7 @@ to review a generated artifact or to work without a connector.
 
 | File | What it holds |
 | --- | --- |
-| [`app-mcp-extension-publish-sequence.txt`](../assets/app-mcp-extension-publish-sequence.txt) | Generate, upload, and attach sequence for App MCP. |
+| [`app-mcp-extension-publish-sequence.txt`](../assets/app-mcp-extension-publish-sequence.txt) | Canonical review/approval and publishing sequence with a final fresh read before updating the script. |
 | [`cdn-version-pinning.html`](../assets/cdn-version-pinning.html) | Unpinned versus pinned external script references. |
 
 ## Safety notes

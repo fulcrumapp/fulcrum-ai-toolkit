@@ -43,9 +43,13 @@ script writes. For script-only changes:
    sync warnings using
    [the builder's confirmation contract](../fulcrum-app-builder/SKILL.md#score-and-advice-at-every-design-confirmation).
    Obtain explicit approval before any live write.
-4. Re-read and re-review the final composed script if the current form or
-   dependencies changed. Obtain updated approval for material changes before
-   writing the reviewed, approved script with `fulcrum_forms_update`.
+4. Always re-read the current form and relevant dependencies immediately before
+   the write, even if no change is known. Reconcile the approved edits into the
+   freshly read script, preserving intervening handlers, and re-review the
+   final composition. If material changes need updated approval, return to
+   step 3 and repeat this fresh read after approval.
+5. Write the reviewed, approved final script with `fulcrum_forms_update`;
+   never write the earlier script snapshot.
 
 > Connector authority: Live installed App MCP schemas define the registered
 > knowledge tool and form-script persistence contract.
@@ -133,8 +137,10 @@ For App MCP-managed shared code, use this order:
    existing consumers can load a replacement without a script change.
 4. Upload the reviewed, approved file with `fulcrum_reference_files_upload`.
 5. Re-read the form and re-review the final composed script with its loaded
-   dependencies. Preserve intervening changes; refresh the score/advice and
-   obtain updated approval if the design or assessment changed materially.
+   dependencies immediately before the write, even if no change is known.
+   Preserve intervening changes; refresh the score/advice and obtain updated
+   approval if the design or assessment changed materially. Repeat this fresh
+   read after reapproval before continuing to step 6.
 6. Write only the reviewed, approved complete script with `fulcrum_forms_update`.
 
 > Verify `LOADFILE()` eligibility as described above before designing around shared Reference Files.

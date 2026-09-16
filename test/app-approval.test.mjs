@@ -54,7 +54,15 @@ test('assessment uses the composed edit and revisits material changes before wri
   const existingApp = build.split('For an existing app:')[1].split('### Data Event scripts')[0];
   assert.match(existingApp, /Complete the performance review.*fulcrum_forms_update/);
   const scriptUpdate = build.split('### Data Event scripts')[1];
-  assert.match(scriptUpdate, /Review performance.*Write the complete script with `fulcrum_forms_update`/);
+  assertInOrder(scriptUpdate, [
+    'Review performance',
+    'Always re-read the current form and relevant dependencies immediately before',
+    'Reconcile the approved edits',
+    're-review that final composition',
+    'repeat this fresh read after approval',
+    'Write the reviewed, approved final script with `fulcrum_forms_update`'
+  ]);
+  assert.match(scriptUpdate, /even if no change is known/);
 });
 
 const codeSkills = [
@@ -100,9 +108,13 @@ test('direct Data Event and shared-file writes remain behind performance and app
     'Compose the handler',
     'Complete the performance review',
     'Obtain explicit approval before any live write',
-    'Re-read and re-review the final composed script',
+    'Always re-read the current form and relevant dependencies immediately before',
+    'Reconcile the approved edits',
+    're-review the final composition',
+    'repeat this fresh read after approval',
     'fulcrum_forms_update'
   ]);
+  assert.match(controlPlane, /even if no change is known/);
   const sharedCode = compact(events.split('### Share code across apps with LOADFILE')[1]?.split('### Session state')[0] ?? '');
   assertInOrder(sharedCode, [
     'Inspect the current Reference File',
@@ -115,6 +127,32 @@ test('direct Data Event and shared-file writes remain behind performance and app
     'fulcrum_forms_update'
   ]);
   assert.match(sharedCode, /existing consumers can load a replacement without a script change/);
+});
+
+test('secondary publishing references cannot bypass canonical review and fresh-read gates', () => {
+  const bridge = compact(read('fulcrum-app-extensions/resources/extension-bridge-api.md'));
+  const workflow = bridge.split('## Reference File Workflow')[1]?.split('## Sandbox Constraints')[0] ?? '';
+  assert.match(workflow, /\[canonical publishing sequence\]\(\.\.\/assets\/app-mcp-extension-publish-sequence\.txt\)/);
+  assert.match(workflow, /before either live write/);
+  assert.match(workflow, /Repeat the fresh read after any required reapproval/);
+  assert.doesNotMatch(workflow, /fulcrum_reference_files_upload\(|fulcrum_forms_update\(/);
+  for (const file of [
+    'fulcrum-app-extensions/assets/README.md',
+    'fulcrum-app-extensions/examples/README.md'
+  ]) {
+    const index = compact(read(file));
+    assert.match(index, /app-mcp-extension-publish-sequence\.txt/);
+    assert.match(index, /review\/approval|review and approve/i);
+    assert.match(index, /fresh read|fresh-read/);
+  }
+  for (const file of [
+    'fulcrum-data-events/examples/README.md',
+    'fulcrum-data-events/resources/data-event-examples.md'
+  ]) {
+    const reference = compact(read(file));
+    assert.match(reference, /\.\.\/SKILL\.md#app-mcp-control-plane/);
+    assert.match(reference, /fresh read|fresh-read/);
+  }
 });
 
 for (const name of codeSkills) {
@@ -207,7 +245,12 @@ test('new approval and performance guidance links resolve in the portable bundle
   for (const file of [
     ...codeSkills.map((name) => `${name}/SKILL.md`),
     'fulcrum-performance-review/SKILL.md',
-    'fulcrum-app-builder/resources/approval-cases.md'
+    'fulcrum-app-builder/resources/approval-cases.md',
+    'fulcrum-app-extensions/resources/extension-bridge-api.md',
+    'fulcrum-app-extensions/assets/README.md',
+    'fulcrum-app-extensions/examples/README.md',
+    'fulcrum-data-events/examples/README.md',
+    'fulcrum-data-events/resources/data-event-examples.md'
   ]) {
     for (const [, link] of read(file).matchAll(/\[[^\]]+\]\(([^)]+)\)/g)) {
       if (/^https?:\/\//.test(link)) continue;

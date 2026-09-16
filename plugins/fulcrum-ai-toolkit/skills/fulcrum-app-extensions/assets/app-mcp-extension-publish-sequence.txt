@@ -45,10 +45,12 @@ Step 6  fulcrum_reference_files_upload(
         ../examples/open-species-picker.js.
 
 Step 7  fulcrum_forms_get(id=...)
-        Re-read before updating. Preserve intervening changes and re-review the
-        final composed script and dependencies. If unapproved changes affect
+        Always re-read immediately before updating, even if no change is known.
+        Preserve intervening changes and re-review the final composed script
+        and dependencies. If unapproved changes affect
         the design, score, or risks materially, return to Step 5 for updated
-        approval before continuing. Do not replay a stale script snapshot.
+        approval, then repeat this fresh read before Step 8. Repeat the upload
+        only if the approved file content changed. Do not replay a stale snapshot.
 
 Step 8  fulcrum_forms_update(
           id=...,

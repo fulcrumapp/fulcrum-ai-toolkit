@@ -232,7 +232,12 @@ There are no standalone Data Event CRUD tools. A form has one `script` value:
 2. Compose the approved change with the existing script instead of overwriting unrelated handlers.
 3. Review performance of the complete script and loaded dependencies. Refresh
    the score and advice and obtain reapproval for material changes before writing.
-4. Write the complete script with `fulcrum_forms_update`.
+4. Always re-read the current form and relevant dependencies immediately before
+   the write, even if no change is known. Reconcile the approved edits into the
+   freshly read script, preserving intervening handlers, and re-review that
+   final composition. If material changes require reapproval, return to step 3
+   and repeat this fresh read after approval; never reuse the earlier snapshot.
+5. Write the reviewed, approved final script with `fulcrum_forms_update`.
 
 Use `fulcrum_expressions_data_events_reference` for current hooks and signatures rather than relying on a memorized contract.
 
