@@ -31,11 +31,14 @@ Step 3  fulcrum_schema_build_form(name=..., elements=[...all built fields...])
 Step 4  fulcrum_forms_validate(name=..., elements=[...from step 3...])
         Validate the complete payload before any creation side effect.
 
-Step 5  fulcrum_forms_create(name=..., elements=[...from step 3...])
-        Before this write, evaluate every authored/generated code artifact
-        with fulcrum-performance-review. If the built definition or review
+Step 5  Performance review and approval gate (no live writes)
+        Run fulcrum-performance-review on every authored/generated code
+        artifact and its dependencies. If the built definition or review
         materially changes the approved score, risks, or behavior, refresh
         the score and advice and obtain approval again.
+        Complete this gate before continuing to Step 6.
+
+Step 6  fulcrum_forms_create(name=..., elements=[...from step 3...])
         Optionally include a `script` value with the form's Data Events.
         Creation also creates a default Report Template unless
         skip_default_report is explicitly true.

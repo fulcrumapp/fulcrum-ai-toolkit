@@ -55,13 +55,19 @@ test('the complete calibration case set is exercised', () => {
 const display = (value) => (Math.round(value * 10) / 10).toFixed(1);
 const range = (low, high) => low === high ? display(low) : `${display(low)}-${display(high)}`;
 
-for (const [name, , counts, uncapped, cap, final, coverage] of workedCases) {
-  test(`published scoring case: ${name}`, () => {
+// The all-excluded guard is not a valid app assessment under the current N/A rules.
+const arithmeticCases = [
+  ...workedCases,
+  ['All-excluded arithmetic guard', '', '0/0/0/20', 'Not scoreable', 'Unknown', 'Not scoreable', 'N/A']
+];
+
+for (const [name, , counts, uncapped, cap, final, coverage] of arithmeticCases) {
+  test(`scoring arithmetic: ${name}`, () => {
     const [pass, fail, unknown, excluded] = counts.split('/').map(Number);
     assert.equal(pass + fail + unknown + excluded, checkIds.length);
     assert.ok(['Triggered', 'Not triggered', 'Unknown'].includes(cap));
     const applicable = pass + fail + unknown;
-    assert.equal(coverage, `${display(100 * (pass + fail) / applicable)}%`);
+    assert.equal(coverage, applicable === 0 ? 'N/A' : `${display(100 * (pass + fail) / applicable)}%`);
     if (pass + fail === 0) {
       assert.equal(uncapped, 'Not scoreable');
       assert.equal(final, 'Not scoreable');

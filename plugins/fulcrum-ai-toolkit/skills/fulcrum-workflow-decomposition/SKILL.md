@@ -7,6 +7,15 @@ A **monolith** is an app that tries to capture an entire business process in a s
 
 The cure is **decomposition**: splitting the monolith into purpose-built apps that each own one piece of the workflow and connect through Record Links and reference data.
 
+Whenever authoring, modifying, or reviewing code during decomposition, complete
+[`fulcrum-performance-review`](../fulcrum-performance-review/SKILL.md) before
+delivery, even when this skill is invoked directly. Inspect the complete
+execution paths, including unchanged Data Events, attached/Reference File
+helpers, and report queries. Evaluate workload growth, trigger frequency,
+request fan-out, and memory before recommending a split; smaller scripts can
+still perform more cross-app I/O. State static risks separately from measured
+behavior and unknowns. Code size is a review signal, not proof of slowness.
+
 ## Monolith Warning Signs
 
 Flag decomposition when you see any of these:
@@ -90,6 +99,7 @@ Decomposition of a live app is disruptive. Sequence it:
 - [ ] Shared reference data is in lookup apps, not duplicated in choice lists
 - [ ] Each decomposed app has a clear goal (see `fulcrum-app-goal`)
 - [ ] Data events per app are under 500 lines
+- [ ] Reviewed or changed code has a workload-based performance summary, including unchanged dependencies and the cost of cross-app calls after splitting
 - [ ] Reporting continuity is confirmed — deliverables still producible
 - [ ] Transition plan exists if decomposing a live app
 

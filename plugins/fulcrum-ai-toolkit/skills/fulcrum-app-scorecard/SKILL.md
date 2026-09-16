@@ -104,7 +104,8 @@ A finding can fail two checks only if it independently violates both.
 
 Let `P`, `F`, `U`, and `N` be the counts of pass, fail, unknown, and N/A.
 Require `P + F + U + N = 20` for version 1.1.0.
-Let `A = P + F + U`, and report coverage as `100 * (P + F) / A`.
+Let `A = P + F + U`. When `A > 0`, report coverage as `100 * (P + F) / A`.
+When `A = 0`, report coverage as **N/A** rather than dividing by zero.
 N/A is excluded from the denominator; unknown remains in it.
 
 - When `A = 0` or no checks have been evaluated (`P + F = 0`), report

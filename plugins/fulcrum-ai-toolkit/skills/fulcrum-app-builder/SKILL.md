@@ -137,8 +137,10 @@ Include in the same confirmation:
   are available under the same rubric and comparable evidence.
 - **Code performance:** a summary from
   [`fulcrum-performance-review`](../fulcrum-performance-review/SKILL.md) for
-  every proposed or changed code artifact. If code is not authored yet,
-  label its assessment preliminary and revisit it before persistence. If
+  every authored, modified, or reviewed code artifact in the complete composed
+  design, including unchanged Data Events, Reference Files, and dependencies.
+  If code is not authored yet, label its assessment preliminary and revisit it
+  before persistence. If
   there is no code, explicitly mark code performance N/A only after inventorying
   attachments, Reference Files, embedded code, and loaded dependencies.
   Include unreviewed artifacts and reasons; an unread attachment is not N/A.
@@ -188,8 +190,11 @@ For a new app:
 3. For inline choices, pass either string labels or `{ "label": "...", "value": "..." }` objects. Use object form whenever the stored value differs from the label; App MCP preserves explicit values.
 4. Assemble the new form with `fulcrum_schema_build_form`.
 5. Validate the generated definition with `fulcrum_forms_validate`.
-6. Create it with `fulcrum_forms_create`, including the approved `script` only after the form structure is valid.
-7. Let `fulcrum_forms_create` create its default Report Template. Set `skip_default_report: true` only when the user explicitly asks to opt out.
+6. Complete the performance review of the built code and dependencies. Refresh
+   the score and advice and obtain approval again if the assessment or design
+   changed materially. Do not perform the create until this gate is complete.
+7. Create it with `fulcrum_forms_create`, including the approved `script` only after the form structure is valid.
+8. Let `fulcrum_forms_create` create its default Report Template. Set `skip_default_report: true` only when the user explicitly asks to opt out.
 
 The full ordered sequence, with the builder arguments worth knowing, is in [`assets/app-build-sequence.txt`](assets/app-build-sequence.txt).
 
@@ -206,7 +211,10 @@ For an existing app:
 5. Preservation is the default. Preserve every unrequested element and choice. Omit `removed_element_keys` when nothing was removed.
 6. If the user requests an element removal, explain the data and integration impact and obtain explicit approval. After approval, omit the removed subtree from the copied tree and collect only that subtree root's existing key in `removed_element_keys`; one root key authorizes its descendants. Choice removals also require approval, but choice keys do not belong in `removed_element_keys`.
 7. Validate the composed full form with `fulcrum_forms_validate`.
-8. Start the update payload with `elements: composedElements`. Only
+8. Complete the performance review of the composed code and dependencies,
+   including unchanged code. Return to Step 3 if the design or assessment
+   changed materially; complete any required reapproval before the update.
+9. Start the update payload with `elements: composedElements`. Only
    `if (removedElementKeys.length > 0)`, set
    `updatePayload.removed_element_keys = removedElementKeys`, then send the
    complete payload with `fulcrum_forms_update(updatePayload)`. The annotated call is
@@ -222,7 +230,9 @@ There are no standalone Data Event CRUD tools. A form has one `script` value:
 
 1. Read the current script with `fulcrum_forms_get`.
 2. Compose the approved change with the existing script instead of overwriting unrelated handlers.
-3. Write the complete script with `fulcrum_forms_update`.
+3. Review performance of the complete script and loaded dependencies. Refresh
+   the score and advice and obtain reapproval for material changes before writing.
+4. Write the complete script with `fulcrum_forms_update`.
 
 Use `fulcrum_expressions_data_events_reference` for current hooks and signatures rather than relying on a memorized contract.
 

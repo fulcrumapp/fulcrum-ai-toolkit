@@ -21,6 +21,8 @@ test('every create/edit confirmation includes scoring, advice, and an informed c
   }
   assert.match(approval, /keep the honest score and findings/);
   assert.match(approval, /does not waive authorization, credential protection/);
+  assert.match(approval, /every authored, modified, or reviewed code artifact in the complete composed design/);
+  assert.match(approval, /including unchanged Data Events, Reference Files, and dependencies/);
 });
 
 test('assessment uses the composed edit and revisits material changes before writing', () => {
@@ -34,13 +36,23 @@ test('assessment uses the composed edit and revisits material changes before wri
   assert.match(build, /reconcile intervening changes rather than overwriting/);
   const sequence = compact(read('fulcrum-app-builder/assets/app-build-sequence.txt'));
   assert.match(sequence, /show the proposed app score, constructive advice, and performance assessment/);
-  assert.match(sequence, /Before this write, evaluate every authored\/generated code artifact/);
+  assert.match(sequence, /Performance review and approval gate \(no live writes\)/);
+  const reviewGate = sequence.indexOf('Run fulcrum-performance-review');
+  const createCall = sequence.indexOf('fulcrum_forms_create(');
+  assert.ok(reviewGate >= 0 && reviewGate < createCall, 'Review gate must precede the live create invocation');
+  const newApp = build.split('For a new app:')[1].split('For an existing app:')[0];
+  assert.match(newApp, /Complete the performance review.*Create it with `fulcrum_forms_create`/);
+  const existingApp = build.split('For an existing app:')[1].split('### Data Event scripts')[0];
+  assert.match(existingApp, /Complete the performance review.*fulcrum_forms_update/);
+  const scriptUpdate = build.split('### Data Event scripts')[1];
+  assert.match(scriptUpdate, /Review performance.*Write the complete script with `fulcrum_forms_update`/);
 });
 
 const codeSkills = [
   'fulcrum-app-builder', 'fulcrum-app-design', 'fulcrum-app-extensions',
   'fulcrum-data-events', 'fulcrum-report-building', 'fulcrum-query-api',
-  'fulcrum-integration-patterns', 'fulcrum-data-migration', 'fulcrum-gis-mapping'
+  'fulcrum-integration-patterns', 'fulcrum-data-migration', 'fulcrum-gis-mapping',
+  'fulcrum-workflow-decomposition'
 ];
 
 for (const name of codeSkills) {

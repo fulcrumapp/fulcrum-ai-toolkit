@@ -50,6 +50,11 @@ Unknown checks remain applicable, so `A = P + F + U = 20`, not zero.
 Coverage is `100 * (P + F) / A = 0.0%`. Because no check was evaluated,
 the result is not scoreable; this is not the all-excluded case.
 
+The defensive all-excluded arithmetic boundary (`P/F/U/N = 0/0/0/20`) has
+`A = 0`: coverage is N/A and the result is not scoreable. This is exercised
+as an arithmetic-only test, not as a valid app calibration row: rubric 1.1.0
+has checks that never allow N/A, so a real assessment cannot exclude them all.
+
 ## Structural And Policy Probes
 
 - A Repeatable nested under multiple Section containers still triggers CAP-01.
