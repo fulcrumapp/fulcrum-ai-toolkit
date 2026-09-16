@@ -19,24 +19,43 @@ Step 3  fulcrum_extensions_generate(
         Returns the Data Event, the complete HTML including the current inline
         bootstrap, and setup notes. Keep the generated bootstrap intact.
 
-Step 4  fulcrum_reference_files_upload(
+Step 4  fulcrum_forms_get(id=...)
+        Read the current form and complete script. Inspect existing Reference
+        Files and all attached/loaded dependencies before composing the change.
+
+Step 5  Performance review and approval gate (no live writes)
+        Compose the existing script plus the generated Data Event without
+        discarding unrelated handlers. Run fulcrum-performance-review on the
+        generated HTML, composed script, and attached/loaded dependencies.
+        Present the proposed app score, constructive advice, unreviewed code,
+        and advisory sync warnings using the builder's confirmation contract.
+        Obtain explicit approval covering both the Reference File upload or
+        replacement and the composed script. Advisory improvements are optional.
+        Complete this gate before continuing to Step 6: replacing a file can
+        affect existing consumers even before the form script is updated.
+
+Step 6  fulcrum_reference_files_upload(
           form_id=...,
           file_name="species-picker.html",
           content=<generated HTML>
         )
-        The file name must match the attachment:// URL in the Data Event
+        Upload only the reviewed, approved HTML. The file name must match the
+        attachment:// URL in the Data Event
         exactly: attachment://species-picker.html. See
         ../examples/open-species-picker.js.
 
-Step 5  fulcrum_forms_get(id=...)
-        Read the form's existing script before changing it.
+Step 7  fulcrum_forms_get(id=...)
+        Re-read before updating. Preserve intervening changes and re-review the
+        final composed script and dependencies. If unapproved changes affect
+        the design, score, or risks materially, return to Step 5 for updated
+        approval before continuing. Do not replay a stale script snapshot.
 
-Step 6  fulcrum_forms_update(
+Step 8  fulcrum_forms_update(
           id=...,
-          script=<existing script plus the generated Data Event>
+          script=<reviewed and approved composed script>
         )
-        There is no standalone Data Event update tool. Merge; do not overwrite
-        unrelated handlers.
+        This write remains behind the Step 5 approval gate. There is no
+        standalone Data Event update tool; preserve unrelated handlers.
 
 # The focused connector contract exposes list, get, and upload operations, not a
 # delete tool. Follow the registered upload contract for replacement, and use

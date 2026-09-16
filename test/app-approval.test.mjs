@@ -9,6 +9,15 @@ const performance = read('fulcrum-performance-review/SKILL.md');
 const compact = (text) => text.replace(/\s+/g, ' ');
 const approval = compact(builder.split('### Score And Advice At Every Design Confirmation')[1]?.split('## Step 4:')[0] ?? '');
 
+function assertInOrder(text, fragments) {
+  let offset = 0;
+  for (const fragment of fragments) {
+    const index = text.indexOf(fragment, offset);
+    assert.notEqual(index, -1, `Missing or out-of-order step: ${fragment}`);
+    offset = index + fragment.length;
+  }
+}
+
 test('every create/edit confirmation includes scoring, advice, and an informed choice', () => {
   assert.match(approval, /every.*design-confirmation prompt for creation or editing/);
   assert.match(approval, /new apps, edits, reapproval, and connector-independent handoffs/);
@@ -54,6 +63,59 @@ const codeSkills = [
   'fulcrum-integration-patterns', 'fulcrum-data-migration', 'fulcrum-gis-mapping',
   'fulcrum-workflow-decomposition'
 ];
+
+test('extension publishing reviews and approves composed artifacts before either live write', () => {
+  const sequence = compact(read('fulcrum-app-extensions/assets/app-mcp-extension-publish-sequence.txt'));
+  assertInOrder(sequence, [
+    'fulcrum_extensions_generate(',
+    'fulcrum_forms_get(',
+    'Performance review and approval gate (no live writes)',
+    'Run fulcrum-performance-review',
+    'Obtain explicit approval',
+    'fulcrum_reference_files_upload(',
+    'fulcrum_forms_get(',
+    're-review the final composed script',
+    'return to Step 5 for updated approval',
+    'fulcrum_forms_update('
+  ]);
+  assert.match(sequence, /both the Reference File upload or replacement and the composed script/);
+  const extension = read('fulcrum-app-extensions/SKILL.md');
+  const manual = compact(extension.split('### Manual UI fallback')[1]?.split('## Anti-Patterns')[0] ?? '');
+  assertInOrder(manual, [
+    'Inspect the target form',
+    'Complete the no-write performance review',
+    'obtain explicit approval',
+    'upload the reviewed file',
+    'Recheck the current form',
+    're-review any intervening changes',
+    'Save the reviewed, approved composed script'
+  ]);
+});
+
+test('direct Data Event and shared-file writes remain behind performance and approval gates', () => {
+  const events = read('fulcrum-data-events/SKILL.md');
+  const controlPlane = compact(events.split('## App MCP Control Plane')[1]?.split('## Event Lifecycle')[0] ?? '');
+  assertInOrder(controlPlane, [
+    'fulcrum_forms_get',
+    'Compose the handler',
+    'Complete the performance review',
+    'Obtain explicit approval before any live write',
+    'Re-read and re-review the final composed script',
+    'fulcrum_forms_update'
+  ]);
+  const sharedCode = compact(events.split('### Share code across apps with LOADFILE')[1]?.split('### Session state')[0] ?? '');
+  assertInOrder(sharedCode, [
+    'Inspect the current Reference File',
+    'Compose the proposed shared-file contents',
+    'Complete the no-write performance review',
+    'obtain explicit approval',
+    'fulcrum_reference_files_upload',
+    'Re-read the form and re-review the final composed script',
+    'obtain updated approval',
+    'fulcrum_forms_update'
+  ]);
+  assert.match(sharedCode, /existing consumers can load a replacement without a script change/);
+});
 
 for (const name of codeSkills) {
   test(`${name} requires performance review without relying on router invocation`, () => {

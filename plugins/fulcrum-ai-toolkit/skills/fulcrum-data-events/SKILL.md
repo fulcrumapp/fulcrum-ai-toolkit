@@ -32,7 +32,20 @@ Treat the local runtime resources as an offline fallback, not as a replacement f
 The compact fallback is
 [`resources/data-events-runtime-api.md`](resources/data-events-runtime-api.md).
 
-There are no standalone Data Event CRUD tools. Read the form and its current `script` with `fulcrum_forms_get`, compose the approved handler with the existing script, and write the complete script with `fulcrum_forms_update`. Do not overwrite unrelated handlers.
+There are no standalone Data Event CRUD tools. If Reference Files change,
+use the gated shared-code sequence below instead; it owns both the file and
+script writes. For script-only changes:
+
+1. Read the form and its current `script` with `fulcrum_forms_get`.
+2. Compose the handler with the complete existing script and inspect all
+   attached/loaded dependencies. Do not overwrite unrelated handlers.
+3. Complete the performance review and present the score, advice, and relevant
+   sync warnings using
+   [the builder's confirmation contract](../fulcrum-app-builder/SKILL.md#score-and-advice-at-every-design-confirmation).
+   Obtain explicit approval before any live write.
+4. Re-read and re-review the final composed script if the current form or
+   dependencies changed. Obtain updated approval for material changes before
+   writing the reviewed, approved script with `fulcrum_forms_update`.
 
 > Connector authority: Live installed App MCP schemas define the registered
 > knowledge tool and form-script persistence contract.
@@ -103,7 +116,26 @@ Store shared JavaScript in a Reference File, then load it into multiple apps at 
 
 > Source: [Fulcrum `LOADFILE()` reference](https://docs.fulcrumapp.com/docs/data-events-loadfile)
 
-`LOADFILE()` takes an options object with required `name`, optional `form_name` or `form_id`, and optional `variable`, followed by an optional callback — `LOADFILE({ name, form_name | form_id, variable }, callback)`. For App MCP-managed files, use `fulcrum_reference_files_list` or `fulcrum_reference_files_get` to inspect the file and `fulcrum_reference_files_upload` to upload it before updating the form script.
+`LOADFILE()` takes an options object with required `name`, optional `form_name` or `form_id`, and optional `variable`, followed by an optional callback — `LOADFILE({ name, form_name | form_id, variable }, callback)`.
+
+For App MCP-managed shared code, use this order:
+
+1. Inspect the current Reference File with `fulcrum_reference_files_list` or
+   `fulcrum_reference_files_get`, and read the current script with
+   `fulcrum_forms_get`. Inspect actual contents, not just file metadata.
+2. Compose the proposed shared-file contents and full form script, preserving
+   unrelated handlers. Inventory attached/loaded dependencies and known
+   consumers affected by replacing shared code.
+3. Complete the no-write performance review of the proposed Reference File,
+   its dependencies, and the composed script. Present the app score, advice,
+   unknowns, and sync warnings and obtain explicit approval covering the file
+   upload/replacement and script update. Do not upload before this gate:
+   existing consumers can load a replacement without a script change.
+4. Upload the reviewed, approved file with `fulcrum_reference_files_upload`.
+5. Re-read the form and re-review the final composed script with its loaded
+   dependencies. Preserve intervening changes; refresh the score/advice and
+   obtain updated approval if the design or assessment changed materially.
+6. Write only the reviewed, approved complete script with `fulcrum_forms_update`.
 
 > Verify `LOADFILE()` eligibility as described above before designing around shared Reference Files.
 
