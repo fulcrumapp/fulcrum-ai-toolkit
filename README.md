@@ -46,7 +46,7 @@ For a standalone skills loader, install the complete collection:
 npx skills@latest add https://github.com/fulcrumapp/fulcrum-ai-toolkit/tree/main/plugins/fulcrum-ai-toolkit/skills --skill '*'
 ```
 
-The supported distribution unit is the **whole 17-skill bundle**. Skills link
+The supported distribution unit is the **complete skill bundle**. Skills link
 to sibling skills and their resources; an individual directory is not a
 self-contained package, and loaders do not automatically install dependencies.
 For manual installation, copy all directories under
@@ -113,7 +113,7 @@ directory or explicitly point to it when the host contract supports that field.
 
 | Host | Install path | Skills | Live Fulcrum actions | Alpha status |
 | --- | --- | --- | --- | --- |
-| Generic skills loader | Add all 17 skills, preserving sibling layout | Yes | No, connector required | Target |
+| Generic skills loader | Add all skills, preserving sibling layout | Yes | No, connector required | Target |
 | Claude Code | Add the Claude marketplace, or use the repository/submodule root as a plugin | Yes | Connector-dependent | Target |
 | Cursor | Install `plugins/fulcrum-ai-toolkit/` as a plugin | Yes | Connector-dependent | Target |
 | Codex | Add the repository marketplace, then install the plugin | Yes | Connector-dependent | Target |
@@ -137,7 +137,7 @@ node scripts/validate.mjs
 node --test test/app-scorecard.test.mjs
 ```
 
-The repository validator checks the exact 17-skill inventory, skill frontmatter,
+The repository validator checks the expected skill inventory, skill frontmatter,
 directory/name consistency, corporate absolute paths, privacy and provenance contracts,
 portable and client JSON manifests, and README inventory. The portable
 `plugin.json` intentionally omits `$schema` because Claude's SDK warns on
