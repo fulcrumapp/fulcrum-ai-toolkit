@@ -8,6 +8,12 @@ description: Select and design Fulcrum Workflows and integrations. Use for webho
 Choose a supported integration shape, define its delivery contract, and hand
 off only actions exposed by the current authorized interface.
 
+Whenever authoring, modifying, or reviewing integration code, complete
+[`fulcrum-performance-review`](../fulcrum-performance-review/SKILL.md) before
+delivery. Evaluate request fan-out, concurrency, retry/queue growth, payloads,
+and memory; distinguish static risks from measured behavior. Constructive
+optimization advice does not replace authorization or delivery guarantees.
+
 ## When To Use
 
 Use this skill for:

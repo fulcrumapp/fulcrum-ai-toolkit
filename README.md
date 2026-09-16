@@ -104,6 +104,16 @@ provisional range rather than an inflated grade. The
 [versioned rubric](plugins/fulcrum-ai-toolkit/skills/fulcrum-app-scorecard/resources/rubric.md)
 can be supplemented with additional checks and caps later.
 
+Creation and edit confirmations also include the proposed app score, strengths,
+and constructive improvement advice. Users may approve the design without
+adopting advisory recommendations; the score stays honest and required safety
+and authorization boundaries still apply.
+
+Whenever code is authored, modified, or reviewed, `fulcrum-performance-review`
+evaluates workload growth, repeated I/O, rendering, and memory before delivery.
+It covers Data Events, calculations, reports/SQL, extensions, and other
+toolkit code paths, and distinguishes static risks from measured results.
+
 ## Alpha install matrix
 
 The distributable package uses the portable
@@ -134,7 +144,7 @@ Validation runs entirely on Node.js. Install dependencies for the format validat
 npm ci --prefix tools/format-validator
 npm run --prefix tools/format-validator validate
 node scripts/validate.mjs
-node --test test/app-scorecard.test.mjs
+node --test test/app-scorecard.test.mjs test/app-approval.test.mjs
 ```
 
 The repository validator checks the expected skill inventory, skill frontmatter,
@@ -145,8 +155,9 @@ unknown top-level fields when it encounters that manifest.
 It also keeps release versions aligned, requires the packaged license and
 Codex manual-invocation policies, and guards the regional MCP endpoint map
 and empty default server configuration.
-Scorecard contract tests check the rubric inventory, sibling links, and worked
-scoring arithmetic; they do not prove an agent's live app assessment.
+Guidance contract tests check the rubric inventory, sibling links, worked
+scoring arithmetic, and required approval/performance instructions; they do
+not prove an agent's live app assessment or runtime performance.
 Structural and schema validation for externalized examples and assets runs via
 `tools/format-validator` using Ajv and pinned parsers.
 In CI, GitHub Actions also validates the Claude plugin marketplace using Anthropic's official
@@ -234,6 +245,7 @@ activation, an authenticated MCP connection, or successful live app creation.
 | `fulcrum-app-builder` | Novice-friendly app discovery, schema approval, App MCP orchestration, and connector-independent handoff | Model-invoked |
 | `fulcrum-app-design` | App structure, field types, linked apps vs single app, repeatables | Model-invoked |
 | `fulcrum-app-scorecard` | Evidence-based 1-10 app design scoring, repeatable ceiling, and extensible rubric | Model-invoked |
+| `fulcrum-performance-review` | Workload-based performance evaluation for every code artifact, with constructive advice and explicit measurement limits | Model-invoked |
 | `fulcrum-app-goal` | Ensure every app has a clear goal and defined deliverable | Model-invoked |
 | `fulcrum-safety` | Flag missing safety steps in field workflows | Model-invoked |
 | `fulcrum-data-events` | Data event patterns, anti-patterns, and platform constraints | Model-invoked |
@@ -265,6 +277,7 @@ uses the focused skill to:
 - Check that every app has a clear goal before building (`fulcrum-app-goal`)
 - Select appropriate field types and app structure (`fulcrum-app-design`)
 - Score existing or proposed apps and prioritize design improvements (`fulcrum-app-scorecard`)
+- Evaluate every authored, modified, or reviewed code artifact for performance (`fulcrum-performance-review`)
 - Flag missing safety steps in field workflows (`fulcrum-safety`)
 - Apply data event best practices and avoid anti-patterns (`fulcrum-data-events`)
 - Recommend decomposition when apps grow too complex (`fulcrum-workflow-decomposition`)

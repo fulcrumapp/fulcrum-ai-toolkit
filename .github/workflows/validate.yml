@@ -29,8 +29,8 @@ jobs:
         working-directory: tools/format-validator
       - name: Validate skills and manifests
         run: node scripts/validate.mjs
-      - name: Validate app scorecard examples
-        run: node --test test/app-scorecard.test.mjs
+      - name: Validate app scoring and review guidance
+        run: node --test test/app-scorecard.test.mjs test/app-approval.test.mjs
       - name: Validate Anthropic Claude plugin marketplace
         uses: anthropics/claude-plugins-community/.github/actions/validate-plugins@a727be1c7bd6064419b6f60d71993a19198adc17
         with:

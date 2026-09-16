@@ -5,6 +5,18 @@ description: Use when writing, reviewing, persisting, or debugging Fulcrum Data 
 
 A **data event** is JavaScript that runs inside a Fulcrum app in response to record lifecycle events. It executes on-device (mobile) and in-browser (web) — there is no server. Every data event shares a single `script` field on the form.
 
+## Performance Evaluation
+
+Whenever authoring, modifying, or reviewing code, complete
+[`fulcrum-performance-review`](../fulcrum-performance-review/SKILL.md) before
+delivery or persistence, including small snippets and generated handlers.
+Inspect the composed script, trigger frequency, repeated lookups/requests,
+calculation-trigger chains, and synchronous validation/save work. Excessive
+complexity can slow editing and saving even when a script is syntactically
+valid. Line count alone neither proves nor rules out a bottleneck.
+Return constructive advice with a static/measured evidence label; users may
+accept performance trade-offs without waiving runtime or safety requirements.
+
 > **Guidance boundary:** Event names and function signatures in this skill follow Fulcrum's documented data-events API. Offline recommendations, security cautions, and workflow conventions are toolkit guidance unless explicitly sourced.
 
 ## App MCP Control Plane
@@ -214,6 +226,7 @@ for event-specific APIs.
 
 ## Completion Criteria
 
+- [ ] Every authored, modified, or reviewed script has a performance evaluation with workload assumptions, advice, and explicit unmeasured risks
 - [ ] Field-change logic listens on `ON('change', 'field', ...)` rather than treating `edit-record` as a change event, and any rule that must also hold when a record opens is applied from `new-record` and `edit-record` as well
 - [ ] All field data names are verified against the live form — wrong names can fail silently
 - [ ] `LOADRECORDS()` and `REQUEST()` are treated as asynchronous callback APIs

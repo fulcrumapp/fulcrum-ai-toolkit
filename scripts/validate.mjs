@@ -36,6 +36,7 @@ const EXPECTED_SKILLS = [
   'fulcrum-discovery',
   'fulcrum-gis-mapping',
   'fulcrum-integration-patterns',
+  'fulcrum-performance-review',
   'fulcrum-product-knowledge',
   'fulcrum-query-api',
   'fulcrum-report-building',

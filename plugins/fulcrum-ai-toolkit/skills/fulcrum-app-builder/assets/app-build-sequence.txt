@@ -4,6 +4,10 @@
 # the preservation rules are what matter here. This sequence is for new forms
 # only — see ../examples/forms-update-preserving-keys.js for existing forms.
 
+Before starting, follow ../SKILL.md Step 3: show the proposed app score,
+constructive advice, and performance assessment with the design confirmation.
+The user may approve the design without adopting advisory improvements.
+
 Step 1  fulcrum_schema_field_types()
         Optional. Use only when the right field type is unclear.
 
@@ -28,6 +32,10 @@ Step 4  fulcrum_forms_validate(name=..., elements=[...from step 3...])
         Validate the complete payload before any creation side effect.
 
 Step 5  fulcrum_forms_create(name=..., elements=[...from step 3...])
+        Before this write, evaluate every authored/generated code artifact
+        with fulcrum-performance-review. If the built definition or review
+        materially changes the approved score, risks, or behavior, refresh
+        the score and advice and obtain approval again.
         Optionally include a `script` value with the form's Data Events.
         Creation also creates a default Report Template unless
         skip_default_report is explicitly true.

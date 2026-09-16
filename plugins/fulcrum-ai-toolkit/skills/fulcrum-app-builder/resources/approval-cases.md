@@ -1,0 +1,27 @@
+# Design Approval And Performance Scenarios
+
+These synthetic scenarios describe expected agent behavior. Repository
+contract checks protect the guidance text and links; they do not prove host
+activation, live app inspection, or measured runtime performance.
+
+| Scenario | Expected confirmation and follow-through |
+| --- | --- |
+| Create an app with a small, appropriate Repeatable | Show the proposed score/range with the 6/10 ceiling, strengths, and a useful alternative only if it fits the workflow. Offer revision or proceeding; do not silently replace the repeatable. |
+| Edit one field in an existing app | Inspect the current full form and compose the post-edit state. Include unchanged repeatables, code, and dependencies in the assessment. Show the proposed score and advice, not a grade for the changed field alone. |
+| Create without runtime fixtures or a connector | Include an explicitly provisional or not-scoreable result and explain missing evidence. Offer an approved implementation handoff; do not invent measured output/performance or claim a live create. |
+| User declines advice | Acknowledge the chosen trade-off once, keep the honest score/findings, and proceed after explicit approval if the design is valid and authorized. Do not require a minimum score or repeatedly recommend the same rejected optimization. |
+| Code is generated after schema approval | Evaluate the actual generated artifact before writing it. If it adds material latency/fan-out risk or changes the score/design, show the refreshed score and advice for approval before persistence. |
+| One-line calculation | Evaluate its execution frequency and input growth. Constant-time arithmetic with no I/O can receive a concise low-risk static assessment; short code that scans an unbounded repeatable cannot be excused because it is one line. |
+| Report queries once per output row | Identify N+1 fan-out, state expected row count or its absence, recommend a bounded shared fetch, and label timing unmeasured unless evidence exists. User may accept the performance trade-off without being promised a fast report. |
+| Data Event reloads a large lookup on every change | Evaluate trigger frequency, repeated I/O, memory, and offline/failure behavior. Suggest correctly scoped reuse or a more suitable lifecycle trigger without moving required synchronous validation into an async callback. |
+| Long but bounded report or Data Event | Review the real work and expected volume. Do not declare it slow solely because it exceeds a line-count warning, and do not add a new score cap. |
+| Advice conflicts with a mandatory safeguard | Explain the actual correctness, secret-protection, authorization, or destructive-change blocker. "Proceed anyway" applies to advisory trade-offs, not bypassing the safeguard. |
+| Form changes after approval | Compare the fresh read with the assessed revision, preserve intervening changes, and obtain updated approval if the design, score, caps, or risks changed materially. |
+| No code in the design | Include the app score and advice; state that code performance is N/A rather than manufacturing an evaluation. |
+
+## References
+
+- [Builder confirmation contract](../SKILL.md#score-and-advice-at-every-design-confirmation)
+- [Scorecard](../../fulcrum-app-scorecard/SKILL.md)
+- [Code performance review](../../fulcrum-performance-review/SKILL.md)
+- [Fulcrum developer documentation](https://docs.fulcrumapp.com/)

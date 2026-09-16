@@ -9,7 +9,7 @@ Assess a Fulcrum data-collection app, not the visual design of an arbitrary
 website. Turn the toolkit's building guidance into an explainable assessment.
 This is a **read-only review**, not permission to rebuild the app.
 
-**Rubric version: 1.0.0.** Read [the rubric](resources/rubric.md) before scoring.
+**Rubric version: 1.1.0.** Read [the rubric](resources/rubric.md) before scoring.
 Its points and caps are toolkit scoring policy, not Fulcrum platform limits,
 a certification, or proof that an app is safe to deploy.
 
@@ -45,6 +45,12 @@ Do not copy credentials, customer records, or personal identities into the
 scorecard. Use sanitized aliases and field paths; share externally only with
 explicit approval.
 
+When called during app creation or editing, reuse the caller's confirmed
+context and return the score and advice for its design-confirmation prompt.
+Do not start a separate interview or approval loop. Score the complete proposed
+post-change design, not just added fields; missing runtime evidence remains
+unknown. The builder owns approval and any subsequent live writes.
+
 ## Review Workflow
 
 1. **Establish scope.** Confirm the goal, deliverable, users, lifecycle, and
@@ -57,7 +63,11 @@ explicit approval.
    A truncated export or inaccessible subtree cannot establish their absence.
 3. **Evaluate each check.** Use all 20 stable check IDs in the rubric.
    Attach an evidence location, verdict, and short explanation to every row.
-   Record caps separately from check failures.
+   Record caps separately from check failures. Evaluate every supplied code
+   artifact with
+   [`fulcrum-performance-review`](../fulcrum-performance-review/SKILL.md).
+   Use relevant findings in existing checks; performance risk labels are not
+   additional deductions or caps.
 4. **Calculate.** Follow the arithmetic below without inventing weights,
    deductions, exemptions, or additional caps.
 5. **Recommend.** Rank concrete fixes by user impact, then scoring impact.
@@ -88,7 +98,7 @@ List multiple findings under the same check without deducting repeatedly.
 A finding can fail two checks only if it independently violates both.
 
 Let `P`, `F`, `U`, and `N` be the counts of pass, fail, unknown, and N/A.
-Require `P + F + U + N = 20` for version 1.0.0.
+Require `P + F + U + N = 20` for version 1.1.0.
 Let `A = P + F + U`, and report coverage as `100 * (P + F) / A`.
 N/A is excluded from the denominator; unknown remains in it.
 
@@ -149,6 +159,14 @@ reconstruct the result.
    missing runtime evidence, and prominently flag access or physical-safety
    concerns even when the numerical score is high.
 
+Keep advice constructive and proportionate. Explain what works, the impact
+of a finding, and a practical option with trade-offs. The user may decline
+advisory improvements and proceed with an otherwise authorized, valid design;
+there is no minimum score for approval. Record accepted trade-offs without
+raising the score, erasing findings, or repeatedly pressing the same advice.
+Required correctness, credential protection, authorization, and destructive
+change safeguards still apply.
+
 Interpret the final score as: below 4 needs substantial redesign; 4 to below 6
 needs significant improvement; 6 to below 8 is workable with limitations;
 8 to below 9 is strong; 9 to 10 is excellent against this rubric. These are
@@ -173,6 +191,7 @@ not ad hoc reviewer deductions.
 - [ ] The full element tree was inspected or CAP-01 absence remains unknown
 - [ ] Uncapped result, cap states, final result, and coverage reconcile
 - [ ] Recommendations trace to checks and source skills without changing apps
+- [ ] Code has a performance evaluation; advisory recommendations respect user choice without changing the evidence or score
 
 ## References
 

@@ -9,6 +9,12 @@ Produce a migration design and evidence plan using supported public interfaces.
 This skill does not provide private tenant cutover runbooks or unsupported
 instance-switching procedures.
 
+Whenever authoring, modifying, or reviewing migration code, complete
+[`fulcrum-performance-review`](../fulcrum-performance-review/SKILL.md) before
+delivery. Evaluate bounded batches, concurrency/retries, media and memory
+growth, and restart behavior without relaxing reconciliation or cutover
+approval. Static evaluation does not authorize a migration run.
+
 ## When To Use
 
 Use this skill to assess a source/target move, map schemas and identities,

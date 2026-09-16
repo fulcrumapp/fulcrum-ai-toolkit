@@ -92,6 +92,11 @@ Do not make the user learn Fulcrum field-type terminology. Infer sensible types,
 
 ## Step 3: Propose The Schema
 
+For an edit, read the current form before proposing the design, then compose
+the intended post-edit state with all unchanged elements, choices, settings,
+and code preserved. Do not score only the diff. If a read is unavailable,
+use the supplied full definition or explicitly mark the missing context.
+
 Before any live write, show a plain-English table:
 
 | Field | Type | Notes |
@@ -111,9 +116,53 @@ Also state:
 - Offline behavior and plan dependencies.
 - Any fields or changes that could cause data loss.
 
+### Score And Advice At Every Design Confirmation
+
+Before **every** design-confirmation prompt for creation or editing, run
+[`fulcrum-app-scorecard`](../fulcrum-app-scorecard/SKILL.md) on the proposed
+complete design. This applies to new apps, edits, reapproval, and
+connector-independent handoffs. Reuse confirmed discovery context; do not
+start another interview just to produce the score.
+
+Include in the same confirmation:
+
+- **Proposed app score:** final `/10`, or an explicitly **Provisional**
+  range or **Not scoreable** result with the missing evidence. Include rubric
+  version, evidence coverage, and applicable caps, especially the repeatable
+  ceiling. New designs commonly lack runtime evidence; never manufacture it.
+- **What works:** the design's strengths and fit to the user's workflow.
+- **Improvement advice:** the most useful changes, their practical benefits
+  and trade-offs, and which findings they address. Do not promise score gains
+  without reassessment. For edits, include before/after scores only when both
+  are available under the same rubric and comparable evidence.
+- **Code performance:** a summary from
+  [`fulcrum-performance-review`](../fulcrum-performance-review/SKILL.md) for
+  every proposed or changed code artifact. If code is not authored yet,
+  label its assessment preliminary and revisit it before persistence. If
+  there is no code, explicitly mark code performance N/A.
+- **Decision:** offer "Revise the design" or "Proceed with this design",
+  making clear that advisory improvements are optional.
+
+Keep the prompt concise and retain the detailed scorecard as supporting
+evidence. Be constructive, not judgmental: explain user impact rather than
+calling the app or its builder bad. The user may decline advice; record
+accepted trade-offs, keep the honest score and findings, and proceed with
+the explicitly approved design without repeated pressure. There is **no
+minimum score required to proceed**.
+
+Declining advice does not waive authorization, credential protection,
+schema/runtime correctness, or explicit confirmation for destructive changes.
 Get explicit approval before creating or modifying live resources.
 
 ## Step 4: Build Or Hand Off
+
+Before persisting or handing off any authored or modified code, complete
+[`fulcrum-performance-review`](../fulcrum-performance-review/SKILL.md) on the
+actual composed artifact, including generated code and calculations.
+Recompute affected scorecard checks after material changes. If implementation,
+performance findings, or a fresh read changes the approved design's score,
+caps, risks, or behavior materially, return to Step 3 with an updated score
+and advice for approval. Do not reopen an unchanged, already accepted trade-off.
 
 When App MCP is available, follow its live schemas exactly. Do not hand-write new element JSON when a registered schema builder owns that shape.
 
@@ -137,7 +186,9 @@ If the result contains a created form plus `report_template_error`, report that 
 
 For an existing app:
 
-1. Fetch the current form with `fulcrum_forms_get`.
+1. Fetch the current form with `fulcrum_forms_get`. Compare it with the version
+   assessed for approval; reconcile intervening changes rather than overwriting
+   them, and return to Step 3 if the approved design or assessment is affected.
 2. Copy its complete element tree and preserve every existing element key and inline-choice key.
 3. Modify requested properties in place without changing their keys.
 4. Use `fulcrum_schema_build_field` only for genuinely new field additions, then insert those additions into the copied tree.
@@ -181,6 +232,8 @@ After a build or handoff, summarize:
 - Plan and offline dependencies.
 - Default Report Template status, including any non-fatal template error.
 - Errors, skipped work, unsupported operations, and known limitations.
+- App score/range, evidence limitations, performance assessment, and advisory
+  trade-offs the user chose to accept.
 - Recommended follow-up for PS, CS, or product.
 
 ## Explicit Safety Rules
@@ -199,6 +252,7 @@ This skill orchestrates app creation and updates. Defer deep platform questions 
 
 ## References
 
+- [Design approval and performance scenarios](resources/approval-cases.md)
 - [Fulcrum developer documentation](https://docs.fulcrumapp.com/)
 - [Fulcrum Forms API](https://docs.fulcrumapp.com/reference/forms-intro)
 - [Build example index](examples/README.md)

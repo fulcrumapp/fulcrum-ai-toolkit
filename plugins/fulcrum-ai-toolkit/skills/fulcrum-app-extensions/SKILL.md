@@ -7,6 +7,14 @@ An **app extension** is a custom HTML/CSS/JavaScript UI that runs inside a Fulcr
 
 Extensions communicate with the Fulcrum record through the data events API bridge. The data lives in standard Fulcrum fields and syncs normally.
 
+Whenever authoring, modifying, or reviewing extension code, complete
+[`fulcrum-performance-review`](../fulcrum-performance-review/SKILL.md) before
+delivery or upload, including generated HTML and its Data Event trigger.
+Evaluate bridge payload size/copies, rendering and list growth, repeated
+lookups, and listener/state lifetime. Include constructive advice and
+distinguish static risks from measured behavior; optimization advice is
+optional, but bridge correctness and authorization remain required.
+
 > **Guidance boundary:** The bridge API and event flow in this skill follow Fulcrum's documented extension API. Field-type recommendations, offline decisions, and payload-sizing guidance are toolkit conventions unless explicitly sourced.
 
 ## App MCP Knowledge And Generation
@@ -166,6 +174,7 @@ An extension that tries to replicate an entire sub-application. Extensions are p
 
 ## Completion Criteria
 
+- [ ] Extension and trigger code have a performance evaluation with workload, rendering/payload risks, evidence, and trade-offs
 - [ ] Picker target is a TextField for free-form values or a RecordLinkField for selected Fulcrum records — not a conflicting ChoiceField
 - [ ] Offline support decision is explicit: Reference Files (offline) vs. CDN (online-only)
 - [ ] All CDN library references use locked semver versions — no `latest` or unversioned URLs

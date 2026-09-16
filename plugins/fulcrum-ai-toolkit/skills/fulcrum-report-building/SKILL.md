@@ -5,6 +5,19 @@ description: Use when building, modifying, generating, or debugging Fulcrum repo
 
 A Fulcrum **report template** is EJS (Embedded JavaScript) that runs server-side inside a headless Chrome instance (Puppeteer). The output is a PDF or HTML page — not a live view. Every report starts from a single record's context and expands from there via `QUERY()`.
 
+## Performance Evaluation
+
+Whenever authoring, modifying, or reviewing report code or embedded SQL,
+complete [`fulcrum-performance-review`](../fulcrum-performance-review/SKILL.md)
+before delivery or persistence, including small edits and generated templates.
+Trace `QUERY()`/`API()` calls inside loops, repeated joins/lookups, row
+multiplication, large HTML tables, media sizes, and page-count growth.
+Excessive report complexity can increase generation time, timeouts, and memory
+use; a successful parse or a short template does not establish performance.
+Include constructive advice and static versus measured evidence. Users may
+accept performance trade-offs; never silently omit required report data to
+make generation faster.
+
 > **Guidance boundary:** Report APIs and template behavior should be checked against current Fulcrum documentation. The rendering workflow below is a toolkit convention, not a guarantee of public product support.
 
 ## App MCP Control Plane
@@ -183,6 +196,7 @@ A report template is a single EJS file. As it grows:
 
 ## Completion Criteria
 
+- [ ] Report code and queries have a workload-based performance evaluation covering request fan-out, rendering/media growth, and any unmeasured risks
 - [ ] Report type is explicit — PDF (printer output) or HTML (interactive/API)
 - [ ] `QUERY()` is used for any data beyond the single record context — no JSON-stuffing workarounds
 - [ ] No credentials are embedded in the Report Template

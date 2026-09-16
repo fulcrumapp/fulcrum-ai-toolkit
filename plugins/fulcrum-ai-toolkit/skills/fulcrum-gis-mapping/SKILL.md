@@ -8,6 +8,12 @@ description: Select Fulcrum GIS and mapping capabilities. Use for layers, basema
 Turn a mapping requirement into a current, source-backed layer and data-flow
 decision without freezing a volatile support matrix.
 
+Whenever authoring, modifying, or reviewing GIS or import/export code, complete
+[`fulcrum-performance-review`](../fulcrum-performance-review/SKILL.md) before
+delivery. Evaluate geometry complexity, dataset/download size, repeated
+transformations, and memory with explicit workload assumptions. Static
+evaluation does not authorize imports or customer-data queries.
+
 ## When To Use
 
 Use this skill for basemap or overlay selection, ArcGIS connectivity, offline
