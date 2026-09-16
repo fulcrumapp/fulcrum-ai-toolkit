@@ -50,6 +50,13 @@ code artifact. Missing workload/code evidence is unknown; a demonstrated
 violation fails the relevant check. Do not fail on line count or absence of
 timings alone, and do not treat accepted advice as a passing result.
 
+Large or frequently updated Reference Files may slow sync when they change.
+Report this as a separate advisory sync warning, including for non-code files.
+Size or update frequency alone is not a check failure, deduction, or cap.
+Only a separately evidenced violation of a confirmed workflow requirement
+affects an existing relevant check. Unread code still leaves review coverage
+unknown; the advisory classification is not an exemption from inspection.
+
 ## Guidance And Remediation Map
 
 | Checks | Owning skills | Improvement direction |

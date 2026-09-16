@@ -164,6 +164,13 @@ reconstruct the result.
    missing runtime evidence, and prominently flag access or physical-safety
    concerns even when the numerical score is high.
 
+Report large or frequently updated Reference Files as a separate **Sync
+warning**: changes may slow synchronization, including for non-code files.
+File size or update frequency alone does not lower the score or create a
+cap. Follow [the sync-warning guidance](../fulcrum-performance-review/SKILL.md#reference-file-sync-warning);
+keep this operational advice separate from scored findings and from unknown
+coverage caused by unread code.
+
 Keep advice constructive and proportionate. Explain what works, the impact
 of a finding, and a practical option with trade-offs. The user may decline
 advisory improvements and proceed with an otherwise authorized, valid design;

@@ -49,7 +49,7 @@ test('scorecard relative references resolve within the installed skill bundle', 
 // These check the published examples' arithmetic, not an agent's app inspection.
 const workedCases = rows(cases).filter((row) => /^\d+\/\d+\/\d+\/\d+$/.test(row[2] ?? ''));
 test('the complete calibration case set is exercised', () => {
-  assert.equal(workedCases.length, 14);
+  assert.equal(workedCases.length, 15);
 });
 
 const display = (value) => (Math.round(value * 10) / 10).toFixed(1);
@@ -59,7 +59,7 @@ for (const [name, , counts, uncapped, cap, final, coverage] of workedCases) {
   test(`published scoring case: ${name}`, () => {
     const [pass, fail, unknown, excluded] = counts.split('/').map(Number);
     assert.equal(pass + fail + unknown + excluded, checkIds.length);
-    assert.ok(['Triggered', 'Triggered once', 'Not triggered', 'Unknown'].includes(cap));
+    assert.ok(['Triggered', 'Not triggered', 'Unknown'].includes(cap));
     const applicable = pass + fail + unknown;
     assert.equal(coverage, `${display(100 * (pass + fail) / applicable)}%`);
     if (pass + fail === 0) {
@@ -70,7 +70,7 @@ for (const [name, , counts, uncapped, cap, final, coverage] of workedCases) {
     const low = 1 + 9 * pass / applicable;
     const high = 1 + 9 * (pass + unknown) / applicable;
     assert.equal(uncapped, range(low, high));
-    const confirmedCeiling = cap.startsWith('Triggered') ? 6 : 10;
+    const confirmedCeiling = cap === 'Triggered' ? 6 : 10;
     const possibleCeiling = cap === 'Unknown' ? 6 : 10;
     const finalLow = Math.min(low, confirmedCeiling, possibleCeiling);
     const finalHigh = Math.min(high, confirmedCeiling);
@@ -78,7 +78,7 @@ for (const [name, , counts, uncapped, cap, final, coverage] of workedCases) {
       ? `Provisional ${display(finalLow)}-${display(finalHigh)}`
       : display(finalLow);
     assert.equal(final, expected);
-    if (cap.startsWith('Triggered')) assert.ok(finalHigh <= 6);
+    if (cap === 'Triggered') assert.ok(finalHigh <= 6);
     assert.ok(finalLow <= low && finalHigh <= high);
   });
 }

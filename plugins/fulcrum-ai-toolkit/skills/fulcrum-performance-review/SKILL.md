@@ -1,6 +1,6 @@
 ---
 name: fulcrum-performance-review
-description: Evaluate performance whenever authoring, modifying, or reviewing Fulcrum code, including attachments, Reference Files, embedded or indirectly loaded code, Data Events, calculations, reports/SQL, App Extensions, integrations, and migration or GIS scripts. Review workload growth, repeated I/O, rendering, memory, and offline behavior; distinguish static risks from measured results.
+description: Evaluate performance whenever authoring, modifying, or reviewing Fulcrum code, including attachments, Reference Files, embedded or indirectly loaded code, Data Events, calculations, reports/SQL, App Extensions, integrations, and migration or GIS scripts. Review workload growth, repeated I/O, rendering, memory, offline behavior, and Reference File sync warnings; distinguish static risks from measured results.
 ---
 
 # Fulcrum Code Performance Review
@@ -18,6 +18,8 @@ while a multi-query report needs a workload and cost breakdown.
 Only after the code inventory establishes that no code is involved, say
 "No code involved; performance code review N/A". An empty form script or a
 non-code-looking filename does not establish this.
+Still report Reference File sync warnings when applicable, even if the files
+contain no code.
 
 ## Discover Attached, Embedded, And Loaded Code
 
@@ -112,6 +114,33 @@ Do not "optimize" synchronous validation by moving required checks into
 asynchronous work, or cache tenant/record data in an unscoped device-wide key.
 Do not truncate a required report/export to hide a performance problem.
 
+## Reference File Sync Warning
+
+**Large Reference Files may slow sync when the files change**, especially
+with frequent updates or slow/intermittent field connections. This applies
+to extension bundles and shared code as well as non-code reference material.
+Separate this transfer/update cost from the code's runtime performance.
+
+Report a **Sync warning (advisory; no automatic score deduction or cap)**.
+Where available, include individual and total file sizes, which files change,
+expected update frequency, affected devices/connections, and observed sync
+times. Label missing measurements as unmeasured. Do not invent a universal
+file-size threshold, transfer duration, or assumption that every sync
+downloads every file; verify actual client/version behavior if it matters.
+
+Suggest proportionate options: reduce unnecessary asset size, separate
+frequently changing content from large stable assets where supported, avoid
+unnecessary republishing, or plan updates for suitable connectivity.
+Preserve offline availability, required content, and correct references.
+Do not move required offline assets to a CDN, silently delete files, or
+promise an unmeasured speedup. The user may accept the sync trade-off.
+
+File size or update frequency alone must not fail a rubric check or lower
+the app score. Only a separately evidenced violation of a confirmed workflow
+requirement belongs in an existing relevant check; do not create an extra
+sync penalty. This warning does not waive code inspection: a large code file
+that cannot be inspected remains unreviewed with unknown performance coverage.
+
 ## Evidence And Measurement
 
 Static review is the default and must be labeled **Static assessment**.
@@ -139,6 +168,8 @@ Include an inventory coverage summary listing inspected artifacts and all
 unreviewed dependencies with reasons. Mark the overall evaluation incomplete
 when any relevant code remains unreviewed; do not claim the whole app or
 extension is low risk from inspecting only its launcher.
+List sync warnings separately from scored findings, including accepted
+trade-offs and any missing size/frequency or measurement evidence.
 Use these risk labels consistently:
 
 - **Low:** inspected work is bounded and no material bottleneck is identified
@@ -176,6 +207,7 @@ rubric checks; risk labels are not extra points, deductions, or caps.
 - [ ] Workload, trigger frequency, and growth/repeated I/O were considered
 - [ ] Static conclusions, measurements, and unknowns are clearly distinguished
 - [ ] Advice preserves behavior and permits informed, authorized acceptance
+- [ ] Reference File size/update sync risks are advisory warnings, not automatic score penalties, including for non-code files
 
 ## References
 

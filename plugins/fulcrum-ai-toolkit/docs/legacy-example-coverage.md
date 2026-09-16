@@ -204,8 +204,10 @@ so its exact public source is recorded in
 
 ## Boundaries preserved
 
-- The five-skill decomposition, the 16-skill inventory, and every host manifest
-  are unchanged.
+- The migration documented here preserved the five-skill decomposition,
+  skill inventory, and host manifests. This is a historical migration
+  snapshot, not a statement of the current bundle size; see the
+  [current skill inventory](../../../README.md#skills).
 - Layer 5 retired the heavyweight vendored REST contract in favor of the named
   [public OpenAPI](https://raw.githubusercontent.com/fulcrumapp/api/v2/reference/rest-api.json)
   and its [documentation](https://docs.fulcrumapp.com/reference/openapi-and-postman-collection).

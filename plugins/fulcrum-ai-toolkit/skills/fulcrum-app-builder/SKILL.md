@@ -142,6 +142,11 @@ Include in the same confirmation:
   there is no code, explicitly mark code performance N/A only after inventorying
   attachments, Reference Files, embedded code, and loaded dependencies.
   Include unreviewed artifacts and reasons; an unread attachment is not N/A.
+- **Sync warnings:** large or frequently updated Reference Files may slow sync
+  when they change, including files containing no code. Follow
+  [the sync-warning guidance](../fulcrum-performance-review/SKILL.md#reference-file-sync-warning)
+  and show this as an advisory trade-off, not an automatic score deduction
+  or cap. Include it even when code performance is N/A.
 - **Decision:** offer "Revise the design" or "Proceed with this design",
   making clear that advisory improvements are optional.
 

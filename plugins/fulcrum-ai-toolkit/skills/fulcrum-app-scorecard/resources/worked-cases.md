@@ -15,7 +15,7 @@ is resolved. Counts are `P/F/U/N`. Scores and coverage display one decimal.
 | Repeatable inside a section | Only OUTPUT-02 fails; `elements[0].elements[1]` is a Repeatable | 19/1/0/0 | 9.6 | Triggered | 6.0 | 100.0% |
 | Hidden empty repeatable | All checks pass; a conditionally hidden Repeatable has no saved entries | 20/0/0/0 | 10.0 | Triggered | 6.0 | 100.0% |
 | Weak design below ceiling | Only GOAL, FIELD, FLOW, OUTPUT checks pass; one repeatable | 8/12/0/0 | 4.6 | Triggered | 4.6 | 100.0% |
-| Multiple repeatables | All checks pass; three Repeatable definitions | 20/0/0/0 | 10.0 | Triggered once | 6.0 | 100.0% |
+| Multiple repeatables | All checks pass; three Repeatable definitions; apply the ceiling once | 20/0/0/0 | 10.0 | Triggered | 6.0 | 100.0% |
 | Simple app without custom code | LOGIC-01/02 and EXT-01/02 are confirmed N/A; remaining checks pass; no repeatables | 16/0/0/4 | 10.0 | Not triggered | 10.0 | 100.0% |
 | Missing runtime evidence | OUTPUT-02 and OFFLINE-01 are unknown; rest pass; repeatable confirmed | 18/0/2/0 | 9.1-10.0 | Triggered | Provisional 6.0-6.0 | 90.0% |
 | Partial schema, cap unresolved | Six checks pass, four fail, ten unknown; no repeatable seen, but unseen subtrees remain | 6/4/10/0 | 3.7-8.2 | Unknown | Provisional 3.7-8.2 | 50.0% |
@@ -24,6 +24,7 @@ is resolved. Counts are `P/F/U/N`. Scores and coverage display one decimal.
 | Poor across every check | All checks fail; repeatable confirmed | 0/20/0/0 | 1.0 | Triggered | 1.0 | 100.0% |
 | Performance evidence missing | LOGIC-02 and OUTPUT-02 are unknown because workload/code evidence is incomplete; other checks pass; no repeatables | 18/0/2/0 | 9.1-10.0 | Not triggered | Provisional 9.1-10.0 | 90.0% |
 | Accepted performance trade-off | OUTPUT-02 fails a measured, agreed render budget; owner accepts it; other checks pass; no repeatables | 19/1/0/0 | 9.6 | Not triggered | 9.6 | 100.0% |
+| Large Reference File sync warning | All checks pass; no repeatables; a large, frequently updated Reference File warrants advisory sync advice but violates no confirmed workflow requirement | 20/0/0/0 | 10.0 | Not triggered | 10.0 | 100.0% |
 
 The unknown-cap-alone case isolates the ceiling calculation: check evidence
 can come from separately verified artifacts, but it does not substitute for
@@ -43,6 +44,11 @@ not N/A.
 For unknown-cap-alone: uncapped bounds are both 10; `C = 10`, `Q = 6`.
 Final bounds are `min(10, 10, 6) = 6` and `min(10, 10) = 10`.
 Coverage describes the checks only; it does not claim that caps are resolved.
+
+For no usable evidence: `P = 0`, `F = 0`, `U = 20`, `N = 0`.
+Unknown checks remain applicable, so `A = P + F + U = 20`, not zero.
+Coverage is `100 * (P + F) / A = 0.0%`. Because no check was evaluated,
+the result is not scoreable; this is not the all-excluded case.
 
 ## Structural And Policy Probes
 

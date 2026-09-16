@@ -107,6 +107,11 @@ Store shared JavaScript in a Reference File, then load it into multiple apps at 
 
 > Verify `LOADFILE()` eligibility as described above before designing around shared Reference Files.
 
+Large shared Reference Files may slow sync when they change, even when the
+loaded code itself runs efficiently. Include an advisory sync warning for
+size/update-frequency trade-offs, not an automatic app-score deduction or cap;
+follow [the shared guidance](../fulcrum-performance-review/SKILL.md#reference-file-sync-warning).
+
 ### Session state with STORAGE
 `STORAGE()` returns a local-storage-like object with `getItem`, `setItem`, `removeItem`, and `clear` methods. Values must be strings, so serialize objects with `JSON.stringify()`. The store is device-wide and persistent, so a bare key such as `baseline` is still there when the next record opens. Scope every key with `FORM().id` and the record it belongs to, and remove it on `cancel-record` and `unload-record`. `RECORDID()` is null until a new record has been saved, so it cannot separate one unsaved record from the next on its own: give an unsaved record a nonce generated once per editing session, so a session that crashed before its cleanup ran leaves a key the next session never computes. See
 [`examples/storage-session-state.js`](examples/storage-session-state.js).

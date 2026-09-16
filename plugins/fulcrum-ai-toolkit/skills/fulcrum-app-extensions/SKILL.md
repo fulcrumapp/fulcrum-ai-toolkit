@@ -127,6 +127,12 @@ Whether an extension works offline depends entirely on where its assets are host
 
 **Decision:** If the extension is needed during offline field work, host everything in Reference Files and inline all JavaScript. If the extension is only used in the office (online), CDN libraries are acceptable.
 
+**Sync warning:** Large Reference Files may slow sync when they change.
+Consider file size and update frequency as an advisory trade-off, not an
+automatic app-score deduction or cap. Follow
+[the shared sync-warning guidance](../fulcrum-performance-review/SKILL.md#reference-file-sync-warning);
+do not sacrifice required offline support merely to avoid a download.
+
 **CDN version pinning:** If you use CDN libraries, always lock to a specific semver version. `latest` or unversioned CDN URLs break silently when the library updates. Compare both forms in
 [`assets/cdn-version-pinning.html`](assets/cdn-version-pinning.html).
 

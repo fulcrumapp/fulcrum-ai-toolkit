@@ -22,6 +22,7 @@ activation, live app inspection, or measured runtime performance.
 | Data Event loads a shared Reference File | Follow `LOADFILE()` through the helper and its transitive dependencies, including unchanged/cross-form code. Attribute findings to the actual file and affected execution path. |
 | Attachment cannot be inspected | Name the unreviewed file and reason in the approval summary, keep affected performance/checks unknown unless a violation is established, and request the smallest readable source. Do not call the app code-free or low risk from its wrapper alone. |
 | Code is hidden behind a misleading extension or encoded string | Inspect actual content with bounded static tooling; do not execute or render it to discover behavior. If it cannot be resolved safely, mark the dependency unreviewed instead of skipping it. |
+| Large Reference Files change frequently | Include a separate advisory sync warning with known sizes/update cadence and measurement limits, even for non-code files. Offer proportionate options that preserve offline use; size/frequency alone does not reduce the score or add a cap. |
 
 ## References
 

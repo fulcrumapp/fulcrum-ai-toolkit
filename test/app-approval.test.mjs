@@ -113,6 +113,22 @@ test('direct code skills require discovery beyond their visible entry points', (
   }
 });
 
+test('Reference File sync cost is an advisory warning even when there is no code', () => {
+  const warning = compact(performance.split('## Reference File Sync Warning')[1]?.split('## Evidence And Measurement')[0] ?? '');
+  assert.match(warning, /Large Reference Files may slow sync when the files change/);
+  assert.match(warning, /non-code reference material/);
+  assert.match(warning, /no automatic score deduction or cap/);
+  assert.match(warning, /individual and total file sizes/);
+  assert.match(warning, /expected update frequency/);
+  assert.match(warning, /Do not invent a universal file-size threshold/);
+  assert.match(warning, /Preserve offline availability/);
+  assert.match(warning, /File size or update frequency alone must not fail a rubric check/);
+  assert.match(warning, /does not waive code inspection/);
+  assert.match(approval, /Include it even when code performance is N\/A/);
+  const rubric = compact(read('fulcrum-app-scorecard/resources/rubric.md'));
+  assert.match(rubric, /Size or update frequency alone is not a check failure, deduction, or cap/);
+});
+
 test('new approval and performance guidance links resolve in the portable bundle', () => {
   for (const file of [
     ...codeSkills.map((name) => `${name}/SKILL.md`),
