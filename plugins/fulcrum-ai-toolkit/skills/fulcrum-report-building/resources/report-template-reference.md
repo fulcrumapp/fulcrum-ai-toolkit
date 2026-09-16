@@ -8,6 +8,12 @@
 
 When App MCP is registered, use `fulcrum_report_templates_list`, `fulcrum_report_templates_get`, `fulcrum_report_templates_create`, `fulcrum_report_templates_update`, and `fulcrum_report_templates_delete` for template persistence, and use `fulcrum_reports_create` for report generation. This file documents functions available inside Report Builder EJS; it does not imply App MCP Query API, record, or media CRUD tools.
 
+This tool catalog is not write authorization. Follow
+[the template publication gate](../SKILL.md#template-publication-gate) before
+creating, updating, or manually saving a template; it requires review, explicit
+approval, and current-state reconciliation before persistence. Report generation
+requires its own authorized request.
+
 ## Available Functions
 
 | Function | Purpose |

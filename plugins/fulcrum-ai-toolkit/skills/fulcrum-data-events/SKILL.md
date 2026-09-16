@@ -135,13 +135,22 @@ For App MCP-managed shared code, use this order:
    unknowns, and sync warnings and obtain explicit approval covering the file
    upload/replacement and script update. Do not upload before this gate:
    existing consumers can load a replacement without a script change.
-4. Upload the reviewed, approved file with `fulcrum_reference_files_upload`.
-5. Re-read the form and re-review the final composed script with its loaded
+4. Immediately re-read the current Reference File, dependencies, and known
+   consumers before upload. Apply
+   [the pre-write freshness safeguard](../fulcrum-app-builder/resources/pre-write-freshness.md):
+   compare content/hash/revision with the approved baseline, reconcile changes,
+   and obtain updated approval for material differences. Repeat this fresh read
+   after approval; a later form read cannot protect an already overwritten file.
+5. Upload the reviewed, approved file with `fulcrum_reference_files_upload`
+   and verify the live content matches the approved artifact.
+6. Re-read the form and re-review the final composed script with its loaded
    dependencies immediately before the write, even if no change is known.
    Preserve intervening changes; refresh the score/advice and obtain updated
    approval if the design or assessment changed materially. Repeat this fresh
-   read after reapproval before continuing to step 6.
-6. Write only the reviewed, approved complete script with `fulcrum_forms_update`.
+   read after reapproval before continuing to step 7. If reapproval changes the
+   approved file content, repeat steps 4-5 and verify that replacement before
+   writing the script. Do not repeat the upload when approved content is unchanged.
+7. Write only the reviewed, approved complete script with `fulcrum_forms_update`.
 
 > Verify `LOADFILE()` eligibility as described above before designing around shared Reference Files.
 

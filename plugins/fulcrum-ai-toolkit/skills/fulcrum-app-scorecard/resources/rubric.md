@@ -1,12 +1,14 @@
-# App Design Rubric 1.1.0
+# App Design Rubric 1.2.0
 
 The ten areas below each contain two equally weighted checks. Score each
 check independently using [the scorecard arithmetic](../SKILL.md#scoring-arithmetic).
 The check wording, weights, and CAP-01 ceiling are toolkit policy derived from
 the linked guidance, not product guarantees.
 
-Version 1.1.0 adds explicit workload-based performance evaluation to LOGIC-02
-and OUTPUT-02. Check IDs, weights, arithmetic, and CAP-01 are unchanged.
+Version 1.2.0 includes calculation expressions in LOGIC-02, even without
+Data Events or loaded helpers. Version 1.1.0 introduced workload-based
+performance evidence in LOGIC-02 and OUTPUT-02.
+Check IDs, weights, arithmetic, and CAP-01 are unchanged.
 Reassess earlier scorecards rather than comparing across versions.
 
 ## Checks
@@ -24,7 +26,7 @@ Reassess earlier scorecards rather than comparing across versions.
 | FLOW-01 | Lifecycle | If record status is needed, the built-in status system and authorized transitions are used rather than a competing custom status choice field. Multiple unrelated lifecycle controls are not mixed. Confirm that a no-status workflow genuinely needs none before passing it. | Never |
 | FLOW-02 | Lifecycle | Simple visibility uses native rules; calculations own derived values; Data Events own lifecycle side effects. Inspect rules and expressions for unnecessary duplication, valid result semantics, and appropriate responsibilities. A native-only form with no such behavior can pass once confirmed. | Never |
 | LOGIC-01 | Automation | Data Events use documented hooks, valid field references, correct open/change initialization, synchronous validation/save behavior, and required geometry guards. Inspect the full script and referenced helpers against current contracts. | Only when the full configuration confirms no Data Events or loaded helpers |
-| LOGIC-02 | Automation | Automation is organized by concern, reuses suitable built-ins/shared logic, and avoids hardcoded resource IDs. A workload-based performance evaluation supports the design's trigger frequency, collection growth, repeated I/O, and synchronous work at expected volumes. Scripts above about 500 lines have a documented decomposition decision and maintainability evidence. Inspect the complete script and helpers, not line count alone. | Same as LOGIC-01 |
+| LOGIC-02 | Automation | Automation and calculation expressions are organized by concern, reuse suitable built-ins/shared logic, and avoid hardcoded resource IDs. A workload-based performance evaluation supports trigger/reevaluation frequency, collection growth, repeated I/O, and synchronous work at expected volumes, including calculation-only apps. Scripts above about 500 lines have a documented decomposition decision and maintainability evidence. Inspect all expressions, scripts, and helpers, not line count alone. | Only when the full configuration confirms no Data Events, calculation expressions, or loaded helpers |
 | OFFLINE-01 | Reliability | Connectivity requirements are explicit, and scripts, reference data, maps, and extension assets satisfy them. Required offline paths have representative offline evidence; an explicitly online-only workflow is not penalized solely for needing connectivity. | Never |
 | OFFLINE-02 | Reliability | External dependencies have verified availability and versions where applicable, bounded requests/payloads, and explicit error/unavailable-state handling. Required capture does not silently succeed after a failed dependency. Inspect dependencies and representative failure evidence. | Only when configuration and workflow confirm no external/runtime dependencies |
 | EXT-01 | Extensions | Each extension solves a custom UI need that native fields cannot reasonably meet, without replicating a standalone app or duplicating calculations. Picker targets follow the TextField/RecordLinkField contract, not a competing ChoiceField UI. | Only when the full configuration confirms no extensions |
@@ -66,7 +68,7 @@ unknown; the advisory classification is not an exemption from inspection.
 | FIELD-01, FIELD-02 | [App design](../../fulcrum-app-design/SKILL.md) | Constrain inputs, simplify prompts, preserve stored choice values and existing integrations. |
 | MOBILE-01, MOBILE-02 | [App design](../../fulcrum-app-design/SKILL.md), [decomposition](../../fulcrum-workflow-decomposition/SKILL.md) | Reduce irrelevant fields, bound selections, model repeating data rather than duplicating fields; measure real mobile behavior. |
 | FLOW-01, FLOW-02 | [App design](../../fulcrum-app-design/SKILL.md), [Data Events](../../fulcrum-data-events/SKILL.md) | Use native status/visibility/calculation behavior before custom lifecycle code. |
-| LOGIC-01, LOGIC-02 | [Data Events](../../fulcrum-data-events/SKILL.md), [decomposition](../../fulcrum-workflow-decomposition/SKILL.md), [performance](../../fulcrum-performance-review/SKILL.md) | Correct event contracts, simplify handlers, verify referenced fields, and bound per-trigger work and repeated I/O. |
+| LOGIC-01, LOGIC-02 | [Data Events](../../fulcrum-data-events/SKILL.md), [calculations/app design](../../fulcrum-app-design/SKILL.md), [decomposition](../../fulcrum-workflow-decomposition/SKILL.md), [performance](../../fulcrum-performance-review/SKILL.md) | Correct event contracts, simplify handlers and calculations, verify referenced fields, and bound per-trigger/reevaluation work and repeated I/O. |
 | OFFLINE-01, OFFLINE-02 | [Data Events](../../fulcrum-data-events/SKILL.md), [extensions](../../fulcrum-app-extensions/SKILL.md), [GIS](../../fulcrum-gis-mapping/SKILL.md), [integrations](../../fulcrum-integration-patterns/SKILL.md) | Package offline dependencies or confirm an online-only workflow; make failures explicit and verify platform eligibility. |
 | EXT-01, EXT-02 | [Extensions](../../fulcrum-app-extensions/SKILL.md) | Narrow UI scope and correct bridge, picker, and write-back contracts. |
 | OUTPUT-01, OUTPUT-02 | [Reports](../../fulcrum-report-building/SKILL.md), [Query API](../../fulcrum-query-api/SKILL.md), [performance](../../fulcrum-performance-review/SKILL.md) | Preserve output continuity, bound query fan-out and rendering growth, and inspect representative deliverables. |
@@ -78,7 +80,7 @@ unknown; the advisory classification is not an exemption from inspection.
 | --- | --- | --- | --- | --- |
 | CAP-01 | At least one `Repeatable` anywhere in the selected form's element tree | 6 | Complete tree inspected with no Repeatable elements; partial/filtered trees cannot prove absence | Explicit scorecard policy favoring simpler top-level/linked models. Keep appropriate repeatables and explain the cap; consider linked children only when lifecycle, growth, or deliverable needs justify them. |
 
-CAP-01 is the only cap in version 1.1.0. There is no waiver for a small,
+CAP-01 is the only cap in version 1.2.0. There is no waiver for a small,
 well-designed repeatable and no additional deduction merely for its presence.
 Even one repeatable found in an incomplete tree establishes the cap;
 completeness is necessary only to establish absence.

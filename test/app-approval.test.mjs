@@ -52,7 +52,15 @@ test('assessment uses the composed edit and revisits material changes before wri
   const newApp = build.split('For a new app:')[1].split('For an existing app:')[0];
   assert.match(newApp, /Complete the performance review.*Create it with `fulcrum_forms_create`/);
   const existingApp = build.split('For an existing app:')[1].split('### Data Event scripts')[0];
-  assert.match(existingApp, /Complete the performance review.*fulcrum_forms_update/);
+  assertInOrder(existingApp, [
+    'Complete the performance review',
+    'Always re-read the full form',
+    'Recompute `composedElements` and `removedElementKeys`',
+    'revalidate the full form',
+    'repeat this final fresh read after approval',
+    'Start the update payload',
+    'fulcrum_forms_update'
+  ]);
   const scriptUpdate = build.split('### Data Event scripts')[1];
   assertInOrder(scriptUpdate, [
     'Review performance',
@@ -80,24 +88,32 @@ test('extension publishing reviews and approves composed artifacts before either
     'Performance review and approval gate (no live writes)',
     'Run fulcrum-performance-review',
     'Obtain explicit approval',
+    'Pre-upload freshness gate (no live writes)',
+    'Immediately re-read the target Reference File',
+    'Repeat this freshness gate after approval',
     'fulcrum_reference_files_upload(',
+    'Verify that the live file matches the approved content',
     'fulcrum_forms_get(',
     're-review the final composed script',
     'return to Step 5 for updated approval',
     'fulcrum_forms_update('
   ]);
   assert.match(sequence, /both the Reference File upload or replacement and the composed script/);
+  assert.match(sequence, /repeat Steps 6-7 and verify the new file before writing its dependent script/);
   const extension = read('fulcrum-app-extensions/SKILL.md');
   const manual = compact(extension.split('### Manual UI fallback')[1]?.split('## Anti-Patterns')[0] ?? '');
   assertInOrder(manual, [
     'Inspect the target form',
     'Complete the no-write performance review',
     'obtain explicit approval',
+    'Immediately re-read the target Reference File',
+    'Repeat this check after approval',
     'upload the reviewed file',
     'Recheck the current form',
     're-review any intervening changes',
     'Save the reviewed, approved composed script'
   ]);
+  assert.match(manual, /repeat steps 4-5 and verify the replacement before writing its dependent script/);
 });
 
 test('direct Data Event and shared-file writes remain behind performance and approval gates', () => {
@@ -121,12 +137,68 @@ test('direct Data Event and shared-file writes remain behind performance and app
     'Compose the proposed shared-file contents',
     'Complete the no-write performance review',
     'obtain explicit approval',
+    'Immediately re-read the current Reference File',
+    'Repeat this fresh read after approval',
     'fulcrum_reference_files_upload',
+    'verify the live content matches the approved artifact',
     'Re-read the form and re-review the final composed script',
     'obtain updated approval',
     'fulcrum_forms_update'
   ]);
   assert.match(sharedCode, /existing consumers can load a replacement without a script change/);
+  assert.match(sharedCode, /repeat steps 4-5 and verify that replacement before writing the script/);
+});
+
+test('shared pre-write safeguards cover freshness, artifact consistency, and non-atomic failures', () => {
+  const guard = compact(read('fulcrum-app-builder/resources/pre-write-freshness.md'));
+  for (const content of [
+    'Always read current state immediately before writing',
+    'approved baseline', 'Recompute removal keys',
+    'repeat the fresh read after approval',
+    'Do not invent an ETag or concurrency argument',
+    'is not atomic', 'repeat the guarded upload',
+    'verify it before writing the script', 'report the partial state'
+  ]) {
+    assert.ok(guard.includes(content), `Missing pre-write safeguard: ${content}`);
+  }
+});
+
+test('builder indexes and update fragments require the canonical gated workflow', () => {
+  for (const file of [
+    'fulcrum-app-builder/assets/README.md',
+    'fulcrum-app-builder/examples/README.md'
+  ]) {
+    const index = compact(read(file));
+    assert.match(index, /SKILL\.md#step-4-build-or-hand-off/);
+    assert.match(index, /pre-write-freshness\.md/);
+    assert.match(index, /payload-only/i);
+    assert.doesNotMatch(index, /create, validate/);
+  }
+  const fragment = read('fulcrum-app-builder/examples/forms-update-preserving-keys.js');
+  assert.match(fragment, /Payload-only fragment, not a standalone workflow or write authorization/);
+  assert.match(fragment, /pre-write-freshness\.md/);
+});
+
+test('direct report publication requires review, explicit approval, and freshness before mutation', () => {
+  const reports = read('fulcrum-report-building/SKILL.md');
+  const gate = compact(reports.split('### Template Publication Gate')[1]?.split('## Report Types')[0] ?? '');
+  assertInOrder(gate, [
+    'Read the target form',
+    'Complete static validation and performance review',
+    'Obtain explicit publication approval before any live write',
+    'pre-write freshness safeguard',
+    'repeat the fresh read',
+    'Only then call `fulcrum_report_templates_create`',
+    '`fulcrum_report_templates_update`'
+  ]);
+  assert.match(gate, /manual UI/);
+  assert.match(gate, /do not call `fulcrum_reports_create` merely to complete a static review/);
+  for (const file of [
+    'fulcrum-report-building/resources/report-template-reference.md',
+    'fulcrum-report-building/examples/README.md'
+  ]) {
+    assert.match(read(file), /\.\.\/SKILL\.md#template-publication-gate/);
+  }
 });
 
 test('secondary publishing references cannot bypass canonical review and fresh-read gates', () => {
@@ -182,8 +254,10 @@ test('performance findings are wired into versioned scoring without a new ceilin
   const logic = rubric.split('\n').find((line) => line.startsWith('| LOGIC-02 |'));
   const output = rubric.split('\n').find((line) => line.startsWith('| OUTPUT-02 |'));
   assert.match(logic, /workload-based performance evaluation/);
+  assert.match(logic, /including calculation-only apps/);
+  assert.match(logic, /Only when the full configuration confirms no Data Events, calculation expressions, or loaded helpers/);
   assert.match(output, /query fan-out.*output-generation cost/);
-  assert.match(rubric, /CAP-01 is the only cap in version 1\.1\.0/);
+  assert.match(rubric, /CAP-01 is the only cap in version 1\.2\.0/);
 });
 
 test('code discovery includes attachments, embedded code, and transitive dependencies', () => {
@@ -246,11 +320,16 @@ test('new approval and performance guidance links resolve in the portable bundle
     ...codeSkills.map((name) => `${name}/SKILL.md`),
     'fulcrum-performance-review/SKILL.md',
     'fulcrum-app-builder/resources/approval-cases.md',
+    'fulcrum-app-builder/resources/pre-write-freshness.md',
+    'fulcrum-app-builder/assets/README.md',
+    'fulcrum-app-builder/examples/README.md',
     'fulcrum-app-extensions/resources/extension-bridge-api.md',
     'fulcrum-app-extensions/assets/README.md',
     'fulcrum-app-extensions/examples/README.md',
     'fulcrum-data-events/examples/README.md',
-    'fulcrum-data-events/resources/data-event-examples.md'
+    'fulcrum-data-events/resources/data-event-examples.md',
+    'fulcrum-report-building/resources/report-template-reference.md',
+    'fulcrum-report-building/examples/README.md'
   ]) {
     for (const [, link] of read(file).matchAll(/\[[^\]]+\]\(([^)]+)\)/g)) {
       if (/^https?:\/\//.test(link)) continue;

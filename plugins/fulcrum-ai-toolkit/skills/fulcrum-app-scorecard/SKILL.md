@@ -9,7 +9,7 @@ Assess a Fulcrum data-collection app, not the visual design of an arbitrary
 website. Turn the toolkit's building guidance into an explainable assessment.
 This is a **read-only review**, not permission to rebuild the app.
 
-**Rubric version: 1.1.0.** Read [the rubric](resources/rubric.md) before scoring.
+**Rubric version: 1.2.0.** Read [the rubric](resources/rubric.md) before scoring.
 Its points and caps are toolkit scoring policy, not Fulcrum platform limits,
 a certification, or proof that an app is safe to deploy.
 
@@ -103,7 +103,7 @@ List multiple findings under the same check without deducting repeatedly.
 A finding can fail two checks only if it independently violates both.
 
 Let `P`, `F`, `U`, and `N` be the counts of pass, fail, unknown, and N/A.
-Require `P + F + U + N = 20` for version 1.1.0.
+Require `P + F + U + N = 20` for version 1.2.0.
 Let `A = P + F + U`. When `A > 0`, report coverage as `100 * (P + F) / A`.
 When `A = 0`, report coverage as **N/A** rather than dividing by zero.
 N/A is excluded from the denominator; unknown remains in it.

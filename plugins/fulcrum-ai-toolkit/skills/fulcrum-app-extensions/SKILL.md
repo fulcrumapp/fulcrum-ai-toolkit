@@ -153,6 +153,12 @@ re-review the final composed artifacts, and obtain updated approval if
 intervening changes materially affect the assessment. Both writes must use
 reviewed, approved content; file replacement can affect existing consumers.
 
+Apply [the pre-write freshness safeguard](../fulcrum-app-builder/resources/pre-write-freshness.md)
+immediately before each upload/replacement as well as each script update.
+Re-read the target file, dependencies, and known consumers; reconcile any
+change from the approved baseline before upload. A later form read cannot
+protect a Reference File that has already been overwritten.
+
 Use `fulcrum_extensions_list_patterns` and `fulcrum_extensions_explain(pattern="picker")` to explore registered patterns before generating. There is no standalone Data Event update tool; preserve the existing form `script` through the form get/update operations.
 
 ### Manual UI fallback
@@ -166,16 +172,22 @@ When App MCP is unavailable:
    and dependencies. Present the score, advice, and sync warnings using
    [the builder's confirmation contract](../fulcrum-app-builder/SKILL.md#score-and-advice-at-every-design-confirmation)
    and obtain explicit approval for the file upload/replacement and script edit.
-4. In Fulcrum, open the target form and upload the reviewed file under **Reference Files**.
-5. Recheck the current form and dependencies immediately before editing its script,
+4. Immediately re-read the target Reference File, dependencies, and known
+   consumers before upload. Apply the pre-write safeguard: compare the
+   approved baseline, reconcile changes, and return to step 3 for material
+   reapproval. Repeat this check after approval.
+5. In Fulcrum, open the target form and upload the reviewed file under **Reference Files**.
+   Verify the live content matches the approved file.
+6. Recheck the current form and dependencies immediately before editing its script,
    even if no change is known.
    Recompose and re-review any intervening changes, returning to step 3 for
    updated approval if the design, score, or risks changed materially. Repeat
-   this fresh read after reapproval; repeat the upload only if the approved
-   file content changed.
-6. Save the reviewed, approved composed script with the `OPENEXTENSION()` handler,
+   this fresh read after reapproval. If approved file content changed, repeat
+   steps 4-5 and verify the replacement before writing its dependent script;
+   otherwise do not repeat the upload.
+7. Save the reviewed, approved composed script with the `OPENEXTENSION()` handler,
    using the uploaded file's exact filename and preserving unrelated handlers.
-7. Test the trigger and the write-back behavior in the form preview, then test again on a device if the workflow must work offline.
+8. Test the trigger and the write-back behavior in the form preview, then test again on a device if the workflow must work offline.
 
 Do not treat the MCP commands above as prerequisites; they are an automation path only.
 

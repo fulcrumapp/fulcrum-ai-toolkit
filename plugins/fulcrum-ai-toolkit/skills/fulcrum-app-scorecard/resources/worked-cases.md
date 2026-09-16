@@ -1,6 +1,6 @@
 # Worked Scoring Cases
 
-These are synthetic rubric 1.1.0 calibration cases, not claims about customer
+These are synthetic rubric 1.2.0 calibration cases, not claims about customer
 apps or proof of agent behavior. The verdicts below are stipulated evidence
 summaries; an actual review must produce a location and rationale for every
 check. Score calculations follow [the skill](../SKILL.md#scoring-arithmetic).
@@ -25,6 +25,8 @@ is resolved. Counts are `P/F/U/N`. Scores and coverage display one decimal.
 | Performance evidence missing | LOGIC-02 and OUTPUT-02 are unknown because workload/code evidence is incomplete; other checks pass; no repeatables | 18/0/2/0 | 9.1-10.0 | Not triggered | Provisional 9.1-10.0 | 90.0% |
 | Accepted performance trade-off | OUTPUT-02 fails a measured, agreed render budget; owner accepts it; other checks pass; no repeatables | 19/1/0/0 | 9.6 | Not triggered | 9.6 | 100.0% |
 | Large Reference File sync warning | All checks pass; no repeatables; a large, frequently updated Reference File warrants advisory sync advice but violates no confirmed workflow requirement | 20/0/0/0 | 10.0 | Not triggered | 10.0 | 100.0% |
+| Bounded calculation-only app | LOGIC-01, EXT-01/02, OFFLINE-02 are confirmed N/A; calculation expressions pass LOGIC-02 and all remaining checks pass; no repeatables | 16/0/0/4 | 10.0 | Not triggered | 10.0 | 100.0% |
+| Slow calculation-only app | Same four N/A checks; LOGIC-02 fails a measured calculation budget; other checks pass; no repeatables | 15/1/0/4 | 9.4 | Not triggered | 9.4 | 100.0% |
 
 The unknown-cap-alone case isolates the ceiling calculation: check evidence
 can come from separately verified artifacts, but it does not substitute for
@@ -52,7 +54,7 @@ the result is not scoreable; this is not the all-excluded case.
 
 The defensive all-excluded arithmetic boundary (`P/F/U/N = 0/0/0/20`) has
 `A = 0`: coverage is N/A and the result is not scoreable. This is exercised
-as an arithmetic-only test, not as a valid app calibration row: rubric 1.1.0
+as an arithmetic-only test, not as a valid app calibration row: rubric 1.2.0
 has checks that never allow N/A, so a real assessment cannot exclude them all.
 
 ## Structural And Policy Probes

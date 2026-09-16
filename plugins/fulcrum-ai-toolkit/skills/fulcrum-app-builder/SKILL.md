@@ -177,6 +177,11 @@ performance findings, or a fresh read changes the approved design's score,
 caps, risks, or behavior materially, return to Step 3 with an updated score
 and advice for approval. Do not reopen an unchanged, already accepted trade-off.
 
+Before each live write, apply the
+[pre-write freshness safeguard](resources/pre-write-freshness.md). It covers
+full-form payloads, scripts, Reference Files, and Report Templates, including
+reapproval and coupled file/script writes.
+
 When App MCP is available, follow its live schemas exactly. Do not hand-write new element JSON when a registered schema builder owns that shape.
 
 > Connector authority: Live installed App MCP schemas define the create/update
@@ -198,7 +203,11 @@ For a new app:
 
 The full ordered sequence, with the builder arguments worth knowing, is in [`assets/app-build-sequence.txt`](assets/app-build-sequence.txt).
 
-If the result contains a created form plus `report_template_error`, report that the form succeeded and only the default Report Template failed. This error is non-fatal. Do not retry form creation; create the missing template separately with `fulcrum_report_templates_create` when appropriate.
+If the result contains a created form plus `report_template_error`, report that
+the form succeeded and only the default Report Template failed. This error is
+non-fatal. Do not retry form creation; recover the missing template through
+[the template publication gate](../fulcrum-report-building/SKILL.md#template-publication-gate).
+Reuse prior approval only when it covers the same content and operation.
 
 For an existing app:
 
@@ -214,7 +223,13 @@ For an existing app:
 8. Complete the performance review of the composed code and dependencies,
    including unchanged code. Return to Step 3 if the design or assessment
    changed materially; complete any required reapproval before the update.
-9. Start the update payload with `elements: composedElements`. Only
+9. Always re-read the full form and relevant dependencies immediately before
+   the update. Reconcile only approved edits into that fresh state, preserving
+   intervening fields, choices, and handlers. Recompute `composedElements` and
+   `removedElementKeys`, revalidate the full form, and re-review the result.
+   Obtain reapproval for material differences and repeat this final fresh read
+   after approval. Follow the pre-write safeguard; never replay stale values.
+10. Start the update payload with `elements: composedElements`. Only
    `if (removedElementKeys.length > 0)`, set
    `updatePayload.removed_element_keys = removedElementKeys`, then send the
    complete payload with `fulcrum_forms_update(updatePayload)`. The annotated call is
@@ -278,6 +293,7 @@ This skill orchestrates app creation and updates. Defer deep platform questions 
 
 ## References
 
+- [Pre-write freshness and artifact consistency](resources/pre-write-freshness.md)
 - [Design approval and performance scenarios](resources/approval-cases.md)
 - [Fulcrum developer documentation](https://docs.fulcrumapp.com/)
 - [Fulcrum Forms API](https://docs.fulcrumapp.com/reference/forms-intro)

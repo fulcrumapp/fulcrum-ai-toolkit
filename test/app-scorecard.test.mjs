@@ -20,11 +20,11 @@ function rows(markdown) {
     .map((line) => line.split('|').slice(1, -1).map((cell) => cell.trim()));
 }
 
-test('rubric 1.1.0 retains twenty stable checks and the six-point repeatable ceiling', () => {
-  assert.match(skill, /Rubric version: 1\.1\.0/);
+test('rubric 1.2.0 retains twenty stable checks and the six-point repeatable ceiling', () => {
+  assert.match(skill, /Rubric version: 1\.2\.0/);
   assert.match(skill, /P \+ F \+ U \+ N = 20/);
-  assert.match(rubric, /^# App Design Rubric 1\.1\.0/m);
-  assert.match(cases, /rubric 1\.1\.0/);
+  assert.match(rubric, /^# App Design Rubric 1\.2\.0/m);
+  assert.match(cases, /rubric 1\.2\.0/);
   const checks = rows(rubric).filter(([id]) => /^[A-Z]+-\d{2}$/.test(id) && !id.startsWith('CAP-'));
   assert.deepEqual(checks.map(([id]) => id), checkIds);
   assert.ok(checks.every((row) => row.length === 4 && row.every(Boolean)));
@@ -49,7 +49,7 @@ test('scorecard relative references resolve within the installed skill bundle', 
 // These check the published examples' arithmetic, not an agent's app inspection.
 const workedCases = rows(cases).filter((row) => /^\d+\/\d+\/\d+\/\d+$/.test(row[2] ?? ''));
 test('the complete calibration case set is exercised', () => {
-  assert.equal(workedCases.length, 15);
+  assert.equal(workedCases.length, 17);
 });
 
 const display = (value) => (Math.round(value * 10) / 10).toFixed(1);
