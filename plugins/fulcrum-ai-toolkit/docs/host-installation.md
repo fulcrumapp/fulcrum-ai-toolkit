@@ -1,7 +1,7 @@
 # Host Installation
 
 Install the complete skill collection. Sibling links are dependencies, not
-instructions for a loader to fetch missing skills. Keep all 16 skill
+instructions for a loader to fetch missing skills. Keep all 17 skill
 directories and their supporting files together, and retain the package
 `LICENSE`. Do not flatten the directories or upload only one `SKILL.md`.
 

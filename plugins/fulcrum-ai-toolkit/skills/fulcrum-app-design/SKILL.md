@@ -5,6 +5,12 @@ description: Use when building or modifying a Fulcrum app — guides app structu
 
 A Fulcrum **app** is a mobile-first data collection form. Every design decision trades **field simplicity** against **workflow fidelity** — the goal is the simplest structure that captures what the field crew actually needs to record and what the office needs to report on.
 
+For a numerical assessment, use
+[`fulcrum-app-scorecard`](../fulcrum-app-scorecard/SKILL.md). Its rubric caps
+apps containing any repeatable at 6/10, even when the repeatable is appropriate.
+That scoring policy does not prohibit repeatables or replace the design
+guidance below.
+
 ## App Structure Decision
 
 Before adding fields, resolve the **structural question**: one app or multiple linked apps?

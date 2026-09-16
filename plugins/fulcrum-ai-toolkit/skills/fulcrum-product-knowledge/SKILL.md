@@ -22,6 +22,7 @@ answer a focused domain question from this router when an owning skill exists.
 | Roles, permissions, memberships, SSO, SCIM, or least privilege | [`fulcrum-access-management`](../fulcrum-access-management/SKILL.md) |
 | Migration discovery, mapping, reconciliation, cutover design, or rollback | [`fulcrum-data-migration`](../fulcrum-data-migration/SKILL.md) |
 | App shape, field types, repeatables, Record Links, or choice design | [`fulcrum-app-design`](../fulcrum-app-design/SKILL.md) |
+| App design score, grade, quality scorecard, or comparison | [`fulcrum-app-scorecard`](../fulcrum-app-scorecard/SKILL.md) |
 | Discovery, feasibility, expectations, or pre-build requirements | [`fulcrum-discovery`](../fulcrum-discovery/SKILL.md) |
 | Goal and deliverable definition | [`fulcrum-app-goal`](../fulcrum-app-goal/SKILL.md) |
 | Approved schema construction or App MCP orchestration | [`fulcrum-app-builder`](../fulcrum-app-builder/SKILL.md) |

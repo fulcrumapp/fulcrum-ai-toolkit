@@ -46,7 +46,7 @@ For a standalone skills loader, install the complete collection:
 npx skills@latest add https://github.com/fulcrumapp/fulcrum-ai-toolkit/tree/main/plugins/fulcrum-ai-toolkit/skills --skill '*'
 ```
 
-The supported distribution unit is the **whole 16-skill bundle**. Skills link
+The supported distribution unit is the **whole 17-skill bundle**. Skills link
 to sibling skills and their resources; an individual directory is not a
 self-contained package, and loaders do not automatically install dependencies.
 For manual installation, copy all directories under
@@ -95,6 +95,15 @@ precedence over toolkit prose.
 5. Build through Fulcrum App MCP when available, or use the approved handoff.
 6. Test the workflow and document the result with `fulcrum-solution-document`.
 
+To assess an existing or proposed app instead of building one, use
+`fulcrum-app-scorecard`: an evidence-based **1 (poor) to 10 (excellent)** design
+score, findings tied to existing skills, and prioritized improvements.
+Any app containing a repeatable is **capped at 6/10**, not automatically
+awarded six points. Missing evidence produces explicit unknowns and a
+provisional range rather than an inflated grade. The
+[versioned rubric](plugins/fulcrum-ai-toolkit/skills/fulcrum-app-scorecard/resources/rubric.md)
+can be supplemented with additional checks and caps later.
+
 ## Alpha install matrix
 
 The distributable package uses the portable
@@ -104,7 +113,7 @@ directory or explicitly point to it when the host contract supports that field.
 
 | Host | Install path | Skills | Live Fulcrum actions | Alpha status |
 | --- | --- | --- | --- | --- |
-| Generic skills loader | Add all 16 skills, preserving sibling layout | Yes | No, connector required | Target |
+| Generic skills loader | Add all 17 skills, preserving sibling layout | Yes | No, connector required | Target |
 | Claude Code | Add the Claude marketplace, or use the repository/submodule root as a plugin | Yes | Connector-dependent | Target |
 | Cursor | Install `plugins/fulcrum-ai-toolkit/` as a plugin | Yes | Connector-dependent | Target |
 | Codex | Add the repository marketplace, then install the plugin | Yes | Connector-dependent | Target |
@@ -125,9 +134,10 @@ Validation runs entirely on Node.js. Install dependencies for the format validat
 npm ci --prefix tools/format-validator
 npm run --prefix tools/format-validator validate
 node scripts/validate.mjs
+node --test test/app-scorecard.test.mjs
 ```
 
-The repository validator checks the exact 16-skill inventory, skill frontmatter,
+The repository validator checks the exact 17-skill inventory, skill frontmatter,
 directory/name consistency, corporate absolute paths, privacy and provenance contracts,
 portable and client JSON manifests, and README inventory. The portable
 `plugin.json` intentionally omits `$schema` because Claude's SDK warns on
@@ -135,6 +145,8 @@ unknown top-level fields when it encounters that manifest.
 It also keeps release versions aligned, requires the packaged license and
 Codex manual-invocation policies, and guards the regional MCP endpoint map
 and empty default server configuration.
+Scorecard contract tests check the rubric inventory, sibling links, and worked
+scoring arithmetic; they do not prove an agent's live app assessment.
 Structural and schema validation for externalized examples and assets runs via
 `tools/format-validator` using Ajv and pinned parsers.
 In CI, GitHub Actions also validates the Claude plugin marketplace using Anthropic's official
@@ -221,6 +233,7 @@ activation, an authenticated MCP connection, or successful live app creation.
 | `fulcrum-data-migration` | Supported migration assessment, mapping, dry runs, reconciliation, cutover, and rollback design | Model-invoked |
 | `fulcrum-app-builder` | Novice-friendly app discovery, schema approval, App MCP orchestration, and connector-independent handoff | Model-invoked |
 | `fulcrum-app-design` | App structure, field types, linked apps vs single app, repeatables | Model-invoked |
+| `fulcrum-app-scorecard` | Evidence-based 1-10 app design scoring, repeatable ceiling, and extensible rubric | Model-invoked |
 | `fulcrum-app-goal` | Ensure every app has a clear goal and defined deliverable | Model-invoked |
 | `fulcrum-safety` | Flag missing safety steps in field workflows | Model-invoked |
 | `fulcrum-data-events` | Data event patterns, anti-patterns, and platform constraints | Model-invoked |
@@ -251,6 +264,7 @@ uses the focused skill to:
 - Guide app discovery, schema approval, and App MCP-dependent execution (`fulcrum-app-builder`)
 - Check that every app has a clear goal before building (`fulcrum-app-goal`)
 - Select appropriate field types and app structure (`fulcrum-app-design`)
+- Score existing or proposed apps and prioritize design improvements (`fulcrum-app-scorecard`)
 - Flag missing safety steps in field workflows (`fulcrum-safety`)
 - Apply data event best practices and avoid anti-patterns (`fulcrum-data-events`)
 - Recommend decomposition when apps grow too complex (`fulcrum-workflow-decomposition`)

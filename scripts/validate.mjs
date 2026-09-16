@@ -30,6 +30,7 @@ const EXPECTED_SKILLS = [
   'fulcrum-app-design',
   'fulcrum-app-extensions',
   'fulcrum-app-goal',
+  'fulcrum-app-scorecard',
   'fulcrum-data-events',
   'fulcrum-data-migration',
   'fulcrum-discovery',
