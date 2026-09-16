@@ -56,11 +56,12 @@ Event function.
    handlers.
 5. Write the complete script with `fulcrum_forms_update`.
 
-The layer-2 Reference File tool subset exposes list, get, and upload operations;
-it does not define a delete tool. Do not invent a delete call: use the upload
-workflow according to the registered service contract for replacement, and use
-the supported product UI or manual flow when removal is required. Keep the
-filename synchronized with the `attachment://` URL. The full ordered sequence
+For optional cleanup, first update the form script so it no longer references
+the `attachment://` URL. Then call
+`fulcrum_reference_files_delete(form_id=..., file_id=...)`. The service verifies
+that the attachment belongs to the supplied form and rejects mismatches. Keep
+the filename synchronized with the `attachment://` URL. The live installed App
+MCP schema remains authoritative for exact arguments. The full ordered sequence
 is in
 [`app-mcp-extension-publish-sequence.txt`](../assets/app-mcp-extension-publish-sequence.txt).
 
