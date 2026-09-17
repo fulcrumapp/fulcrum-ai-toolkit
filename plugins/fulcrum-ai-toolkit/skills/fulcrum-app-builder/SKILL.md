@@ -131,10 +131,12 @@ element must retain a concrete discriminator returned by App MCP, such as
 Pass the objects returned by `fulcrum_schema_build_field` through to form
 assembly unchanged. Do not reconstruct them from tool-schema model names or
 replace their `type` values. Before create or update, recursively inspect every
-top-level element and every child of a Section or Repeatable. If a `type` is
-missing, is not a string, or is not one of the concrete types reported by
-`fulcrum_schema_field_types`, stop and rebuild that element with
-`fulcrum_schema_build_field`.
+top-level element and every child of a Section or Repeatable. For a new app or
+newly added field, rebuild any element whose `type` is missing, is not a string,
+or is not one of the concrete types reported by
+`fulcrum_schema_field_types`. For an existing element during an update, stop
+and report the invalid discriminator instead; do not rebuild it or replace its
+key.
 
 For a new app:
 
