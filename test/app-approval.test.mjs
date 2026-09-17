@@ -315,6 +315,11 @@ test('Reference File sync cost is an advisory warning even when there is no code
   assert.match(warning, /File size or update frequency alone must not fail a rubric check/);
   assert.match(warning, /does not waive code inspection/);
   assert.match(approval, /Include it even when code performance is N\/A/);
+  const performanceText = compact(performance);
+  assert.match(performanceText, /expensive\*\* means work that materially consumes/);
+  assert.match(performanceText, /synchronous record-path work above \*\*100 ms p95\*\*/);
+  assert.match(performanceText, /interactive asynchronous work above \*\*1 second p95\*\*/);
+  assert.match(performanceText, /\*\*Small\*\* means bounded work scoped to the current record/);
   const rubric = compact(read('fulcrum-app-scorecard/resources/rubric.md'));
   assert.match(rubric, /Size or update frequency alone is not a check failure, deduction, or cap/);
 });

@@ -92,6 +92,21 @@ already-established hotspots separately; unknown coverage does not erase them.
 
 ## Runtime-Specific Review
 
+In this review, **expensive** means work that materially consumes the
+latency, CPU, memory, storage, network, or rendering budget for its expected
+workload. Treat unbounded growth, repeated I/O, or a fan-out proportional to
+the number of records as an expense even when no timing is available. As a
+consistent starting heuristic, flag synchronous record-path work above
+**100 ms p95** or interactive asynchronous work above **1 second p95** when
+measured; these are review triggers, not platform guarantees.
+
+**Small** means bounded work scoped to the current record or changed values,
+without network calls or unbounded collection scans, and with a documented
+target latency budget. A longer operation can still be appropriate for a
+bounded background or report job when its workload, pagination, memory, and
+failure behavior are explicit. Use measured runtime budgets for the target
+client and workload when they are available.
+
 | Artifact | Risks to evaluate | Constructive alternatives |
 | --- | --- | --- |
 | Data Events | Whole-form/lookup scans on every field change; repeated `LOADRECORDS()` or network calls; repeated handler registration; indirect calculation-trigger chains; expensive synchronous validation/save paths; growing device storage | Move work to the correct lifecycle event, reuse fetched data within a valid scope, pre-index lookups, bound results, and keep required synchronous paths small |
