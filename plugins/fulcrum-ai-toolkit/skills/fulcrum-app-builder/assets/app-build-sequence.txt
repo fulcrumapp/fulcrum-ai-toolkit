@@ -38,7 +38,13 @@ Step 5  Performance review and approval gate (no live writes)
         the score and advice and obtain approval again.
         Complete this gate before continuing to Step 6.
 
-Step 6  fulcrum_forms_create(name=..., elements=[...from step 3...])
+Step 6  Pre-create freshness check (no live writes)
+        Immediately re-read the target form identity and confirm that no form
+        with the approved name/identity appeared after approval. If the target
+        now exists or the approved assumptions changed, stop and reconcile
+        through ../resources/pre-write-freshness.md before creating anything.
+
+Step 7  fulcrum_forms_create(name=..., elements=[...from step 3...])
         Optionally include a `script` value with the form's Data Events.
         Creation also creates a default Report Template unless
         skip_default_report is explicitly true.

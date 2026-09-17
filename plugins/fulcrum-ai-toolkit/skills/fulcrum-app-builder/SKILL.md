@@ -198,8 +198,13 @@ For a new app:
 6. Complete the performance review of the built code and dependencies. Refresh
    the score and advice and obtain approval again if the assessment or design
    changed materially. Do not perform the create until this gate is complete.
-7. Create it with `fulcrum_forms_create`, including the approved `script` only after the form structure is valid.
-8. Let `fulcrum_forms_create` create its default Report Template. Set `skip_default_report: true` only when the user explicitly asks to opt out.
+7. Immediately re-read the target form identity and verify that no form with
+   the approved name/identity appeared after approval. If it exists or the
+   approved assumptions changed, stop and reconcile through the
+   [pre-write freshness safeguard](resources/pre-write-freshness.md) before
+   creating anything.
+8. Create it with `fulcrum_forms_create`, including the approved `script` only after the form structure is valid.
+9. Let `fulcrum_forms_create` create its default Report Template. Set `skip_default_report: true` only when the user explicitly asks to opt out.
 
 The full ordered sequence, with the builder arguments worth knowing, is in [`assets/app-build-sequence.txt`](assets/app-build-sequence.txt).
 
