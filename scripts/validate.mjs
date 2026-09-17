@@ -476,10 +476,17 @@ const queryGuidance = [querySkillPath, queryModelingPath]
   .join('\n');
 const normalizedQueryGuidance = queryGuidance.replace(/\s+/g, ' ');
 
-for (const tool of ['form_summaries', 'get_form_query_tables', 'query_records']) {
+const queryToolPurposes = {
+  form_summaries: 'list forms available to the authenticated user',
+  get_form_query_tables: 'return Query table definitions for a selected form',
+  query_records: 'execute read-only Query SQL'
+};
+for (const [tool, purpose] of Object.entries(queryToolPurposes)) {
   const escapedTool = tool.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
   if (!new RegExp(`\`${escapedTool}(?:\\([^\\n\`]*\\))?\``).test(queryGuidance)) {
-    failures.push(`${repoRelativePath(querySkillPath)}: document the stable Query MCP tool ${tool}`);
+    failures.push(
+      `${repoRelativePath(querySkillPath)}: document the stable Query MCP workflow purpose "${purpose}" (currently \`${tool}\`)`
+    );
   }
 }
 if (!/live (?:Fulcrum MCP )?gateway schemas.{0,120}(?:authoritative|govern)/i.test(normalizedQueryGuidance)) {
