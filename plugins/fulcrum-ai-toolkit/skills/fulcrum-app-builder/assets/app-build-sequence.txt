@@ -5,7 +5,8 @@
 # only — see ../examples/forms-update-preserving-keys.js for existing forms.
 
 Step 1  fulcrum_schema_field_types()
-        Optional. Use only when the right field type is unclear.
+        Call once without a category filter. Keep the complete supported type
+        set for the exhaustive discriminator check in Step 4.
 
 Step 2  fulcrum_schema_build_field(...)
         Build each field one at a time. The builder generates correct keys,

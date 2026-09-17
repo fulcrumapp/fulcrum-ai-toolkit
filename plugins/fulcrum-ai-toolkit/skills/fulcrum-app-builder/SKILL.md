@@ -130,24 +130,23 @@ element must retain a concrete discriminator returned by App MCP, such as
 
 Pass the objects returned by `fulcrum_schema_build_field` through to form
 assembly unchanged. Do not reconstruct them from tool-schema model names or
-replace their `type` values. Before create or update, recursively inspect every
-top-level element and every child of a Section or Repeatable. For a new app or
-newly added field, rebuild any element whose `type` is missing, is not a string,
-or is not one of the concrete types reported by
-`fulcrum_schema_field_types`. For an existing element during an update, stop
-and report the invalid discriminator instead; do not rebuild it or replace its
-key.
+replace their `type` values. Before create or update, call
+`fulcrum_schema_field_types` once without a category filter to obtain the
+complete supported type set. Recursively inspect every top-level element and
+every child of a Section or Repeatable against that complete set. For a new app
+or newly added field, rebuild any element whose `type` is missing, is not a
+string, or is unsupported. For an existing element during an update, stop and
+report the invalid discriminator instead; do not rebuild it or replace its key.
 
 For a new app:
 
-1. Call `fulcrum_schema_field_types` when field capabilities are uncertain.
-2. Build each field with `fulcrum_schema_build_field`.
-3. For inline choices, pass either string labels or `{ "label": "...", "value": "..." }` objects. Use object form whenever the stored value differs from the label; App MCP preserves explicit values.
-4. Assemble the new form with `fulcrum_schema_build_form`, passing the exact field objects returned by the field builder.
-5. Recursively verify that every element still has its builder-produced concrete `type`.
-6. Validate the generated definition with `fulcrum_forms_validate`.
-7. Create it with `fulcrum_forms_create`, including the approved `script` only after the form structure is valid.
-8. Let `fulcrum_forms_create` create its default Report Template. Set `skip_default_report: true` only when the user explicitly asks to opt out.
+1. Build each field with `fulcrum_schema_build_field`.
+2. For inline choices, pass either string labels or `{ "label": "...", "value": "..." }` objects. Use object form whenever the stored value differs from the label; App MCP preserves explicit values.
+3. Assemble the new form with `fulcrum_schema_build_form`, passing the exact field objects returned by the field builder.
+4. Recursively verify that every element still has its builder-produced concrete `type` from the complete supported type set.
+5. Validate the generated definition with `fulcrum_forms_validate`.
+6. Create it with `fulcrum_forms_create`, including the approved `script` only after the form structure is valid.
+7. Let `fulcrum_forms_create` create its default Report Template. Set `skip_default_report: true` only when the user explicitly asks to opt out.
 
 The full ordered sequence, with the builder arguments worth knowing, is in [`assets/app-build-sequence.txt`](assets/app-build-sequence.txt).
 
