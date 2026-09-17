@@ -95,10 +95,10 @@ already-established hotspots separately; unknown coverage does not erase them.
 In this review, **expensive** means work that materially consumes the
 latency, CPU, memory, storage, network, or rendering budget for its expected
 workload. Treat unbounded growth, repeated I/O, or a fan-out proportional to
-the number of records as an expense even when no timing is available. As a
-consistent starting heuristic, flag synchronous record-path work above
-**100 ms p95** or interactive asynchronous work above **1 second p95** when
-measured; these are review triggers, not platform guarantees.
+the number of records as an expense even when no timing is available. Use the
+declared or measured budget for the target client and workload when one exists;
+otherwise report the cost as unmeasured rather than inventing a universal
+latency threshold.
 
 **Small** means bounded work scoped to the current record or changed values,
 without network calls or unbounded collection scans, and with a documented
@@ -136,21 +136,18 @@ with frequent updates or slow/intermittent field connections. This applies
 to extension bundles and shared code as well as non-code reference material.
 Separate this transfer/update cost from the code's runtime performance.
 
-For a consistent toolkit review, use **large** as an advisory trigger when an
-individual Reference File is at least **1 MiB**, the set of changed Reference
-Files is at least **5 MiB**, or an observed sync of the changed files takes at
-least **5 seconds** on a representative target connection. These are review
-heuristics, not Fulcrum limits or guarantees: report the actual bytes, files,
-connection, and measured time when available, and still flag a smaller file
-when its update frequency or target connection makes the transfer material.
+Use **large** as an advisory, workload-relative description for a Reference
+File or changed file set whose bytes or transfer time are material for the
+target client, connection, or update cadence. There is no universal cutoff:
+report actual bytes, files, connection, and measured time when available, and
+flag a smaller file when its update frequency or target connection makes the
+transfer material.
 
 Report a **Sync warning (advisory; no automatic score deduction or cap)**.
 Where available, include individual and total file sizes, which files change,
 expected update frequency, affected devices/connections, and observed sync
-times. Label missing measurements as unmeasured. Do not present the heuristics
-as a universal file-size threshold or transfer-duration guarantee, and do not
-assume that every sync downloads every file; verify actual client/version
-behavior if it matters.
+times. Label missing measurements as unmeasured. Do not assume that every sync
+downloads every file; verify actual client/version behavior if it matters.
 
 Suggest proportionate options: reduce unnecessary asset size, separate
 frequently changing content from large stable assets where supported, avoid
