@@ -82,6 +82,14 @@ jobs:
     permissions:
       pull-requests: read
     pre-steps:
+      - name: Checkout pull request head for policy validation
+        if: contains(needs.agent.outputs.output_types, 'push_to_pull_request_branch')
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          repository: ${{ github.repository }}
+          ref: ${{ github.event.pull_request.head.sha }}
+          fetch-depth: 0
+          persist-credentials: false
       - name: Download agent output for policy validation
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
         with:
@@ -127,6 +135,50 @@ jobs:
               typeof activationHeadSha !== "string"
             ) {
               throw new Error("Missing triggering pull request state");
+            }
+            if (pushes.length === 1) {
+              const bundlePaths = fs
+                .readdirSync("/tmp/gh-aw-policy-input")
+                .filter((name) => name.startsWith("aw-") && name.endsWith(".bundle"))
+                .map((name) => `/tmp/gh-aw-policy-input/${name}`);
+              if (bundlePaths.length !== 1) {
+                throw new Error("A code push requires exactly one commit bundle");
+              }
+
+              const bundlePath = bundlePaths[0];
+              await exec.exec("git", ["bundle", "verify", bundlePath]);
+              const { stdout: headsOutput } = await exec.getExecOutput(
+                "git",
+                ["bundle", "list-heads", bundlePath]
+              );
+              const heads = headsOutput.trim().split("\n").filter(Boolean);
+              if (heads.length !== 1) {
+                throw new Error("A code push bundle must contain exactly one head");
+              }
+
+              const [bundleHead, bundleRef] = heads[0].split(/\s+/, 2);
+              if (
+                !/^[0-9a-f]{40}$/i.test(bundleHead) ||
+                !bundleRef?.startsWith("refs/heads/")
+              ) {
+                throw new Error("A code push bundle has an invalid head");
+              }
+              await exec.exec("git", ["fetch", bundlePath, bundleRef]);
+              const ancestry = await exec.getExecOutput(
+                "git",
+                ["merge-base", "--is-ancestor", activationHeadSha, bundleHead],
+                { ignoreReturnCode: true }
+              );
+              if (ancestry.exitCode !== 0) {
+                throw new Error("A code push must extend the activation head");
+              }
+              const { stdout: countOutput } = await exec.getExecOutput(
+                "git",
+                ["rev-list", "--count", `${activationHeadSha}..${bundleHead}`]
+              );
+              if (Number.parseInt(countOutput.trim(), 10) !== 1) {
+                throw new Error("A code push must contain exactly one commit");
+              }
             }
 
             const { data: pull } = await github.rest.pulls.get({
