@@ -42,7 +42,7 @@ const EXPECTED_SKILLS = [
   'fulcrum-solution-document',
   'fulcrum-workflow-decomposition'
 ];
-const USER_INVOKED_SKILLS = new Set(['fulcrum-discovery', 'fulcrum-solution-document']);
+const USER_INVOKED_SKILLS = new Set(['fulcrum-solution-document']);
 
 const COVERAGE_MAP_RELATIVE_PATH = path.join(
   PLUGIN_RELATIVE_PATH,
@@ -315,11 +315,11 @@ for (const skillPath of skillPaths) {
     failures.push(`${relativePath}: frontmatter name does not match directory`);
   }
 
+  const policyPath = path.join(path.dirname(skillPath), 'agents', 'openai.yaml');
   if (USER_INVOKED_SKILLS.has(directoryName)) {
     if (frontmatter?.['disable-model-invocation'] !== true) {
       failures.push(`${relativePath}: user-invoked skills must disable model invocation`);
     }
-    const policyPath = path.join(path.dirname(skillPath), 'agents', 'openai.yaml');
     if (!fs.existsSync(policyPath)) {
       failures.push(`${repoRelativePath(policyPath)}: Codex invocation policy is missing`);
     } else {
@@ -327,6 +327,20 @@ for (const skillPath of skillPaths) {
         const config = YAML.parse(fs.readFileSync(policyPath, 'utf8'));
         if (config?.policy?.allow_implicit_invocation !== false) {
           failures.push(`${repoRelativePath(policyPath)}: allow_implicit_invocation must be false`);
+        }
+      } catch (err) {
+        failures.push(`${repoRelativePath(policyPath)}: invalid YAML (${err.message.split('\n')[0].trim()})`);
+      }
+    }
+  } else {
+    if (frontmatter?.['disable-model-invocation'] === true) {
+      failures.push(`${relativePath}: model-invoked skills must not disable model invocation`);
+    }
+    if (fs.existsSync(policyPath)) {
+      try {
+        const config = YAML.parse(fs.readFileSync(policyPath, 'utf8'));
+        if (config?.policy?.allow_implicit_invocation === false) {
+          failures.push(`${repoRelativePath(policyPath)}: model-invoked skills must allow implicit invocation`);
         }
       } catch (err) {
         failures.push(`${repoRelativePath(policyPath)}: invalid YAML (${err.message.split('\n')[0].trim()})`);

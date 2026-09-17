@@ -1,20 +1,25 @@
 ---
 name: fulcrum-discovery
-description: Process discovery interview for Fulcrum app building. Understand the field workflow, deliverable, and constraints. User-invoked — run only on request or after the user chooses discovery in the app-builder workflow.
-disable-model-invocation: true
+description: Discover requirements before building a new Fulcrum app or workflow. Use when a user starts a new build, needs help clarifying a field process, deliverable, users, or constraints, or would benefit from a structured pre-build interview.
 ---
 
 **Discovery before building.** The most common failure mode in Fulcrum app building is starting with fields before understanding the workflow. This skill walks through a structured interview — one question at a time — to build a clear picture before opening the app builder.
 
 ## Invocation And Consent
 
-This is a manual workflow, even in hosts that ignore `disable-model-invocation`.
-Do not start a full interview merely because a user asks to build or edit an
-app. Start only when the user requests discovery or chooses it after
-`fulcrum-app-builder` offers the option. Reuse answers already provided.
+This skill may be selected automatically when a user starts a new Fulcrum app
+or workflow or needs pre-build requirements clarified. Automatic selection does
+not authorize starting the full interview without consent. Offer the user the
+same quick check-in versus full discovery choice defined by
+`fulcrum-app-builder`. If that workflow already offered the choice and the user
+selected full discovery, continue without asking again.
+
+Reuse answers already provided and ask only for missing information. If the user
+chooses the quick check-in or declines the full interview, return control to the
+calling workflow after confirming the minimum goal, deliverable, and users.
 Keep the summary in the conversation unless the user requests a saved document.
-An interview request does not authorize file writes, app changes, or external
-sharing; obtain approval for those actions separately.
+Discovery does not authorize file writes, app changes, or external sharing;
+obtain approval for those actions separately.
 
 ## Platform Boundaries — Resolve Before the Interview
 
@@ -112,6 +117,13 @@ safety applicability, constraints, and the recommended structure.
 Present this to the builder. Confirm before building. Then proceed with `fulcrum-app-design`.
 
 ## Completion Criteria
+
+### Quick check-in
+
+- [ ] Goal, deliverable, and users are confirmed
+- [ ] Control is returned to the calling workflow
+
+### Full discovery
 
 - [ ] Platform boundaries reviewed — any misconceptions resolved before the interview
 - [ ] Required feature eligibility verified against current sources and organization access, or explicitly marked unresolved with a fallback
