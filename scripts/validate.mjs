@@ -482,16 +482,25 @@ const queryGuidance = queryGuidancePaths
   .join('\n');
 const normalizedQueryGuidance = queryGuidance.replace(/\s+/g, ' ');
 
-const queryToolPurposes = {
-  form_summaries: 'list forms available to the authenticated user',
-  get_form_query_tables: 'return Query table definitions for a selected form',
-  query_records: 'execute read-only Query SQL'
-};
-for (const [tool, purpose] of Object.entries(queryToolPurposes)) {
-  const escapedTool = tool.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-  if (!new RegExp(`\`${escapedTool}(?:\\([^\\n\`]*\\))?\``).test(queryGuidance)) {
+const queryWorkflowPurposes = [
+  {
+    purpose: 'list forms available to the authenticated user',
+    pattern: /\b(?:list|discover|find)\b.{0,80}\bforms?\b.{0,80}\bavailable\b.{0,80}\bauthenticated user\b/i
+  },
+  {
+    purpose: 'return Query table definitions for a selected form',
+    pattern:
+      /\b(?:return|discover|retrieve|get)\b.{0,80}\bQuery table (?:definitions|metadata|schemas?)\b.{0,80}\b(?:selected|intended|specified|chosen) form\b/i
+  },
+  {
+    purpose: 'execute read-only Query SQL',
+    pattern: /\b(?:execute|run|submit|pass)\b.{0,80}\bread-only\b.{0,80}\b(?:Query )?SQL\b/i
+  }
+];
+for (const { purpose, pattern } of queryWorkflowPurposes) {
+  if (!pattern.test(normalizedQueryGuidance)) {
     failures.push(
-      `${repoRelativePath(querySkillPath)}: document the stable Query MCP workflow purpose "${purpose}" (currently \`${tool}\`)`
+      `${repoRelativePath(querySkillPath)}: document the stable Query MCP workflow purpose "${purpose}"`
     );
   }
 }
