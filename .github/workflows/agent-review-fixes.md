@@ -61,6 +61,11 @@ network:
   allowed: [defaults, node]
 
 safe-outputs:
+  missing-tool: false
+  missing-data: false
+  report-incomplete: false
+  report-failure-as-issue: false
+  report-failed-jobs: false
   push-to-pull-request-branch:
     target: triggering
     max: 1
@@ -395,12 +400,47 @@ jobs:
               throw new Error("Review reply body is invalid");
             }
 
+            const path = require("path");
+            const actionsDir = path.join(process.env.RUNNER_TEMP, "gh-aw", "actions");
+            const { sanitizeContent } = require(
+              path.join(actionsDir, "sanitize_content.cjs")
+            );
+            const {
+              generateFooterWithMessages,
+              getDetectionCautionAlert,
+            } = require(path.join(actionsDir, "messages_footer.cjs"));
+            const workflowName = context.workflow;
+            const runUrl =
+              `${context.serverUrl}/${owner}/${repo}/actions/runs/${context.runId}`;
+            const workflowSource =
+              `${owner}/${repo}/.github/workflows/agent-review-fixes.md@${context.ref}`;
+            const workflowSourceUrl =
+              `${context.serverUrl}/${owner}/${repo}/blob/${context.ref}` +
+              "/.github/workflows/agent-review-fixes.md";
+            let finalBody = sanitizeContent(body);
+            const detectionCaution = getDetectionCautionAlert(workflowName, runUrl);
+            if (detectionCaution) {
+              finalBody = detectionCaution + "\n\n" + finalBody;
+            }
+            const footer = generateFooterWithMessages(
+              workflowName,
+              runUrl,
+              workflowSource,
+              workflowSourceUrl,
+              undefined,
+              pullNumber,
+              undefined,
+              undefined,
+              { skipDetectionCaution: true }
+            );
+            finalBody = finalBody.trimEnd() + "\n\n" + footer;
+
             await github.rest.pulls.createReplyForReviewComment({
               owner,
               repo,
               pull_number: pullNumber,
               comment_id: replyTargetCommentId,
-              body,
+              body: finalBody,
             });
 
             if (wantsResolution) {
