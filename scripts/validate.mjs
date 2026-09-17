@@ -11,10 +11,16 @@ import { createRequire } from 'node:module';
 
 const require = createRequire(import.meta.url);
 let YAML;
+let containsGenericElementDiscriminator;
+let isElementDiscriminatorContractPath;
 try {
   YAML = require('../tools/format-validator/node_modules/yaml');
+  ({
+    containsGenericElementDiscriminator,
+    isElementDiscriminatorContractPath
+  } = await import('../tools/format-validator/lib/element-discriminator.mjs'));
 } catch {
-  console.error('Missing yaml. Run `npm ci` in tools/format-validator first.');
+  console.error('Missing validator dependencies. Run `npm ci` in tools/format-validator first.');
   process.exit(1);
 }
 
@@ -125,8 +131,6 @@ const PRIVATE_HOST_SUFFIXES = [
   'invalid', 'lan', 'local', 'localhost', 'onion', 'test'
 ];
 const HTTP_URL = /https?:\/\/[^\s"'`<>)]+/gi;
-const INVALID_GENERIC_ELEMENT_DISCRIMINATOR =
-  /(?:["']type["']|(?<![$\p{ID_Continue}])type)\s*:\s*["']Element["']/u;
 
 function normalizeContainerPrefix(sourceLine) {
   let line = sourceLine.trimStart();
@@ -416,16 +420,15 @@ for (const p of uniqueTextPaths) {
     failures.push(`${relative}: Inventory fingerprint is allowed only in ${FINGERPRINT_ALLOWED_PATHS.join(' or ')}`);
   }
 
-  const skillRelativePath = path.relative(SKILLS_DIR, p);
-  const skillContentDirectory = skillRelativePath.startsWith(`..${path.sep}`)
-    ? undefined
-    : skillRelativePath.split(path.sep)[1];
-  if (
-    ['examples', 'assets'].includes(skillContentDirectory) &&
-    ['.js', '.json'].includes(path.extname(p).toLowerCase()) &&
-    INVALID_GENERIC_ELEMENT_DISCRIMINATOR.test(text)
-  ) {
-    failures.push(`${relative}: Element is a generic schema name, not a valid field type discriminator`);
+  const extension = path.extname(p).toLowerCase();
+  if (isElementDiscriminatorContractPath(p, SKILLS_DIR) && ['.js', '.json'].includes(extension)) {
+    try {
+      if (containsGenericElementDiscriminator(text, extension)) {
+        failures.push(`${relative}: Element is a generic schema name, not a valid field type discriminator`);
+      }
+    } catch (error) {
+      failures.push(`${relative}: cannot inspect element discriminators (${error.message})`);
+    }
   }
 }
 
