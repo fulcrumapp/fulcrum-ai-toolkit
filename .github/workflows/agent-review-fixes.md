@@ -320,11 +320,14 @@ jobs:
               throw new Error("Pull request no longer satisfies the mutation policy");
             }
 
-            await github.rest.pulls.getReviewComment({
+            const { data: reviewComment } = await github.rest.pulls.getReviewComment({
               owner,
               repo,
               comment_id: commentId,
             });
+            const replyTargetCommentId = Number.isInteger(reviewComment.in_reply_to_id)
+              ? reviewComment.in_reply_to_id
+              : commentId;
 
             let thread = null;
             let cursor = null;
@@ -393,7 +396,7 @@ jobs:
               owner,
               repo,
               pull_number: pullNumber,
-              comment_id: commentId,
+              comment_id: replyTargetCommentId,
               body,
             });
 
