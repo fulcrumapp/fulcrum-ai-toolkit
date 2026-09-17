@@ -87,7 +87,8 @@ precedence over toolkit prose.
 
 ## Start here
 
-1. Run `fulcrum-discovery` for a new workflow.
+1. Let `fulcrum-discovery` clarify a new workflow, choosing a quick check-in or
+   full interview when offered.
 2. Define the goal and deliverable with `fulcrum-app-goal`.
 3. Use `fulcrum-app-builder` and `fulcrum-app-design` to propose and approve a schema.
 4. Route integration, mapping, Query API, access, and migration decisions to
@@ -227,7 +228,7 @@ activation, an authenticated MCP connection, or successful live app creation.
 | `fulcrum-workflow-decomposition` | Break monolithic apps into composable, maintainable pieces | Model-invoked |
 | `fulcrum-app-extensions` | App extension anatomy, FS bridge API, offline support, picker anti-pattern | Model-invoked |
 | `fulcrum-report-building` | Report template authoring — EJS tags, repeatables, parameters, debugging | Model-invoked |
-| `fulcrum-discovery` | Process discovery before building — interview the customer | User-invoked |
+| `fulcrum-discovery` | Process discovery before building — interview the customer | Model-invoked |
 | `fulcrum-solution-document` | Post-build documentation, privacy review, and destination-neutral sharing formats | User-invoked |
 
 ## Usage
@@ -248,6 +249,8 @@ uses the focused skill to:
   (`fulcrum-access-management`)
 - Plan supported migrations with dry-run, reconciliation, and rollback evidence
   (`fulcrum-data-migration`)
+- Clarify new app and workflow requirements with a quick check-in or an optional
+  full interview (`fulcrum-discovery`)
 - Guide app discovery, schema approval, and App MCP-dependent execution (`fulcrum-app-builder`)
 - Check that every app has a clear goal before building (`fulcrum-app-goal`)
 - Select appropriate field types and app structure (`fulcrum-app-design`)
@@ -257,16 +260,16 @@ uses the focused skill to:
 - Apply extension best practices and avoid the picker anti-pattern (`fulcrum-app-extensions`)
 - Guide report template authoring with correct EJS patterns and parameter handling (`fulcrum-report-building`)
 
-Two skills are intended to be **user-invoked** — request them explicitly:
+One skill is intended to be **user-invoked** — request it explicitly:
 
-- `fulcrum-discovery` — start a new project by interviewing the customer before building
 - `fulcrum-solution-document` — after building, document what was built, review it for privacy, and prepare it for a destination chosen by the user
 
-Claude Code and Cursor use `disable-model-invocation: true`; Codex uses each
-skill's `agents/openai.yaml` policy. These are host adapters, not guarantees
-provided by the Agent Skills standard. On other hosts, invocation behavior may
-differ. The skill bodies also require a user request or consent before an
-interview or document workflow, and explicit approval before an external send.
+For `fulcrum-solution-document`, Claude Code and Cursor use
+`disable-model-invocation: true`, while Codex uses the skill's
+`agents/openai.yaml` policy. These are host adapters, not guarantees provided by
+the Agent Skills standard. On other hosts, invocation behavior may differ.
+Contextual discovery still asks the user to choose a quick check-in or full
+interview, and explicit approval remains required before an external send.
 
 ## Where this comes from
 
