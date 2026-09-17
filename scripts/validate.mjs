@@ -126,7 +126,7 @@ const PRIVATE_HOST_SUFFIXES = [
 ];
 const HTTP_URL = /https?:\/\/[^\s"'`<>)]+/gi;
 const INVALID_GENERIC_ELEMENT_DISCRIMINATOR =
-  /(?:["']type["']|type)\s*:\s*["']Element["']/;
+  /(?:["']type["']|(?<![$\p{ID_Continue}])type)\s*:\s*["']Element["']/u;
 
 function normalizeContainerPrefix(sourceLine) {
   let line = sourceLine.trimStart();
