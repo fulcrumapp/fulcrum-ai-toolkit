@@ -1,8 +1,15 @@
-# Regional Fulcrum App MCP Setup
+# Regional Fulcrum MCP Setup
 
-Fulcrum hosts App MCP separately from this skill bundle. Connect only when the
-user requests live Fulcrum access; guidance and an approved implementation
-handoff do not need credentials or a connector.
+Fulcrum hosts a federated MCP gateway separately from this skill bundle. The
+same endpoint provides App MCP configuration tools and Query MCP read-only
+query tools when advertised by the live schema. Connect only when the user
+requests live Fulcrum access; guidance and an approved implementation handoff
+do not need credentials or a connector.
+
+Existing endpoint URLs, authentication behavior, client aliases such as
+`fulcrum-app`, and the `FULCRUM_APP_MCP_URL` environment-variable convention
+remain valid. These are client-side labels for the same endpoint; federation
+happens server-side, so existing installations need no configuration migration.
 
 ## Choose The Tenant's Instance
 
@@ -10,7 +17,7 @@ Ask which Fulcrum instance holds the target organization, or confirm it from
 the user's existing Fulcrum sign-in host. Do not infer it from language,
 physical location, or the agent machine's region.
 
-| Tenant instance | Fulcrum domain | App MCP endpoint |
+| Tenant instance | Fulcrum domain | Fulcrum MCP endpoint |
 | --- | --- | --- |
 | US / default instance | `fulcrumapp.com` | `https://mcp.fulcrumapp.com` |
 | Australia | `fulcrumapp-au.com` | `https://mcp.fulcrumapp-au.com` |
@@ -22,7 +29,7 @@ not the REST API's `api.<domain>/api/v2/` endpoints. "Default instance" names
 the US service; it is not permission to default an unknown tenant to that
 endpoint.
 
-> Source: The public [App MCP service](https://mcp.fulcrumapp.com) and its
+> Source: The public [Fulcrum MCP service](https://mcp.fulcrumapp.com) and its
 > regional endpoints above provide the connector. [Fulcrum regional-instance
 > documentation](https://docs.fulcrumapp.com/reference/working-with-other-instances)
 > describes the corresponding Fulcrum instance domains and REST distinction.
@@ -34,7 +41,7 @@ tenant. A connection failure is not permission to switch regions.
 ## Authenticate With An Organization API Token
 
 Use the existing opaque Fulcrum API token for the intended organization on
-the selected instance. App MCP expects the token in the `Authorization`
+the selected instance. Fulcrum MCP expects the token in the `Authorization`
 header with the `Bearer` scheme. It does not support OAuth login.
 
 Manage tokens in the selected instance's Fulcrum API settings. Choose the
@@ -124,7 +131,8 @@ proxy or claim that installing skills alone enables live actions.
    authenticated connection.
 3. Use an authorized read-only operation exposed by the live schema to
    confirm the intended organization's resources before proposing a write.
-   Do not create a disposable form as a connection test.
+   Query MCP `form_summaries` is suitable when advertised. Do not create a
+   disposable form as a connection test.
 4. Obtain schema/change approval before mutation and separate explicit
    confirmation for destructive changes.
 

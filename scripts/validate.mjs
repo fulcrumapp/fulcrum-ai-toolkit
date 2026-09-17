@@ -461,6 +461,55 @@ if (!fs.existsSync(setupPath)) {
   }
 }
 
+// Query MCP guidance contracts
+const querySkillPath = path.join(SKILLS_DIR, 'fulcrum-query-api', 'SKILL.md');
+const queryModelingPath = path.join(
+  SKILLS_DIR,
+  'fulcrum-query-api',
+  'resources',
+  'query-modeling-reference.md'
+);
+const reportSkillPath = path.join(SKILLS_DIR, 'fulcrum-report-building', 'SKILL.md');
+const queryGuidance = [querySkillPath, queryModelingPath]
+  .filter((p) => fs.existsSync(p))
+  .map((p) => fs.readFileSync(p, 'utf8'))
+  .join('\n');
+const normalizedQueryGuidance = queryGuidance.replace(/\s+/g, ' ');
+
+for (const tool of ['form_summaries', 'get_form_query_tables', 'query_records']) {
+  const escapedTool = tool.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  if (!new RegExp(`\`${escapedTool}(?:\\([^\\n\`]*\\))?\``).test(queryGuidance)) {
+    failures.push(`${repoRelativePath(querySkillPath)}: document the stable Query MCP tool ${tool}`);
+  }
+}
+if (!/live (?:Fulcrum MCP )?gateway schemas.{0,120}(?:authoritative|govern)/i.test(normalizedQueryGuidance)) {
+  failures.push(`${repoRelativePath(querySkillPath)}: live gateway schemas must own exact Query MCP contracts`);
+}
+if (!/read-only/i.test(queryGuidance) || !/single line|single-line/i.test(queryGuidance)) {
+  failures.push(`${repoRelativePath(querySkillPath)}: require read-only, single-line Query MCP SQL`);
+}
+if (!/LIMIT 100/i.test(queryGuidance) || !/explor/i.test(queryGuidance)) {
+  failures.push(`${repoRelativePath(querySkillPath)}: require LIMIT 100 for exploratory queries`);
+}
+if (
+  !/confirm/i.test(queryGuidance) ||
+  !/broad-column|broad column|SELECT \*/i.test(queryGuidance) ||
+  !/personal/i.test(queryGuidance) ||
+  !/location/i.test(queryGuidance) ||
+  !/media/i.test(queryGuidance)
+) {
+  failures.push(`${repoRelativePath(querySkillPath)}: require confirmation for broad and sensitive retrieval`);
+}
+if (!/direct Query API/i.test(queryGuidance) || !/fallback/i.test(queryGuidance)) {
+  failures.push(`${repoRelativePath(querySkillPath)}: retain a direct Query API fallback`);
+}
+if (fs.existsSync(reportSkillPath)) {
+  const reportGuidance = fs.readFileSync(reportSkillPath, 'utf8').replace(/\s+/g, ' ');
+  if (!/Report Builder `QUERY\(\)`.{0,160}distinct from Query MCP `query_records`/i.test(reportGuidance)) {
+    failures.push(`${repoRelativePath(reportSkillPath)}: distinguish Report Builder QUERY() from Query MCP query_records`);
+  }
+}
+
 const cursorManifestPath = `${PLUGIN_RELATIVE_PATH}/.cursor-plugin/plugin.json`;
 const cursorManifest = jsonDocuments[cursorManifestPath];
 if (cursorManifest) {
