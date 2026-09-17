@@ -68,9 +68,6 @@ documented geometry column when requesting a spatial response format.
 > defines the complete SQL `q` field plus optional `format` and `table_name`;
 > it defines no bind-parameter field.
 
-If Query MCP is unavailable, provide this direct Query API request contract as
-a reviewable fallback and state that execution did not occur.
-
 ## References
 
 - [POST Query request contract](https://docs.fulcrumapp.com/reference/query-post)

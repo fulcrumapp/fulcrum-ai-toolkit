@@ -1,7 +1,7 @@
 # Query API Asset Index
 
-Read-only SQL shapes for Query MCP and the direct Fulcrum Query API fallback.
-Every file carries `-- Source:` comments naming its public documentation.
+Read-only SQL shapes for Query MCP and Report Builder `QUERY()`. Every file
+carries `-- Source:` comments naming its public documentation.
 
 | File | What it holds |
 | --- | --- |
@@ -27,5 +27,5 @@ Every file carries `-- Source:` comments naming its public documentation.
 - Keep credentials in the client's secret mechanism, never in SQL or a shared
   URL.
 - Treat errors and truncated responses as failures, not empty successful
-  results. If Query MCP is unavailable, use the documented direct API contract
-  as a reviewable handoff and do not claim execution.
+  results. If Query MCP is unavailable, report that execution is unavailable
+  and do not claim that the query ran.

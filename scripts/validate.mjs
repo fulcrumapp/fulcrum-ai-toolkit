@@ -522,8 +522,11 @@ if (
 ) {
   failures.push(`${repoRelativePath(querySkillPath)}: require confirmation for broad and sensitive retrieval`);
 }
-if (!/direct Query API/i.test(queryGuidance) || !/fallback/i.test(queryGuidance)) {
-  failures.push(`${repoRelativePath(querySkillPath)}: retain a direct Query API fallback`);
+if (/direct Query API.{0,100}(?:fallback|hand ?off)/i.test(normalizedQueryGuidance)) {
+  failures.push(`${repoRelativePath(querySkillPath)}: do not add a direct Query API execution fallback`);
+}
+if (!/Query MCP tools are unavailable.{0,160}execution is unavailable/i.test(normalizedQueryGuidance)) {
+  failures.push(`${repoRelativePath(querySkillPath)}: fail clearly when Query MCP execution is unavailable`);
 }
 if (fs.existsSync(reportSkillPath)) {
   const reportGuidance = fs.readFileSync(reportSkillPath, 'utf8').replace(/\s+/g, ' ');

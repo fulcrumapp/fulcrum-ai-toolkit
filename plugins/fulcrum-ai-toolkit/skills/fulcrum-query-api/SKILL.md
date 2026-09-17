@@ -1,13 +1,12 @@
 ---
 name: fulcrum-query-api
-description: Discover, model, execute, and validate safe read-only Fulcrum queries through Query MCP. Use for system, app, repeatable, link, and media tables; metadata discovery; parameterization; documented PostgreSQL/PostGIS analysis; and direct Query API fallback.
+description: Discover, model, execute, and validate safe read-only Fulcrum queries through Query MCP. Use for system, app, repeatable, link, and media tables; metadata discovery; parameterization; and documented PostgreSQL/PostGIS analysis.
 ---
 
 # Fulcrum Query API
 
 Discover current metadata, model a read-only query, execute it through Query
-MCP when authorized, and validate the result. Keep the direct Query API as a
-reviewable fallback when the gateway does not advertise Query MCP tools.
+MCP when authorized, and validate the result.
 
 ## When To Use
 
@@ -32,7 +31,6 @@ read-only analytics.
    shapes.
 3. Metadata discovered from the target organization for actual table and column
    names.
-4. Public OpenAPI for the direct Query API fallback request shape.
 
 > Source: [Query API introduction](https://docs.fulcrumapp.com/reference/query-intro)
 > and [POST Query](https://docs.fulcrumapp.com/reference/query-post).
@@ -87,17 +85,15 @@ arguments, and result shapes can change.
    nullability, duplicates, parent-child cardinality, geometry, response
    format, and any truncation metadata against the expected shape.
 
-## Fulcrum MCP And Direct API Boundaries
+## Fulcrum MCP Boundaries
 
 The Fulcrum MCP gateway federates App MCP configuration operations and Query
 MCP read-only execution. Query MCP does not add record CRUD, media CRUD, or
 mutation support. Never route SQL through an unrelated App MCP operation or
 infer a tool not present in the live gateway schema.
 
-If Query MCP tools are unavailable, do not claim execution. Provide the
-single-statement SQL, identifier allowlist, literal-encoding contract, expected
-output, reconciliation checks, and documented direct Query API request shape
-for an authorized client to review and execute.
+If Query MCP tools are unavailable, report that execution is unavailable and
+do not claim that the query ran.
 
 Report Builder `QUERY()` is a server-side template runtime function. It is not
 the Query MCP `query_records` tool, and the two execution contexts must not be

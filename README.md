@@ -79,12 +79,11 @@ When separately registered for the confirmed tenant, the gateway provides App
 MCP as the default control plane for supported app configuration and knowledge
 operations, plus Query MCP for read-only Query API discovery and execution.
 Without it, `fulcrum-app-builder` stops at an approved implementation handoff
-and `fulcrum-query-api` provides a reviewable direct API fallback. App MCP
-covers forms, schema builders and validation, choices, classifications,
-projects, layer metadata, webhooks, Reference Files, memberships and roles,
-Report Templates, and report generation. Query MCP exposes read-only queries;
-record CRUD, media CRUD, and query mutations still require other supported
-interfaces.
+and Query MCP execution is unavailable. App MCP covers forms, schema builders
+and validation, choices, classifications, projects, layer metadata, webhooks,
+Reference Files, memberships and roles, Report Templates, and report
+generation. Query MCP exposes read-only queries; record CRUD, media CRUD, and
+query mutations still require other supported interfaces.
 
 Existing endpoint URLs, authentication, the `fulcrum-app` client alias, and the
 `FULCRUM_APP_MCP_URL` convention remain valid. They are client-side
@@ -223,7 +222,7 @@ activation, an authenticated MCP connection, or successful live app creation.
 | `fulcrum-product-knowledge` | Fulcrum platform capability router, constraints, plans, boundaries, and App MCP build reference | Model-invoked |
 | `fulcrum-integration-patterns` | Workflow and integration selection, webhooks, URL Actions, REST, middleware, and delivery safety | Model-invoked |
 | `fulcrum-gis-mapping` | GIS/layer selection, online/offline mapping, geometry, and import/export boundaries | Model-invoked |
-| `fulcrum-query-api` | Query MCP-first read-only discovery, SQL modeling, execution, validation, and direct Query API fallback | Model-invoked |
+| `fulcrum-query-api` | Query MCP read-only discovery, SQL modeling, execution, and validation | Model-invoked |
 | `fulcrum-access-management` | Roles, resource access, memberships, SSO/SCIM, and least-privilege reasoning | Model-invoked |
 | `fulcrum-data-migration` | Supported migration assessment, mapping, dry runs, reconciliation, cutover, and rollback design | Model-invoked |
 | `fulcrum-app-builder` | Novice-friendly app discovery, schema approval, App MCP orchestration, and connector-independent handoff | Model-invoked |
@@ -249,8 +248,7 @@ uses the focused skill to:
   (`fulcrum-integration-patterns`)
 - Verify current GIS, layer, geometry, and online/offline mapping support
   (`fulcrum-gis-mapping`)
-- Discover, execute, and validate bounded read-only SQL through Query MCP, with
-  a direct Query API fallback
+- Discover, execute, and validate bounded read-only SQL through Query MCP
   (`fulcrum-query-api`)
 - Design role plus resource access and SSO/SCIM lifecycle controls
   (`fulcrum-access-management`)
