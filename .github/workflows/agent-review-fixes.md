@@ -348,7 +348,7 @@ jobs:
                         nodes {
                           id
                           isResolved
-                          comments(last: 100) { nodes { databaseId } }
+                          comments(last: 100) { nodes { databaseId body } }
                         }
                         pageInfo { hasNextPage endCursor }
                       }
@@ -435,13 +435,29 @@ jobs:
             );
             finalBody = finalBody.trimEnd() + "\n\n" + footer;
 
-            await github.rest.pulls.createReplyForReviewComment({
-              owner,
-              repo,
-              pull_number: pullNumber,
-              comment_id: replyTargetCommentId,
-              body: finalBody,
-            });
+            const marker = footer.match(
+              /<!-- gh-aw-agentic-workflow:.*?-->/s
+            )?.[0];
+            if (!marker) {
+              throw new Error("Generated review reply footer is missing its marker");
+            }
+            const replyAlreadyPosted = thread.comments.nodes.some(
+              (comment) =>
+                comment.databaseId !== commentId &&
+                typeof comment.body === "string" &&
+                comment.body.includes(marker)
+            );
+            if (replyAlreadyPosted) {
+              core.info("Review reply for this workflow run already exists");
+            } else {
+              await github.rest.pulls.createReplyForReviewComment({
+                owner,
+                repo,
+                pull_number: pullNumber,
+                comment_id: replyTargetCommentId,
+                body: finalBody,
+              });
+            }
 
             if (wantsResolution) {
               await github.graphql(
