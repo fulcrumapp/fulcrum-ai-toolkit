@@ -57,6 +57,9 @@ tools:
     allowed:
       - pull_request_read
 
+network:
+  allowed: [defaults, node]
+
 safe-outputs:
   push-to-pull-request-branch:
     target: triggering
