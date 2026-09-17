@@ -121,12 +121,21 @@ with frequent updates or slow/intermittent field connections. This applies
 to extension bundles and shared code as well as non-code reference material.
 Separate this transfer/update cost from the code's runtime performance.
 
+For a consistent toolkit review, use **large** as an advisory trigger when an
+individual Reference File is at least **1 MiB**, the set of changed Reference
+Files is at least **5 MiB**, or an observed sync of the changed files takes at
+least **5 seconds** on a representative target connection. These are review
+heuristics, not Fulcrum limits or guarantees: report the actual bytes, files,
+connection, and measured time when available, and still flag a smaller file
+when its update frequency or target connection makes the transfer material.
+
 Report a **Sync warning (advisory; no automatic score deduction or cap)**.
 Where available, include individual and total file sizes, which files change,
 expected update frequency, affected devices/connections, and observed sync
-times. Label missing measurements as unmeasured. Do not invent a universal
-file-size threshold, transfer duration, or assumption that every sync
-downloads every file; verify actual client/version behavior if it matters.
+times. Label missing measurements as unmeasured. Do not present the heuristics
+as a universal file-size threshold or transfer-duration guarantee, and do not
+assume that every sync downloads every file; verify actual client/version
+behavior if it matters.
 
 Suggest proportionate options: reduce unnecessary asset size, separate
 frequently changing content from large stable assets where supported, avoid

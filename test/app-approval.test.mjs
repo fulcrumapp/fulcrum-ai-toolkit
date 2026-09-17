@@ -306,7 +306,11 @@ test('Reference File sync cost is an advisory warning even when there is no code
   assert.match(warning, /no automatic score deduction or cap/);
   assert.match(warning, /individual and total file sizes/);
   assert.match(warning, /expected update frequency/);
-  assert.match(warning, /Do not invent a universal file-size threshold/);
+  assert.match(warning, /individual Reference File is at least \*\*1 MiB\*\*/);
+  assert.match(warning, /changed Reference Files is at least \*\*5 MiB\*\*/);
+  assert.match(warning, /sync of the changed files takes at least \*\*5 seconds\*\*/);
+  assert.match(warning, /review heuristics, not Fulcrum limits or guarantees/);
+  assert.match(warning, /Do not present the heuristics as a universal file-size threshold/);
   assert.match(warning, /Preserve offline availability/);
   assert.match(warning, /File size or update frequency alone must not fail a rubric check/);
   assert.match(warning, /does not waive code inspection/);
