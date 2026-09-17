@@ -118,6 +118,13 @@ Present this to the builder. Confirm before building. Then proceed with `fulcrum
 
 ## Completion Criteria
 
+### Quick check-in
+
+- [ ] Goal, deliverable, and users are confirmed
+- [ ] Control is returned to the calling workflow
+
+### Full discovery
+
 - [ ] Platform boundaries reviewed — any misconceptions resolved before the interview
 - [ ] Required feature eligibility verified against current sources and organization access, or explicitly marked unresolved with a fallback
 - [ ] All 8 interview topics are covered using existing answers or requested follow-up questions
