@@ -470,7 +470,13 @@ const queryModelingPath = path.join(
   'query-modeling-reference.md'
 );
 const reportSkillPath = path.join(SKILLS_DIR, 'fulcrum-report-building', 'SKILL.md');
-const queryGuidance = [querySkillPath, queryModelingPath]
+const queryGuidancePaths = [querySkillPath, queryModelingPath];
+for (const guidancePath of queryGuidancePaths) {
+  if (!fs.existsSync(guidancePath)) {
+    failures.push(`${repoRelativePath(guidancePath)}: Query guidance file is missing`);
+  }
+}
+const queryGuidance = queryGuidancePaths
   .filter((p) => fs.existsSync(p))
   .map((p) => fs.readFileSync(p, 'utf8'))
   .join('\n');
