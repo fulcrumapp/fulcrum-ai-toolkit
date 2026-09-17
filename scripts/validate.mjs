@@ -125,6 +125,8 @@ const PRIVATE_HOST_SUFFIXES = [
   'invalid', 'lan', 'local', 'localhost', 'onion', 'test'
 ];
 const HTTP_URL = /https?:\/\/[^\s"'`<>)]+/gi;
+const INVALID_GENERIC_ELEMENT_DISCRIMINATOR =
+  /(?:["']type["']|type)\s*:\s*["']Element["']/;
 
 function normalizeContainerPrefix(sourceLine) {
   let line = sourceLine.trimStart();
@@ -412,6 +414,13 @@ for (const p of uniqueTextPaths) {
 
   for (const _ of invalidInventoryFingerprints(text, relative, FINGERPRINT_ALLOWED_PATHS)) {
     failures.push(`${relative}: Inventory fingerprint is allowed only in ${FINGERPRINT_ALLOWED_PATHS.join(' or ')}`);
+  }
+
+  if (
+    ['.js', '.json'].includes(path.extname(p).toLowerCase()) &&
+    INVALID_GENERIC_ELEMENT_DISCRIMINATOR.test(text)
+  ) {
+    failures.push(`${relative}: Element is a generic schema name, not a valid field type discriminator`);
   }
 }
 

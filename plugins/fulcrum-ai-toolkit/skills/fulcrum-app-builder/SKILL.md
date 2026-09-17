@@ -121,15 +121,31 @@ When App MCP is available, follow its live schemas exactly. Do not hand-write ne
 > arguments and result shapes. The preservation workflow is a toolkit safety
 > guard around the [public Forms API](https://docs.fulcrumapp.com/reference/forms-intro).
 
+### Element type discriminators
+
+“Element” is a generic name for an item in a form schema. It is **not** a
+Fulcrum field type and must never be used as an element's `type` value. Every
+element must retain a concrete discriminator returned by App MCP, such as
+`TextField`, `ChoiceField`, `Section`, `Repeatable`, or `RecordLinkField`.
+
+Pass the objects returned by `fulcrum_schema_build_field` through to form
+assembly unchanged. Do not reconstruct them from tool-schema model names or
+replace their `type` values. Before create or update, recursively inspect every
+top-level element and every child of a Section or Repeatable. If a `type` is
+missing, is not a string, or is not one of the concrete types reported by
+`fulcrum_schema_field_types`, stop and rebuild that element with
+`fulcrum_schema_build_field`.
+
 For a new app:
 
 1. Call `fulcrum_schema_field_types` when field capabilities are uncertain.
 2. Build each field with `fulcrum_schema_build_field`.
 3. For inline choices, pass either string labels or `{ "label": "...", "value": "..." }` objects. Use object form whenever the stored value differs from the label; App MCP preserves explicit values.
-4. Assemble the new form with `fulcrum_schema_build_form`.
-5. Validate the generated definition with `fulcrum_forms_validate`.
-6. Create it with `fulcrum_forms_create`, including the approved `script` only after the form structure is valid.
-7. Let `fulcrum_forms_create` create its default Report Template. Set `skip_default_report: true` only when the user explicitly asks to opt out.
+4. Assemble the new form with `fulcrum_schema_build_form`, passing the exact field objects returned by the field builder.
+5. Recursively verify that every element still has its builder-produced concrete `type`.
+6. Validate the generated definition with `fulcrum_forms_validate`.
+7. Create it with `fulcrum_forms_create`, including the approved `script` only after the form structure is valid.
+8. Let `fulcrum_forms_create` create its default Report Template. Set `skip_default_report: true` only when the user explicitly asks to opt out.
 
 The full ordered sequence, with the builder arguments worth knowing, is in [`assets/app-build-sequence.txt`](assets/app-build-sequence.txt).
 
@@ -138,7 +154,7 @@ If the result contains a created form plus `report_template_error`, report that 
 For an existing app:
 
 1. Fetch the current form with `fulcrum_forms_get`.
-2. Copy its complete element tree and preserve every existing element key and inline-choice key.
+2. Copy its complete element tree and preserve every existing element key, concrete `type`, and inline-choice key.
 3. Modify requested properties in place without changing their keys.
 4. Use `fulcrum_schema_build_field` only for genuinely new field additions, then insert those additions into the copied tree.
 5. Preservation is the default. Preserve every unrequested element and choice. Omit `removed_element_keys` when nothing was removed.
@@ -190,6 +206,8 @@ After a build or handoff, summarize:
 - Never use client-side data events as an authorization boundary.
 - Never embed secrets in app scripts, report templates, or extension code.
 - Never regenerate existing element or choice keys during an update.
+- Never emit the generic schema/model name `Element` as a field `type`.
+- Never change an existing element's concrete `type`; replacing a field requires an explicitly approved destructive migration.
 - Never claim execution when App MCP is unavailable.
 - Never select or change the tenant's MCP endpoint without confirmation.
 
