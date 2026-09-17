@@ -79,6 +79,8 @@ safe-outputs:
 
 jobs:
   safe_outputs:
+    permissions:
+      pull-requests: read
     pre-steps:
       - name: Download agent output for policy validation
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
