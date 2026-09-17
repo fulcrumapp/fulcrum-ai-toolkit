@@ -338,17 +338,21 @@ jobs:
               : commentId;
 
             let thread = null;
+            let authenticatedLogin = null;
             let cursor = null;
             do {
               const data = await github.graphql(
                 `query($owner: String!, $repo: String!, $number: Int!, $cursor: String) {
+                  viewer { login }
                   repository(owner: $owner, name: $repo) {
                     pullRequest(number: $number) {
                       reviewThreads(first: 100, after: $cursor) {
                         nodes {
                           id
                           isResolved
-                          comments(last: 100) { nodes { databaseId body } }
+                          comments(last: 100) {
+                            nodes { databaseId body author { login } }
+                          }
                         }
                         pageInfo { hasNextPage endCursor }
                       }
@@ -357,6 +361,10 @@ jobs:
                 }`,
                 { owner, repo, number: pullNumber, cursor }
               );
+              if (typeof data.viewer?.login !== "string" || !data.viewer.login) {
+                throw new Error("Authenticated GitHub identity is unavailable");
+              }
+              authenticatedLogin = data.viewer.login;
               const connection = data.repository.pullRequest.reviewThreads;
               thread = connection.nodes.find((candidate) =>
                 candidate.comments.nodes.some(
@@ -444,6 +452,7 @@ jobs:
             const replyAlreadyPosted = thread.comments.nodes.some(
               (comment) =>
                 comment.databaseId !== commentId &&
+                comment.author?.login === authenticatedLogin &&
                 typeof comment.body === "string" &&
                 comment.body.includes(marker)
             );
