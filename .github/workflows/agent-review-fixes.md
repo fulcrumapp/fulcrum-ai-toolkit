@@ -273,6 +273,7 @@ jobs:
         if: needs.safe_outputs.result == 'success'
         uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
         env:
+          ACTIVATION_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
           PUSH_COMMIT_SHA: ${{ needs.safe_outputs.outputs.push_commit_sha }}
         with:
           github-token: ${{ secrets.PR_REVIEW_THREAD_TOKEN || secrets.GITHUB_TOKEN }}
@@ -372,6 +373,11 @@ jobs:
               }
               if (resolutions[0].thread_id !== thread.id) {
                 throw new Error("Resolution does not target the triggering review thread");
+              }
+            } else {
+              const activationHeadSha = process.env.ACTIVATION_HEAD_SHA;
+              if (!activationHeadSha || pull.head.sha !== activationHeadSha) {
+                throw new Error("Pull request head changed after the reply-only assessment");
               }
             }
 
