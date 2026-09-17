@@ -87,8 +87,8 @@ precedence over toolkit prose.
 
 ## Start here
 
-1. Let `fulcrum-discovery` clarify a new workflow, choosing a quick check-in or
-   full interview when offered.
+1. Let `fulcrum-discovery` clarify a new workflow. It will offer a quick
+   check-in or full interview and honor the user's choice.
 2. Define the goal and deliverable with `fulcrum-app-goal`.
 3. Use `fulcrum-app-builder` and `fulcrum-app-design` to propose and approve a schema.
 4. Route integration, mapping, Query API, access, and migration decisions to
