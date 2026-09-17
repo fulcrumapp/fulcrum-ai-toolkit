@@ -40,9 +40,9 @@ read-only analytics.
 ## Query MCP Tools
 
 The Fulcrum MCP endpoint is a federated gateway for App MCP and Query MCP. These
-stable Query MCP tools define the workflow; inspect the live gateway schemas
-before every invocation because they remain authoritative for exact arguments
-and result shapes.
+Query MCP tools serve stable purposes in the workflow; inspect the live gateway
+schemas before every invocation because tool names, descriptions, exact
+arguments, and result shapes can change.
 
 | Tool | Purpose |
 | --- | --- |
