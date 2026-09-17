@@ -52,11 +52,13 @@ test('assessment uses the composed edit and revisits material changes before wri
   assertInOrder(sequence, [
     'Step 5 Performance review and approval gate',
     'Step 6 Pre-create freshness check',
-    'Immediately re-read the target form identity',
+    'currently registered form list/search/discovery operation',
+    'If no supported discovery operation exists, freshness is unverifiable',
     'Step 7 fulcrum_forms_create'
   ]);
   const newApp = build.split('For a new app:')[1].split('For an existing app:')[0];
-  assert.match(newApp, /Complete the performance review.*Immediately re-read the target form identity.*Create it with `fulcrum_forms_create`/);
+  assert.match(newApp, /Complete the performance review.*currently registered form list\/search\/discovery operation.*freshness is unverifiable.*Create it with `fulcrum_forms_create`/);
+  assert.match(compact(read('fulcrum-app-builder/resources/pre-write-freshness.md')), /If no supported discovery operation exists, freshness is unverifiable/);
   const existingApp = build.split('For an existing app:')[1].split('### Data Event scripts')[0];
   assertInOrder(existingApp, [
     'Complete the performance review',

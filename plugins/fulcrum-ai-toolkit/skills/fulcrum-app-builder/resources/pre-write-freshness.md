@@ -14,8 +14,11 @@ Use current registered schemas; this guide does not add tool parameters.
 2. **Always read current state immediately before writing.** Fetch the full
    target plus relevant dependencies and known consumers, even if no change is
    known. For Reference Files, compare actual content or a trustworthy
-   content hash/revision, not the filename alone. Recheck that a new target has
-   not appeared since approval; do not accidentally replace it.
+   content hash/revision, not the filename alone. For a proposed new target,
+   use a currently registered list/search/discovery operation when available to
+   recheck that it has not appeared since approval. If no supported discovery
+   operation exists, freshness is unverifiable; stop and report the limitation
+   rather than guessing an identifier, inventing a tool call, or writing.
 3. **Reconcile, do not replay.** Compare current state with the approved
    baseline and apply only the approved edits to the latest state, preserving
    intervening unrequested fields, choices, handlers, and file/template changes.

@@ -39,10 +39,13 @@ Step 5  Performance review and approval gate (no live writes)
         Complete this gate before continuing to Step 6.
 
 Step 6  Pre-create freshness check (no live writes)
-        Immediately re-read the target form identity and confirm that no form
-        with the approved name/identity appeared after approval. If the target
-        now exists or the approved assumptions changed, stop and reconcile
-        through ../resources/pre-write-freshness.md before creating anything.
+        Use a currently registered form list/search/discovery operation, when
+        the live App MCP catalog provides one, to re-read the target identity
+        and confirm that no form with the approved name/identity appeared
+        after approval. If the target exists or assumptions changed, stop and
+        reconcile through ../resources/pre-write-freshness.md. If no supported
+        discovery operation exists, freshness is unverifiable: stop and report
+        the limitation rather than inventing a tool call or issuing create.
 
 Step 7  fulcrum_forms_create(name=..., elements=[...from step 3...])
         Optionally include a `script` value with the form's Data Events.

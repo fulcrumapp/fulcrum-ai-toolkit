@@ -198,11 +198,14 @@ For a new app:
 6. Complete the performance review of the built code and dependencies. Refresh
    the score and advice and obtain approval again if the assessment or design
    changed materially. Do not perform the create until this gate is complete.
-7. Immediately re-read the target form identity and verify that no form with
-   the approved name/identity appeared after approval. If it exists or the
-   approved assumptions changed, stop and reconcile through the
-   [pre-write freshness safeguard](resources/pre-write-freshness.md) before
-   creating anything.
+7. Use a currently registered form list/search/discovery operation, when the
+   live App MCP catalog provides one, to re-read the target identity and
+   verify that no form with the approved name/identity appeared after approval.
+   If it exists or the approved assumptions changed, stop and reconcile
+   through the [pre-write freshness safeguard](resources/pre-write-freshness.md)
+   before creating anything. If no supported discovery operation exists,
+   freshness is unverifiable: stop and report the limitation rather than
+   inventing a tool call or issuing create.
 8. Create it with `fulcrum_forms_create`, including the approved `script` only after the form structure is valid.
 9. Let `fulcrum_forms_create` create its default Report Template. Set `skip_default_report: true` only when the user explicitly asks to opt out.
 
