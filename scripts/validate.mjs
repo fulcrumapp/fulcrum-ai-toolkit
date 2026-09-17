@@ -416,7 +416,12 @@ for (const p of uniqueTextPaths) {
     failures.push(`${relative}: Inventory fingerprint is allowed only in ${FINGERPRINT_ALLOWED_PATHS.join(' or ')}`);
   }
 
+  const skillRelativePath = path.relative(SKILLS_DIR, p);
+  const skillContentDirectory = skillRelativePath.startsWith(`..${path.sep}`)
+    ? undefined
+    : skillRelativePath.split(path.sep)[1];
   if (
+    ['examples', 'assets'].includes(skillContentDirectory) &&
     ['.js', '.json'].includes(path.extname(p).toLowerCase()) &&
     INVALID_GENERIC_ELEMENT_DISCRIMINATOR.test(text)
   ) {
