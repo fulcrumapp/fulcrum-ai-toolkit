@@ -57,12 +57,16 @@ Event function.
 5. Write the complete script with `fulcrum_forms_update`.
 
 For optional cleanup, first update the form script so it no longer references
-the `attachment://` URL. Then call
-`fulcrum_reference_files_delete(form_id=..., file_id=...)`. The service verifies
-that the attachment belongs to the supplied form and rejects mismatches. Keep
-the filename synchronized with the `attachment://` URL. The live installed App
-MCP schema remains authoritative for exact arguments. The full ordered sequence
-is in
+the `attachment://` URL. Use
+`fulcrum_reference_files_list(form_id=...)` to verify that the intended filename
+and file ID appear for that form. Immediately before deletion, obtain explicit
+confirmation that identifies the form name and ID, filename, and file ID, then call
+`fulcrum_reference_files_delete(file_id=...)`. The current delete contract
+accepts only `file_id` and does not verify form ownership, so do not delete a
+file that was not verified against the form-specific list result. Keep the
+filename synchronized with the `attachment://` URL. The live installed App MCP
+schema remains authoritative for exact arguments. The full ordered sequence is
+in
 [`app-mcp-extension-publish-sequence.txt`](../assets/app-mcp-extension-publish-sequence.txt).
 
 ## Sandbox Constraints

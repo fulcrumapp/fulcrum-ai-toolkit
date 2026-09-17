@@ -39,13 +39,18 @@ Step 6  fulcrum_forms_update(
         unrelated handlers.
 
 Optional cleanup  After the form script no longer references the attachment://
-                  URL, call:
+                  URL, call fulcrum_reference_files_list(form_id=...) and
+                  verify that the intended filename and file ID appear for
+                  that form.
 
-                  fulcrum_reference_files_delete(
-                    form_id=...,
-                    file_id=...
-                  )
+                  Immediately before deletion, obtain explicit confirmation
+                  that identifies the form name and ID, filename, and file ID.
+                  After confirmation, call:
 
-                  The service verifies that the attachment belongs to the
-                  supplied form and rejects mismatches. The live installed App
-                  MCP schema remains authoritative for exact arguments.
+                  fulcrum_reference_files_delete(file_id=...)
+
+                  The current delete contract accepts only file_id and does
+                  not verify form ownership. Do not delete a file that was not
+                  verified against the form-specific list result. The live
+                  installed App MCP schema remains authoritative for exact
+                  arguments.
