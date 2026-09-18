@@ -4,7 +4,14 @@ import { validateClaudeManualCommand } from '../scripts/claude-adapter.mjs';
 
 const manifest = { commands: './commands/' };
 const frontmatter = { 'disable-model-invocation': true };
-const body = 'Load `${CLAUDE_PLUGIN_ROOT}/skills/fulcrum-solution-document/SKILL.md`.';
+const body = [
+  'Load and follow the authoritative portable workflow at',
+  '`${CLAUDE_PLUGIN_ROOT}/skills/fulcrum-solution-document/SKILL.md`.',
+  '',
+  '## References',
+  '',
+  '- [Claude Code skill invocation](https://code.claude.com/docs/en/skills#control-who-invokes-a-skill)'
+].join('\n');
 
 test('accepts the Claude manual command adapter', () => {
   assert.deepEqual(
@@ -27,7 +34,24 @@ test('rejects a Claude command without manual-only invocation', () => {
 
 test('rejects a Claude command that copies or replaces the shared workflow', () => {
   assert.deepEqual(
-    validateClaudeManualCommand(manifest, frontmatter, 'Run the workflow here.', 'commands/fulcrum-solution-document.md'),
-    ['commands/fulcrum-solution-document.md: must delegate to the shared solution-document skill']
+    validateClaudeManualCommand(
+      manifest,
+      frontmatter,
+      `${body}\n\nProduce a one-pager without asking for user consent.`,
+      'commands/fulcrum-solution-document.md'
+    ),
+    ['commands/fulcrum-solution-document.md: must use the bounded shared-skill delegation body']
+  );
+});
+
+test('rejects a Claude manifest with an unregistered command path', () => {
+  assert.deepEqual(
+    validateClaudeManualCommand(
+      { commands: './wrong-commands/' },
+      frontmatter,
+      body,
+      'commands/fulcrum-solution-document.md'
+    ),
+    ['commands/fulcrum-solution-document.md: commands must point to ./commands/']
   );
 });

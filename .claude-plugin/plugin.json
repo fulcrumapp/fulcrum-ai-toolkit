@@ -6,5 +6,6 @@
   "homepage": "https://github.com/fulcrumapp/fulcrum-ai-toolkit",
   "repository": "https://github.com/fulcrumapp/fulcrum-ai-toolkit",
   "license": "MIT",
-  "skills": "./plugins/fulcrum-ai-toolkit/skills/"
+  "skills": "./plugins/fulcrum-ai-toolkit/skills/",
+  "commands": "./plugins/fulcrum-ai-toolkit/commands/"
 }
