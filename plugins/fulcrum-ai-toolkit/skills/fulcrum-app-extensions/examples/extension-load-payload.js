@@ -5,9 +5,32 @@
 // validate before using it.
 
 Fulcrum.load(function (payload) {
-  var data = payload.data || {};
+  if (
+    !payload ||
+    typeof payload !== 'object' ||
+    !payload.data ||
+    typeof payload.data !== 'object' ||
+    Array.isArray(payload.data)
+  ) {
+    console.error('Invalid extension payload: expected an object in data');
+    return;
+  }
+
+  var data = payload.data;
   var currentValue = data.current_value;
   var recordId = data.record_id;
+
+  if (
+    typeof currentValue !== 'string' ||
+    currentValue.length > 256 ||
+    (recordId !== null &&
+      (typeof recordId !== 'string' ||
+        recordId.length === 0 ||
+        recordId.length > 128))
+  ) {
+    console.error('Invalid extension payload: unexpected value or identifier');
+    return;
+  }
 
   initialize(currentValue, recordId);
 });

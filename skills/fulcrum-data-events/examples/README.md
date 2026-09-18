@@ -62,7 +62,7 @@ when the logic is too complex for an expression.
 | File | What it shows |
 | --- | --- |
 | [`geometry-trigger-guard.js`](geometry-trigger-guard.js) | Why location logic belongs on `change-geometry`. |
-| [`field-names-bulk-readonly.js`](field-names-bulk-readonly.js) | `FIELD_NAMES()` instead of a hardcoded field list. |
+| [`field-names-bulk-readonly.js`](field-names-bulk-readonly.js) | `DATANAMES()` instead of a hardcoded field list. |
 | [`avoid-hardcoded-ids.js`](avoid-hardcoded-ids.js) | Runtime discovery instead of literal identifiers. |
 | [`no-secrets-in-scripts.js`](no-secrets-in-scripts.js) | Why a credential must not live in a client-side script. |
 | [`pin-cdn-library-versions.js`](pin-cdn-library-versions.js) | Exact semver pinning for external script references. |

@@ -39,7 +39,7 @@
 // cancelled, and unload-record fires when the editor has closed.
 //
 // Only list explicitly approved, non-sensitive scalar fields here. Do not
-// replace this allowlist with FIELD_NAMES(): STORAGE() is persistent and
+// replace this allowlist with DATANAMES(): STORAGE() is persistent and
 // repeatable, media, location, and personal-data values do not belong in it.
 
 var BASELINE_KEY_PREFIX = 'baseline:';
