@@ -172,7 +172,7 @@ Validation runs entirely on Node.js. Install dependencies for the format validat
 npm ci --prefix tools/format-validator
 npm run --prefix tools/format-validator validate
 node scripts/validate.mjs
-node --test test/app-scorecard.test.mjs test/app-approval.test.mjs test/build-m365-bundle.test.mjs test/validate-entrypoint-frontmatter.test.mjs
+node --test test/app-scorecard.test.mjs test/app-approval.test.mjs test/build-m365-bundle.test.mjs test/validate-entrypoint-frontmatter.test.mjs test/agent-skill-frontmatter.test.mjs
 ```
 
 The repository validator checks the expected skill inventory, skill frontmatter,

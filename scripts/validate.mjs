@@ -8,6 +8,7 @@ import path from 'node:path';
 import process from 'node:process';
 import { fileURLToPath } from 'node:url';
 import { createRequire } from 'node:module';
+import { validateAgentSkillFrontmatter } from './agent-skill-frontmatter.mjs';
 
 const require = createRequire(import.meta.url);
 let YAML;
@@ -56,15 +57,6 @@ const EXPECTED_SKILLS = [
   'fulcrum-workflow-decomposition'
 ];
 const USER_INVOKED_SKILLS = new Set(['fulcrum-solution-document']);
-const AGENT_SKILL_FIELDS = new Set([
-  'name',
-  'description',
-  'license',
-  'compatibility',
-  'metadata',
-  'allowed-tools'
-]);
-
 const COVERAGE_MAP_RELATIVE_PATH = path.join(
   PLUGIN_RELATIVE_PATH,
   'docs',
@@ -394,21 +386,7 @@ for (const skillPath of skillPaths) {
     continue;
   }
 
-  if (!hasRequiredFrontmatter(frontmatter)) {
-    failures.push(`${relativePath}: frontmatter needs name and description`);
-  }
-
-  if (frontmatter && typeof frontmatter === 'object') {
-    for (const field of Object.keys(frontmatter)) {
-      if (!AGENT_SKILL_FIELDS.has(field)) {
-        failures.push(`${relativePath}: unsupported Agent Skills frontmatter field "${field}"`);
-      }
-    }
-  }
-
-  if (frontmatter && frontmatter.name !== directoryName) {
-    failures.push(`${relativePath}: frontmatter name does not match directory`);
-  }
+  failures.push(...validateAgentSkillFrontmatter(frontmatter, relativePath, directoryName));
 
   const policyPath = path.join(path.dirname(skillPath), 'agents', 'openai.yaml');
   if (USER_INVOKED_SKILLS.has(directoryName)) {
