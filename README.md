@@ -59,9 +59,10 @@ marketplace metadata, not the distributable skills.
 See [host installation details](plugins/fulcrum-ai-toolkit/docs/host-installation.md)
 for Cursor, Gemini, Hermes, and the different Claude Desktop surfaces.
 
-## Connect Fulcrum App MCP
+## Connect Fulcrum MCP
 
-The hosted service is available at `https://mcp.fulcrumapp.com`, with
+The hosted Fulcrum MCP service is a federated gateway for App MCP and Query MCP.
+It is available at `https://mcp.fulcrumapp.com`, with
 different hosts for Australian, European, and Canadian tenants. Select the
 endpoint from the **tenant's Fulcrum instance**, not your physical location.
 There is no automatic region fallback.
@@ -74,16 +75,21 @@ or an environment variable, never in this repository or a chat message.
 
 The toolkit installs guidance skills only. It does not register a server or
 bundle credentials; its MCP manifests intentionally contain no servers.
-When separately registered for the confirmed tenant, App MCP is the toolkit's
-default control plane for supported app configuration and knowledge operations.
-Without it, `fulcrum-app-builder` stops at an approved implementation handoff.
-App MCP covers forms, schema builders and validation, choices, classifications,
-projects, layer metadata, webhooks, Reference Files, memberships and roles,
-Report Templates, and report generation. Query API execution, record CRUD, and
-media CRUD require another authorized interface.
+When separately registered for the confirmed tenant, the gateway provides App
+MCP as the default control plane for supported app configuration and knowledge
+operations, plus Query MCP for read-only Query API discovery and execution.
+Without it, `fulcrum-app-builder` stops at an approved implementation handoff
+and Query MCP execution is unavailable. App MCP covers forms, schema builders
+and validation, choices, classifications, projects, layer metadata, webhooks,
+Reference Files, memberships and roles, Report Templates, and report
+generation. Query MCP exposes read-only queries; record CRUD, media CRUD, and
+query mutations still require other supported interfaces.
 
-Live installed App MCP schemas define the connector tool contract and take
-precedence over toolkit prose.
+Existing endpoint URLs, authentication, the `fulcrum-app` client alias, and the
+`FULCRUM_APP_MCP_URL` convention remain valid. They are client-side
+configuration labels for the same endpoint; federation happens server-side.
+Live installed gateway schemas define connector tool arguments and result
+shapes and take precedence over toolkit prose.
 
 ## Start here
 
@@ -217,7 +223,7 @@ activation, an authenticated MCP connection, or successful live app creation.
 | `fulcrum-product-knowledge` | Fulcrum platform capability router, constraints, plans, boundaries, and App MCP build reference | Model-invoked |
 | `fulcrum-integration-patterns` | Workflow and integration selection, webhooks, URL Actions, REST, middleware, and delivery safety | Model-invoked |
 | `fulcrum-gis-mapping` | GIS/layer selection, online/offline mapping, geometry, and import/export boundaries | Model-invoked |
-| `fulcrum-query-api` | Read-only Query API modeling, metadata discovery, safe SQL parameters, and spatial-query boundaries | Model-invoked |
+| `fulcrum-query-api` | Query MCP read-only discovery, SQL modeling, execution, and validation | Model-invoked |
 | `fulcrum-access-management` | Roles, resource access, memberships, SSO/SCIM, and least-privilege reasoning | Model-invoked |
 | `fulcrum-data-migration` | Supported migration assessment, mapping, dry runs, reconciliation, cutover, and rollback design | Model-invoked |
 | `fulcrum-app-builder` | Novice-friendly app discovery, schema approval, App MCP orchestration, and connector-independent handoff | Model-invoked |
@@ -243,7 +249,7 @@ uses the focused skill to:
   (`fulcrum-integration-patterns`)
 - Verify current GIS, layer, geometry, and online/offline mapping support
   (`fulcrum-gis-mapping`)
-- Model read-only SQL from discovered Query API metadata
+- Discover, execute, and validate bounded read-only SQL through Query MCP
   (`fulcrum-query-api`)
 - Design role plus resource access and SSO/SCIM lifecycle controls
   (`fulcrum-access-management`)
@@ -274,8 +280,8 @@ interview, and explicit approval remains required before an external send.
 ## Where this comes from
 
 The toolkit combines public Fulcrum documentation with portable workflow
-guidance. Live App MCP schemas own connector names, arguments, and result
-shapes; public Fulcrum documentation owns product and runtime behavior.
+guidance. Live Fulcrum MCP gateway schemas own connector names, arguments, and
+result shapes; public Fulcrum documentation owns product and runtime behavior.
 
 Distributable provenance uses `> Source:` notes with a public URL. The legacy
 coverage manifest may instead use its neutral `Inventory fingerprint:` label.
@@ -294,8 +300,8 @@ their durable externalization policy.
   platform behavior and runtime functions.
 - [Fulcrum public OpenAPI document](https://raw.githubusercontent.com/fulcrumapp/api/v2/reference/rest-api.json)
   for REST resource shapes.
-- Live installed App MCP schemas for the connector control-plane contract used
-  by the current workflow guidance.
+- Live installed Fulcrum MCP gateway schemas for the App MCP control-plane and
+  Query MCP read-only execution contracts used by the current workflow guidance.
 
 The [legacy product-knowledge migration coverage map](plugins/fulcrum-ai-toolkit/docs/legacy-product-knowledge-coverage.md)
 tracks every legacy domain, its canonical target, public sources, and material

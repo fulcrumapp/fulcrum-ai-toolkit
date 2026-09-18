@@ -5,10 +5,10 @@ description: Guided, novice-friendly workflow for creating or updating a Fulcrum
 
 # Fulcrum App Builder
 
-This skill is the front door for app-building conversations. Use [fulcrum-product-knowledge](../fulcrum-product-knowledge/SKILL.md) for platform boundaries and use the focused skills for goals, discovery, design, safety, data events, extensions, reports, and decomposition. When Fulcrum App MCP is registered, treat its live tool schemas as the control plane for supported app configuration and knowledge operations.
+This skill is the front door for app-building conversations. Use [fulcrum-product-knowledge](../fulcrum-product-knowledge/SKILL.md) for platform boundaries and use the focused skills for goals, discovery, design, safety, data events, extensions, reports, and decomposition. When the Fulcrum MCP gateway is registered, treat its live App MCP schemas as the control plane for supported app configuration and knowledge operations and its Query MCP schemas as the read-only query path.
 
-> Connector authority: Live installed App MCP schemas define the tool contract
-> used by this workflow.
+> Connector authority: Live installed Fulcrum MCP gateway schemas define the
+> App MCP and Query MCP tool contracts used by this workflow.
 >
 > Source: [Fulcrum Forms API](https://docs.fulcrumapp.com/reference/forms-intro)
 > and the [public OpenAPI document](https://raw.githubusercontent.com/fulcrumapp/api/v2/reference/rest-api.json)
@@ -38,7 +38,12 @@ When App MCP is available, inspect its live tool schemas and use it by default f
 | Report Templates and report generation | Template lifecycle plus report generation for a supplied record ID |
 | Expression and App Extension knowledge or generation | Expression references plus extension pattern explanation and artifact generation |
 
-App MCP does **not** provide Query API execution, record CRUD, or media CRUD. Do not invent connector calls for those domains. Use another authorized interface or provide a handoff for those operations. Report templates may call the documented `QUERY()` runtime function, but that does not create an App MCP query tool.
+Query API execution is available through Query MCP when the federated gateway
+advertises its tools; use [`fulcrum-query-api`](../fulcrum-query-api/SKILL.md)
+for that read-only workflow. App MCP does **not** provide record CRUD, media
+CRUD, or query mutations. Do not invent connector calls for those domains.
+Report templates may call the documented `QUERY()` runtime function, which is
+distinct from Query MCP `query_records`.
 
 If App MCP is unavailable, do not pretend to create or modify a live app. Continue through discovery and schema approval, then provide a handoff that an authorized builder can execute in Fulcrum.
 
@@ -48,7 +53,8 @@ Briefly explain the supported App MCP surface and any operation that needs anoth
 
 Always surface relevant limitations:
 
-- Query API execution, record CRUD, and media CRUD are outside App MCP.
+- Read-only Query API execution belongs to Query MCP; record CRUD, media CRUD,
+  and query mutations remain outside the gateway's supported tool surface.
 - Workflow automation CRUD is outside App MCP; global webhook CRUD is supported.
 - App MCP can manage Report Templates and request report generation, but rendered output still needs visual review.
 - External CDN assets do not work for offline extensions.

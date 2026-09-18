@@ -492,6 +492,80 @@ if (!fs.existsSync(setupPath)) {
   }
 }
 
+// Query MCP guidance contracts
+const querySkillPath = path.join(SKILLS_DIR, 'fulcrum-query-api', 'SKILL.md');
+const queryModelingPath = path.join(
+  SKILLS_DIR,
+  'fulcrum-query-api',
+  'resources',
+  'query-modeling-reference.md'
+);
+const reportSkillPath = path.join(SKILLS_DIR, 'fulcrum-report-building', 'SKILL.md');
+const queryGuidancePaths = [querySkillPath, queryModelingPath];
+for (const guidancePath of queryGuidancePaths) {
+  if (!fs.existsSync(guidancePath)) {
+    failures.push(`${repoRelativePath(guidancePath)}: Query guidance file is missing`);
+  }
+}
+const queryGuidance = queryGuidancePaths
+  .filter((p) => fs.existsSync(p))
+  .map((p) => fs.readFileSync(p, 'utf8'))
+  .join('\n');
+const normalizedQueryGuidance = queryGuidance.replace(/\s+/g, ' ');
+
+const queryWorkflowPurposes = [
+  {
+    purpose: 'list forms available to the authenticated user',
+    pattern: /\b(?:list|discover|find)\b.{0,80}\bforms?\b.{0,80}\bavailable\b.{0,80}\bauthenticated user\b/i
+  },
+  {
+    purpose: 'return Query table definitions for a selected form',
+    pattern:
+      /\b(?:return|discover|retrieve|get)\b.{0,80}\bQuery table (?:definitions|metadata|schemas?)\b.{0,80}\b(?:selected|intended|specified|chosen) form\b/i
+  },
+  {
+    purpose: 'execute read-only Query SQL',
+    pattern: /\b(?:execute|run|submit|pass)\b.{0,80}\bread-only\b.{0,80}\b(?:Query )?SQL\b/i
+  }
+];
+for (const { purpose, pattern } of queryWorkflowPurposes) {
+  if (!pattern.test(normalizedQueryGuidance)) {
+    failures.push(
+      `${repoRelativePath(querySkillPath)}: document the stable Query MCP workflow purpose "${purpose}"`
+    );
+  }
+}
+if (!/live (?:Fulcrum MCP )?gateway schemas.{0,120}(?:authoritative|govern)/i.test(normalizedQueryGuidance)) {
+  failures.push(`${repoRelativePath(querySkillPath)}: live gateway schemas must own exact Query MCP contracts`);
+}
+if (!/read-only/i.test(queryGuidance) || !/single line|single-line/i.test(queryGuidance)) {
+  failures.push(`${repoRelativePath(querySkillPath)}: require read-only, single-line Query MCP SQL`);
+}
+if (!/LIMIT 100/i.test(queryGuidance) || !/explor/i.test(queryGuidance)) {
+  failures.push(`${repoRelativePath(querySkillPath)}: require LIMIT 100 for exploratory queries`);
+}
+if (
+  !/confirm/i.test(queryGuidance) ||
+  !/broad-column|broad column|SELECT \*/i.test(queryGuidance) ||
+  !/personal/i.test(queryGuidance) ||
+  !/location/i.test(queryGuidance) ||
+  !/media/i.test(queryGuidance)
+) {
+  failures.push(`${repoRelativePath(querySkillPath)}: require confirmation for broad and sensitive retrieval`);
+}
+if (/direct Query API.{0,100}(?:fallback|hand ?off)/i.test(normalizedQueryGuidance)) {
+  failures.push(`${repoRelativePath(querySkillPath)}: do not add a direct Query API execution fallback`);
+}
+if (!/Query MCP tools are unavailable.{0,160}execution is unavailable/i.test(normalizedQueryGuidance)) {
+  failures.push(`${repoRelativePath(querySkillPath)}: fail clearly when Query MCP execution is unavailable`);
+}
+if (fs.existsSync(reportSkillPath)) {
+  const reportGuidance = fs.readFileSync(reportSkillPath, 'utf8').replace(/\s+/g, ' ');
+  if (!/Report Builder `QUERY\(\)`.{0,160}distinct from Query MCP `query_records`/i.test(reportGuidance)) {
+    failures.push(`${repoRelativePath(reportSkillPath)}: distinguish Report Builder QUERY() from Query MCP query_records`);
+  }
+}
+
 const cursorManifestPath = `${PLUGIN_RELATIVE_PATH}/.cursor-plugin/plugin.json`;
 const cursorManifest = jsonDocuments[cursorManifestPath];
 if (cursorManifest) {

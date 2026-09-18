@@ -16,51 +16,25 @@
 -- Discover the current table catalog before naming a table. Table names come
 -- from app names, so quote any name with spaces or special characters.
 
--- 1. Read a small sample from an app table.
-SELECT *
-FROM "My App Name"
-LIMIT 10;
+-- Query MCP query_records accepts one read-only SQL statement on one line.
+-- These exploratory examples use LIMIT 100 or less. Confirm broad columns,
+-- cross-app joins, and likely personal, location, or media data first.
+
+-- 1. Read a small, explicit-column sample from an app table.
+SELECT _record_id, _status FROM "My App Name" LIMIT 10;
 
 -- 2. Join a repeatable table to its parent records.
 --    Repeatable tables carry _parent_id (immediate parent record) and
 --    _record_id (root record, for nested repeatables).
-SELECT
-  p._record_id,
-  p._status,
-  r.some_repeatable_field
-FROM "My App" p
-JOIN "My App/my_repeatable" r
-  ON r._parent_id = p._record_id
-WHERE p._status = 'active';
+SELECT p._record_id, p._status, r.some_repeatable_field FROM "My App" p JOIN "My App/my_repeatable" r ON r._parent_id = p._record_id WHERE p._status = 'active' LIMIT 100;
 
 -- 3. Spatial filter with PostGIS.
 --    Cast to geography for metre-based distances.
-SELECT _record_id, _latitude, _longitude
-FROM "My App"
-WHERE ST_DWithin(
-  _geometry::geography,
-  ST_SetSRID(ST_MakePoint(:longitude, :latitude), 4326)::geography,
-  1000
-);
+SELECT _record_id, _latitude, _longitude FROM "My App" WHERE ST_DWithin(_geometry::geography, ST_SetSRID(ST_MakePoint(:longitude, :latitude), 4326)::geography, 1000) LIMIT 100;
 
 -- 4. Common record metadata columns available on app tables.
-SELECT
-  _record_id,
-  _status,
-  _created_at,
-  _updated_at,
-  _created_by_id,
-  _updated_by_id,
-  _assigned_to_id,
-  _project_id,
-  _latitude,
-  _longitude
-FROM "My App"
-ORDER BY _updated_at DESC
-LIMIT 100;
+SELECT _record_id, _status, _created_at, _updated_at, _created_by_id, _updated_by_id, _assigned_to_id, _project_id, _latitude, _longitude FROM "My App" ORDER BY _updated_at DESC LIMIT 100;
 
 -- 5. System table lookup. The current Query API source is authoritative for the
 --    available system tables and their columns.
-SELECT *
-FROM forms
-LIMIT 25;
+SELECT id, name FROM forms LIMIT 25;
