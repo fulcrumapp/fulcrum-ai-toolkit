@@ -1,0 +1,22 @@
+<%# Source: https://docs.fulcrumapp.com/docs/variables#record %>
+<%# Fragment: paste into a Report Template; this is not a standalone template. %>
+<%# Purpose: read single-value fields through record.formValues.find(). %>
+<%# find() returns undefined for an unknown data name, so guard every lookup. %>
+<%# `value` is what is stored; `displayValue` is the rendered label. %>
+
+<%# Text field %>
+<% const inspectorName = record.formValues.find('inspector_name'); %>
+<%= inspectorName ? inspectorName.displayValue : '' %>
+
+<%# Choice field %>
+<% const siteCondition = record.formValues.find('site_condition'); %>
+<%= siteCondition ? siteCondition.displayValue : '' %>
+<% const storedSiteCondition = siteCondition ? siteCondition.value : null; %>
+
+<%# Yes/No field %>
+<% const photosTaken = record.formValues.find('photos_taken'); %>
+<%= photosTaken ? photosTaken.displayValue : '' %>
+
+<%# Date field %>
+<% const inspectionDate = record.formValues.find('inspection_date'); %>
+<%= inspectionDate && inspectionDate.value ? FORMATDATE(new Date(inspectionDate.value)) : '' %>

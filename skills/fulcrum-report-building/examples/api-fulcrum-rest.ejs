@@ -1,0 +1,17 @@
+<%# Source: https://docs.fulcrumapp.com/docs/functions#api %>
+<%# Fragment: paste into a Report Template; this is not a standalone template. %>
+<%# Purpose: call Fulcrum REST resources from template EJS. %>
+<%#
+  API(path, options) takes a Fulcrum API path plus options and is already
+  authenticated as the report runtime. Never place a token, password, or other
+  credential in a template. For external URLs use a documented function such as
+  GET(url, options) or JSONREQUEST(options) — do not invent helper names.
+%>
+
+<% const choiceLists = API('/choice_lists', {
+  qs: { per_page: 1 }
+}); %>
+<%= choiceLists.choice_lists[0].name %>
+
+<% const forms = API('/forms', { qs: { per_page: 1 } }); %>
+<%= forms.forms[0].name %>

@@ -1,0 +1,38 @@
+# Source: https://docs.fulcrumapp.com/docs/calculations-reference
+# Source: https://docs.fulcrumapp.com/docs/week-of-the-year
+# Purpose: simple expressions and advanced JavaScript in calculation fields.
+#
+# Copy one CORRECT example at a time, without these # explanation lines.
+# These examples require populated numeric fields with data names length
+# and width, measured in the same unit. Decide how missing inputs should be
+# handled before adapting them. Use Number display for area examples and
+# Text display for the conditional example.
+
+# CORRECT — an expression that evaluates to a value.
+$length * $width
+
+# CORRECT — a numeric comparison, not an assignment.
+IF($length >= 10, "Long", "Short")
+
+# CORRECT — advanced JavaScript with a helper and explicit field result.
+function calculateArea(length, width) {
+  const area = length * width;
+  return Math.round(area * 100) / 100;
+}
+
+const area = calculateArea($length, $width);
+SETRESULT(area);
+
+# WRONG — a top-level return is not valid; this is not a function body.
+return $length * $width;
+
+# Rules
+# - Simple expressions produce a value directly.
+# - Advanced calculations may use declarations, helpers, and JS methods;
+#   use SETRESULT(value) to set the calculation field's result.
+# - A return inside a helper is valid; a top-level return is not.
+# - Prefer a Fulcrum built-in when it already solves the problem.
+# - Reference field values with $data_name.
+# - Use data events for side effects such as SETVALUE() on other fields,
+#   visibility changes, save validation, or network requests, not merely
+#   because a calculation uses a helper function.

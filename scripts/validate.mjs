@@ -193,6 +193,16 @@ function isValidDescription(value) {
   return isNonEmptyString(value) && value.length <= 1024;
 }
 
+function directorySnapshot(directory) {
+  if (!fs.existsSync(directory) || !fs.statSync(directory).isDirectory()) return null;
+  return filesUnder(directory)
+    .map((filePath) => [
+      path.relative(directory, filePath),
+      fs.readFileSync(filePath).toString('base64')
+    ])
+    .sort(([left], [right]) => left.localeCompare(right));
+}
+
 function referencesSectionHasUrl(text) {
   const match = text.match(/(?:^|\n)## References(?:\r?\n|$)/);
   if (!match) return false;
@@ -623,13 +633,33 @@ if (fs.existsSync(reportSkillPath)) {
 
 const rootClaudeManifestPath = '.claude-plugin/plugin.json';
 const rootClaudeManifest = jsonDocuments[rootClaudeManifestPath];
-const expectedClaudeSkillPaths = EXPECTED_SKILLS
+const expectedClaudeSkillNames = EXPECTED_SKILLS
   .filter((skillName) => !USER_INVOKED_SKILLS.has(skillName))
-  .map((skillName) => `./${PLUGIN_RELATIVE_PATH}/skills/${skillName}/`);
-if (JSON.stringify(rootClaudeManifest?.skills) !== JSON.stringify(expectedClaudeSkillPaths)) {
+  .sort();
+const rootClaudeSkillsPath = path.join(ROOT, 'skills');
+const rootClaudeSkillEntries = fs.existsSync(rootClaudeSkillsPath) && fs.statSync(rootClaudeSkillsPath).isDirectory()
+  ? fs.readdirSync(rootClaudeSkillsPath, { withFileTypes: true }).sort((left, right) =>
+    left.name.localeCompare(right.name)
+  )
+  : [];
+if (rootClaudeManifest?.skills !== undefined) {
+  failures.push(`${rootClaudeManifestPath}: omit unsupported skills field; use the plugin-root skills/ directory`);
+}
+if (
+  JSON.stringify(rootClaudeSkillEntries.map((entry) => entry.name)) !==
+  JSON.stringify(expectedClaudeSkillNames) ||
+  rootClaudeSkillEntries.some((entry) => !entry.isDirectory())
+) {
   failures.push(
-    `${rootClaudeManifestPath}: skills must explicitly register every shared skill except ${[...USER_INVOKED_SKILLS].join(', ')}`
+    `skills/: must contain every shared skill except ${[...USER_INVOKED_SKILLS].join(', ')}`
   );
+}
+for (const skillName of expectedClaudeSkillNames) {
+  const sourceSnapshot = directorySnapshot(path.join(SKILLS_DIR, skillName));
+  const claudeSnapshot = directorySnapshot(path.join(rootClaudeSkillsPath, skillName));
+  if (JSON.stringify(sourceSnapshot) !== JSON.stringify(claudeSnapshot)) {
+    failures.push(`skills/${skillName}: must mirror the portable skill directory`);
+  }
 }
 
 const claudeCommandDefinitions = [
