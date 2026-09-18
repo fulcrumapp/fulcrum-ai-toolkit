@@ -11,10 +11,16 @@ import { createRequire } from 'node:module';
 
 const require = createRequire(import.meta.url);
 let YAML;
+let containsGenericElementDiscriminator;
+let isElementDiscriminatorContractPath;
 try {
   YAML = require('../tools/format-validator/node_modules/yaml');
+  ({
+    containsGenericElementDiscriminator,
+    isElementDiscriminatorContractPath
+  } = await import('../tools/format-validator/lib/element-discriminator.mjs'));
 } catch {
-  console.error('Missing yaml. Run `npm ci` in tools/format-validator first.');
+  console.error('Missing validator dependencies. Run `npm ci` in tools/format-validator first.');
   process.exit(1);
 }
 
@@ -426,6 +432,17 @@ for (const p of uniqueTextPaths) {
 
   for (const _ of invalidInventoryFingerprints(text, relative, FINGERPRINT_ALLOWED_PATHS)) {
     failures.push(`${relative}: Inventory fingerprint is allowed only in ${FINGERPRINT_ALLOWED_PATHS.join(' or ')}`);
+  }
+
+  const extension = path.extname(p).toLowerCase();
+  if (isElementDiscriminatorContractPath(p, SKILLS_DIR) && ['.js', '.json'].includes(extension)) {
+    try {
+      if (containsGenericElementDiscriminator(text, extension)) {
+        failures.push(`${relative}: Element is a generic schema name, not a valid field type discriminator`);
+      }
+    } catch (error) {
+      failures.push(`${relative}: cannot inspect element discriminators (${error.message})`);
+    }
   }
 }
 
