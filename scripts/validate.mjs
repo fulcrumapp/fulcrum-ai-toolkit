@@ -35,6 +35,11 @@ const DEFAULT_BUNDLE_ENTRYPOINTS = [
   path.join(PLUGIN_DIR, 'SKILL.md')
 ];
 const BUNDLE_ENTRYPOINTS = resolveBundleEntrypoints(process.env.FULCRUM_VALIDATE_BUNDLE_ENTRYPOINTS);
+const FORBIDDEN_PACKAGE_PATHS = [
+  path.join(PLUGIN_RELATIVE_PATH, '.cursor-plugin', 'plugin.json'),
+  path.join(PLUGIN_RELATIVE_PATH, '.codex-plugin', 'plugin.json'),
+  path.join(PLUGIN_RELATIVE_PATH, '.mcp.json')
+];
 
 const EXPECTED_SKILLS = [
   'fulcrum-access-management',
@@ -369,6 +374,12 @@ if (JSON.stringify(actualSkillNames) !== JSON.stringify(EXPECTED_SKILLS.slice().
   const missing = EXPECTED_SKILLS.filter((s) => !actualSkillNames.includes(s));
   const unexpected = actualSkillNames.filter((s) => !EXPECTED_SKILLS.includes(s));
   failures.push(`skill inventory mismatch (missing: ${missing.join(', ')}; unexpected: ${unexpected.join(', ')})`);
+}
+
+for (const relativePath of FORBIDDEN_PACKAGE_PATHS) {
+  if (fs.existsSync(path.join(ROOT, relativePath))) {
+    failures.push(`${relativePath}: redundant vendor-specific file must not be present`);
+  }
 }
 
 // 2. Validate each skill
