@@ -68,7 +68,7 @@ An environment variable only works if the host process can read it.
 
 Use the host's remote HTTP / Streamable HTTP MCP transport. Preserve unrelated
 servers and settings; get approval before changing a user's configuration.
-The toolkit's `mcp.json` and `.mcp.json` intentionally register no servers, so
+The toolkit's portable `mcp.json` intentionally registers no servers, so
 installing the bundle cannot select a tenant or transmit a token.
 
 ### Claude Code
