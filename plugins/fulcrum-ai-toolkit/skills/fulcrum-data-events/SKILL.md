@@ -204,7 +204,7 @@ Any trigger that needs the record's GPS location must guard against an empty geo
 Do not hardcode field name arrays when the platform provides dynamic alternatives. See
 [`examples/field-names-bulk-readonly.js`](examples/field-names-bulk-readonly.js).
 
-`FIELD_NAMES()` returns the data names of all fields in the current form scope. Inside a repeatable event, it returns fields within that repeatable. This is the correct approach for bulk read-only, bulk hide, or bulk clear operations.
+`DATANAMES()` returns the data names available in the current form scope. This is the correct approach for bulk read-only, bulk hide, or bulk clear operations.
 
 ### Hardcoded IDs
 Compare a literal identifier with runtime discovery in
@@ -251,7 +251,7 @@ Before writing custom JavaScript logic, call `fulcrum_expressions_list_functions
 
 | Task | Built-in | Instead of |
 |------|----------|-----------|
-| Get all field names | `FIELD_NAMES()` | Hardcoded array |
+| Get all field names | `DATANAMES()` | Hardcoded array |
 | Find nearest record by geometry | `GEOMETRY_NEAREST(records, point)` | Custom distance loop |
 | Format a date | `FORMAT(date, 'YYYY-MM-DD')` | Manual string construction |
 | User's full name | `USERFULLNAME()` | Custom user lookup |
@@ -296,7 +296,7 @@ for event-specific APIs.
 - [ ] If using `LOADRECORDS()` or `LOADFILE()` — eligibility and organization access verified against current sources; unresolved dependencies are not presented as available
 - [ ] If using REQUEST() on web — confirmed target API supports CORS or middleware proxy is in place
 - [ ] Any location-dependent trigger uses `change-geometry` and guards against empty geometry
-- [ ] Bulk field operations use `FIELD_NAMES()` rather than hardcoded field name arrays
+- [ ] Bulk field operations use `DATANAMES()` rather than hardcoded field name arrays
 - [ ] Built-in expression functions checked before writing custom logic that might duplicate them
 - [ ] When App MCP is available, current functions were checked with `fulcrum_expressions_data_events_reference` or the relevant expression knowledge tool
 - [ ] The form's existing `script` was fetched and preserved before `fulcrum_forms_update`
