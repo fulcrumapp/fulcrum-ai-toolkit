@@ -565,14 +565,20 @@ if (claudeCommandParts.length < 3) {
 } else {
   try {
     const frontmatter = YAML.parse(claudeCommandParts[1]);
-    failures.push(
-      ...validateClaudeManualCommand(
-        jsonDocuments[nestedClaudeManifestPath],
-        frontmatter,
-        claudeCommandParts.slice(2).join('---'),
-        claudeCommandRelativePath
-      )
-    );
+    const body = claudeCommandParts.slice(2).join('---').trim();
+    failures.push(...validateClaudeManualCommand(
+      jsonDocuments[nestedClaudeManifestPath],
+      frontmatter,
+      body,
+      claudeCommandRelativePath
+    ));
+    failures.push(...validateClaudeManualCommand(
+      rootClaudeManifest,
+      frontmatter,
+      body,
+      claudeCommandRelativePath,
+      `./${PLUGIN_RELATIVE_PATH}/commands/`
+    ));
   } catch (err) {
     failures.push(`${claudeCommandRelativePath}: invalid YAML frontmatter (${err.message.split('\n')[0].trim()})`);
   }

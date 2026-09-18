@@ -49,6 +49,13 @@ test('rejects malformed author and extension values', () => {
   assert.ok(failures.some((failure) => failure.includes('extensions must map namespaces to objects')));
 });
 
+test('rejects a non-object author', () => {
+  assert.deepEqual(
+    errors({ ...validManifest, author: ['Example'] }),
+    ['plugins/example/plugin.json: author must be an object']
+  );
+});
+
 test('rejects malformed extension members', () => {
   const failures = errors({
     ...validManifest,
