@@ -6,9 +6,11 @@ directories and their supporting files together, and retain the package
 `LICENSE`. Do not flatten the directories or upload only one `SKILL.md`.
 
 The package directory is a multi-format bundle. Its portable Agent Plugins
-core is `plugin.json`, `mcp.json`, and `skills/`; the Claude and Gemini wrapper
-files are native adapters and are not part of the portable core. Strict
-portable consumers should load the core files and omit the native wrappers.
+core is `plugin.json`, `mcp.json`, and `skills/`; the package also includes
+Gemini's native extension manifest. Claude's native command adapter and skill
+discovery tree live at the repository root rather than inside the portable
+package. Strict portable consumers should load the core files and omit native
+host adapters.
 
 These are alpha installation targets. Host versions, administrator policy,
 skill discovery, and support for token-authenticated remote MCP vary.

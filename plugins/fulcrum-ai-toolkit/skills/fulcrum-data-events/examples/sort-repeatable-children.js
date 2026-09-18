@@ -21,7 +21,11 @@ ON('change', 'repeatable', function (event) {
     var aSortValue = Number.isFinite(aValue) ? aValue : Number.POSITIVE_INFINITY;
     var bSortValue = Number.isFinite(bValue) ? bValue : Number.POSITIVE_INFINITY;
 
-    return aSortValue - bSortValue;
+    if (aSortValue === bSortValue) {
+      return 0;
+    }
+
+    return aSortValue < bSortValue ? -1 : 1;
   });
 
   rawSetValue('repeatable', sorted);
