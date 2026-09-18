@@ -206,11 +206,12 @@ from full CI. Format validator contract probes run within its package script.
 The repository validator checks the expected skill inventory, skill frontmatter,
 directory/name consistency, corporate absolute paths, privacy and provenance contracts,
 portable and client JSON manifests, and README inventory. The portable
-`plugin.json` intentionally omits `$schema` because Claude's SDK warns on
-unknown top-level fields when it encounters that manifest.
-It also keeps release versions aligned, requires the packaged license and
-Codex manual-invocation policies, and guards the regional MCP endpoint map
-and empty default server configuration.
+`plugin.json` includes the Agent Plugins schema and is the canonical manifest
+for hosts that support the portable format. Claude and Gemini retain their
+native manifests where their installers require them. The validator also keeps
+release versions aligned, requires the packaged license and Codex
+manual-invocation policies, and guards the regional MCP endpoint map and empty
+default server configuration.
 Guidance contract tests check app-inventory routing and evidence/completeness
 safeguards, the rubric inventory, sibling links, worked scoring arithmetic, and
 required approval/performance instructions; they do not prove host skill
@@ -355,8 +356,8 @@ One skill is intended to be **user-invoked** — request it explicitly:
 
 - `fulcrum-solution-document` — after building, document what was built, review it for privacy, and prepare it for a destination chosen by the user
 
-For `fulcrum-solution-document`, Claude Code and Cursor use
-`disable-model-invocation: true`, while Codex uses the skill's
+For `fulcrum-solution-document`, the manual-invocation requirement is stated in
+the portable skill body, while Codex additionally uses the skill's
 `agents/openai.yaml` policy. These are host adapters, not guarantees provided by
 the Agent Skills standard. On other hosts, invocation behavior may differ.
 Contextual discovery still asks the user to choose a quick check-in or full
@@ -413,11 +414,11 @@ Plugin configs are included for multiple AI platforms:
 | ---------- | -------- |
 | GitHub Copilot CLI | `.github/plugin/marketplace.json` and `plugins/fulcrum-ai-toolkit/plugin.json` |
 | Claude Code | `.claude-plugin/plugin.json` at the repository root, or the nested package manifest at `plugins/fulcrum-ai-toolkit/.claude-plugin/plugin.json` |
-| Cursor | `plugins/fulcrum-ai-toolkit/.cursor-plugin/plugin.json` |
-| Codex | `plugins/fulcrum-ai-toolkit/.codex-plugin/plugin.json` |
+| Cursor | Portable `plugins/fulcrum-ai-toolkit/plugin.json` |
+| Codex | Portable `plugins/fulcrum-ai-toolkit/plugin.json` |
 | Hermes | Shared `skills/` directory; root `plugin.json` for hosts supporting Agent Plugins v1 |
 | Gemini | `plugins/fulcrum-ai-toolkit/gemini-extension.json` |
-| MCP | Empty `.mcp.json` and `mcp.json`; configure a tenant-specific server separately |
+| MCP | `plugins/fulcrum-ai-toolkit/mcp.json`; configure a tenant-specific server separately |
 
 All hosts discover or reference the package's shared `skills/` directory; they
 do not maintain separate copies of skill content. GitHub Copilot marketplace
