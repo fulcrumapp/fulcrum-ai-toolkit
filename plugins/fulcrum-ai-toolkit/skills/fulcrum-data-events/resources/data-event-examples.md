@@ -34,7 +34,10 @@ documentation.
 ## Usage Notes
 
 - A form holds one `script` value. Merge a snippet into the existing script
-  instead of replacing it.
+  instead of replacing it. Use the
+  [canonical persistence workflow](../SKILL.md#app-mcp-control-plane) for
+  review/approval and an unconditional fresh read immediately before writing;
+  these examples are not an alternative publishing sequence.
 - Repeatable entries must be saved before their child records can be edited.
 - Before using `LOADRECORDS()` or `LOADFILE()`, follow the sibling
   [Plan And Licensing Check](../../fulcrum-product-knowledge/resources/plan-and-licensing-reference.md).

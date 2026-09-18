@@ -5,6 +5,23 @@ description: Use when writing, reviewing, persisting, or debugging Fulcrum Data 
 
 A **data event** is JavaScript that runs inside a Fulcrum app in response to record lifecycle events. It executes on-device (mobile) and in-browser (web) — there is no server. Every data event shares a single `script` field on the form.
 
+## Performance Evaluation
+
+Whenever authoring, modifying, or reviewing code, complete
+[`fulcrum-performance-review`](../fulcrum-performance-review/SKILL.md) before
+delivery or persistence, including small snippets and generated handlers.
+Inspect the composed script, trigger frequency, repeated lookups/requests,
+calculation-trigger chains, and synchronous validation/save work. Excessive
+complexity can slow editing and saving even when a script is syntactically
+valid. Line count alone neither proves nor rules out a bottleneck.
+Return constructive advice with a static/measured evidence label; users may
+accept performance trade-offs without waiving runtime or safety requirements.
+
+Follow the performance skill's code-discovery workflow into attached source,
+`LOADFILE()` Reference Files, cross-form helpers, and any further code they
+load. Reviewing the loader alone is insufficient. Keep unavailable code
+explicitly unreviewed rather than claiming the whole script is low risk.
+
 > **Guidance boundary:** Event names and function signatures in this skill follow Fulcrum's documented data-events API. Offline recommendations, security cautions, and workflow conventions are toolkit guidance unless explicitly sourced.
 
 ## App MCP Control Plane
@@ -15,7 +32,24 @@ Treat the local runtime resources as an offline fallback, not as a replacement f
 The compact fallback is
 [`resources/data-events-runtime-api.md`](resources/data-events-runtime-api.md).
 
-There are no standalone Data Event CRUD tools. Read the form and its current `script` with `fulcrum_forms_get`, compose the approved handler with the existing script, and write the complete script with `fulcrum_forms_update`. Do not overwrite unrelated handlers.
+There are no standalone Data Event CRUD tools. If Reference Files change,
+use the gated shared-code sequence below instead; it owns both the file and
+script writes. For script-only changes:
+
+1. Read the form and its current `script` with `fulcrum_forms_get`.
+2. Compose the handler with the complete existing script and inspect all
+   attached/loaded dependencies. Do not overwrite unrelated handlers.
+3. Complete the performance review and present the score, advice, and relevant
+   sync warnings using
+   [the builder's confirmation contract](../fulcrum-app-builder/SKILL.md#score-and-advice-at-every-design-confirmation).
+   Obtain explicit approval before any live write.
+4. Always re-read the current form and relevant dependencies immediately before
+   the write, even if no change is known. Reconcile the approved edits into the
+   freshly read script, preserving intervening handlers, and re-review the
+   final composition. If material changes need updated approval, return to
+   step 3 and repeat this fresh read after approval.
+5. Write the reviewed, approved final script with `fulcrum_forms_update`;
+   never write the earlier script snapshot.
 
 > Connector authority: Live installed App MCP schemas define the registered
 > knowledge tool and form-script persistence contract.
@@ -86,9 +120,44 @@ Store shared JavaScript in a Reference File, then load it into multiple apps at 
 
 > Source: [Fulcrum `LOADFILE()` reference](https://docs.fulcrumapp.com/docs/data-events-loadfile)
 
-`LOADFILE()` takes an options object with required `name`, optional `form_name` or `form_id`, and optional `variable`, followed by an optional callback — `LOADFILE({ name, form_name | form_id, variable }, callback)`. For App MCP-managed files, use `fulcrum_reference_files_list` or `fulcrum_reference_files_get` to inspect the file and `fulcrum_reference_files_upload` to upload it before updating the form script.
+`LOADFILE()` takes an options object with required `name`, optional `form_name` or `form_id`, and optional `variable`, followed by an optional callback — `LOADFILE({ name, form_name | form_id, variable }, callback)`.
+
+For App MCP-managed shared code, use this order:
+
+1. Inspect the current Reference File with `fulcrum_reference_files_list` or
+   `fulcrum_reference_files_get`, and read the current script with
+   `fulcrum_forms_get`. Inspect actual contents, not just file metadata.
+2. Compose the proposed shared-file contents and full form script, preserving
+   unrelated handlers. Inventory attached/loaded dependencies and known
+   consumers affected by replacing shared code.
+3. Complete the no-write performance review of the proposed Reference File,
+   its dependencies, and the composed script. Present the app score, advice,
+   unknowns, and sync warnings and obtain explicit approval covering the file
+   upload/replacement and script update. Do not upload before this gate:
+   existing consumers can load a replacement without a script change.
+4. Immediately re-read the current Reference File, dependencies, and known
+   consumers before upload. Apply
+   [the pre-write freshness safeguard](../fulcrum-app-builder/resources/pre-write-freshness.md):
+   compare content/hash/revision with the approved baseline, reconcile changes,
+   and obtain updated approval for material differences. Repeat this fresh read
+   after approval; a later form read cannot protect an already overwritten file.
+5. Upload the reviewed, approved file with `fulcrum_reference_files_upload`
+   and verify the live content matches the approved artifact.
+6. Re-read the form and re-review the final composed script with its loaded
+   dependencies immediately before the write, even if no change is known.
+   Preserve intervening changes; refresh the score/advice and obtain updated
+   approval if the design or assessment changed materially. Repeat this fresh
+   read after reapproval before continuing to step 7. If reapproval changes the
+   approved file content, repeat steps 4-5 and verify that replacement before
+   writing the script. Do not repeat the upload when approved content is unchanged.
+7. Write only the reviewed, approved complete script with `fulcrum_forms_update`.
 
 > Verify `LOADFILE()` eligibility as described above before designing around shared Reference Files.
+
+Large shared Reference Files may slow sync when they change, even when the
+loaded code itself runs efficiently. Include an advisory sync warning for
+size/update-frequency trade-offs, not an automatic app-score deduction or cap;
+follow [the shared guidance](../fulcrum-performance-review/SKILL.md#reference-file-sync-warning).
 
 ### Session state with STORAGE
 `STORAGE()` returns a local-storage-like object with `getItem`, `setItem`, `removeItem`, and `clear` methods. Values must be strings, so serialize objects with `JSON.stringify()`. The store is device-wide and persistent, so a bare key such as `baseline` is still there when the next record opens. Scope every key with `FORM().id` and the record it belongs to, and remove it on `cancel-record` and `unload-record`. `RECORDID()` is null until a new record has been saved, so it cannot separate one unsaved record from the next on its own: give an unsaved record a nonce generated once per editing session, so a session that crashed before its cleanup ran leaves a key the next session never computes. See
@@ -214,6 +283,7 @@ for event-specific APIs.
 
 ## Completion Criteria
 
+- [ ] Every authored, modified, or reviewed script has a performance evaluation with workload assumptions, advice, and explicit unmeasured risks
 - [ ] Field-change logic listens on `ON('change', 'field', ...)` rather than treating `edit-record` as a change event, and any rule that must also hold when a record opens is applied from `new-record` and `edit-record` as well
 - [ ] All field data names are verified against the live form — wrong names can fail silently
 - [ ] `LOADRECORDS()` and `REQUEST()` are treated as asynchronous callback APIs

@@ -7,6 +7,20 @@ An **app extension** is a custom HTML/CSS/JavaScript UI that runs inside a Fulcr
 
 Extensions communicate with the Fulcrum record through the data events API bridge. The data lives in standard Fulcrum fields and syncs normally.
 
+Whenever authoring, modifying, or reviewing extension code, complete
+[`fulcrum-performance-review`](../fulcrum-performance-review/SKILL.md) before
+delivery or upload, including generated HTML and its Data Event trigger.
+Evaluate bridge payload size/copies, rendering and list growth, repeated
+lookups, and listener/state lifetime. Include constructive advice and
+distinguish static risks from measured behavior; optimization advice is
+optional, but bridge correctness and authorization remain required.
+
+Follow the performance skill's code-discovery workflow through attached HTML,
+`attachment://` Reference Files, inline/embedded scripts and handlers, bundles,
+and transitively loaded assets. Review the extension contents as well as the
+Data Event that launches it; an upload, filename, or bridge check is not a
+review of the code inside the attachment.
+
 > **Guidance boundary:** The bridge API and event flow in this skill follow Fulcrum's documented extension API. Field-type recommendations, offline decisions, and payload-sizing guidance are toolkit conventions unless explicitly sourced.
 
 ## App MCP Knowledge And Generation
@@ -113,6 +127,12 @@ Whether an extension works offline depends entirely on where its assets are host
 
 **Decision:** If the extension is needed during offline field work, host everything in Reference Files and inline all JavaScript. If the extension is only used in the office (online), CDN libraries are acceptable.
 
+**Sync warning:** Large Reference Files may slow sync when they change.
+Consider file size and update frequency as an advisory trade-off, not an
+automatic app-score deduction or cap. Follow
+[the shared sync-warning guidance](../fulcrum-performance-review/SKILL.md#reference-file-sync-warning);
+do not sacrifice required offline support merely to avoid a download.
+
 **CDN version pinning:** If you use CDN libraries, always lock to a specific semver version. `latest` or unversioned CDN URLs break silently when the library updates. Compare both forms in
 [`assets/cdn-version-pinning.html`](assets/cdn-version-pinning.html).
 
@@ -123,10 +143,21 @@ The extension HTML file is uploaded as a **Reference File** on the form. When Ap
 > Connector authority: Live installed App MCP schemas define exact tool
 > arguments and the generated Reference File workflow.
 
-The generate, upload, read, and update sequence is in
+The generate, read, review/approve, upload, re-read, and update sequence is in
 [`assets/app-mcp-extension-publish-sequence.txt`](assets/app-mcp-extension-publish-sequence.txt).
-It calls `fulcrum_extensions_generate`, `fulcrum_reference_files_upload`,
-`fulcrum_forms_get`, and `fulcrum_forms_update` in that order.
+After `fulcrum_extensions_generate`, read the existing form and dependencies
+with authorized read operations and compose the complete script. Complete
+the performance review and obtain design approval before
+`fulcrum_reference_files_upload`. Re-read before `fulcrum_forms_update`,
+re-review the final composed artifacts, and obtain updated approval if
+intervening changes materially affect the assessment. Both writes must use
+reviewed, approved content; file replacement can affect existing consumers.
+
+Apply [the pre-write freshness safeguard](../fulcrum-app-builder/resources/pre-write-freshness.md)
+immediately before each upload/replacement as well as each script update.
+Re-read the target file, dependencies, and known consumers; reconcile any
+change from the approved baseline before upload. A later form read cannot
+protect a Reference File that has already been overwritten.
 
 Use `fulcrum_extensions_list_patterns` and `fulcrum_extensions_explain(pattern="picker")` to explore registered patterns before generating. There is no standalone Data Event update tool; preserve the existing form `script` through the form get/update operations.
 
@@ -135,9 +166,28 @@ Use `fulcrum_extensions_list_patterns` and `fulcrum_extensions_explain(pattern="
 When App MCP is unavailable:
 
 1. Save the extension as an `.html` file with all offline-required assets embedded or included as Reference Files.
-2. In Fulcrum, open the target form and upload the file under **Reference Files**.
-3. Add or update the form's data event script with the `OPENEXTENSION()` handler, using the uploaded file's exact filename.
-4. Test the trigger and the write-back behavior in the form preview, then test again on a device if the workflow must work offline.
+2. Inspect the target form, existing script, and attached/loaded dependencies.
+   Compose the proposed full script locally, preserving unrelated handlers.
+3. Complete the no-write performance review of the HTML, composed script,
+   and dependencies. Present the score, advice, and sync warnings using
+   [the builder's confirmation contract](../fulcrum-app-builder/SKILL.md#score-and-advice-at-every-design-confirmation)
+   and obtain explicit approval for the file upload/replacement and script edit.
+4. Immediately re-read the target Reference File, dependencies, and known
+   consumers before upload. Apply the pre-write safeguard: compare the
+   approved baseline, reconcile changes, and return to step 3 for material
+   reapproval. Repeat this check after approval.
+5. In Fulcrum, open the target form and upload the reviewed file under **Reference Files**.
+   Verify the live content matches the approved file.
+6. Recheck the current form and dependencies immediately before editing its script,
+   even if no change is known.
+   Recompose and re-review any intervening changes, returning to step 3 for
+   updated approval if the design, score, or risks changed materially. Repeat
+   this fresh read after reapproval. If approved file content changed, repeat
+   steps 4-5 and verify the replacement before writing its dependent script;
+   otherwise do not repeat the upload.
+7. Save the reviewed, approved composed script with the `OPENEXTENSION()` handler,
+   using the uploaded file's exact filename and preserving unrelated handlers.
+8. Test the trigger and the write-back behavior in the form preview, then test again on a device if the workflow must work offline.
 
 Do not treat the MCP commands above as prerequisites; they are an automation path only.
 
@@ -166,6 +216,7 @@ An extension that tries to replicate an entire sub-application. Extensions are p
 
 ## Completion Criteria
 
+- [ ] Extension and trigger code have a performance evaluation with workload, rendering/payload risks, evidence, and trade-offs
 - [ ] Picker target is a TextField for free-form values or a RecordLinkField for selected Fulcrum records — not a conflicting ChoiceField
 - [ ] Offline support decision is explicit: Reference Files (offline) vs. CDN (online-only)
 - [ ] All CDN library references use locked semver versions — no `latest` or unversioned URLs

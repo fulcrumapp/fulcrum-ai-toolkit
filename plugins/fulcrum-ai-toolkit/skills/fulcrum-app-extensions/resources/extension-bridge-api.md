@@ -48,13 +48,19 @@ Event function.
 
 ## Reference File Workflow
 
-1. Generate artifacts with `fulcrum_extensions_generate`.
-2. Upload the generated HTML with
-   `fulcrum_reference_files_upload({ form_id, file_name, content })`.
-3. Read the form's existing `script` with `fulcrum_forms_get`.
-4. Append or merge the generated Data Event without replacing unrelated
-   handlers.
-5. Write the complete script with `fulcrum_forms_update`.
+Follow the
+[canonical publishing sequence](../assets/app-mcp-extension-publish-sequence.txt)
+instead of treating this bridge reference as a separate upload procedure.
+Read the current form, inventory attached/loaded code, and compose the
+complete proposed script. Complete performance review and obtain approval
+covering both the Reference File and script before either live write.
+Immediately before the script update, re-read the current form and dependencies,
+reconcile intervening changes, and re-review the final composition. Repeat the
+fresh read after any required reapproval; never publish a stale script snapshot.
+
+For connector-independent work, follow
+[the manual UI workflow](../SKILL.md#manual-ui-fallback), which requires the
+same review, approval, and fresh-read safeguards.
 
 For optional cleanup, first update the form script so it no longer references
 the `attachment://` URL. Immediately before deletion, obtain explicit

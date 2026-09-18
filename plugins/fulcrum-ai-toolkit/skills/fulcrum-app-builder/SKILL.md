@@ -98,6 +98,11 @@ Do not make the user learn Fulcrum field-type terminology. Infer sensible types,
 
 ## Step 3: Propose The Schema
 
+For an edit, read the current form before proposing the design, then compose
+the intended post-edit state with all unchanged elements, choices, settings,
+and code preserved. Do not score only the diff. If a read is unavailable,
+use the supplied full definition or explicitly mark the missing context.
+
 Before any live write, show a plain-English table:
 
 | Field | Type | Notes |
@@ -117,9 +122,71 @@ Also state:
 - Offline behavior and plan dependencies.
 - Any fields or changes that could cause data loss.
 
+### Score And Advice At Every Design Confirmation
+
+Before **every** design-confirmation prompt for creation or editing, run
+[`fulcrum-app-scorecard`](../fulcrum-app-scorecard/SKILL.md) on the proposed
+complete design. This applies to new apps, edits, reapproval, and
+connector-independent handoffs. Reuse confirmed discovery context; do not
+start another interview just to produce the score.
+
+Include in the same confirmation:
+
+- **Proposed app score:** final `/10`, or an explicitly **Provisional**
+  range or **Not scoreable** result with the missing evidence. Include rubric
+  version, evidence coverage, and applicable caps, especially the repeatable
+  ceiling. New designs commonly lack runtime evidence; never manufacture it.
+- **What works:** the design's strengths and fit to the user's workflow.
+- **Improvement advice:** the most useful changes, their practical benefits
+  and trade-offs, and which findings they address. Do not promise score gains
+  without reassessment. For edits, include before/after scores only when both
+  are available under the same rubric and comparable evidence.
+- **Code performance:** a summary from
+  [`fulcrum-performance-review`](../fulcrum-performance-review/SKILL.md) for
+  every authored, modified, or reviewed code artifact in the complete composed
+  design, including unchanged Data Events, Reference Files, and dependencies.
+  If code is not authored yet, label its assessment preliminary and revisit it
+  before persistence. If
+  there is no code, explicitly mark code performance N/A only after inventorying
+  attachments, Reference Files, embedded code, and loaded dependencies.
+  Include unreviewed artifacts and reasons; an unread attachment is not N/A.
+- **Sync warnings:** large or frequently updated Reference Files may slow sync
+  when they change, including files containing no code. Follow
+  [the sync-warning guidance](../fulcrum-performance-review/SKILL.md#reference-file-sync-warning)
+  and show this as an advisory trade-off, not an automatic score deduction
+  or cap. Include it even when code performance is N/A.
+- **Decision:** offer "Revise the design" or "Proceed with this design",
+  making clear that advisory improvements are optional.
+
+Keep the prompt concise and retain the detailed scorecard as supporting
+evidence. Be constructive, not judgmental: explain user impact rather than
+calling the app or its builder bad. The user may decline advice; record
+accepted trade-offs, keep the honest score and findings, and proceed with
+the explicitly approved design without repeated pressure. There is **no
+minimum score required to proceed**.
+
+Declining advice does not waive authorization, credential protection,
+schema/runtime correctness, or explicit confirmation for destructive changes.
 Get explicit approval before creating or modifying live resources.
 
 ## Step 4: Build Or Hand Off
+
+Before persisting or handing off any authored or modified code, complete
+[`fulcrum-performance-review`](../fulcrum-performance-review/SKILL.md) on the
+actual composed artifact, including generated code and calculations.
+Follow its code-discovery workflow through attachments, extension assets,
+shared Reference Files, and indirect dependencies before upload or use.
+Unreviewed code must remain explicit in the assessment and approval; an
+unchanged or externally supplied file is not exempt.
+Recompute affected scorecard checks after material changes. If implementation,
+performance findings, or a fresh read changes the approved design's score,
+caps, risks, or behavior materially, return to Step 3 with an updated score
+and advice for approval. Do not reopen an unchanged, already accepted trade-off.
+
+Before each live write, apply the
+[pre-write freshness safeguard](resources/pre-write-freshness.md). It covers
+full-form payloads, scripts, Reference Files, and Report Templates, including
+reapproval and coupled file/script writes.
 
 When App MCP is available, follow its live schemas exactly. Do not hand-write new element JSON when a registered schema builder owns that shape.
 
@@ -151,23 +218,50 @@ For a new app:
 3. Assemble the new form with `fulcrum_schema_build_form`, passing the exact field objects returned by the field builder.
 4. Recursively verify that every element still has its builder-produced concrete `type` from the complete supported type set.
 5. Validate the generated definition with `fulcrum_forms_validate`.
-6. Create it with `fulcrum_forms_create`, including the approved `script` only after the form structure is valid.
-7. Let `fulcrum_forms_create` create its default Report Template. Set `skip_default_report: true` only when the user explicitly asks to opt out.
+6. Complete the performance review of the built code and dependencies. Refresh
+   the score and advice and obtain approval again if the assessment or design
+   changed materially. Do not perform the create until this gate is complete.
+7. Use a currently registered form list/search/discovery operation, when the
+   live App MCP catalog provides one, to re-read the target identity and
+   verify that no form with the approved name/identity appeared after approval.
+   If it exists or the approved assumptions changed, stop and reconcile
+   through the [pre-write freshness safeguard](resources/pre-write-freshness.md)
+   before creating anything. If no supported discovery operation exists,
+   freshness is unverifiable: stop and report the limitation rather than
+   inventing a tool call or issuing create.
+8. Create it with `fulcrum_forms_create`, including the approved `script` only after the form structure is valid.
+9. Let `fulcrum_forms_create` create its default Report Template. Set `skip_default_report: true` only when the user explicitly asks to opt out.
 
 The full ordered sequence, with the builder arguments worth knowing, is in [`assets/app-build-sequence.txt`](assets/app-build-sequence.txt).
 
-If the result contains a created form plus `report_template_error`, report that the form succeeded and only the default Report Template failed. This error is non-fatal. Do not retry form creation; create the missing template separately with `fulcrum_report_templates_create` when appropriate.
+If the result contains a created form plus `report_template_error`, report that
+the form succeeded and only the default Report Template failed. This error is
+non-fatal. Do not retry form creation; recover the missing template through
+[the template publication gate](../fulcrum-report-building/SKILL.md#template-publication-gate).
+Reuse prior approval only when it covers the same content and operation.
 
 For an existing app:
 
-1. Fetch the current form with `fulcrum_forms_get`.
-2. Copy its complete element tree and preserve every existing element key, concrete `type`, and inline-choice key.
+1. Fetch the current form with `fulcrum_forms_get`. Compare it with the version
+   assessed for approval; reconcile intervening changes rather than overwriting
+   them, and return to Step 3 if the approved design or assessment is affected.
+2. Copy its complete element tree and preserve every existing element key,
+   concrete `type`, and inline-choice key.
 3. Modify requested properties in place without changing their keys.
 4. Use `fulcrum_schema_build_field` only for genuinely new field additions, then insert those additions into the copied tree.
 5. Preservation is the default. Preserve every unrequested element and choice. Omit `removed_element_keys` when nothing was removed.
 6. If the user requests an element removal, explain the data and integration impact and obtain explicit approval. After approval, omit the removed subtree from the copied tree and collect only that subtree root's existing key in `removed_element_keys`; one root key authorizes its descendants. Choice removals also require approval, but choice keys do not belong in `removed_element_keys`.
 7. Validate the composed full form with `fulcrum_forms_validate`.
-8. Start the update payload with `elements: composedElements`. Only
+8. Complete the performance review of the composed code and dependencies,
+   including unchanged code. Return to Step 3 if the design or assessment
+   changed materially; complete any required reapproval before the update.
+9. Always re-read the full form and relevant dependencies immediately before
+   the update. Reconcile only approved edits into that fresh state, preserving
+   intervening fields, choices, and handlers. Recompute `composedElements` and
+   `removedElementKeys`, revalidate the full form, and re-review the result.
+   Obtain reapproval for material differences and repeat this final fresh read
+   after approval. Follow the pre-write safeguard; never replay stale values.
+10. Start the update payload with `elements: composedElements`. Only
    `if (removedElementKeys.length > 0)`, set
    `updatePayload.removed_element_keys = removedElementKeys`, then send the
    complete payload with `fulcrum_forms_update(updatePayload)`. The annotated call is
@@ -183,7 +277,14 @@ There are no standalone Data Event CRUD tools. A form has one `script` value:
 
 1. Read the current script with `fulcrum_forms_get`.
 2. Compose the approved change with the existing script instead of overwriting unrelated handlers.
-3. Write the complete script with `fulcrum_forms_update`.
+3. Review performance of the complete script and loaded dependencies. Refresh
+   the score and advice and obtain reapproval for material changes before writing.
+4. Always re-read the current form and relevant dependencies immediately before
+   the write, even if no change is known. Reconcile the approved edits into the
+   freshly read script, preserving intervening handlers, and re-review that
+   final composition. If material changes require reapproval, return to step 3
+   and repeat this fresh read after approval; never reuse the earlier snapshot.
+5. Write the reviewed, approved final script with `fulcrum_forms_update`.
 
 Use `fulcrum_expressions_data_events_reference` for current hooks and signatures rather than relying on a memorized contract.
 
@@ -204,6 +305,8 @@ After a build or handoff, summarize:
 - Plan and offline dependencies.
 - Default Report Template status, including any non-fatal template error.
 - Errors, skipped work, unsupported operations, and known limitations.
+- App score/range, evidence limitations, performance assessment, and advisory
+  trade-offs the user chose to accept.
 - Recommended follow-up for PS, CS, or product.
 
 ## Explicit Safety Rules
@@ -224,6 +327,8 @@ This skill orchestrates app creation and updates. Defer deep platform questions 
 
 ## References
 
+- [Pre-write freshness and artifact consistency](resources/pre-write-freshness.md)
+- [Design approval and performance scenarios](resources/approval-cases.md)
 - [Fulcrum developer documentation](https://docs.fulcrumapp.com/)
 - [Fulcrum Forms API](https://docs.fulcrumapp.com/reference/forms-intro)
 - [Build example index](examples/README.md)

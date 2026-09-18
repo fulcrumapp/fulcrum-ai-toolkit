@@ -5,6 +5,10 @@ carries an `<%# Source: %>` or `/* Source: */` comment naming its public
 documentation. Paste a fragment into a template; these are not standalone
 templates.
 
+Stage fragments locally first. Before saving a composed template, follow
+[the template publication gate](../SKILL.md#template-publication-gate) for
+performance review, explicit approval, and pre-write freshness checks.
+
 Only functions listed in
 [`report-template-reference.md`](../resources/report-template-reference.md)
 exist at runtime. Do not invent helper names, and never place a credential in a

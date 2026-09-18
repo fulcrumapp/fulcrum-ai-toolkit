@@ -4,6 +4,10 @@
 # the preservation rules are what matter here. This sequence is for new forms
 # only — see ../examples/forms-update-preserving-keys.js for existing forms.
 
+Before starting, follow ../SKILL.md Step 3: show the proposed app score,
+constructive advice, and performance assessment with the design confirmation.
+The user may approve the design without adopting advisory improvements.
+
 Step 1  fulcrum_schema_field_types()
         Call once without a category filter. Keep the complete supported type
         set for the exhaustive discriminator check in Step 4.
@@ -38,7 +42,23 @@ Step 4  fulcrum_forms_validate(name=..., elements=[...from step 3...])
         is missing, non-string, generic, or unsupported. Then validate the
         complete payload before any creation side effect.
 
-Step 5  fulcrum_forms_create(name=..., elements=[...from step 3...])
+Step 5  Performance review and approval gate (no live writes)
+        Run fulcrum-performance-review on every authored/generated code
+        artifact and its dependencies. If the built definition or review
+        materially changes the approved score, risks, or behavior, refresh
+        the score and advice and obtain approval again.
+        Complete this gate before continuing to Step 6.
+
+Step 6  Pre-create freshness check (no live writes)
+        Use a currently registered form list/search/discovery operation, when
+        the live App MCP catalog provides one, to re-read the target identity
+        and confirm that no form with the approved name/identity appeared
+        after approval. If the target exists or assumptions changed, stop and
+        reconcile through ../resources/pre-write-freshness.md. If no supported
+        discovery operation exists, freshness is unverifiable: stop and report
+        the limitation rather than inventing a tool call or issuing create.
+
+Step 7  fulcrum_forms_create(name=..., elements=[...from step 3...])
         Optionally include a `script` value with the form's Data Events.
         Creation also creates a default Report Template unless
         skip_default_report is explicitly true.

@@ -22,6 +22,8 @@ answer a focused domain question from this router when an owning skill exists.
 | Roles, permissions, memberships, SSO, SCIM, or least privilege | [`fulcrum-access-management`](../fulcrum-access-management/SKILL.md) |
 | Migration discovery, mapping, reconciliation, cutover design, or rollback | [`fulcrum-data-migration`](../fulcrum-data-migration/SKILL.md) |
 | App shape, field types, repeatables, Record Links, or choice design | [`fulcrum-app-design`](../fulcrum-app-design/SKILL.md) |
+| App design score, grade, quality scorecard, or comparison | [`fulcrum-app-scorecard`](../fulcrum-app-scorecard/SKILL.md) |
+| Any code authoring/edit/review: performance, workload growth, or optimization | [`fulcrum-performance-review`](../fulcrum-performance-review/SKILL.md), alongside the owning runtime skill |
 | Discovery, feasibility, expectations, or pre-build requirements | [`fulcrum-discovery`](../fulcrum-discovery/SKILL.md) |
 | Goal and deliverable definition | [`fulcrum-app-goal`](../fulcrum-app-goal/SKILL.md) |
 | Approved schema construction or App MCP orchestration | [`fulcrum-app-builder`](../fulcrum-app-builder/SKILL.md) |
@@ -82,6 +84,12 @@ try credentials against other regions after a failure.
 > connector contract and take precedence over toolkit prose.
 
 ## Routing Workflow
+
+Every workflow that authors, modifies, or reviews code must include
+[`fulcrum-performance-review`](../fulcrum-performance-review/SKILL.md) before
+delivery, even when performance was not explicitly requested. Include its
+constructive summary with the code or design approval; do not confuse static
+analysis with measured runtime performance.
 
 1. Classify the request by outcome, affected resources, online/offline needs,
    and whether it asks for advice or execution.

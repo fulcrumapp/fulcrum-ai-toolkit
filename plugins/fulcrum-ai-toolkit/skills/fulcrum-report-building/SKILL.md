@@ -5,18 +5,39 @@ description: Use when building, modifying, generating, or debugging Fulcrum repo
 
 A Fulcrum **report template** is EJS (Embedded JavaScript) that runs server-side inside a headless Chrome instance (Puppeteer). The output is a PDF or HTML page — not a live view. Every report starts from a single record's context and expands from there via `QUERY()`.
 
+## Performance Evaluation
+
+Whenever authoring, modifying, or reviewing report code or embedded SQL,
+complete [`fulcrum-performance-review`](../fulcrum-performance-review/SKILL.md)
+before delivery or persistence, including small edits and generated templates.
+Trace `QUERY()`/`API()` calls inside loops, repeated joins/lookups, row
+multiplication, large HTML tables, media sizes, and page-count growth.
+Excessive report complexity can increase generation time, timeouts, and memory
+use; a successful parse or a short template does not establish performance.
+Include constructive advice and static versus measured evidence. Users may
+accept performance trade-offs; never silently omit required report data to
+make generation faster.
+
+Follow the performance skill's code-discovery workflow into attached
+templates, EJS partials, embedded SQL/scripts/styles, and their dependencies.
+Unread or dynamically resolved code must remain explicitly unreviewed; a
+clean top-level template does not establish the cost of its included content.
+
 > **Guidance boundary:** Report APIs and template behavior should be checked against current Fulcrum documentation. The rendering workflow below is a toolkit convention, not a guarantee of public product support.
 
 ## App MCP Control Plane
 
 When Fulcrum App MCP is registered, use its live schemas for Report Template management and report generation:
 
+Template creation and updates require the no-write review and approval gate
+below; the tool list is a capability reference, not authorization to persist.
+
 | Goal | App MCP tool |
 |---|---|
 | List templates, optionally by form | `fulcrum_report_templates_list` |
 | Read a template | `fulcrum_report_templates_get` |
-| Create a Report Builder template | `fulcrum_report_templates_create` |
-| Update a template | `fulcrum_report_templates_update` |
+| Create a Report Builder template after publication approval | `fulcrum_report_templates_create` |
+| Update a template after publication approval | `fulcrum_report_templates_update` |
 | Delete a template after confirmation | `fulcrum_report_templates_delete` |
 | Generate a report for a record | `fulcrum_reports_create` |
 
@@ -27,11 +48,39 @@ through an authorized interface. Report Builder `QUERY()` executes inside
 template EJS and is distinct from Query MCP `query_records`; do not substitute
 one execution context for the other.
 
-`fulcrum_forms_create` creates a default Report Template unless `skip_default_report` is explicitly `true`. If form creation returns a form plus `report_template_error`, the form succeeded and only template creation failed. Do not create the form again; use `fulcrum_report_templates_create` for the missing template.
+`fulcrum_forms_create` creates a default Report Template unless `skip_default_report` is explicitly `true`. If form creation returns a form plus `report_template_error`, the form succeeded and only template creation failed. Do not create the form again; recover the missing template through the publication gate below, reusing prior approval only when it covers the same content and operation.
 
 > Connector authority: Live installed App MCP schemas define registered report
 > tools and result shapes. Runtime names come from the
 > [Fulcrum Report Builder functions reference](https://docs.fulcrumapp.com/docs/functions).
+
+### Template Publication Gate
+
+Apply this workflow for direct report work as well as builder-orchestrated
+work, including manual UI saves:
+
+1. Read the target form, existing template (for updates), and relevant
+   attached/loaded dependencies through authorized read operations. Stage
+   the complete proposed template locally, preserving unrequested changes.
+2. Complete static validation and performance review of the template,
+   queries, and dependencies. Present the app score or its explicit evidence
+   limits, constructive advice, and intended create/update operation using
+   [the builder's confirmation contract](../fulcrum-app-builder/SKILL.md#score-and-advice-at-every-design-confirmation).
+3. Obtain explicit publication approval before any live write. Performance
+   advice is optional; reviewing code or asking for an evaluation is not
+   authorization to publish it.
+4. Immediately before persistence, apply
+   [the pre-write freshness safeguard](../fulcrum-app-builder/resources/pre-write-freshness.md).
+   For updates, re-read the current template and dependencies, reconcile,
+   revalidate, and re-review. Obtain reapproval for material changes, then
+   repeat the fresh read. Do not replay an earlier full template.
+5. Only then call `fulcrum_report_templates_create` or
+   `fulcrum_report_templates_update`, or save through the manual UI, using
+   the reviewed and approved content.
+
+Report generation is a separate operation: do not call `fulcrum_reports_create`
+merely to complete a static review. Use it only within an authorized
+report-generation request; do not infer that permission from template approval.
 
 ## Report Types
 
@@ -146,7 +195,7 @@ At minimum, verify one short, one long, and one multi-page fixture, plus any lay
 ### Debugging in the report builder
 The report builder has poor error messages — a syntax error may show a blank white page with no indication of what broke.
 
-**Workflow:** Write and test all logic in VS Code first. Use Node.js to validate JavaScript. Paste into the report builder only when the logic is confirmed working. Keep a local copy of every report template.
+**Workflow:** Write and test all logic in VS Code first. Use Node.js to validate JavaScript. Before saving in the report builder, follow the [template publication gate](#template-publication-gate); successful validation is not write authorization. Keep a local copy of every report template.
 
 ### Inventing runtime functions or embedding credentials
 Use the documented Fulcrum API helper and a relative API path, as in
@@ -188,6 +237,7 @@ A report template is a single EJS file. As it grows:
 
 ## Completion Criteria
 
+- [ ] Report code and queries have a workload-based performance evaluation covering request fan-out, rendering/media growth, and any unmeasured risks
 - [ ] Report type is explicit — PDF (printer output) or HTML (interactive/API)
 - [ ] `QUERY()` is used for any data beyond the single record context — no JSON-stuffing workarounds
 - [ ] No credentials are embedded in the Report Template

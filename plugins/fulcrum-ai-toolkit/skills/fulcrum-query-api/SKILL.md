@@ -8,6 +8,12 @@ description: Discover, model, execute, and validate safe read-only Fulcrum queri
 Discover current metadata, model a read-only query, execute it through Query
 MCP when authorized, and validate the result.
 
+Whenever authoring, modifying, or reviewing SQL or caller code, complete
+[`fulcrum-performance-review`](../fulcrum-performance-review/SKILL.md) before
+delivery. Evaluate scan bounds, join cardinality, repeated calls, sorting,
+and spatial cost; distinguish static risks from measured plans or timings.
+The evaluation does not authorize query execution.
+
 ## When To Use
 
 Use this skill for Query API table discovery, app/repeatable/link/media joins,
