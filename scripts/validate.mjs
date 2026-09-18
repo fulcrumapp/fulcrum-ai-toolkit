@@ -42,7 +42,9 @@ const BUNDLE_ENTRYPOINTS = resolveBundleEntrypoints(process.env.FULCRUM_VALIDATE
 const FORBIDDEN_PACKAGE_PATHS = [
   path.join(PLUGIN_RELATIVE_PATH, '.cursor-plugin', 'plugin.json'),
   path.join(PLUGIN_RELATIVE_PATH, '.codex-plugin', 'plugin.json'),
-  path.join(PLUGIN_RELATIVE_PATH, '.mcp.json')
+  path.join(PLUGIN_RELATIVE_PATH, '.mcp.json'),
+  path.join(PLUGIN_RELATIVE_PATH, '.claude-plugin', 'plugin.json'),
+  path.join(PLUGIN_RELATIVE_PATH, 'commands', 'fulcrum-solution-document.md')
 ];
 
 const EXPECTED_SKILLS = [
@@ -621,18 +623,16 @@ if (fs.existsSync(reportSkillPath)) {
 
 const rootClaudeManifestPath = '.claude-plugin/plugin.json';
 const rootClaudeManifest = jsonDocuments[rootClaudeManifestPath];
-if (rootClaudeManifest?.skills !== `./${PLUGIN_RELATIVE_PATH}/skills/`) {
-  failures.push(`${rootClaudeManifestPath}: skills must point to ./${PLUGIN_RELATIVE_PATH}/skills/`);
+const expectedClaudeSkillPaths = EXPECTED_SKILLS
+  .filter((skillName) => !USER_INVOKED_SKILLS.has(skillName))
+  .map((skillName) => `./${PLUGIN_RELATIVE_PATH}/skills/${skillName}/`);
+if (JSON.stringify(rootClaudeManifest?.skills) !== JSON.stringify(expectedClaudeSkillPaths)) {
+  failures.push(
+    `${rootClaudeManifestPath}: skills must explicitly register every shared skill except ${[...USER_INVOKED_SKILLS].join(', ')}`
+  );
 }
 
-const nestedClaudeManifestPath = `${PLUGIN_RELATIVE_PATH}/.claude-plugin/plugin.json`;
 const claudeCommandDefinitions = [
-  {
-    manifestPath: nestedClaudeManifestPath,
-    commandRelativePath: `${PLUGIN_RELATIVE_PATH}/commands/fulcrum-solution-document.md`,
-    commandsPath: './commands/',
-    sharedSkillPath: '${CLAUDE_PLUGIN_ROOT}/skills/fulcrum-solution-document/SKILL.md'
-  },
   {
     manifestPath: rootClaudeManifestPath,
     commandRelativePath: 'commands/fulcrum-solution-document.md',
@@ -671,8 +671,7 @@ for (const {
 }
 
 const claudeManifestPaths = [
-  rootClaudeManifestPath,
-  nestedClaudeManifestPath
+  rootClaudeManifestPath
 ];
 for (const relativePath of claudeManifestPaths) {
   if ('$schema' in (jsonDocuments[relativePath] ?? {})) {
@@ -712,7 +711,7 @@ if (!fs.existsSync(rootLicensePath) || !fs.existsSync(packageLicensePath)) {
 
 const marketplaceSources = {
   '.github/plugin/marketplace.json': './plugins/fulcrum-ai-toolkit',
-  '.claude-plugin/marketplace.json': './plugins/fulcrum-ai-toolkit',
+  '.claude-plugin/marketplace.json': './',
   'marketplace.json': './plugins/fulcrum-ai-toolkit'
 };
 for (const [relPath, expectedSource] of Object.entries(marketplaceSources)) {

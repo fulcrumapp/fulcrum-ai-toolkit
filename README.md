@@ -23,8 +23,10 @@ In Claude Code, add the marketplace and install the plugin:
 
 Private repositories may also include this repository as a git submodule and
 use the submodule root as a Claude plugin. The root
-`.claude-plugin/plugin.json` points Claude to the nested package's shared skills
-and root-level manual command adapter.
+`.claude-plugin/plugin.json` explicitly registers the shared skills other than
+the manual-only solution-document workflow, and registers the root-level
+manual command adapter. This keeps that workflow available only through the
+command while leaving the other shared skills discoverable.
 
 In Codex, add the repository marketplace, then install
 `fulcrum-ai-toolkit` from the Plugins directory:
@@ -378,7 +380,7 @@ Plugin configs are included for multiple AI platforms:
 | Platform | Config |
 | ---------- | -------- |
 | GitHub Copilot CLI | `.github/plugin/marketplace.json` and `plugins/fulcrum-ai-toolkit/plugin.json` |
-| Claude Code | `.claude-plugin/plugin.json` at the repository root, or the nested package manifest at `plugins/fulcrum-ai-toolkit/.claude-plugin/plugin.json`; each manifest registers a plugin-root-relative `commands/` adapter |
+| Claude Code | `.claude-plugin/plugin.json` at the repository root; it explicitly registers the non-manual shared skills and the root `commands/` adapter |
 | Cursor | Portable core in `plugins/fulcrum-ai-toolkit/` |
 | Codex | Portable core in `plugins/fulcrum-ai-toolkit/` |
 | Hermes | Shared `skills/` directory; root `plugin.json` for hosts supporting Agent Plugins v1 |
@@ -386,10 +388,12 @@ Plugin configs are included for multiple AI platforms:
 | MCP | `plugins/fulcrum-ai-toolkit/mcp.json`; configure a tenant-specific server separately |
 
 All hosts discover or reference the package's shared `skills/` directory; they
-do not maintain separate copies of skill content. The Claude command adapter
-delegates to the shared skill rather than copying its workflow. Native wrapper
-files are not portable Agent Plugins components and are retained only for the
-installers that require them. GitHub Copilot marketplace
+do not maintain separate copies of skill content. Claude uses the repository
+root as its plugin source and explicitly omits the manual-only solution-document
+skill from automatic skill discovery; its command adapter delegates to the
+shared skill rather than copying its workflow. Native wrapper files are not
+portable Agent Plugins components and are retained only for the installers that
+require them. GitHub Copilot marketplace
 metadata is available at `.github/plugin/marketplace.json`; the same catalog is
 also available at `.claude-plugin/marketplace.json` for Claude and Copilot's
 fallback lookup. A root `.claude-plugin/plugin.json` supports repositories that
