@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import fs from 'node:fs';
 import test from 'node:test';
 import { validateClaudeManualCommand } from '../scripts/claude-adapter.mjs';
 
@@ -20,6 +21,14 @@ const rootBody = [
   '',
   '- [Claude Code skill invocation](https://code.claude.com/docs/en/skills#control-who-invokes-a-skill)'
 ].join('\n');
+const rootManifest = JSON.parse(
+  fs.readFileSync(new URL('../.claude-plugin/plugin.json', import.meta.url), 'utf8')
+);
+const sharedSkillsPath = new URL('../plugins/fulcrum-ai-toolkit/skills/', import.meta.url);
+const expectedClaudeSkills = fs.readdirSync(sharedSkillsPath, { withFileTypes: true })
+  .filter((entry) => entry.isDirectory() && entry.name !== 'fulcrum-solution-document')
+  .map((entry) => `./plugins/fulcrum-ai-toolkit/skills/${entry.name}/`)
+  .sort();
 
 test('accepts the Claude manual command adapter', () => {
   assert.deepEqual(
@@ -39,6 +48,14 @@ test('accepts the repository-root Claude manual command adapter', () => {
       '${CLAUDE_PLUGIN_ROOT}/plugins/fulcrum-ai-toolkit/skills/fulcrum-solution-document/SKILL.md'
     ),
     []
+  );
+});
+
+test('keeps the manual-only workflow out of Claude skill discovery', () => {
+  assert.deepEqual(rootManifest.skills.toSorted(), expectedClaudeSkills);
+  assert.equal(
+    rootManifest.skills.some((skillPath) => skillPath.includes('fulcrum-solution-document')),
+    false
   );
 });
 
