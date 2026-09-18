@@ -37,9 +37,15 @@
 // Events used below are the documented record lifecycle: load-record fires when
 // the editor is displayed, cancel-record fires after an editing session is
 // cancelled, and unload-record fires when the editor has closed.
+//
+// Only list explicitly approved, non-sensitive scalar fields here. Do not
+// replace this allowlist with FIELD_NAMES(): STORAGE() is persistent and
+// repeatable, media, location, and personal-data values do not belong in it.
 
 var BASELINE_KEY_PREFIX = 'baseline:';
 var DRAFT_POINTER_SUFFIX = ':draft-latest';
+var BASELINE_FIELDS = ['condition', 'status'];
+var MAX_BASELINE_TEXT_LENGTH = 256;
 var baselineKey = null;
 
 function formScope() {
@@ -78,8 +84,19 @@ function readBaseline() {
 function computeBaseline() {
   var baseline = {};
 
-  FIELD_NAMES().forEach(function (fieldName) {
-    baseline[fieldName] = VALUE(fieldName);
+  BASELINE_FIELDS.forEach(function (fieldName) {
+    var value = VALUE(fieldName);
+
+    if (typeof value === 'string' && value.length <= MAX_BASELINE_TEXT_LENGTH) {
+      baseline[fieldName] = value;
+    } else if (
+      typeof value === 'number' &&
+      Number.isFinite(value)
+    ) {
+      baseline[fieldName] = value;
+    } else if (typeof value === 'boolean') {
+      baseline[fieldName] = value;
+    }
   });
 
   return baseline;

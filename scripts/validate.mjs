@@ -141,7 +141,7 @@ function applyClaudeSkillMirrorRewrites(skillName, snapshot) {
       .toString('utf8')
       .replace(
         '../fulcrum-solution-document/SKILL.md',
-        '../commands/fulcrum-solution-document.md'
+        '../../commands/fulcrum-solution-document.md'
       );
     return [relativePath, Buffer.from(content).toString('base64')];
   });
