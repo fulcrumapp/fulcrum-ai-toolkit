@@ -367,12 +367,12 @@
     {
       "path": "skills/fulcrum-report-building/assets/ejs-tag-types.ejs",
       "kind": "fragment",
-      "sha256": "6d702b468114a2879157e57d1813dfde0acccb3b93a3eac0d97ade01b36c1875"
+      "sha256": "ae78d090b74b9e371684688bf835f8968d6345c661c5948115bff83b21675bce"
     },
     {
       "path": "skills/fulcrum-report-building/examples/api-fulcrum-rest.ejs",
       "kind": "fragment",
-      "sha256": "9f9380e4df31b72ee4c6fba85bcb18b7a91ed4384ccf018b4f3efeac8945bb71"
+      "sha256": "a6602cb092cc55d4f4ab2c849c9de68ff0ad33cb4a13809f07aa5ef6422b4eaa"
     },
     {
       "path": "skills/fulcrum-report-building/examples/conditional-section.ejs",
@@ -392,7 +392,7 @@
     {
       "path": "skills/fulcrum-report-building/examples/photo-url-signed-src.ejs",
       "kind": "fragment",
-      "sha256": "cfec798ff4bb9a401ef222b10d01dbc0b70710fbd358b8ce119269297ba1e7d3"
+      "sha256": "7cad08a4721d8604bb57583f919bf536fb6fbf91ca6a59a23819dbe25aae0e3b"
     },
     {
       "path": "skills/fulcrum-report-building/examples/query-related-records.ejs",
@@ -407,7 +407,7 @@
     {
       "path": "skills/fulcrum-report-building/examples/query-rows-iteration.ejs",
       "kind": "fragment",
-      "sha256": "cf97d4e95a09f6d3e22369400da6900143f6b84f7d0dba980d31b75603c53662"
+      "sha256": "5f9addfb7d88703838c079868887da8e70c8abe720ad02d0e9937789e597ddaa"
     },
     {
       "path": "skills/fulcrum-report-building/examples/record-field-access.ejs",
