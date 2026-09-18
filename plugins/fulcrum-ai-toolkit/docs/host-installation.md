@@ -22,10 +22,10 @@ command is `codex plugin add fulcrum-ai-toolkit@fulcrum-ai-toolkit`.
 When a private repository includes this toolkit as a git submodule and registers
 the submodule directory directly as a Claude plugin, use the submodule root.
 Its `.claude-plugin/plugin.json` points to the distributable package's shared
-`skills/` directory. Do not register the parent private repository as the plugin
-root unless its own marketplace entry selects the toolkit submodule path.
-For ordinary marketplace installation, the marketplace continues to select the
-nested package directly.
+`skills/` directory and its Claude-native manual command adapter. Do not
+register the parent private repository as the plugin root unless its own
+marketplace entry selects the toolkit submodule path. For ordinary marketplace
+installation, the marketplace continues to select the nested package directly.
 
 ## Cursor
 
