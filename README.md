@@ -147,6 +147,22 @@ Structural and schema validation for externalized examples and assets runs via
 In CI, GitHub Actions also validates the Claude plugin marketplace using Anthropic's official
 `validate-plugins` composite action.
 
+## Automated inline review fixes
+
+The `Agent review fixes` agentic workflow handles newly created inline pull
+request review comments. It runs only for trusted collaborators on open
+same-repository pull requests carrying the `agent-review-fixes` label. Remove
+the label to disable automatic code changes, pushes, replies, and thread
+resolution for a pull request.
+
+The workflow does not operate on forks and never merges or bypasses approvals,
+branch protection, or required checks. Inspect executions in the repository's
+**Actions** tab under **Agent review fixes**, or with
+`gh aw status agent-review-fixes` and `gh aw logs agent-review-fixes`.
+Repository Actions must allow read/write workflow permissions and GitHub
+Copilot requests. Add a `PR_REVIEW_THREAD_TOKEN` secret with pull-request write
+access if the default Actions token cannot resolve review threads.
+
 ## Releases
 
 The toolkit version is defined in
