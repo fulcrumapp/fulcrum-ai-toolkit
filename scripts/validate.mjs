@@ -555,32 +555,47 @@ if (rootClaudeManifest?.skills !== `./${PLUGIN_RELATIVE_PATH}/skills/`) {
 }
 
 const nestedClaudeManifestPath = `${PLUGIN_RELATIVE_PATH}/.claude-plugin/plugin.json`;
-const claudeCommandRelativePath = `${PLUGIN_RELATIVE_PATH}/commands/fulcrum-solution-document.md`;
-const claudeCommandPath = path.join(ROOT, claudeCommandRelativePath);
-const claudeCommandParts = fs.existsSync(claudeCommandPath)
-  ? fs.readFileSync(claudeCommandPath, 'utf8').split(/^---\s*$/m)
-  : [];
-if (claudeCommandParts.length < 3) {
-  failures.push(`${claudeCommandRelativePath}: missing YAML frontmatter`);
-} else {
+const claudeCommandDefinitions = [
+  {
+    manifestPath: nestedClaudeManifestPath,
+    commandRelativePath: `${PLUGIN_RELATIVE_PATH}/commands/fulcrum-solution-document.md`,
+    commandsPath: './commands/',
+    sharedSkillPath: '${CLAUDE_PLUGIN_ROOT}/skills/fulcrum-solution-document/SKILL.md'
+  },
+  {
+    manifestPath: rootClaudeManifestPath,
+    commandRelativePath: 'commands/fulcrum-solution-document.md',
+    commandsPath: './commands/',
+    sharedSkillPath:
+      '${CLAUDE_PLUGIN_ROOT}/plugins/fulcrum-ai-toolkit/skills/fulcrum-solution-document/SKILL.md'
+  }
+];
+for (const {
+  manifestPath,
+  commandRelativePath,
+  commandsPath,
+  sharedSkillPath
+} of claudeCommandDefinitions) {
+  const commandPath = path.join(ROOT, commandRelativePath);
+  const commandParts = fs.existsSync(commandPath)
+    ? fs.readFileSync(commandPath, 'utf8').split(/^---\s*$/m)
+    : [];
+  if (commandParts.length < 3) {
+    failures.push(`${commandRelativePath}: missing YAML frontmatter`);
+    continue;
+  }
   try {
-    const frontmatter = YAML.parse(claudeCommandParts[1]);
-    const body = claudeCommandParts.slice(2).join('---').trim();
+    const frontmatter = YAML.parse(commandParts[1]);
     failures.push(...validateClaudeManualCommand(
-      jsonDocuments[nestedClaudeManifestPath],
+      jsonDocuments[manifestPath],
       frontmatter,
-      body,
-      claudeCommandRelativePath
-    ));
-    failures.push(...validateClaudeManualCommand(
-      rootClaudeManifest,
-      frontmatter,
-      body,
-      claudeCommandRelativePath,
-      `./${PLUGIN_RELATIVE_PATH}/commands/`
+      commandParts.slice(2).join('---').trim(),
+      commandRelativePath,
+      commandsPath,
+      sharedSkillPath
     ));
   } catch (err) {
-    failures.push(`${claudeCommandRelativePath}: invalid YAML frontmatter (${err.message.split('\n')[0].trim()})`);
+    failures.push(`${commandRelativePath}: invalid YAML frontmatter (${err.message.split('\n')[0].trim()})`);
   }
 }
 
