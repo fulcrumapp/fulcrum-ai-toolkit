@@ -1,0 +1,103 @@
+<%# Source: https://docs.fulcrumapp.com/docs/reports-introduction %>
+<%# Source: https://docs.fulcrumapp.com/reference/query-post %>
+<%# Fragment: paste into a Report Template; this is not a standalone template. %>
+<%# Purpose: accept a report date range through $params, safely. %>
+<%#
+  URL: .../run/<template_id>?start_date=2024-01-01&end_date=2024-03-31
+
+  $params is user-controlled, and a shape test alone is not enough. Both
+  "2024-02-31" and "2024-13-01" satisfy /^\d{4}-\d{2}-\d{2}$/ without being
+  calendar dates, and a reversed range silently returns nothing. Parse each
+  value as a real UTC day and round-trip it back to YYYY-MM-DD; a value that
+  does not survive the round trip is rejected rather than corrected.
+
+  The range is half-open: [start 00:00Z, day after end 00:00Z). BETWEEN is
+  inclusive of its upper bound, so on a timestamp column it keeps only the
+  midnight instant of the end day and drops every later reading that day.
+
+  The Query API accepts one complete SQL string and exposes no server-side bind
+  parameters, so the template owns the literal. Each literal below is re-emitted
+  from the parsed Date, and is encoded again in the gap where it reaches SQL,
+  so what lands inside the quotes is digits and hyphens whatever happened
+  upstream. Encoding in the gap is what a reader can check: a filter written
+  further up says nothing about the name that is actually interpolated here.
+  `('' + value)` converts without naming `String`, which is an ordinary binding
+  a template could rebind.
+
+  Every branch emits complete markup. A row is only valid inside a table, so the
+  rows below are wrapped in one here rather than left to the surrounding
+  template: a rejected range renders a message, an empty result renders a single
+  spanning row, and neither leaves a <tr> loose in the document.
+%>
+
+<% const MS_PER_DAY = 86400000; %>
+<% const DEFAULT_WINDOW_DAYS = 90; %>
+
+<% function parseIsoDay(value) {
+     const text = '' + value;
+     if (!/^\d{4}-\d{2}-\d{2}$/.test(text)) { return null; }
+     const year = Number(text.slice(0, 4));
+     if (year < 1 || year > 9998) { return null; }
+     const parsed = new Date(text + 'T00:00:00.000Z');
+     if (isNaN(parsed.getTime())) { return null; }
+     return parsed.toISOString().slice(0, 10) === text ? parsed : null;
+   } %>
+<% function isoDay(day) { return day.toISOString().slice(0, 10); } %>
+<% function addDays(day, days) { return new Date(day.getTime() + days * MS_PER_DAY); } %>
+
+<% const today = parseIsoDay(isoDay(new Date())); %>
+<% const requestedStart = $params.start_date; %>
+<% const requestedEnd = $params.end_date; %>
+<% const endDay = requestedEnd ? parseIsoDay(requestedEnd) : today; %>
+<% const startDay = requestedStart
+     ? parseIsoDay(requestedStart)
+     : parseIsoDay(isoDay(addDays(endDay || today, -DEFAULT_WINDOW_DAYS))); %>
+
+<% const rangeError = !startDay || !endDay
+     ? 'start_date and end_date must be calendar dates in YYYY-MM-DD form.'
+     : startDay.getTime() > endDay.getTime()
+       ? 'start_date must not be later than end_date.'
+       : null; %>
+
+<% const startDate = rangeError ? '' : isoDay(startDay); %>
+<% const endDate = rangeError ? '' : isoDay(endDay); %>
+<% const endExclusiveDay = rangeError ? null : addDays(endDay, 1); %>
+<% const endExclusiveDate = endExclusiveDay ? isoDay(endExclusiveDay) : ''; %>
+
+<% const recordResults = rangeError ? { rows: [] } : QUERY(
+       `SELECT _record_id, _created_at, _status
+        FROM "Inspections"
+        WHERE _created_at >= '${('' + startDate).replace(/[^0-9-]/g, '')}'
+          AND _created_at < '${('' + endExclusiveDate).replace(/[^0-9-]/g, '')}'
+        ORDER BY _created_at DESC
+        LIMIT 500`,
+       { format: 'json' }
+     ); %>
+<table class="report-table">
+  <thead>
+    <tr>
+      <th scope="col">Record</th>
+      <th scope="col">Created</th>
+      <th scope="col">Status</th>
+    </tr>
+  </thead>
+  <tbody>
+    <% if (rangeError) { %>
+      <tr>
+        <td colspan="3" class="report-error"><%= rangeError %> No query was run.</td>
+      </tr>
+    <% } else if (recordResults.rows.length === 0) { %>
+      <tr>
+        <td colspan="3">No inspections in this range.</td>
+      </tr>
+    <% } else { %>
+      <% recordResults.rows.forEach(function (row) { %>
+        <tr>
+          <td><%= row._record_id %></td>
+          <td><%= row._created_at %></td>
+          <td><%= row._status %></td>
+        </tr>
+      <% }); %>
+    <% } %>
+  </tbody>
+</table>

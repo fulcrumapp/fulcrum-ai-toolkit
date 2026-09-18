@@ -371,16 +371,18 @@ Plugin configs are included for multiple AI platforms:
 | MCP | `plugins/fulcrum-ai-toolkit/mcp.json`; configure a tenant-specific server separately |
 
 All hosts discover or reference the package's shared `skills/` directory; they
-do not maintain separate copies of skill content. Claude uses the repository
-root as its plugin source and explicitly omits the manual-only solution-document
-skill from automatic skill discovery; its command adapter delegates to the
-shared skill rather than copying its workflow. Native wrapper files are not
+do not maintain separate copies of skill content, except for Claude's native
+repository-root adapter, which carries a validator-checked copy of the
+non-manual skills because Claude only scans its plugin-root `skills/` directory.
+Claude explicitly omits the manual-only solution-document skill from automatic
+skill discovery; its command adapter delegates to the shared skill rather than
+copying its workflow. Native wrapper files are not
 portable Agent Plugins components and are retained only for the installers that
 require them. GitHub Copilot marketplace
 metadata is available at `.github/plugin/marketplace.json`; the same catalog is
-also available at `.claude-plugin/marketplace.json` for Claude and Copilot's
-fallback lookup. A root `.claude-plugin/plugin.json` supports repositories that
-consume this repository as a plugin submodule. The legacy root
+also available at `.claude-plugin/marketplace.json` for Claude. A root
+`.claude-plugin/plugin.json` supports repositories that consume this repository
+as a plugin submodule. The legacy root
 `marketplace.json` is kept for existing installers. Codex marketplace metadata is available at
 `.agents/plugins/marketplace.json` and points to the package under `plugins/`.
 

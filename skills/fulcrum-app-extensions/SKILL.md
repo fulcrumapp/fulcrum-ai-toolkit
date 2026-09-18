@@ -1,0 +1,235 @@
+---
+name: fulcrum-app-extensions
+description: Use when building, modifying, or reviewing Fulcrum App Extensions. Defers pattern knowledge and artifact generation to App MCP, then covers the generated bridge contract, Reference File workflow, offline decisions, data exchange, and picker anti-pattern.
+---
+
+An **app extension** is a custom HTML/CSS/JavaScript UI that runs inside a Fulcrum record on iOS, Android, and web. It lets you build data collection interfaces that Fulcrum doesn't support natively — custom pickers, embedded charts, SVG area selection, Bluetooth input, complex validation UIs.
+
+Extensions communicate with the Fulcrum record through the data events API bridge. The data lives in standard Fulcrum fields and syncs normally.
+
+Whenever authoring, modifying, or reviewing extension code, complete
+[`fulcrum-performance-review`](../fulcrum-performance-review/SKILL.md) before
+delivery or upload, including generated HTML and its Data Event trigger.
+Evaluate bridge payload size/copies, rendering and list growth, repeated
+lookups, and listener/state lifetime. Include constructive advice and
+distinguish static risks from measured behavior; optimization advice is
+optional, but bridge correctness and authorization remain required.
+
+Follow the performance skill's code-discovery workflow through attached HTML,
+`attachment://` Reference Files, inline/embedded scripts and handlers, bundles,
+and transitively loaded assets. Review the extension contents as well as the
+Data Event that launches it; an upload, filename, or bridge check is not a
+review of the code inside the attachment.
+
+> **Guidance boundary:** The bridge API and event flow in this skill follow Fulcrum's documented extension API. Field-type recommendations, offline decisions, and payload-sizing guidance are toolkit conventions unless explicitly sourced.
+
+## App MCP Knowledge And Generation
+
+When Fulcrum App MCP is registered, use `fulcrum_extensions_list_patterns` and `fulcrum_extensions_explain` to select a supported pattern, then use `fulcrum_extensions_generate` for the Data Event, HTML, and setup notes. Treat those registered tools as the current extension contract instead of recreating a remembered bootstrap or bridge.
+
+> Connector authority: Live installed App MCP schemas define generated
+> artifacts. The bridge behavior comes from the
+> [Fulcrum App Extensions introduction](https://docs.fulcrumapp.com/docs/app-extensions-introduction).
+>
+> Source: [Fulcrum App Extensions introduction](https://docs.fulcrumapp.com/docs/app-extensions-introduction).
+
+## When to Use an Extension vs. a Data Event
+
+| Use a data event when... | Use an app extension when... |
+|--------------------------|------------------------------|
+| Logic and automation that doesn't require a custom UI | You need a UI that native fields can't provide |
+| Showing/hiding fields conditionally | Custom pickers, image selectors, color ramps |
+| Cascading choices, validation, calculations | Rich multi-step input flows |
+| Simple lookups that return a single value | Embedded charts or graphs inside a record |
+| Role-based field visibility | Complex forms with their own validation |
+| The workflow works with native Fulcrum fields | The native field types are the wrong UX |
+
+## Extension Types
+
+| Pattern | Use case |
+|---------|----------|
+| `picker` | Custom search/lookup UI — replaces the native choice picker |
+| `editor` | Rich editing UI for complex structured data |
+| `visualization` | Embedded charts, maps, or dashboards within a record |
+| `input` | Device/sensor input (Bluetooth measurements, hardware interfaces) |
+| `integration` | Backend sync or lookup within the record UI |
+
+## Extension Anatomy
+
+An app extension has two parts: a Data Event script that opens the extension, and a custom HTML page that runs in Fulcrum's sandboxed browser panel. The generated Data Event passes values with `OPENEXTENSION({ url, title, data, onMessage })`. The generated HTML embeds the current Fulcrum bootstrap inline, receives a payload shaped as `{ data }`, and returns results with `Fulcrum.finish(result)`.
+
+Do not substitute an old external bootstrap URL. Start from the complete HTML returned by `fulcrum_extensions_generate`, which includes the current standalone bootstrap needed for Reference File and offline use.
+
+A self-contained page with inline styles, the current public inline bootstrap,
+and an inline picker script is in
+[`examples/species-picker.html`](examples/species-picker.html). Upload that
+exact file name as the Reference File, because the Data Event opens it as
+`attachment://species-picker.html`; the two names must match character for
+character. The full example index is [`examples/README.md`](examples/README.md).
+
+> Source: The payload and inline-bootstrap semantics above follow the [public App Extensions quick start](https://docs.fulcrumapp.com/docs/app-extensions-introduction#quick-start);
+> live installed App MCP schemas govern generated artifacts.
+
+## Data Exchange — Reading and Writing Record Fields
+
+Extensions exchange data with the host through the Data Event that opened them. `Fulcrum.load(callback)` receives a payload whose `data` property is the object passed to `OPENEXTENSION`. `Fulcrum.finish(result)` returns an `onMessage` payload whose `data` property is that result. The Data Event remains responsible for reading and writing Fulcrum fields.
+
+### Passing values into the extension
+
+The Data Event calls `OPENEXTENSION({ url, title, data, onMessage })`. Use
+`attachment://<filename>.html` for HTML uploaded as a Reference File. The
+canonical trigger, including the `onMessage` write-back, is
+[`examples/open-extension-pass-values.js`](examples/open-extension-pass-values.js).
+
+Inside the HTML extension, receive the data with `Fulcrum.load(({ data }) => ...)`:
+[`examples/extension-load-payload.js`](examples/extension-load-payload.js).
+
+### Triggering from data events (OPENEXTENSION)
+
+The Data Event opens the extension with an options object. When the HTML page calls `Fulcrum.finish(data)`, the Data Event's `onMessage` callback receives the result and can write it to form fields. The same canonical trigger covers this flow —
+[`examples/open-extension-pass-values.js`](examples/open-extension-pass-values.js)
+passes `mode` alongside the current value, and
+[`examples/extension-bootstrap-lifecycle.js`](examples/extension-bootstrap-lifecycle.js)
+shows the matching page lifecycle.
+
+Treat `payload.data` as untrusted input inside the page. The bridge is the only trusted channel; do not add ad hoc `window.postMessage` listeners, and verify `event.origin` and `event.source` if the page embeds any other frame.
+
+## The Picker Pattern — Read This First
+
+**The picker pattern is the most misunderstood extension type.**
+
+The picker extension REPLACES the native picker UI. It does not augment it. This has one critical implication for field type selection:
+
+> **Do not use a ChoiceField when the extension is replacing the native choice-picker UI. Use a TextField for a free-form selected value or a RecordLinkField when the picker selects a Fulcrum record.**
+
+The ChoiceField has its own picker UI that conflicts with the extension. The correct pattern:
+
+1. **TextField** — stores a free-form selected value
+2. **RecordLinkField** — stores a selected Fulcrum record when the picker returns a record link
+3. **HyperlinkField** — the trigger button; user taps it to open the extension
+4. `ON('click', ...)` on the HyperlinkField → `OPENEXTENSION(...)` in data events
+5. Extension returns the selected value with `Fulcrum.finish()`; the Data Event writes it back to the target field.
+
+The picker trigger is
+[`examples/open-species-picker.js`](examples/open-species-picker.js).
+
+Getting this wrong means building the extension and the form around the wrong field type — an expensive rework. Lock the field type decision before writing extension code.
+
+## Offline Support — The Key Design Decision
+
+Whether an extension works offline depends entirely on where its assets are hosted.
+
+| Asset location | Offline? | Tradeoff |
+|---------------|----------|----------|
+| Uploaded to Fulcrum Reference Files | **Yes** | Must manage updates; no CDN conveniences |
+| Loaded from a CDN (jsDelivr, cdnjs, unpkg) | **No** | Easy to add libraries; breaks offline |
+| Embedded inline in the HTML file | **Yes** | Larger file size; no external dependencies |
+
+**Decision:** If the extension is needed during offline field work, host everything in Reference Files and inline all JavaScript. If the extension is only used in the office (online), CDN libraries are acceptable.
+
+**Sync warning:** Large Reference Files may slow sync when they change.
+Consider file size and update frequency as an advisory trade-off, not an
+automatic app-score deduction or cap. Follow
+[the shared sync-warning guidance](../fulcrum-performance-review/SKILL.md#reference-file-sync-warning);
+do not sacrifice required offline support merely to avoid a download.
+
+**CDN version pinning:** If you use CDN libraries, always lock to a specific semver version. `latest` or unversioned CDN URLs break silently when the library updates. Compare both forms in
+[`assets/cdn-version-pinning.html`](assets/cdn-version-pinning.html).
+
+## Uploading and Attaching Extensions
+
+The extension HTML file is uploaded as a **Reference File** on the form. When App MCP is available, use the generated artifacts without changing their bridge contract:
+
+> Connector authority: Live installed App MCP schemas define exact tool
+> arguments and the generated Reference File workflow.
+
+The generate, read, review/approve, upload, re-read, and update sequence is in
+[`assets/app-mcp-extension-publish-sequence.txt`](assets/app-mcp-extension-publish-sequence.txt).
+After `fulcrum_extensions_generate`, read the existing form and dependencies
+with authorized read operations and compose the complete script. Complete
+the performance review and obtain design approval before
+`fulcrum_reference_files_upload`. Re-read before `fulcrum_forms_update`,
+re-review the final composed artifacts, and obtain updated approval if
+intervening changes materially affect the assessment. Both writes must use
+reviewed, approved content; file replacement can affect existing consumers.
+
+Apply [the pre-write freshness safeguard](../fulcrum-app-builder/resources/pre-write-freshness.md)
+immediately before each upload/replacement as well as each script update.
+Re-read the target file, dependencies, and known consumers; reconcile any
+change from the approved baseline before upload. A later form read cannot
+protect a Reference File that has already been overwritten.
+
+Use `fulcrum_extensions_list_patterns` and `fulcrum_extensions_explain(pattern="picker")` to explore registered patterns before generating. There is no standalone Data Event update tool; preserve the existing form `script` through the form get/update operations.
+
+### Manual UI fallback
+
+When App MCP is unavailable:
+
+1. Save the extension as an `.html` file with all offline-required assets embedded or included as Reference Files.
+2. Inspect the target form, existing script, and attached/loaded dependencies.
+   Compose the proposed full script locally, preserving unrelated handlers.
+3. Complete the no-write performance review of the HTML, composed script,
+   and dependencies. Present the score, advice, and sync warnings using
+   [the builder's confirmation contract](../fulcrum-app-builder/SKILL.md#score-and-advice-at-every-design-confirmation)
+   and obtain explicit approval for the file upload/replacement and script edit.
+4. Immediately re-read the target Reference File, dependencies, and known
+   consumers before upload. Apply the pre-write safeguard: compare the
+   approved baseline, reconcile changes, and return to step 3 for material
+   reapproval. Repeat this check after approval.
+5. In Fulcrum, open the target form and upload the reviewed file under **Reference Files**.
+   Verify the live content matches the approved file.
+6. Recheck the current form and dependencies immediately before editing its script,
+   even if no change is known.
+   Recompose and re-review any intervening changes, returning to step 3 for
+   updated approval if the design, score, or risks changed materially. Repeat
+   this fresh read after reapproval. If approved file content changed, repeat
+   steps 4-5 and verify the replacement before writing its dependent script;
+   otherwise do not repeat the upload.
+7. Save the reviewed, approved composed script with the `OPENEXTENSION()` handler,
+   using the uploaded file's exact filename and preserving unrelated handlers.
+8. Test the trigger and the write-back behavior in the form preview, then test again on a device if the workflow must work offline.
+
+Do not treat the MCP commands above as prerequisites; they are an automation path only.
+
+## Anti-Patterns
+
+### ChoiceField as picker target
+Using a ChoiceField to store the result of an extension that replaces the native choice picker causes a UI conflict. Use a TextField for free-form values or a RecordLinkField for selected Fulcrum records. See the Picker Pattern section above.
+
+### Duplicated calculation logic
+Do not reimplement a CalculatedField or data-event rule inside extension JavaScript. The two implementations can drift and show different values for the same record. Prefer displaying the stored calculated value, or pass the rule's parameters through `data` so one configurable implementation drives the extension.
+
+### Unbounded bridge payloads
+Do not pass an entire `LOADRECORDS()` result through `OPENEXTENSION()` when the collection can be large. Filter before opening the extension and pass only the fields the UI needs. For larger datasets, use a bounded result, search, or pagination strategy appropriate to the workflow.
+
+### External assets for offline extensions
+Loading any script, style, or asset from a URL in an extension intended for offline use. If the device has no connection, the asset fails to load silently — the extension may render blank or broken.
+
+### Handwritten or stale bridge bootstrap
+Do not copy an old hosted bootstrap script or invent the `Fulcrum.load` payload shape. Use the full HTML returned by `fulcrum_extensions_generate`; its inline bootstrap and `{ data }` payload contract are versioned with App MCP.
+
+### Extension as a data event replacement
+Building an extension for logic that data events handle well (show/hide, cascade, calculate). Extensions add complexity — an app is harder to maintain when logic is split between data events and extension code. Use extensions only when you need a custom UI.
+
+### Unbounded extension scope
+An extension that tries to replicate an entire sub-application. Extensions are panels inside a record, not standalone apps. If the extension needs its own database, navigation, or lifecycle, that's a linked child app.
+
+## Completion Criteria
+
+- [ ] Extension and trigger code have a performance evaluation with workload, rendering/payload risks, evidence, and trade-offs
+- [ ] Picker target is a TextField for free-form values or a RecordLinkField for selected Fulcrum records — not a conflicting ChoiceField
+- [ ] Offline support decision is explicit: Reference Files (offline) vs. CDN (online-only)
+- [ ] All CDN library references use locked semver versions — no `latest` or unversioned URLs
+- [ ] Extension is scoped to a UI problem that native fields can't solve — not a data event replacement
+- [ ] Data flows are documented: what fields the extension reads, what fields it writes back
+- [ ] `OPENEXTENSION()` call in data events passes any needed context to the extension
+- [ ] Extension returns results with `Fulcrum.finish()` after the user completes the interaction
+- [ ] App MCP-generated HTML retains its inline bootstrap and `payload.data` initialization semantics
+- [ ] Existing form Data Event handlers were preserved when the generated handler was appended
+
+## References
+
+- [Fulcrum app extensions introduction](https://docs.fulcrumapp.com/docs/app-extensions-introduction)
+- [Fulcrum offline capabilities](https://docs.fulcrumapp.com/docs/offline-capabilities)
+- [Runnable example index](examples/README.md)
+- [Bridge API reference](resources/extension-bridge-api.md)
