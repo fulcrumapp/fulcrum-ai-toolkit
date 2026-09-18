@@ -90,11 +90,6 @@ If the user's prompt already answers some of these clearly, confirm them ("It so
 
 Do not make the user learn Fulcrum field-type terminology. Infer sensible types, but ask when the workflow or data contract is ambiguous.
 
-A request for a "button" describes an interaction, not proof of an available
-field type. Follow the [field capability and action guidance](../fulcrum-app-design/SKILL.md#field-capability-evidence-and-actions):
-verify the target editor and current documentation, respect the user's report
-of what is available, and prefer the documented Hyperlink action pattern.
-
 ## Step 3: Propose The Schema
 
 Before any live write, show a plain-English table:
@@ -138,11 +133,7 @@ For a new app:
 
 The full ordered sequence, with the builder arguments worth knowing, is in [`assets/app-build-sequence.txt`](assets/app-build-sequence.txt).
 
-If a created form is returned with `report_template_status: "failed"` or a
-legacy `report_template_error`, the form succeeded and only its default Report
-Template failed. Do not recreate the form. Follow the
-[partial-success recovery rules](resources/tool-failure-recovery.md#form-created-default-report-template-failed)
-for safe `report_template_failure` details and template-only recovery.
+If the result contains a created form plus `report_template_error`, report that the form succeeded and only the default Report Template failed. This error is non-fatal. Do not retry form creation; create the missing template separately with `fulcrum_report_templates_create` when appropriate.
 
 For an existing app:
 
@@ -163,11 +154,6 @@ Omit `removed_element_keys` when `removedElementKeys` is empty. Never declare a 
 
 Never rebuild an existing schema wholesale with `fulcrum_schema_build_form`. It generates new keys for new forms, and App MCP rejects updates that replace known element keys.
 
-Preserve Record Link targets and configuration, existing data names, and
-unrequested form settings. Send only properties required by the live update
-contract or the approved change; do not guess defaults or clear omitted
-settings. Navigation prefills do not replace Record Link relationships.
-
 ### Data Event scripts
 
 There are no standalone Data Event CRUD tools. A form has one `script` value:
@@ -178,14 +164,9 @@ There are no standalone Data Event CRUD tools. A form has one `script` value:
 
 Use `fulcrum_expressions_data_events_reference` for current hooks and signatures rather than relying on a memorized contract.
 
-### Tool failures and partial results
+If a tool fails, surface the raw error, retry at most once when appropriate, and distinguish connector permission or approval failures from Fulcrum API failures. Never silently retry destructive operations.
 
-Follow [Tool Failure And Recovery](resources/tool-failure-recovery.md) for
-every failed tool operation or partial result. Use approved public error
-guidance and a safe Trace ID/support reference, never raw diagnostics.
-Never automatically retry an unchanged write or call a generic 422 a
-transient lock. Read back state after ambiguous writes before retrying or
-claiming that nothing was saved.
+When a connector response includes a safe public `trace_id`, include it in the handoff as **Trace ID** and tell the user to provide it to support. Do not invent a Trace ID when one is not supplied.
 
 When no connector is available, produce the approved schema, field data names, choice values, status stages, calculations, data-event requirements, and implementation notes as a handoff. Do not claim that the app was created.
 
@@ -200,7 +181,7 @@ After a build or handoff, summarize:
 - Status workflow.
 - Data events, extensions, reports, and integrations.
 - Plan and offline dependencies.
-- Default Report Template status, with only safe public failure/recovery details.
+- Default Report Template status, including any non-fatal template error.
 - Errors, skipped work, unsupported operations, and known limitations.
 - Recommended follow-up for PS, CS, or product.
 
