@@ -30,6 +30,10 @@ const rootProductKnowledge = fs.readFileSync(
   new URL('../skills/fulcrum-product-knowledge/SKILL.md', import.meta.url),
   'utf8'
 );
+const rootProductKnowledgePath = new URL(
+  '../skills/fulcrum-product-knowledge/SKILL.md',
+  import.meta.url
+);
 const expectedClaudeSkills = fs.readdirSync(sharedSkillsPath, { withFileTypes: true })
   .filter((entry) => entry.isDirectory() && entry.name !== 'fulcrum-solution-document')
   .map((entry) => `./plugins/fulcrum-ai-toolkit/skills/${entry.name}/`)
@@ -72,7 +76,9 @@ test('keeps the manual-only workflow out of Claude skill discovery', () => {
 });
 
 test('routes the Claude product-knowledge copy to the loader-visible command', () => {
-  assert.match(rootProductKnowledge, /\]\(\.\.\/commands\/fulcrum-solution-document\.md\)/);
+  const commandLink = new URL('../../commands/fulcrum-solution-document.md', rootProductKnowledgePath);
+  assert.equal(fs.existsSync(commandLink), true);
+  assert.match(rootProductKnowledge, /\]\(\.\.\/\.\.\/commands\/fulcrum-solution-document\.md\)/);
   assert.doesNotMatch(rootProductKnowledge, /\]\(\.\.\/fulcrum-solution-document\/SKILL\.md\)/);
 });
 
