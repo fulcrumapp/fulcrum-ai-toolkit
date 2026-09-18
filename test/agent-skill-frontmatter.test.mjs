@@ -22,6 +22,10 @@ test('accepts conformant Agent Skills frontmatter', () => {
   assert.deepEqual(errors(), []);
 });
 
+test('rejects non-object Agent Skills frontmatter', () => {
+  assert.deepEqual(errors(null), ['skills/example-skill/SKILL.md: frontmatter must be a YAML mapping']);
+});
+
 test('rejects missing and mistyped required fields', () => {
   const failures = errors({
     name: ['example-skill'],
