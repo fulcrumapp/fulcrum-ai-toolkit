@@ -33,7 +33,7 @@ answer a focused domain question from this router when an owning skill exists.
 | Report Template design or rendering | [`fulcrum-report-building`](../fulcrum-report-building/SKILL.md) |
 | Monolithic workflow decomposition | [`fulcrum-workflow-decomposition`](../fulcrum-workflow-decomposition/SKILL.md) |
 | Field-work hazards | [`fulcrum-safety`](../fulcrum-safety/SKILL.md) |
-| Post-build documentation | [`fulcrum-solution-document`](../commands/fulcrum-solution-document.md) |
+| Post-build documentation | [`fulcrum-solution-document`](../../commands/fulcrum-solution-document.md) |
 
 When a host supplies shared `field-choice-optimizer` or `feasibility-check`
 workflows, route those requests there rather than duplicating them. Otherwise,

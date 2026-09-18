@@ -150,12 +150,13 @@ app or extension assessment.
 
 The repository publishes `plugins/fulcrum-ai-toolkit/` as a multi-format bundle.
 Its portable Agent Plugins core is the `plugin.json`, `mcp.json`, and
-`skills/` set; the same directory also contains native Claude and Gemini
-wrappers because those installers require their own file locations. Therefore
-the complete directory is not claimed as a strict single-format Agent Plugins
-package. A strict portable consumer should load the portable core files and
-ignore or omit the native wrappers; native installers should use the wrapper
-paths documented below.
+`skills/` set. Gemini's native extension manifest is package-local, while
+Claude's native command adapter and skill-discovery tree live at the repository
+root because Claude requires those locations. Therefore the complete
+repository is not claimed as a strict single-format Agent Plugins package. A
+strict portable consumer should load the portable core files and ignore native
+host adapters; native installers should use the host-specific paths documented
+below.
 
 | Host | Install path | Skills | Live Fulcrum actions | Alpha status |
 | --- | --- | --- | --- | --- |
