@@ -10,6 +10,8 @@ import { fileURLToPath } from 'node:url';
 import { createRequire } from 'node:module';
 import { validateAgentSkillFrontmatter } from './agent-skill-frontmatter.mjs';
 import { validateAgentPluginManifest } from './agent-plugin-manifest.mjs';
+import { validateAgentMcpConfig } from './agent-mcp-config.mjs';
+import { validateForbiddenPackagePaths } from './package-invariants.mjs';
 
 const require = createRequire(import.meta.url);
 let YAML;
@@ -377,11 +379,11 @@ if (JSON.stringify(actualSkillNames) !== JSON.stringify(EXPECTED_SKILLS.slice().
   failures.push(`skill inventory mismatch (missing: ${missing.join(', ')}; unexpected: ${unexpected.join(', ')})`);
 }
 
-for (const relativePath of FORBIDDEN_PACKAGE_PATHS) {
-  if (fs.existsSync(path.join(ROOT, relativePath))) {
-    failures.push(`${relativePath}: redundant vendor-specific file must not be present`);
-  }
-}
+failures.push(
+  ...validateForbiddenPackagePaths(FORBIDDEN_PACKAGE_PATHS, (relativePath) =>
+    fs.existsSync(path.join(ROOT, relativePath))
+  )
+);
 
 // 2. Validate each skill
 for (const skillPath of skillPaths) {
@@ -517,42 +519,11 @@ for (const p of uniqueTextPaths) {
 }
 
 // 5. Manifest checks
-const AGENT_MCP_SCHEMA = 'https://agent-plugins.org/schemas/1.0.0/mcp.schema.json';
 const agentManifest = jsonDocuments[`${PLUGIN_RELATIVE_PATH}/plugin.json`];
 failures.push(...validateAgentPluginManifest(agentManifest, `${PLUGIN_RELATIVE_PATH}/plugin.json`));
 
 const agentMcp = jsonDocuments[`${PLUGIN_RELATIVE_PATH}/mcp.json`];
-if (!agentMcp || typeof agentMcp !== 'object' || Array.isArray(agentMcp)) {
-  failures.push(`${PLUGIN_RELATIVE_PATH}/mcp.json: configuration must be a JSON object`);
-} else {
-  if (agentMcp.$schema !== AGENT_MCP_SCHEMA) {
-    failures.push(`${PLUGIN_RELATIVE_PATH}/mcp.json: $schema must identify Agent Plugins MCP 1.0.0`);
-  }
-  if (
-    !agentMcp.mcpServers ||
-    typeof agentMcp.mcpServers !== 'object' ||
-    Array.isArray(agentMcp.mcpServers)
-  ) {
-    failures.push(`${PLUGIN_RELATIVE_PATH}/mcp.json: mcpServers must be an object`);
-  }
-  for (const field of Object.keys(agentMcp)) {
-    if (!['$schema', 'mcpServers'].includes(field)) {
-      failures.push(`${PLUGIN_RELATIVE_PATH}/mcp.json: unsupported top-level field "${field}"`);
-    }
-  }
-}
-
-const portableMcpServers = agentMcp?.mcpServers;
-if (
-  !portableMcpServers ||
-  typeof portableMcpServers !== 'object' ||
-  Array.isArray(portableMcpServers) ||
-  Object.keys(portableMcpServers).length !== 0
-) {
-  failures.push(
-    `${PLUGIN_RELATIVE_PATH}/mcp.json: keep mcpServers empty; users must explicitly select their tenant endpoint`
-  );
-}
+failures.push(...validateAgentMcpConfig(agentMcp, `${PLUGIN_RELATIVE_PATH}/mcp.json`));
 
 const setupPath = path.join(SKILLS_DIR, 'fulcrum-app-builder', 'resources', 'mcp-setup.md');
 if (!fs.existsSync(setupPath)) {
