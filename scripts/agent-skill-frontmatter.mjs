@@ -7,7 +7,21 @@ const AGENT_SKILL_FIELDS = new Set([
   'allowed-tools'
 ]);
 
-const SKILL_NAME_PATTERN = /^(?!-)(?!.*--)[a-z0-9-]{1,64}(?<!-)$/;
+const MAX_SKILL_NAME_LENGTH = 64;
+const MAX_DESCRIPTION_LENGTH = 1024;
+const MAX_COMPATIBILITY_LENGTH = 500;
+
+function characterLength(value) {
+  return Array.from(value).length;
+}
+
+function normalizeSkillName(value) {
+  return value.normalize('NFKC').trim();
+}
+
+function isSkillNameCharacter(value) {
+  return /^[\p{Letter}\p{Number}-]$/u.test(value);
+}
 
 function hasOwn(object, key) {
   return Object.prototype.hasOwnProperty.call(object, key);
@@ -28,23 +42,35 @@ export function validateAgentSkillFrontmatter(frontmatter, relativePath, directo
     }
   }
 
-  if (typeof frontmatter.name !== 'string' || frontmatter.name.length === 0) {
+  if (typeof frontmatter.name !== 'string' || normalizeSkillName(frontmatter.name).length === 0) {
     addFailure('frontmatter name must be a non-empty string');
   } else {
-    if (frontmatter.name.length > 64 || !SKILL_NAME_PATTERN.test(frontmatter.name)) {
+    const normalizedName = normalizeSkillName(frontmatter.name);
+    const nameCharacters = Array.from(normalizedName);
+    if (
+      characterLength(normalizedName) > MAX_SKILL_NAME_LENGTH ||
+      normalizedName !== normalizedName.toLowerCase() ||
+      normalizedName.startsWith('-') ||
+      normalizedName.endsWith('-') ||
+      normalizedName.includes('--') ||
+      !nameCharacters.every(isSkillNameCharacter)
+    ) {
       addFailure(
         'frontmatter name must be 1-64 characters using lowercase letters, numbers, and hyphens, without leading, trailing, or consecutive hyphens'
       );
     }
-    if (frontmatter.name !== directoryName) {
+    if (normalizedName !== directoryName.normalize('NFKC')) {
       addFailure('frontmatter name does not match directory');
     }
   }
 
-  if (typeof frontmatter.description !== 'string' || frontmatter.description.length === 0) {
+  if (
+    typeof frontmatter.description !== 'string' ||
+    frontmatter.description.trim().length === 0
+  ) {
     addFailure('frontmatter description must be a non-empty string');
-  } else if (frontmatter.description.length > 1024) {
-    addFailure('frontmatter description must be at most 1024 characters');
+  } else if (characterLength(frontmatter.description) > MAX_DESCRIPTION_LENGTH) {
+    addFailure(`frontmatter description must be at most ${MAX_DESCRIPTION_LENGTH} characters`);
   }
 
   if (hasOwn(frontmatter, 'license') && typeof frontmatter.license !== 'string') {
@@ -54,8 +80,8 @@ export function validateAgentSkillFrontmatter(frontmatter, relativePath, directo
   if (hasOwn(frontmatter, 'compatibility')) {
     if (typeof frontmatter.compatibility !== 'string' || frontmatter.compatibility.length === 0) {
       addFailure('frontmatter compatibility must be a non-empty string');
-    } else if (frontmatter.compatibility.length > 500) {
-      addFailure('frontmatter compatibility must be at most 500 characters');
+    } else if (characterLength(frontmatter.compatibility) > MAX_COMPATIBILITY_LENGTH) {
+      addFailure(`frontmatter compatibility must be at most ${MAX_COMPATIBILITY_LENGTH} characters`);
     }
   }
 

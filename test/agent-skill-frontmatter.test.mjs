@@ -42,6 +42,29 @@ test('rejects Agent Skills name syntax and length violations', () => {
   assert.ok(errors({ ...validFrontmatter }, 'different-directory').some((failure) => failure.includes('name does not match directory')));
 });
 
+test('accepts normalized internationalized skill names', () => {
+  assert.deepEqual(
+    errors({ ...validFrontmatter, name: '技能' }, '技能'),
+    []
+  );
+  assert.deepEqual(
+    errors({ ...validFrontmatter, name: 'e\u0301' }, 'é'),
+    []
+  );
+  assert.deepEqual(
+    errors({ ...validFrontmatter, name: ' example-skill ' }),
+    []
+  );
+});
+
+test('rejects whitespace-only descriptions', () => {
+  assert.ok(
+    errors({ ...validFrontmatter, description: '   ' }).some((failure) =>
+      failure.includes('description must be a non-empty string')
+    )
+  );
+});
+
 test('rejects description and compatibility length violations', () => {
   assert.ok(errors({ ...validFrontmatter, description: 'x'.repeat(1025) }).some((failure) => failure.includes('description must be at most 1024')));
   assert.ok(errors({ ...validFrontmatter, compatibility: 'x'.repeat(501) }).some((failure) => failure.includes('compatibility must be at most 500')));
