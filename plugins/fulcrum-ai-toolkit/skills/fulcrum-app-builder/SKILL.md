@@ -166,7 +166,7 @@ Use `fulcrum_expressions_data_events_reference` for current hooks and signatures
 
 If a tool fails, surface the raw error, retry at most once when appropriate, and distinguish connector permission or approval failures from Fulcrum API failures. Never silently retry destructive operations.
 
-When a connector response includes a safe public `trace_id`, include it in the handoff as **Trace ID** and tell the user to provide it to support. Do not invent a Trace ID when one is not supplied.
+When a connector response includes a safe public `trace_id`, include it in the handoff as **Trace ID** and tell the user to provide it to support. Prefer that structured value; if only HTTP headers are exposed, extract the trace ID from the `traceparent` value's second field, the B3 `b3` value's first field, or the `X-B3-TraceId` header. Do not use a span ID or `tracestate` as the trace ID, and do not invent one when no valid value is supplied.
 
 When no connector is available, produce the approved schema, field data names, choice values, status stages, calculations, data-event requirements, and implementation notes as a handoff. Do not claim that the app was created.
 
