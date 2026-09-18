@@ -1,4 +1,5 @@
 {
+  "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
   "name": "fulcrum-ai-toolkit",
   "version": "0.1.2",
   "description": "Portable AI skills for Fulcrum app building, integrations, mapping, queries, access, and migrations",
