@@ -36,8 +36,15 @@ test('rejects missing and mistyped required fields', () => {
   assert.ok(failures.some((failure) => failure.includes('allowed-tools must be a space-separated string')));
 });
 
-test('rejects Agent Skills name syntax and length violations', () => {
-  assert.ok(errors({ ...validFrontmatter, name: 'Example--Skill' }).some((failure) => failure.includes('name must be 1-64')));
+test('rejects uppercase Agent Skills names', () => {
+  assert.ok(errors({ ...validFrontmatter, name: 'Example-skill' }).some((failure) => failure.includes('name must be 1-64')));
+});
+
+test('rejects consecutive-hyphen Agent Skills names', () => {
+  assert.ok(errors({ ...validFrontmatter, name: 'example--skill' }).some((failure) => failure.includes('name must be 1-64')));
+});
+
+test('rejects Agent Skills name length and directory violations', () => {
   assert.ok(errors({ ...validFrontmatter, name: `a${'b'.repeat(64)}` }).some((failure) => failure.includes('name must be 1-64')));
   assert.ok(errors({ ...validFrontmatter }, 'different-directory').some((failure) => failure.includes('name does not match directory')));
 });
