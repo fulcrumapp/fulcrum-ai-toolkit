@@ -25,6 +25,10 @@ test('accepts a conformant Agent Plugins manifest', () => {
   assert.deepEqual(errors(), []);
 });
 
+test('rejects a non-object manifest', () => {
+  assert.deepEqual(errors(null), ['plugins/example/plugin.json: manifest must be a JSON object']);
+});
+
 test('rejects missing schema and unknown top-level fields', () => {
   const withoutSchema = { ...validManifest };
   delete withoutSchema.$schema;
@@ -37,14 +41,23 @@ test('rejects missing schema and unknown top-level fields', () => {
 test('rejects malformed author and extension values', () => {
   const failures = errors({
     ...validManifest,
-    author: ['invalid'],
+    author: { name: 'Example', invalid: 'field' },
+    extensions: 'invalid'
+  });
+
+  assert.ok(failures.some((failure) => failure.includes('author fields must be name, email, or url strings')));
+  assert.ok(failures.some((failure) => failure.includes('extensions must map namespaces to objects')));
+});
+
+test('rejects malformed extension members', () => {
+  const failures = errors({
+    ...validManifest,
     extensions: {
       cursor: {},
       'com.example.client': []
     }
   });
 
-  assert.ok(failures.some((failure) => failure.includes('author must be an object')));
   assert.ok(failures.some((failure) => failure.includes('extension key "cursor" must be a reverse-domain namespace')));
   assert.ok(failures.some((failure) => failure.includes('extension "com.example.client" must be an object')));
 });
