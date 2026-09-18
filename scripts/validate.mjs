@@ -458,13 +458,10 @@ for (const skillPath of skillPaths) {
 const jsonSearchDirs = [
   ROOT,
   path.join(ROOT, '.claude-plugin'),
-  path.join(ROOT, '.cursor-plugin'),
   path.join(ROOT, '.github', 'plugin'),
   path.join(ROOT, '.agents', 'plugins'),
   PLUGIN_DIR,
   path.join(PLUGIN_DIR, '.claude-plugin'),
-  path.join(PLUGIN_DIR, '.cursor-plugin'),
-  path.join(PLUGIN_DIR, '.codex-plugin')
 ];
 
 const foundJsonPaths = new Set();
@@ -623,12 +620,16 @@ if (!agentMcp || typeof agentMcp !== 'object' || Array.isArray(agentMcp)) {
   }
 }
 
-for (const name of ['mcp.json', '.mcp.json']) {
-  const relativePath = `${PLUGIN_RELATIVE_PATH}/${name}`;
-  const servers = jsonDocuments[relativePath]?.mcpServers;
-  if (!servers || typeof servers !== 'object' || Array.isArray(servers) || Object.keys(servers).length !== 0) {
-    failures.push(`${relativePath}: keep mcpServers empty; users must explicitly select their tenant endpoint`);
-  }
+const portableMcpServers = agentMcp?.mcpServers;
+if (
+  !portableMcpServers ||
+  typeof portableMcpServers !== 'object' ||
+  Array.isArray(portableMcpServers) ||
+  Object.keys(portableMcpServers).length !== 0
+) {
+  failures.push(
+    `${PLUGIN_RELATIVE_PATH}/mcp.json: keep mcpServers empty; users must explicitly select their tenant endpoint`
+  );
 }
 
 const setupPath = path.join(SKILLS_DIR, 'fulcrum-app-builder', 'resources', 'mcp-setup.md');
@@ -724,14 +725,6 @@ if (fs.existsSync(reportSkillPath)) {
   }
 }
 
-const cursorManifestPath = `${PLUGIN_RELATIVE_PATH}/.cursor-plugin/plugin.json`;
-const cursorManifest = jsonDocuments[cursorManifestPath];
-if (cursorManifest) {
-  if (cursorManifest.skills !== './skills/') {
-    failures.push(`${cursorManifestPath}: skills must point to ./skills/`);
-  }
-}
-
 const rootClaudeManifestPath = '.claude-plugin/plugin.json';
 const rootClaudeManifest = jsonDocuments[rootClaudeManifestPath];
 if (rootClaudeManifest?.skills !== `./${PLUGIN_RELATIVE_PATH}/skills/`) {
@@ -750,8 +743,6 @@ for (const relativePath of claudeManifestPaths) {
 
 for (const relativePath of [
   ...claudeManifestPaths,
-  `${PLUGIN_RELATIVE_PATH}/.codex-plugin/plugin.json`,
-  cursorManifestPath,
   `${PLUGIN_RELATIVE_PATH}/gemini-extension.json`
 ]) {
   const manifest = jsonDocuments[relativePath];

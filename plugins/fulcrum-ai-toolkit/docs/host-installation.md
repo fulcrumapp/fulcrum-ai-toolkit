@@ -25,8 +25,8 @@ nested package directly.
 ## Cursor
 
 Use Cursor's plugin installation UI or repository import with
-`plugins/fulcrum-ai-toolkit/` as the plugin package. Its
-`.cursor-plugin/plugin.json` points to `./skills/`.
+`plugins/fulcrum-ai-toolkit/` as the plugin package. Cursor reads the
+portable root `plugin.json` and discovers the shared `skills/` directory.
 If the available UI cannot select a nested package, use the complete
 skills-loader installation from the repository README instead.
 
