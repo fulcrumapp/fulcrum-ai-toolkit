@@ -5,6 +5,11 @@ instructions for a loader to fetch missing skills. Keep all skill
 directories and their supporting files together, and retain the package
 `LICENSE`. Do not flatten the directories or upload only one `SKILL.md`.
 
+The package directory is a multi-format bundle. Its portable Agent Plugins
+core is `plugin.json`, `mcp.json`, and `skills/`; the Claude and Gemini wrapper
+files are native adapters and are not part of the portable core. Strict
+portable consumers should load the core files and omit the native wrappers.
+
 These are alpha installation targets. Host versions, administrator policy,
 skill discovery, and support for token-authenticated remote MCP vary.
 Installing skills does not connect a Fulcrum tenant.
@@ -26,7 +31,8 @@ nested package directly.
 
 Use Cursor's plugin installation UI or repository import with
 `plugins/fulcrum-ai-toolkit/` as the plugin package. Cursor reads the
-portable root `plugin.json` and discovers the shared `skills/` directory.
+portable root `plugin.json` and discovers the shared `skills/` directory;
+portable clients should ignore the native wrapper files.
 If the available UI cannot select a nested package, use the complete
 skills-loader installation from the repository README instead.
 
@@ -38,8 +44,8 @@ Clone the repository, then run from its root:
 gemini extensions install ./plugins/fulcrum-ai-toolkit
 ```
 
-The local directory contains `gemini-extension.json` and the full `skills/`
-collection. Do not substitute the repository-root URL or a GitHub `tree/` URL:
+The local directory contains the Gemini-native `gemini-extension.json` and the
+full `skills/` collection. Do not substitute the repository-root URL or a GitHub `tree/` URL:
 the extension installer is not the skills installer's subdirectory interface.
 
 ## Hermes
