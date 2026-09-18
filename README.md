@@ -127,10 +127,14 @@ app or extension assessment.
 
 ## Alpha install matrix
 
-The distributable package uses the portable
-`plugins/fulcrum-ai-toolkit/skills/*/SKILL.md` layout. Host-specific manifests
-are adapters inside that package and either discover the standard `skills/`
-directory or explicitly point to it when the host contract supports that field.
+The repository publishes `plugins/fulcrum-ai-toolkit/` as a multi-format bundle.
+Its portable Agent Plugins core is the `plugin.json`, `mcp.json`, and
+`skills/` set; the same directory also contains native Claude and Gemini
+wrappers because those installers require their own file locations. Therefore
+the complete directory is not claimed as a strict single-format Agent Plugins
+package. A strict portable consumer should load the portable core files and
+ignore or omit the native wrappers; native installers should use the wrapper
+paths documented below.
 
 | Host | Install path | Skills | Live Fulcrum actions | Alpha status |
 | --- | --- | --- | --- | --- |
@@ -155,15 +159,15 @@ Validation runs entirely on Node.js. Install dependencies for the format validat
 npm ci --prefix tools/format-validator
 npm run --prefix tools/format-validator validate
 node scripts/validate.mjs
-node --test test/app-scorecard.test.mjs test/app-approval.test.mjs test/agent-skill-frontmatter.test.mjs
+node --test test/app-scorecard.test.mjs test/app-approval.test.mjs test/agent-plugin-manifest.test.mjs test/agent-skill-frontmatter.test.mjs
 ```
 
 The repository validator checks the expected skill inventory, skill frontmatter,
 directory/name consistency, corporate absolute paths, privacy and provenance contracts,
-portable and client JSON manifests, and README inventory. The portable
+portable and client JSON manifests, and README inventory. The portable core's
 `plugin.json` includes the Agent Plugins schema and is the canonical manifest
-for hosts that support the portable format. Claude and Gemini retain their
-native manifests where their installers require them. The validator also keeps
+for strict portable consumers; Claude and Gemini retain native wrappers outside
+that core because their installers require those locations. The validator also keeps
 release versions aligned, requires the packaged license and Codex
 manual-invocation policies, and guards the regional MCP endpoint map and empty
 default server configuration.
@@ -355,14 +359,16 @@ Plugin configs are included for multiple AI platforms:
 | ---------- | -------- |
 | GitHub Copilot CLI | `.github/plugin/marketplace.json` and `plugins/fulcrum-ai-toolkit/plugin.json` |
 | Claude Code | `.claude-plugin/plugin.json` at the repository root, or the nested package manifest at `plugins/fulcrum-ai-toolkit/.claude-plugin/plugin.json` |
-| Cursor | Portable `plugins/fulcrum-ai-toolkit/plugin.json` |
-| Codex | Portable `plugins/fulcrum-ai-toolkit/plugin.json` |
+| Cursor | Portable core in `plugins/fulcrum-ai-toolkit/` |
+| Codex | Portable core in `plugins/fulcrum-ai-toolkit/` |
 | Hermes | Shared `skills/` directory; root `plugin.json` for hosts supporting Agent Plugins v1 |
 | Gemini | `plugins/fulcrum-ai-toolkit/gemini-extension.json` |
 | MCP | `plugins/fulcrum-ai-toolkit/mcp.json`; configure a tenant-specific server separately |
 
 All hosts discover or reference the package's shared `skills/` directory; they
-do not maintain separate copies of skill content. GitHub Copilot marketplace
+do not maintain separate copies of skill content. The native wrapper files are
+not portable Agent Plugins components and are retained only for the installers
+that require them. GitHub Copilot marketplace
 metadata is available at `.github/plugin/marketplace.json`; the same catalog is
 also available at `.claude-plugin/marketplace.json` for Claude and Copilot's
 fallback lookup. A root `.claude-plugin/plugin.json` supports repositories that

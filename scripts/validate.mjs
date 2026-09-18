@@ -9,6 +9,7 @@ import process from 'node:process';
 import { fileURLToPath } from 'node:url';
 import { createRequire } from 'node:module';
 import { validateAgentSkillFrontmatter } from './agent-skill-frontmatter.mjs';
+import { validateAgentPluginManifest } from './agent-plugin-manifest.mjs';
 
 const require = createRequire(import.meta.url);
 let YAML;
@@ -445,77 +446,9 @@ for (const p of uniqueTextPaths) {
 }
 
 // 5. Manifest checks
-const AGENT_PLUGIN_SCHEMA = 'https://agent-plugins.org/schemas/1.0.0/plugin.schema.json';
 const AGENT_MCP_SCHEMA = 'https://agent-plugins.org/schemas/1.0.0/mcp.schema.json';
-const AGENT_PLUGIN_FIELDS = new Set([
-  '$schema',
-  'name',
-  'version',
-  'description',
-  'author',
-  'homepage',
-  'repository',
-  'license',
-  'keywords',
-  'extensions'
-]);
-const AGENT_PLUGIN_NAME = /^(?!.*(?:--|\.\.))[a-z0-9](?:[a-z0-9.-]*[a-z0-9])?$/;
 const agentManifest = jsonDocuments[`${PLUGIN_RELATIVE_PATH}/plugin.json`];
-if (!agentManifest || typeof agentManifest !== 'object' || Array.isArray(agentManifest)) {
-  failures.push(`${PLUGIN_RELATIVE_PATH}/plugin.json: manifest must be a JSON object`);
-} else {
-  if (agentManifest.$schema !== AGENT_PLUGIN_SCHEMA) {
-    failures.push(`${PLUGIN_RELATIVE_PATH}/plugin.json: $schema must identify Agent Plugins 1.0.0`);
-  }
-  for (const field of Object.keys(agentManifest)) {
-    if (!AGENT_PLUGIN_FIELDS.has(field)) {
-      failures.push(`${PLUGIN_RELATIVE_PATH}/plugin.json: unsupported top-level field "${field}"`);
-    }
-  }
-  if (
-    typeof agentManifest.name !== 'string' ||
-    agentManifest.name.length < 1 ||
-    agentManifest.name.length > 64 ||
-    !AGENT_PLUGIN_NAME.test(agentManifest.name)
-  ) {
-    failures.push(`${PLUGIN_RELATIVE_PATH}/plugin.json: name does not satisfy Agent Plugins naming constraints`);
-  }
-  for (const field of ['version', 'description', 'homepage', 'repository', 'license']) {
-    if (field in agentManifest && typeof agentManifest[field] !== 'string') {
-      failures.push(`${PLUGIN_RELATIVE_PATH}/plugin.json: ${field} must be a string`);
-    }
-  }
-  if (
-    'keywords' in agentManifest &&
-    (!Array.isArray(agentManifest.keywords) || agentManifest.keywords.some((keyword) => typeof keyword !== 'string'))
-  ) {
-    failures.push(`${PLUGIN_RELATIVE_PATH}/plugin.json: keywords must be an array of strings`);
-  }
-  if ('author' in agentManifest) {
-    const author = agentManifest.author;
-    const authorFields = new Set(['name', 'email', 'url']);
-    if (!author || typeof author !== 'object' || Array.isArray(author)) {
-      failures.push(`${PLUGIN_RELATIVE_PATH}/plugin.json: author must be an object`);
-    } else {
-      for (const field of Object.keys(author)) {
-        if (!authorFields.has(field) || typeof author[field] !== 'string') {
-          failures.push(`${PLUGIN_RELATIVE_PATH}/plugin.json: author fields must be name, email, or url strings`);
-        }
-      }
-    }
-  }
-  if (
-    'extensions' in agentManifest &&
-    (!agentManifest.extensions ||
-      typeof agentManifest.extensions !== 'object' ||
-      Array.isArray(agentManifest.extensions) ||
-      Object.values(agentManifest.extensions).some(
-        (extension) => !extension || typeof extension !== 'object' || Array.isArray(extension)
-      ))
-  ) {
-    failures.push(`${PLUGIN_RELATIVE_PATH}/plugin.json: extensions must map namespaces to objects`);
-  }
-}
+failures.push(...validateAgentPluginManifest(agentManifest, `${PLUGIN_RELATIVE_PATH}/plugin.json`));
 
 const agentMcp = jsonDocuments[`${PLUGIN_RELATIVE_PATH}/mcp.json`];
 if (!agentMcp || typeof agentMcp !== 'object' || Array.isArray(agentMcp)) {
