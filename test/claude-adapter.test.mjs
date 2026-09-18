@@ -12,10 +12,32 @@ const body = [
   '',
   '- [Claude Code skill invocation](https://code.claude.com/docs/en/skills#control-who-invokes-a-skill)'
 ].join('\n');
+const rootBody = [
+  'Load and follow the authoritative portable workflow at',
+  '`${CLAUDE_PLUGIN_ROOT}/plugins/fulcrum-ai-toolkit/skills/fulcrum-solution-document/SKILL.md`.',
+  '',
+  '## References',
+  '',
+  '- [Claude Code skill invocation](https://code.claude.com/docs/en/skills#control-who-invokes-a-skill)'
+].join('\n');
 
 test('accepts the Claude manual command adapter', () => {
   assert.deepEqual(
     validateClaudeManualCommand(manifest, frontmatter, body, 'commands/fulcrum-solution-document.md'),
+    []
+  );
+});
+
+test('accepts the repository-root Claude manual command adapter', () => {
+  assert.deepEqual(
+    validateClaudeManualCommand(
+      manifest,
+      frontmatter,
+      rootBody,
+      'commands/fulcrum-solution-document.md',
+      './commands/',
+      '${CLAUDE_PLUGIN_ROOT}/plugins/fulcrum-ai-toolkit/skills/fulcrum-solution-document/SKILL.md'
+    ),
     []
   );
 });

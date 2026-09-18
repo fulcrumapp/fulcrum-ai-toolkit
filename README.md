@@ -23,7 +23,8 @@ In Claude Code, add the marketplace and install the plugin:
 
 Private repositories may also include this repository as a git submodule and
 use the submodule root as a Claude plugin. The root
-`.claude-plugin/plugin.json` points Claude to the nested package's shared skills.
+`.claude-plugin/plugin.json` points Claude to the nested package's shared skills
+and root-level manual command adapter.
 
 In Codex, add the repository marketplace, then install
 `fulcrum-ai-toolkit` from the Plugins directory:
@@ -377,7 +378,7 @@ Plugin configs are included for multiple AI platforms:
 | Platform | Config |
 | ---------- | -------- |
 | GitHub Copilot CLI | `.github/plugin/marketplace.json` and `plugins/fulcrum-ai-toolkit/plugin.json` |
-| Claude Code | `.claude-plugin/plugin.json` at the repository root, or the nested package manifest at `plugins/fulcrum-ai-toolkit/.claude-plugin/plugin.json`; the nested adapter also registers `commands/` |
+| Claude Code | `.claude-plugin/plugin.json` at the repository root, or the nested package manifest at `plugins/fulcrum-ai-toolkit/.claude-plugin/plugin.json`; each manifest registers a plugin-root-relative `commands/` adapter |
 | Cursor | Portable core in `plugins/fulcrum-ai-toolkit/` |
 | Codex | Portable core in `plugins/fulcrum-ai-toolkit/` |
 | Hermes | Shared `skills/` directory; root `plugin.json` for hosts supporting Agent Plugins v1 |
