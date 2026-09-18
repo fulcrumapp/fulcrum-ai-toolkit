@@ -75,6 +75,16 @@ function readBaseline() {
   return stored ? JSON.parse(stored) : null;
 }
 
+function computeBaseline() {
+  var baseline = {};
+
+  FIELD_NAMES().forEach(function (fieldName) {
+    baseline[fieldName] = VALUE(fieldName);
+  });
+
+  return baseline;
+}
+
 // Idempotent: repeated calls within one session reuse the cached value.
 function ensureBaseline() {
   var existing = readBaseline();

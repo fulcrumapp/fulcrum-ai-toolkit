@@ -203,6 +203,26 @@ function directorySnapshot(directory) {
     .sort(([left], [right]) => left.localeCompare(right));
 }
 
+function applyClaudeSkillMirrorRewrites(skillName, snapshot) {
+  if (skillName !== 'fulcrum-product-knowledge') {
+    return snapshot;
+  }
+
+  return snapshot.map(([relativePath, encodedContent]) => {
+    if (relativePath !== 'SKILL.md') {
+      return [relativePath, encodedContent];
+    }
+
+    const content = Buffer.from(encodedContent, 'base64')
+      .toString('utf8')
+      .replace(
+        '../fulcrum-solution-document/SKILL.md',
+        '../commands/fulcrum-solution-document.md'
+      );
+    return [relativePath, Buffer.from(content).toString('base64')];
+  });
+}
+
 function referencesSectionHasUrl(text) {
   const match = text.match(/(?:^|\n)## References(?:\r?\n|$)/);
   if (!match) return false;
@@ -657,7 +677,10 @@ if (
 for (const skillName of expectedClaudeSkillNames) {
   const sourceSnapshot = directorySnapshot(path.join(SKILLS_DIR, skillName));
   const claudeSnapshot = directorySnapshot(path.join(rootClaudeSkillsPath, skillName));
-  if (JSON.stringify(sourceSnapshot) !== JSON.stringify(claudeSnapshot)) {
+  if (
+    JSON.stringify(applyClaudeSkillMirrorRewrites(skillName, sourceSnapshot)) !==
+    JSON.stringify(claudeSnapshot)
+  ) {
     failures.push(`skills/${skillName}: must mirror the portable skill directory`);
   }
 }
