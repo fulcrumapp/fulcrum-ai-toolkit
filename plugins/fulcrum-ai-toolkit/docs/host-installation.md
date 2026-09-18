@@ -21,10 +21,11 @@ command is `codex plugin add fulcrum-ai-toolkit@fulcrum-ai-toolkit`.
 
 When a private repository includes this toolkit as a git submodule and registers
 the submodule directory directly as a Claude plugin, use the submodule root.
-Its `.claude-plugin/plugin.json` explicitly registers the distributable
-package's validator-checked copy of the shared skills other than
-`fulcrum-solution-document`, plus the root-level Claude-native manual command
-adapter at `commands/fulcrum-solution-document.md`. Do not register the nested
+Its `.claude-plugin/plugin.json` registers the root-level Claude-native manual
+command adapter at `commands/fulcrum-solution-document.md`. Claude auto-discovers
+the validator-checked copies of the distributable package's shared skills from
+the repository-root `skills/` directory; that directory intentionally excludes
+`fulcrum-solution-document`. Do not register the nested
 portable package directly as a Claude plugin: its fixed `skills/` directory
 must remain complete for Agent Plugins consumers, so it cannot enforce
 Claude's manual-only invocation policy. The Claude marketplace selects the

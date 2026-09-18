@@ -1,7 +1,8 @@
 // Source: https://docs.fulcrumapp.com/docs/data-events-reference
 // Purpose: read reference records asynchronously.
 // LOADRECORDS() takes an options object and a callback; it does not return
-// records directly. Requires an Elite plan or Developer Pack.
+// records directly. Verify availability against current pricing, the public
+// function documentation, and the organization's permissions/configuration.
 
 ON('load-record', function (event) {
   LOADRECORDS({

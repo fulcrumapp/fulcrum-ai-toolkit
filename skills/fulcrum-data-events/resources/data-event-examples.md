@@ -5,8 +5,9 @@
 
 Every runnable snippet lives in [`../examples/`](../examples/README.md) as a
 separate `.js` file so it can be linted, diffed, and pasted without extracting
-it from prose. Each file carries a `// Source:` comment naming its public
-documentation.
+it from prose. Anti-pattern contrasts in those files are comment-only, leaving
+the preferred block runnable. Each file carries a `// Source:` comment naming
+its public documentation.
 
 ## Index
 

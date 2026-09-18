@@ -16,7 +16,11 @@ ON('click', 'open_species_picker', function (event) {
     },
     onMessage: function (message) {
       var data = message && message.data;
-      if (data) {
+      if (
+        data &&
+        Object.prototype.hasOwnProperty.call(data, 'value') &&
+        typeof data.value === 'string'
+      ) {
         SETVALUE('selected_species', data.value);
       }
     }

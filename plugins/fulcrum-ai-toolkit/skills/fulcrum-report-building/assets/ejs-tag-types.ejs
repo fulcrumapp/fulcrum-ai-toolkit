@@ -2,6 +2,6 @@
 <%# Fragment: paste into a Report Template; this is not a standalone template. %>
 <%# Purpose: the escaped-output and code-only EJS forms used by this toolkit. %>
 
-<%= expression %>   <%# Outputs the value — HTML-escaped %>
+<%%= expression %>   <%# Renders the literal escaped-output tag %>
 <%# Raw unescaped output is intentionally omitted because emitted markup cannot be validated statically. %>
-<% statement %>     <%# Executes JavaScript — no output %>
+<%% statement %>     <%# Renders the literal code-only tag %>
