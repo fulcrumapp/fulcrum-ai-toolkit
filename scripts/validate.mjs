@@ -12,6 +12,7 @@ import { validateAgentSkillFrontmatter } from './agent-skill-frontmatter.mjs';
 import { validateAgentPluginManifest } from './agent-plugin-manifest.mjs';
 import { validateAgentMcpConfig } from './agent-mcp-config.mjs';
 import { validateForbiddenPackagePaths } from './package-invariants.mjs';
+import { validateClaudeManualCommand } from './claude-adapter.mjs';
 
 const require = createRequire(import.meta.url);
 let YAML;
@@ -624,9 +625,33 @@ if (rootClaudeManifest?.skills !== `./${PLUGIN_RELATIVE_PATH}/skills/`) {
   failures.push(`${rootClaudeManifestPath}: skills must point to ./${PLUGIN_RELATIVE_PATH}/skills/`);
 }
 
+const nestedClaudeManifestPath = `${PLUGIN_RELATIVE_PATH}/.claude-plugin/plugin.json`;
+const claudeCommandRelativePath = `${PLUGIN_RELATIVE_PATH}/commands/fulcrum-solution-document.md`;
+const claudeCommandPath = path.join(ROOT, claudeCommandRelativePath);
+const claudeCommandParts = fs.existsSync(claudeCommandPath)
+  ? fs.readFileSync(claudeCommandPath, 'utf8').split(/^---\s*$/m)
+  : [];
+if (claudeCommandParts.length < 3) {
+  failures.push(`${claudeCommandRelativePath}: missing YAML frontmatter`);
+} else {
+  try {
+    const frontmatter = YAML.parse(claudeCommandParts[1]);
+    failures.push(
+      ...validateClaudeManualCommand(
+        jsonDocuments[nestedClaudeManifestPath],
+        frontmatter,
+        claudeCommandParts.slice(2).join('---'),
+        claudeCommandRelativePath
+      )
+    );
+  } catch (err) {
+    failures.push(`${claudeCommandRelativePath}: invalid YAML frontmatter (${err.message.split('\n')[0].trim()})`);
+  }
+}
+
 const claudeManifestPaths = [
   rootClaudeManifestPath,
-  `${PLUGIN_RELATIVE_PATH}/.claude-plugin/plugin.json`
+  nestedClaudeManifestPath
 ];
 for (const relativePath of claudeManifestPaths) {
   if ('$schema' in (jsonDocuments[relativePath] ?? {})) {

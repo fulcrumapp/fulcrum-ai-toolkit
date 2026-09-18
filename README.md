@@ -176,7 +176,7 @@ Validation runs entirely on Node.js. Install dependencies for the format validat
 npm ci --prefix tools/format-validator
 npm run --prefix tools/format-validator validate
 node scripts/validate.mjs
-node --test test/app-scorecard.test.mjs test/app-approval.test.mjs test/agent-plugin-manifest.test.mjs test/agent-mcp-config.test.mjs test/agent-skill-frontmatter.test.mjs test/package-invariants.test.mjs test/build-m365-bundle.test.mjs test/validate-entrypoint-frontmatter.test.mjs
+node --test test/app-scorecard.test.mjs test/app-approval.test.mjs test/agent-plugin-manifest.test.mjs test/agent-mcp-config.test.mjs test/agent-skill-frontmatter.test.mjs test/package-invariants.test.mjs test/claude-adapter.test.mjs test/build-m365-bundle.test.mjs test/validate-entrypoint-frontmatter.test.mjs
 ```
 
 The repository validator checks the expected skill inventory, skill frontmatter,
@@ -324,9 +324,11 @@ One skill is intended to be **user-invoked** — request it explicitly:
 - `fulcrum-solution-document` — after building, document what was built, review it for privacy, and prepare it for a destination chosen by the user
 
 For `fulcrum-solution-document`, the manual-invocation requirement is stated in
-the portable skill body, while Codex additionally uses the skill's
-`agents/openai.yaml` policy. These are host adapters, not guarantees provided by
-the Agent Skills standard. On other hosts, invocation behavior may differ.
+the portable skill body. Claude additionally exposes a native
+`commands/fulcrum-solution-document.md` adapter with Claude's
+`disable-model-invocation: true` policy, and Codex uses the skill's
+`agents/openai.yaml` policy. These are host adapters, not guarantees provided
+by the Agent Skills standard. On other hosts, invocation behavior may differ.
 Contextual discovery still asks the user to choose a quick check-in or full
 interview, and explicit approval remains required before an external send.
 
@@ -375,7 +377,7 @@ Plugin configs are included for multiple AI platforms:
 | Platform | Config |
 | ---------- | -------- |
 | GitHub Copilot CLI | `.github/plugin/marketplace.json` and `plugins/fulcrum-ai-toolkit/plugin.json` |
-| Claude Code | `.claude-plugin/plugin.json` at the repository root, or the nested package manifest at `plugins/fulcrum-ai-toolkit/.claude-plugin/plugin.json` |
+| Claude Code | `.claude-plugin/plugin.json` at the repository root, or the nested package manifest at `plugins/fulcrum-ai-toolkit/.claude-plugin/plugin.json`; the nested adapter also registers `commands/` |
 | Cursor | Portable core in `plugins/fulcrum-ai-toolkit/` |
 | Codex | Portable core in `plugins/fulcrum-ai-toolkit/` |
 | Hermes | Shared `skills/` directory; root `plugin.json` for hosts supporting Agent Plugins v1 |
@@ -383,9 +385,10 @@ Plugin configs are included for multiple AI platforms:
 | MCP | `plugins/fulcrum-ai-toolkit/mcp.json`; configure a tenant-specific server separately |
 
 All hosts discover or reference the package's shared `skills/` directory; they
-do not maintain separate copies of skill content. The native wrapper files are
-not portable Agent Plugins components and are retained only for the installers
-that require them. GitHub Copilot marketplace
+do not maintain separate copies of skill content. The Claude command adapter
+delegates to the shared skill rather than copying its workflow. Native wrapper
+files are not portable Agent Plugins components and are retained only for the
+installers that require them. GitHub Copilot marketplace
 metadata is available at `.github/plugin/marketplace.json`; the same catalog is
 also available at `.claude-plugin/marketplace.json` for Claude and Copilot's
 fallback lookup. A root `.claude-plugin/plugin.json` supports repositories that
