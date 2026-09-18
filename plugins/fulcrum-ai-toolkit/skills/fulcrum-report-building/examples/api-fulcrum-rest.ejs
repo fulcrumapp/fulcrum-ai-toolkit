@@ -11,7 +11,9 @@
 <% const choiceLists = API('/choice_lists', {
   qs: { per_page: 1 }
 }); %>
-<%= choiceLists.choice_lists[0].name %>
+<% const choiceListRows = Array.isArray(choiceLists.choice_lists) ? choiceLists.choice_lists : []; %>
+<%= choiceListRows[0] ? choiceListRows[0].name : 'No shared choice lists found.' %>
 
 <% const forms = API('/forms', { qs: { per_page: 1 } }); %>
-<%= forms.forms[0].name %>
+<% const formRows = Array.isArray(forms.forms) ? forms.forms : []; %>
+<%= formRows[0] ? formRows[0].name : 'No forms found.' %>

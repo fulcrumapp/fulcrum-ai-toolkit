@@ -1,7 +1,9 @@
 # Data Event Examples Index
 
 Runnable reference snippets for the single `script` value on a Fulcrum form.
-Every file carries a `// Source:` comment naming its public documentation.
+Anti-pattern contrast blocks are comment-only; the preferred block is the
+executable portion of those files. Every file carries a `// Source:` comment
+naming its public documentation.
 
 Compose these with the form's existing script rather than replacing it.
 Follow the [script persistence workflow](../SKILL.md#app-mcp-control-plane):

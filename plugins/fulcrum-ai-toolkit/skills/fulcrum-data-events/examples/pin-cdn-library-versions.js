@@ -3,11 +3,13 @@
 // An unversioned or "latest" URL changes under the app without a code change,
 // and any external URL is unavailable offline.
 
-// AVOID — unversioned references.
+/*
+AVOID — unversioned references.
 var unpinned = [
   '<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>',
   '<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/latest/d3.min.js"></script>'
 ];
+*/
 
 // PREFER — exact semver references, and inline or Reference File assets when
 // the workflow must run offline.

@@ -16,7 +16,12 @@ ON('change', 'repeatable', function (event) {
   var reps = $repeatable || [];
   var sortKey = FIELD('field_data_name').key;
   var sorted = reps.slice().sort(function (a, b) {
-    return parseInt(a.form_values[sortKey], 10) > parseInt(b.form_values[sortKey], 10) ? 1 : -1;
+    var aValue = Number(a.form_values[sortKey]);
+    var bValue = Number(b.form_values[sortKey]);
+    var aSortValue = Number.isFinite(aValue) ? aValue : Number.POSITIVE_INFINITY;
+    var bSortValue = Number.isFinite(bValue) ? bValue : Number.POSITIVE_INFINITY;
+
+    return aSortValue - bSortValue;
   });
 
   rawSetValue('repeatable', sorted);

@@ -11,9 +11,6 @@
 <% const firstSitePhoto = sitePhotoItems[0]; %>
 
 <% if (firstSitePhoto) { %>
-  <%# AVOID — the media ID is not a URL. %>
-  <img src="<%= firstSitePhoto.mediaID %>" alt="Site photo">
-
-  <%# PREFER — wrap the media ID in PHOTOURL(). %>
+  <%# AVOID — do not use firstSitePhoto.mediaID directly; it is an identifier, not a URL. %>
   <img src="<%= PHOTOURL(firstSitePhoto.mediaID) %>" alt="Site photo">
 <% } %>
