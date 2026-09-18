@@ -6,24 +6,5 @@
   "homepage": "https://github.com/fulcrumapp/fulcrum-ai-toolkit",
   "repository": "https://github.com/fulcrumapp/fulcrum-ai-toolkit",
   "license": "MIT",
-  "skills": [
-    "./plugins/fulcrum-ai-toolkit/skills/fulcrum-access-management/",
-    "./plugins/fulcrum-ai-toolkit/skills/fulcrum-app-builder/",
-    "./plugins/fulcrum-ai-toolkit/skills/fulcrum-app-design/",
-    "./plugins/fulcrum-ai-toolkit/skills/fulcrum-app-extensions/",
-    "./plugins/fulcrum-ai-toolkit/skills/fulcrum-app-goal/",
-    "./plugins/fulcrum-ai-toolkit/skills/fulcrum-app-scorecard/",
-    "./plugins/fulcrum-ai-toolkit/skills/fulcrum-data-events/",
-    "./plugins/fulcrum-ai-toolkit/skills/fulcrum-data-migration/",
-    "./plugins/fulcrum-ai-toolkit/skills/fulcrum-discovery/",
-    "./plugins/fulcrum-ai-toolkit/skills/fulcrum-gis-mapping/",
-    "./plugins/fulcrum-ai-toolkit/skills/fulcrum-integration-patterns/",
-    "./plugins/fulcrum-ai-toolkit/skills/fulcrum-performance-review/",
-    "./plugins/fulcrum-ai-toolkit/skills/fulcrum-product-knowledge/",
-    "./plugins/fulcrum-ai-toolkit/skills/fulcrum-query-api/",
-    "./plugins/fulcrum-ai-toolkit/skills/fulcrum-report-building/",
-    "./plugins/fulcrum-ai-toolkit/skills/fulcrum-safety/",
-    "./plugins/fulcrum-ai-toolkit/skills/fulcrum-workflow-decomposition/"
-  ],
   "commands": "./commands/"
 }

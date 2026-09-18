@@ -1,0 +1,85 @@
+# Source: https://docs.fulcrumapp.com/docs/app-extensions-introduction
+# Purpose: the automation path for publishing an extension with App MCP.
+# Live installed App MCP schemas define the exact arguments; the order below is
+# the part that matters. This is an automation convenience, not a prerequisite:
+# the manual Reference File upload in the Fulcrum UI reaches the same result.
+
+Step 1  fulcrum_extensions_list_patterns()
+        Review the registered patterns before choosing one.
+
+Step 2  fulcrum_extensions_explain(pattern="picker")
+        Confirm the pattern's field and bridge expectations.
+
+Step 3  fulcrum_extensions_generate(
+          pattern="picker",
+          name="species-picker",
+          description="Select a species",
+          field_name="open_species_picker"
+        )
+        Returns the Data Event, the complete HTML including the current inline
+        bootstrap, and setup notes. Keep the generated bootstrap intact.
+
+Step 4  fulcrum_forms_get(id=...)
+        Read the current form and complete script. Inspect existing Reference
+        Files and all attached/loaded dependencies before composing the change.
+
+Step 5  Performance review and approval gate (no live writes)
+        Compose the existing script plus the generated Data Event without
+        discarding unrelated handlers. Run fulcrum-performance-review on the
+        generated HTML, composed script, and attached/loaded dependencies.
+        Present the proposed app score, constructive advice, unreviewed code,
+        and advisory sync warnings using the builder's confirmation contract.
+        Obtain explicit approval covering both the Reference File upload or
+        replacement and the composed script. Advisory improvements are optional.
+        Complete this gate before continuing to Step 6: replacing a file can
+        affect existing consumers even before the form script is updated.
+
+Step 6  Pre-upload freshness gate (no live writes)
+        Follow ../../fulcrum-app-builder/resources/pre-write-freshness.md.
+        Immediately re-read the target Reference File, dependencies, and known
+        consumers; compare content/hash/revision with the approved baseline.
+        Reconcile intervening changes and return to Step 5 for updated approval
+        if the proposed content or assessment changed materially. Repeat this
+        freshness gate after approval before uploading.
+
+Step 7  fulcrum_reference_files_upload(
+          form_id=...,
+          file_name="species-picker.html",
+          content=<generated HTML>
+        )
+        Upload only the reviewed, approved HTML. The file name must match the
+        attachment:// URL in the Data Event
+        exactly: attachment://species-picker.html. See
+        ../examples/open-species-picker.js. Verify that the live file matches
+        the approved content before proceeding.
+
+Step 8  fulcrum_forms_get(id=...)
+        Always re-read immediately before updating, even if no change is known.
+        Preserve intervening changes and re-review the final composed script
+        and dependencies. If unapproved changes affect
+        the design, score, or risks materially, return to Step 5 for updated
+        approval, then repeat this fresh read before Step 9. If the approved
+        file content changed, repeat Steps 6-7 and verify the new file before
+        writing its dependent script. Otherwise do not repeat the upload.
+        Do not replay a stale snapshot.
+
+Step 9  fulcrum_forms_update(
+          id=...,
+          script=<reviewed and approved composed script>
+        )
+        This write remains behind the Step 5 approval gate. There is no
+        standalone Data Event update tool; preserve unrelated handlers.
+
+Optional cleanup  After the form script no longer references the attachment://
+                  URL, immediately before deletion obtain explicit confirmation
+                  that identifies the form name and ID, filename, and file ID.
+                  After confirmation, call:
+
+                  fulcrum_reference_files_delete(
+                    form_id=...,
+                    file_id=...
+                  )
+
+                  The service verifies that the attachment belongs to the
+                  supplied form and rejects mismatches. The live installed App
+                  MCP schema remains authoritative for exact arguments.

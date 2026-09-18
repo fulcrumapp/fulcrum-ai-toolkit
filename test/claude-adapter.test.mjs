@@ -25,9 +25,13 @@ const rootManifest = JSON.parse(
   fs.readFileSync(new URL('../.claude-plugin/plugin.json', import.meta.url), 'utf8')
 );
 const sharedSkillsPath = new URL('../plugins/fulcrum-ai-toolkit/skills/', import.meta.url);
+const rootSkillsPath = new URL('../skills/', import.meta.url);
 const expectedClaudeSkills = fs.readdirSync(sharedSkillsPath, { withFileTypes: true })
   .filter((entry) => entry.isDirectory() && entry.name !== 'fulcrum-solution-document')
   .map((entry) => `./plugins/fulcrum-ai-toolkit/skills/${entry.name}/`)
+  .sort();
+const expectedClaudeSkillNames = expectedClaudeSkills
+  .map((skillPath) => skillPath.split('/').at(-2))
   .sort();
 
 test('accepts the Claude manual command adapter', () => {
@@ -52,9 +56,13 @@ test('accepts the repository-root Claude manual command adapter', () => {
 });
 
 test('keeps the manual-only workflow out of Claude skill discovery', () => {
-  assert.deepEqual(rootManifest.skills.toSorted(), expectedClaudeSkills);
+  assert.equal('skills' in rootManifest, false);
+  const rootSkillEntries = fs.readdirSync(rootSkillsPath, { withFileTypes: true })
+    .sort((left, right) => left.name.localeCompare(right.name));
+  assert.deepEqual(rootSkillEntries.map((entry) => entry.name), expectedClaudeSkillNames);
+  assert.equal(rootSkillEntries.every((entry) => entry.isDirectory()), true);
   assert.equal(
-    rootManifest.skills.some((skillPath) => skillPath.includes('fulcrum-solution-document')),
+    rootSkillEntries.some((entry) => entry.name === 'fulcrum-solution-document'),
     false
   );
 });
