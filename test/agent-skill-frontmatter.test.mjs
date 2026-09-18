@@ -72,6 +72,14 @@ test('rejects whitespace-only descriptions', () => {
   );
 });
 
+test('rejects whitespace-only compatibility', () => {
+  assert.ok(
+    errors({ ...validFrontmatter, compatibility: '\t\n' }).some((failure) =>
+      failure.includes('compatibility must be a non-empty string')
+    )
+  );
+});
+
 test('rejects description and compatibility length violations', () => {
   assert.ok(errors({ ...validFrontmatter, description: 'x'.repeat(1025) }).some((failure) => failure.includes('description must be at most 1024')));
   assert.ok(errors({ ...validFrontmatter, compatibility: 'x'.repeat(501) }).some((failure) => failure.includes('compatibility must be at most 500')));

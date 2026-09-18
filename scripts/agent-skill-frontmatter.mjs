@@ -78,7 +78,7 @@ export function validateAgentSkillFrontmatter(frontmatter, relativePath, directo
   }
 
   if (hasOwn(frontmatter, 'compatibility')) {
-    if (typeof frontmatter.compatibility !== 'string' || frontmatter.compatibility.length === 0) {
+    if (typeof frontmatter.compatibility !== 'string' || frontmatter.compatibility.trim().length === 0) {
       addFailure('frontmatter compatibility must be a non-empty string');
     } else if (characterLength(frontmatter.compatibility) > MAX_COMPATIBILITY_LENGTH) {
       addFailure(`frontmatter compatibility must be at most ${MAX_COMPATIBILITY_LENGTH} characters`);
