@@ -15,6 +15,13 @@ test('accepts an empty conformant Agent Plugins MCP configuration', () => {
   assert.deepEqual(errors(), []);
 });
 
+test('rejects a non-object MCP configuration', () => {
+  const failures = errors(null);
+
+  assert.ok(failures.some((failure) => failure.includes('configuration must be a JSON object')));
+  assert.ok(failures.some((failure) => failure.includes('keep mcpServers empty')));
+});
+
 test('rejects missing schema and unknown top-level fields', () => {
   const withoutSchema = { ...validConfig };
   delete withoutSchema.$schema;
