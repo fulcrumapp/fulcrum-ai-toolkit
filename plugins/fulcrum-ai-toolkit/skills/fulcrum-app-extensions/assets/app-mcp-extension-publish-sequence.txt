@@ -70,6 +70,16 @@ Step 9  fulcrum_forms_update(
         This write remains behind the Step 5 approval gate. There is no
         standalone Data Event update tool; preserve unrelated handlers.
 
-# The focused connector contract exposes list, get, and upload operations, not a
-# delete tool. Follow the registered upload contract for replacement, and use
-# the supported product UI or manual flow when removal is required.
+Optional cleanup  After the form script no longer references the attachment://
+                  URL, immediately before deletion obtain explicit confirmation
+                  that identifies the form name and ID, filename, and file ID.
+                  After confirmation, call:
+
+                  fulcrum_reference_files_delete(
+                    form_id=...,
+                    file_id=...
+                  )
+
+                  The service verifies that the attachment belongs to the
+                  supplied form and rejects mismatches. The live installed App
+                  MCP schema remains authoritative for exact arguments.

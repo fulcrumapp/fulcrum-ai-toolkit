@@ -5,10 +5,10 @@ description: Guided, novice-friendly workflow for creating or updating a Fulcrum
 
 # Fulcrum App Builder
 
-This skill is the front door for app-building conversations. Use [fulcrum-product-knowledge](../fulcrum-product-knowledge/SKILL.md) for platform boundaries and use the focused skills for goals, discovery, design, safety, data events, extensions, reports, and decomposition. When Fulcrum App MCP is registered, treat its live tool schemas as the control plane for supported app configuration and knowledge operations.
+This skill is the front door for app-building conversations. Use [fulcrum-product-knowledge](../fulcrum-product-knowledge/SKILL.md) for platform boundaries and use the focused skills for goals, discovery, design, safety, data events, extensions, reports, and decomposition. When the Fulcrum MCP gateway is registered, treat its live App MCP schemas as the control plane for supported app configuration and knowledge operations and its Query MCP schemas as the read-only query path.
 
-> Connector authority: Live installed App MCP schemas define the tool contract
-> used by this workflow.
+> Connector authority: Live installed Fulcrum MCP gateway schemas define the
+> App MCP and Query MCP tool contracts used by this workflow.
 >
 > Source: [Fulcrum Forms API](https://docs.fulcrumapp.com/reference/forms-intro)
 > and the [public OpenAPI document](https://raw.githubusercontent.com/fulcrumapp/api/v2/reference/rest-api.json)
@@ -38,7 +38,12 @@ When App MCP is available, inspect its live tool schemas and use it by default f
 | Report Templates and report generation | Template lifecycle plus report generation for a supplied record ID |
 | Expression and App Extension knowledge or generation | Expression references plus extension pattern explanation and artifact generation |
 
-App MCP does **not** provide Query API execution, record CRUD, or media CRUD. Do not invent connector calls for those domains. Use another authorized interface or provide a handoff for those operations. Report templates may call the documented `QUERY()` runtime function, but that does not create an App MCP query tool.
+Query API execution is available through Query MCP when the federated gateway
+advertises its tools; use [`fulcrum-query-api`](../fulcrum-query-api/SKILL.md)
+for that read-only workflow. App MCP does **not** provide record CRUD, media
+CRUD, or query mutations. Do not invent connector calls for those domains.
+Report templates may call the documented `QUERY()` runtime function, which is
+distinct from Query MCP `query_records`.
 
 If App MCP is unavailable, do not pretend to create or modify a live app. Continue through discovery and schema approval, then provide a handoff that an authorized builder can execute in Fulcrum.
 
@@ -48,7 +53,8 @@ Briefly explain the supported App MCP surface and any operation that needs anoth
 
 Always surface relevant limitations:
 
-- Query API execution, record CRUD, and media CRUD are outside App MCP.
+- Read-only Query API execution belongs to Query MCP; record CRUD, media CRUD,
+  and query mutations remain outside the gateway's supported tool surface.
 - Workflow automation CRUD is outside App MCP; global webhook CRUD is supported.
 - App MCP can manage Report Templates and request report generation, but rendered output still needs visual review.
 - External CDN assets do not work for offline extensions.
@@ -188,12 +194,29 @@ When App MCP is available, follow its live schemas exactly. Do not hand-write ne
 > arguments and result shapes. The preservation workflow is a toolkit safety
 > guard around the [public Forms API](https://docs.fulcrumapp.com/reference/forms-intro).
 
+### Element type discriminators
+
+“Element” is a generic name for an item in a form schema. It is **not** a
+Fulcrum field type and must never be used as an element's `type` value. Every
+element must retain a concrete discriminator returned by App MCP, such as
+`TextField`, `ChoiceField`, `Section`, `Repeatable`, or `RecordLinkField`.
+
+Pass the objects returned by `fulcrum_schema_build_field` through to form
+assembly unchanged. Do not reconstruct them from tool-schema model names or
+replace their `type` values. Before create or update, call
+`fulcrum_schema_field_types` once without a category filter to obtain the
+complete supported type set. Recursively inspect every top-level element and
+every child of a Section or Repeatable against that complete set. For a new app
+or newly added field, rebuild any element whose `type` is missing, is not a
+string, or is unsupported. For an existing element during an update, stop and
+report the invalid discriminator instead; do not rebuild it or replace its key.
+
 For a new app:
 
-1. Call `fulcrum_schema_field_types` when field capabilities are uncertain.
-2. Build each field with `fulcrum_schema_build_field`.
-3. For inline choices, pass either string labels or `{ "label": "...", "value": "..." }` objects. Use object form whenever the stored value differs from the label; App MCP preserves explicit values.
-4. Assemble the new form with `fulcrum_schema_build_form`.
+1. Build each field with `fulcrum_schema_build_field`.
+2. For inline choices, pass either string labels or `{ "label": "...", "value": "..." }` objects. Use object form whenever the stored value differs from the label; App MCP preserves explicit values.
+3. Assemble the new form with `fulcrum_schema_build_form`, passing the exact field objects returned by the field builder.
+4. Recursively verify that every element still has its builder-produced concrete `type` from the complete supported type set.
 5. Validate the generated definition with `fulcrum_forms_validate`.
 6. Complete the performance review of the built code and dependencies. Refresh
    the score and advice and obtain approval again if the assessment or design
@@ -222,7 +245,8 @@ For an existing app:
 1. Fetch the current form with `fulcrum_forms_get`. Compare it with the version
    assessed for approval; reconcile intervening changes rather than overwriting
    them, and return to Step 3 if the approved design or assessment is affected.
-2. Copy its complete element tree and preserve every existing element key and inline-choice key.
+2. Copy its complete element tree and preserve every existing element key,
+   concrete `type`, and inline-choice key.
 3. Modify requested properties in place without changing their keys.
 4. Use `fulcrum_schema_build_field` only for genuinely new field additions, then insert those additions into the copied tree.
 5. Preservation is the default. Preserve every unrequested element and choice. Omit `removed_element_keys` when nothing was removed.
@@ -292,6 +316,8 @@ After a build or handoff, summarize:
 - Never use client-side data events as an authorization boundary.
 - Never embed secrets in app scripts, report templates, or extension code.
 - Never regenerate existing element or choice keys during an update.
+- Never emit the generic schema/model name `Element` as a field `type`.
+- Never change an existing element's concrete `type`; replacing a field requires an explicitly approved destructive migration.
 - Never claim execution when App MCP is unavailable.
 - Never select or change the tenant's MCP endpoint without confirmation.
 

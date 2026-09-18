@@ -16,8 +16,13 @@
 // exactly as a repository file is.
 
 import fs from 'node:fs';
+import path from 'node:path';
 
 import { compiledSource, queryCalls, recognizedEncoders } from './ejs-queries.mjs';
+import {
+  containsGenericElementDiscriminator,
+  isElementDiscriminatorContractPath
+} from './element-discriminator.mjs';
 import {
   SCHEMA_MAPPINGS,
   VENDORED_OPENAPI_SPEC_PATH,
@@ -27,6 +32,36 @@ import {
 import { readOnlyViolations } from './sql-contract.mjs';
 
 const QUERY_ONE = { single: true };
+
+const ELEMENT_DISCRIMINATOR_PROBES = [
+  ['an unquoted JavaScript type property', '.js', 'const field = { type: "Element" };', true],
+  ['a quoted JavaScript type property', '.js', 'const field = { "type": "Element" };', true],
+  ['a computed JavaScript type property', '.js', 'const field = { ["type"]: "Element" };', true],
+  ['an escaped JavaScript property name', '.js', 'const field = { t\\u0079pe: "Element" };', true],
+  [
+    'a statically composed JavaScript property and value',
+    '.js',
+    'const field = { ["ty" + "pe"]: "Ele" + "ment" };',
+    true
+  ],
+  ['an escaped JavaScript value', '.js', 'const field = { type: "\\u0045lement" };', true],
+  ['a static JavaScript template value', '.js', 'const field = { type: `Element` };', true],
+  ['a nested escaped JSON value', '.json', '{"fields":[{"type":"\\u0045lement"}]}', true],
+  ['an escaped JSON property name', '.json', '{"\\u0074ype":"Element"}', true],
+  ['a JavaScript comment', '.js', '// never use type: "Element"\nconst ok = true;', false],
+  ['a JavaScript diagnostic string', '.js', 'const help = "never use type: \\"Element\\"";', false],
+  ['a longer JavaScript property name', '.js', 'const field = { prototype: "Element" };', false],
+  ['a concrete JavaScript discriminator', '.js', 'const field = { type: "TextField" };', false],
+  ['an unrelated JSON property', '.json', '{"prototype":"Element"}', false],
+  ['a concrete JSON discriminator', '.json', '{"type":"TextField"}', false]
+];
+
+const ELEMENT_SCOPE_PROBES = [
+  ['a skill example', ['fulcrum-app-builder', 'examples', 'field.js'], true],
+  ['a skill asset', ['fulcrum-app-builder', 'assets', 'field.json'], true],
+  ['a skill resource', ['fulcrum-app-builder', 'resources', 'field.json'], false],
+  ['a plugin manifest', ['..', 'plugin.json'], false]
+];
 
 // [sql, kinds, because, options?] — every kind listed must appear among the
 // violations reported, so a probe cannot pass because some other rule covered
@@ -321,6 +356,39 @@ function encoderFailures() {
   return failures;
 }
 
+function elementDiscriminatorFailures() {
+  const failures = [];
+
+  for (const [because, extension, source, expected] of ELEMENT_DISCRIMINATOR_PROBES) {
+    let actual;
+    try {
+      actual = containsGenericElementDiscriminator(source, extension);
+    } catch (error) {
+      failures.push(`element discriminator inspection threw on ${because}: ${error.message}`);
+      continue;
+    }
+    if (actual !== expected) {
+      failures.push(
+        `element discriminator inspection ${actual ? 'rejects' : 'accepts'} ${because}, but it should ` +
+          `${expected ? 'reject' : 'accept'} it`
+      );
+    }
+  }
+
+  const skillsDirectory = path.join('repository', 'plugins', 'fulcrum-ai-toolkit', 'skills');
+  for (const [because, segments, expected] of ELEMENT_SCOPE_PROBES) {
+    const actual = isElementDiscriminatorContractPath(path.join(skillsDirectory, ...segments), skillsDirectory);
+    if (actual !== expected) {
+      failures.push(
+        `element discriminator scope ${actual ? 'includes' : 'excludes'} ${because}, but it should ` +
+          `${expected ? 'include' : 'exclude'} it`
+      );
+    }
+  }
+
+  return failures;
+}
+
 // In-memory OpenAPI-shaped fixtures. They never set additionalProperties:
 // false, so a probe that names "undocumented property" can only pass if the
 // closed-set walk is still wired. Nested Child properties are a different
@@ -511,12 +579,20 @@ const SCHEMA_PROBE_COUNT =
 // and how many probes were exercised.
 export function selfCheck() {
   return {
-    failures: [...sqlFailures(), ...templateFailures(), ...encoderFailures(), ...schemaFailures()],
+    failures: [
+      ...sqlFailures(),
+      ...templateFailures(),
+      ...encoderFailures(),
+      ...elementDiscriminatorFailures(),
+      ...schemaFailures()
+    ],
     total:
       REJECTED_SQL.length +
       ACCEPTED_SQL.length +
       TEMPLATE_PROBES.length +
       recognizedEncoders.size +
+      ELEMENT_DISCRIMINATOR_PROBES.length +
+      ELEMENT_SCOPE_PROBES.length +
       SCHEMA_PROBE_COUNT
   };
 }

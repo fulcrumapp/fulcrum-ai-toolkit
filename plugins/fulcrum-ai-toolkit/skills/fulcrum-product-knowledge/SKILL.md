@@ -56,28 +56,32 @@ feasibility.
   [`resource-governance.md`](resources/resource-governance.md) when deciding
   whether a public source should be linked, indexed, or packaged for offline use.
 
-## Authority And App MCP Boundary
+## Authority And Fulcrum MCP Boundary
 
-Use live installed App MCP schemas for connector names, arguments, required
-fields, and response shapes. Use public Fulcrum docs/OpenAPI for product and API
-behavior, and pricing for plan gates. If these sources disagree, do not blend
-them; report the discrepancy and identify which authority governs each claim.
+Use live installed Fulcrum MCP gateway schemas for connector names, arguments,
+required fields, and response shapes. Use public Fulcrum docs/OpenAPI for
+product and API behavior, and pricing for plan gates. If these sources
+disagree, do not blend them; report the discrepancy and identify which
+authority governs each claim.
 
 > Source: [Fulcrum public OpenAPI](https://raw.githubusercontent.com/fulcrumapp/api/v2/reference/rest-api.json)
 > defines REST behavior; [OpenAPI and Postman collection](https://docs.fulcrumapp.com/reference/openapi-and-postman-collection)
 > explains the supported public contract.
 
-App MCP is an app-configuration control plane. Query API execution, record CRUD, and media CRUD remain outside App MCP. The focused skills describe additional
-read-only and destructive boundaries. Never infer an unregistered tool or claim
-an action ran when no authorized connector is available.
+The Fulcrum MCP gateway federates App MCP as an app-configuration control plane
+and Query MCP as a read-only Query API execution path. Record CRUD, media CRUD,
+and query mutations remain outside those responsibilities. The focused skills
+describe additional read-only and destructive boundaries. Never infer an
+unregistered tool or claim an action ran when no authorized connector is
+available.
 
 Connection setup must select the tenant's US, Australian, European, or Canadian
 instance explicitly and use its organization API token as a Bearer credential.
 OAuth login is not supported. Never default an unknown tenant to the US or
 try credentials against other regions after a failure.
 
-> Connector authority: Live installed App MCP schemas define the connector
-> contract and take precedence over toolkit prose.
+> Connector authority: Live installed Fulcrum MCP gateway schemas define the
+> connector contract and take precedence over toolkit prose.
 
 ## Routing Workflow
 

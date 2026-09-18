@@ -15,7 +15,9 @@ authority for tool arguments and response shapes.
   [the gated update workflow](../SKILL.md#step-4-build-or-hand-off) and
   [pre-write freshness safeguard](../resources/pre-write-freshness.md).
 - Preservation is the default. Copy every existing element and inline-choice
-  key through unchanged.
+  key through unchanged, including each element's concrete field type.
+- “Element” is a generic schema/model term, not a valid field type. New fields
+  must use the concrete type returned by `fulcrum_schema_build_field`.
 - Removing a field permanently deletes its data. Explain the impact and get
   explicit approval first.
 - Never call a destructive tool on inferred intent.

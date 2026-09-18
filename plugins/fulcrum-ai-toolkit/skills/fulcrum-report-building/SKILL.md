@@ -41,7 +41,12 @@ below; the tool list is a capability reference, not authorization to persist.
 | Delete a template after confirmation | `fulcrum_report_templates_delete` |
 | Generate a report for a record | `fulcrum_reports_create` |
 
-`fulcrum_reports_create` requires `record_id` and accepts optional `template_id`. App MCP does not provide record CRUD, Query API execution, or media CRUD; obtain record IDs through an authorized interface and use the Report Builder's documented runtime functions only inside template EJS.
+`fulcrum_reports_create` requires `record_id` and accepts optional `template_id`.
+The federated Fulcrum MCP gateway may also advertise Query MCP read-only tools,
+but App MCP does not provide record CRUD or media CRUD. Obtain record IDs
+through an authorized interface. Report Builder `QUERY()` executes inside
+template EJS and is distinct from Query MCP `query_records`; do not substitute
+one execution context for the other.
 
 `fulcrum_forms_create` creates a default Report Template unless `skip_default_report` is explicitly `true`. If form creation returns a form plus `report_template_error`, the form succeeded and only template creation failed. Do not create the form again; recover the missing template through the publication gate below, reusing prior approval only when it covers the same content and operation.
 

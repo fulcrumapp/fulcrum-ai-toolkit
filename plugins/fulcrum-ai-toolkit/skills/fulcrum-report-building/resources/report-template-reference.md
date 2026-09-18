@@ -6,7 +6,7 @@
 > public references below.
 > Verified: 2026-09-02
 
-When App MCP is registered, use `fulcrum_report_templates_list`, `fulcrum_report_templates_get`, `fulcrum_report_templates_create`, `fulcrum_report_templates_update`, and `fulcrum_report_templates_delete` for template persistence, and use `fulcrum_reports_create` for report generation. This file documents functions available inside Report Builder EJS; it does not imply App MCP Query API, record, or media CRUD tools.
+When App MCP is registered, use `fulcrum_report_templates_list`, `fulcrum_report_templates_get`, `fulcrum_report_templates_create`, `fulcrum_report_templates_update`, and `fulcrum_report_templates_delete` for template persistence, and use `fulcrum_reports_create` for report generation. This file documents functions available inside Report Builder EJS. Report Builder `QUERY()` is distinct from Query MCP `query_records`; neither implies record or media CRUD or query mutation tools.
 
 This tool catalog is not write authorization. Follow
 [the template publication gate](../SKILL.md#template-publication-gate) before

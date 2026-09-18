@@ -11,10 +11,16 @@ import { createRequire } from 'node:module';
 
 const require = createRequire(import.meta.url);
 let YAML;
+let containsGenericElementDiscriminator;
+let isElementDiscriminatorContractPath;
 try {
   YAML = require('../tools/format-validator/node_modules/yaml');
+  ({
+    containsGenericElementDiscriminator,
+    isElementDiscriminatorContractPath
+  } = await import('../tools/format-validator/lib/element-discriminator.mjs'));
 } catch {
-  console.error('Missing yaml. Run `npm ci` in tools/format-validator first.');
+  console.error('Missing validator dependencies. Run `npm ci` in tools/format-validator first.');
   process.exit(1);
 }
 
@@ -44,7 +50,7 @@ const EXPECTED_SKILLS = [
   'fulcrum-solution-document',
   'fulcrum-workflow-decomposition'
 ];
-const USER_INVOKED_SKILLS = new Set(['fulcrum-discovery', 'fulcrum-solution-document']);
+const USER_INVOKED_SKILLS = new Set(['fulcrum-solution-document']);
 
 const COVERAGE_MAP_RELATIVE_PATH = path.join(
   PLUGIN_RELATIVE_PATH,
@@ -317,11 +323,11 @@ for (const skillPath of skillPaths) {
     failures.push(`${relativePath}: frontmatter name does not match directory`);
   }
 
+  const policyPath = path.join(path.dirname(skillPath), 'agents', 'openai.yaml');
   if (USER_INVOKED_SKILLS.has(directoryName)) {
     if (frontmatter?.['disable-model-invocation'] !== true) {
       failures.push(`${relativePath}: user-invoked skills must disable model invocation`);
     }
-    const policyPath = path.join(path.dirname(skillPath), 'agents', 'openai.yaml');
     if (!fs.existsSync(policyPath)) {
       failures.push(`${repoRelativePath(policyPath)}: Codex invocation policy is missing`);
     } else {
@@ -329,6 +335,20 @@ for (const skillPath of skillPaths) {
         const config = YAML.parse(fs.readFileSync(policyPath, 'utf8'));
         if (config?.policy?.allow_implicit_invocation !== false) {
           failures.push(`${repoRelativePath(policyPath)}: allow_implicit_invocation must be false`);
+        }
+      } catch (err) {
+        failures.push(`${repoRelativePath(policyPath)}: invalid YAML (${err.message.split('\n')[0].trim()})`);
+      }
+    }
+  } else {
+    if (frontmatter?.['disable-model-invocation'] === true) {
+      failures.push(`${relativePath}: model-invoked skills must not disable model invocation`);
+    }
+    if (fs.existsSync(policyPath)) {
+      try {
+        const config = YAML.parse(fs.readFileSync(policyPath, 'utf8'));
+        if (config?.policy?.allow_implicit_invocation === false) {
+          failures.push(`${repoRelativePath(policyPath)}: model-invoked skills must allow implicit invocation`);
         }
       } catch (err) {
         failures.push(`${repoRelativePath(policyPath)}: invalid YAML (${err.message.split('\n')[0].trim()})`);
@@ -415,6 +435,17 @@ for (const p of uniqueTextPaths) {
   for (const _ of invalidInventoryFingerprints(text, relative, FINGERPRINT_ALLOWED_PATHS)) {
     failures.push(`${relative}: Inventory fingerprint is allowed only in ${FINGERPRINT_ALLOWED_PATHS.join(' or ')}`);
   }
+
+  const extension = path.extname(p).toLowerCase();
+  if (isElementDiscriminatorContractPath(p, SKILLS_DIR) && ['.js', '.json'].includes(extension)) {
+    try {
+      if (containsGenericElementDiscriminator(text, extension)) {
+        failures.push(`${relative}: Element is a generic schema name, not a valid field type discriminator`);
+      }
+    } catch (error) {
+      failures.push(`${relative}: cannot inspect element discriminators (${error.message})`);
+    }
+  }
 }
 
 // 5. Manifest checks
@@ -460,6 +491,80 @@ if (!fs.existsSync(setupPath)) {
     if (!setup.includes(mapping)) {
       failures.push(`${repoRelativePath(setupPath)}: missing tenant-to-endpoint mapping for ${domain}`);
     }
+  }
+}
+
+// Query MCP guidance contracts
+const querySkillPath = path.join(SKILLS_DIR, 'fulcrum-query-api', 'SKILL.md');
+const queryModelingPath = path.join(
+  SKILLS_DIR,
+  'fulcrum-query-api',
+  'resources',
+  'query-modeling-reference.md'
+);
+const reportSkillPath = path.join(SKILLS_DIR, 'fulcrum-report-building', 'SKILL.md');
+const queryGuidancePaths = [querySkillPath, queryModelingPath];
+for (const guidancePath of queryGuidancePaths) {
+  if (!fs.existsSync(guidancePath)) {
+    failures.push(`${repoRelativePath(guidancePath)}: Query guidance file is missing`);
+  }
+}
+const queryGuidance = queryGuidancePaths
+  .filter((p) => fs.existsSync(p))
+  .map((p) => fs.readFileSync(p, 'utf8'))
+  .join('\n');
+const normalizedQueryGuidance = queryGuidance.replace(/\s+/g, ' ');
+
+const queryWorkflowPurposes = [
+  {
+    purpose: 'list forms available to the authenticated user',
+    pattern: /\b(?:list|discover|find)\b.{0,80}\bforms?\b.{0,80}\bavailable\b.{0,80}\bauthenticated user\b/i
+  },
+  {
+    purpose: 'return Query table definitions for a selected form',
+    pattern:
+      /\b(?:return|discover|retrieve|get)\b.{0,80}\bQuery table (?:definitions|metadata|schemas?)\b.{0,80}\b(?:selected|intended|specified|chosen) form\b/i
+  },
+  {
+    purpose: 'execute read-only Query SQL',
+    pattern: /\b(?:execute|run|submit|pass)\b.{0,80}\bread-only\b.{0,80}\b(?:Query )?SQL\b/i
+  }
+];
+for (const { purpose, pattern } of queryWorkflowPurposes) {
+  if (!pattern.test(normalizedQueryGuidance)) {
+    failures.push(
+      `${repoRelativePath(querySkillPath)}: document the stable Query MCP workflow purpose "${purpose}"`
+    );
+  }
+}
+if (!/live (?:Fulcrum MCP )?gateway schemas.{0,120}(?:authoritative|govern)/i.test(normalizedQueryGuidance)) {
+  failures.push(`${repoRelativePath(querySkillPath)}: live gateway schemas must own exact Query MCP contracts`);
+}
+if (!/read-only/i.test(queryGuidance) || !/single line|single-line/i.test(queryGuidance)) {
+  failures.push(`${repoRelativePath(querySkillPath)}: require read-only, single-line Query MCP SQL`);
+}
+if (!/LIMIT 100/i.test(queryGuidance) || !/explor/i.test(queryGuidance)) {
+  failures.push(`${repoRelativePath(querySkillPath)}: require LIMIT 100 for exploratory queries`);
+}
+if (
+  !/confirm/i.test(queryGuidance) ||
+  !/broad-column|broad column|SELECT \*/i.test(queryGuidance) ||
+  !/personal/i.test(queryGuidance) ||
+  !/location/i.test(queryGuidance) ||
+  !/media/i.test(queryGuidance)
+) {
+  failures.push(`${repoRelativePath(querySkillPath)}: require confirmation for broad and sensitive retrieval`);
+}
+if (/direct Query API.{0,100}(?:fallback|hand ?off)/i.test(normalizedQueryGuidance)) {
+  failures.push(`${repoRelativePath(querySkillPath)}: do not add a direct Query API execution fallback`);
+}
+if (!/Query MCP tools are unavailable.{0,160}execution is unavailable/i.test(normalizedQueryGuidance)) {
+  failures.push(`${repoRelativePath(querySkillPath)}: fail clearly when Query MCP execution is unavailable`);
+}
+if (fs.existsSync(reportSkillPath)) {
+  const reportGuidance = fs.readFileSync(reportSkillPath, 'utf8').replace(/\s+/g, ' ');
+  if (!/Report Builder `QUERY\(\)`.{0,160}distinct from Query MCP `query_records`/i.test(reportGuidance)) {
+    failures.push(`${repoRelativePath(reportSkillPath)}: distinguish Report Builder QUERY() from Query MCP query_records`);
   }
 }
 

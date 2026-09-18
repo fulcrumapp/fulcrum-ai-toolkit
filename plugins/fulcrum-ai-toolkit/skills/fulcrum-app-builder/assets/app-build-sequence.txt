@@ -9,7 +9,8 @@ constructive advice, and performance assessment with the design confirmation.
 The user may approve the design without adopting advisory improvements.
 
 Step 1  fulcrum_schema_field_types()
-        Optional. Use only when the right field type is unclear.
+        Call once without a category filter. Keep the complete supported type
+        set for the exhaustive discriminator check in Step 4.
 
 Step 2  fulcrum_schema_build_field(...)
         Build each field one at a time. The builder generates correct keys,
@@ -25,11 +26,21 @@ Step 2  fulcrum_schema_build_field(...)
           display_style number, currency, or string for a CalculatedField
           elements      child fields for a Section or Repeatable
 
+        Preserve each returned field object unchanged. "Element" is a generic
+        schema/model name, not a valid value for the type property. Every
+        top-level and nested element must keep a concrete type returned by the
+        builder, such as TextField, Section, or Repeatable.
+
 Step 3  fulcrum_schema_build_form(name=..., elements=[...all built fields...])
-        Assembles the API-ready payload.
+        Assemble the API-ready payload from the exact field objects returned by
+        Step 2. Do not reconstruct fields from tool-schema model names.
 
 Step 4  fulcrum_forms_validate(name=..., elements=[...from step 3...])
-        Validate the complete payload before any creation side effect.
+        Before this call, recursively confirm that every element, including
+        children of Sections and Repeatables, has a concrete type reported by
+        fulcrum_schema_field_types(). Stop and rebuild any element whose type
+        is missing, non-string, generic, or unsupported. Then validate the
+        complete payload before any creation side effect.
 
 Step 5  Performance review and approval gate (no live writes)
         Run fulcrum-performance-review on every authored/generated code
@@ -59,3 +70,4 @@ Step 7  fulcrum_forms_create(name=..., elements=[...from step 3...])
 
 # Never rebuild an existing schema wholesale with fulcrum_schema_build_form. It
 # generates new keys, and removing a field permanently deletes its data.
+# Preserve both the key and concrete type of every existing element.

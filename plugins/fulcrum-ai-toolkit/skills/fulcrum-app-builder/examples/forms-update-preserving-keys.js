@@ -5,8 +5,9 @@
 // ../resources/pre-write-freshness.md: review/approve, fresh-read/reconcile,
 // revalidate, and reapprove material changes before using this payload.
 // Send the complete composed elements tree, not a partial patch. Existing
-// element and inline-choice keys must be copied through unchanged; App MCP
-// rejects an update that replaces a known element key.
+// element keys, concrete element types, and inline-choice keys must be copied
+// through unchanged; App MCP rejects an update that replaces a known element
+// key. "Element" is a generic schema/model name, not a valid field type.
 //
 // Omit removed_element_keys when removedElementKeys is empty. Declare only the
 // root key of an approved removed subtree, and never declare a key that is

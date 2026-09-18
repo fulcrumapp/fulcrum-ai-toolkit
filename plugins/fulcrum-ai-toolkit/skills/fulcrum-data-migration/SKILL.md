@@ -38,7 +38,9 @@ reviewed cutover/rollback plan.
 2. Current public import/export documentation for supported bulk paths.
 3. Current public regional-instance documentation for API base URL selection.
 4. Live source/target metadata and explicit migration requirements.
-5. App MCP schemas only to enforce its non-migration boundaries.
+5. Live Fulcrum MCP gateway schemas to identify App MCP configuration and Query
+   MCP read-only discovery capabilities without treating either as migration
+   execution.
 
 > Source: [REST API introduction](https://docs.fulcrumapp.com/reference/rest-api-intro),
 > [public OpenAPI](https://raw.githubusercontent.com/fulcrumapp/api/v2/reference/rest-api.json),
@@ -72,14 +74,16 @@ reviewed cutover/rollback plan.
    deprovisioning, endpoint switching, or irreversible cleanup without explicit
    authorization and a successful dry-run review.
 
-## App MCP Boundary
+## Fulcrum MCP Boundary
 
-App MCP is not a migration executor. Query API execution, record CRUD, and media
-CRUD are outside App MCP. Its app-configuration operations must not be treated
-as a complete organization export/import or identity-preserving copy.
+Fulcrum MCP is not a migration executor. Query MCP can support bounded,
+authorized source/target inventory and reconciliation with read-only Query API
+execution. App MCP configuration operations and Query MCP reads must not be
+treated as record/media migration, mutation, a complete organization
+export/import, or an identity-preserving copy.
 
-> Connector authority: Live installed App MCP schemas define the
-> app-configuration scope and data-level exclusions.
+> Connector authority: Live installed Fulcrum MCP gateway schemas define the
+> App MCP configuration and Query MCP read-only scopes.
 
 ## Confirmation, Privacy, And Failure
 
