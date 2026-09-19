@@ -14,11 +14,11 @@
   A <tr> is only valid inside a table, so the rows are wrapped in one here and
   an empty result gets its own spanning row.
 
-  This example intentionally caps the rendered result at 100 rows. It requests
-  one extra row so the report can mark a partial result instead of presenting
-  the cap as the complete related-record set. Narrow the filter, remove the cap,
-  or use the Query API's page/per_page controls outside this template to retrieve
-  more.
+  This example intentionally caps the rendered result at 100 rows, the maximum
+  returned by one Query API response. A response at that cap is treated as
+  potentially partial because the endpoint does not return a count. Narrow
+  the filter or issue additional queries with SQL LIMIT/OFFSET or keyset
+  pagination when the complete related-record set is required.
 %>
 
 <% const siteIdField = record.formValues.find('site_id'); %>
@@ -29,11 +29,11 @@
    FROM "Site Inspections"
    WHERE site_id = '${('' + siteId).replace(/[^A-Za-z0-9_-]/g, '')}'
    ORDER BY _created_at DESC
-   LIMIT 101`,
+   LIMIT 100`,
   { format: 'json' }
 ); %>
 <% const resultRows = relatedInspections.rows; %>
-<% const hasMoreRows = resultRows.length > MAX_ROWS; %>
+<% const hasMoreRows = resultRows.length === MAX_ROWS; %>
 <% const visibleRows = hasMoreRows ? resultRows.slice(0, MAX_ROWS) : resultRows; %>
 
 <table class="report-table">
@@ -60,9 +60,10 @@
       <% if (hasMoreRows) { %>
         <tr>
           <td colspan="3" class="report-warning">
-            Showing the first 100 related inspections only. More results
-            exist; narrow the filter or retrieve additional pages before
-            treating this as a complete result.
+            Showing up to 100 related inspections. Because the Query API caps
+            each response at 100 rows, this result may be partial; narrow the
+            filter or use SQL LIMIT/OFFSET or keyset pagination for a complete
+            result.
           </td>
         </tr>
       <% } %>

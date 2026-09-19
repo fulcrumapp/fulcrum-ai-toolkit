@@ -387,7 +387,7 @@
     {
       "path": "skills/fulcrum-report-building/examples/params-date-range.ejs",
       "kind": "fragment",
-      "sha256": "a84b2f82da4a83b97f81150f9b832334d0a209ff84009daeae84d6dbac6814a8"
+      "sha256": "917391c9649e759a7691db838fb387761f5652c663fc0ae7490cb176b9568ee1"
     },
     {
       "path": "skills/fulcrum-report-building/examples/photo-url-signed-src.ejs",
@@ -397,12 +397,12 @@
     {
       "path": "skills/fulcrum-report-building/examples/query-related-records.ejs",
       "kind": "fragment",
-      "sha256": "b9d776e98dcab859ede5bbf8b6dfa47f75faa9a55504ce74f39ff1b2ed59056f"
+      "sha256": "d71554227ff642e771ff67f0cc67631fa7d23170d2ccf87195e15c04c6029854"
     },
     {
       "path": "skills/fulcrum-report-building/examples/query-repeatable-join.ejs",
       "kind": "fragment",
-      "sha256": "43bdb831f878d2a7c8f503d5e93a4826e3d3b014d141d1d3755e0c1115a6177c"
+      "sha256": "0f3147202b9adcc5dbc24af1e2ffa802f3cd57e1bc644e15aa36521350e679f9"
     },
     {
       "path": "skills/fulcrum-report-building/examples/query-rows-iteration.ejs",

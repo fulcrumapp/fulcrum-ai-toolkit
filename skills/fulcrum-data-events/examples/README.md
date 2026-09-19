@@ -55,7 +55,7 @@ when the logic is too complex for an expression.
 | --- | --- |
 | [`load-reference-records.js`](load-reference-records.js) | Reads reference records with the `LOADRECORDS()` callback API. |
 | [`loadfile-shared-helpers.js`](loadfile-shared-helpers.js) | Loads a shared helper Reference File with `LOADFILE()`. |
-| [`storage-session-state.js`](storage-session-state.js) | Caches a bounded baseline under a form-and-record-scoped `STORAGE()` key for saved records; unsaved records stay in session state until they have an identifier. |
+| [`storage-session-state.js`](storage-session-state.js) | Caches a bounded baseline under a form-and-record-scoped `STORAGE()` key for existing saved records; newly created records stay in session state because `save-record` runs before an identifier is available for re-keying. |
 
 ## Anti-pattern contrasts
 

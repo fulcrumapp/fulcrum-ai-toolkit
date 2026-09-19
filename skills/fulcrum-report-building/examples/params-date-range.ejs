@@ -29,15 +29,16 @@
   template: a rejected range renders a message, an empty result renders a single
   spanning row, and neither leaves a <tr> loose in the document.
 
-  This example intentionally caps the rendered result at 500 rows. It requests
-  one extra row so the report can mark a partial result instead of presenting
-  the cap as the complete date range. Narrow the range, remove the cap, or use
-  the Query API's page/per_page controls outside this template to retrieve more.
+  This example intentionally caps the rendered result at 100 rows, the maximum
+  returned by one Query API response. A response at that cap is treated as
+  potentially partial because the endpoint does not return a count. Narrow
+  the range or issue additional queries with SQL LIMIT/OFFSET or keyset
+  pagination when the complete date range is required.
 %>
 
 <% const MS_PER_DAY = 86400000; %>
 <% const DEFAULT_WINDOW_DAYS = 90; %>
-<% const MAX_ROWS = 500; %>
+<% const MAX_ROWS = 100; %>
 
 <% function parseIsoDay(value) {
      const text = '' + value;
@@ -76,11 +77,11 @@
         WHERE _created_at >= '${('' + startDate).replace(/[^0-9-]/g, '')}'
           AND _created_at < '${('' + endExclusiveDate).replace(/[^0-9-]/g, '')}'
         ORDER BY _created_at DESC
-        LIMIT 501`,
+        LIMIT 100`,
        { format: 'json' }
      ); %>
 <% const resultRows = recordResults.rows; %>
-<% const hasMoreRows = resultRows.length > MAX_ROWS; %>
+<% const hasMoreRows = resultRows.length === MAX_ROWS; %>
 <% const visibleRows = hasMoreRows ? resultRows.slice(0, MAX_ROWS) : resultRows; %>
 <table class="report-table">
   <thead>
@@ -110,9 +111,9 @@
       <% if (hasMoreRows) { %>
         <tr>
           <td colspan="3" class="report-warning">
-            Showing the first 500 inspections only. The date range has more
-            results; narrow the range or retrieve additional pages before
-            treating this as a complete result.
+            Showing up to 100 inspections. Because the Query API caps each
+            response at 100 rows, this result may be partial; narrow the range
+            or use SQL LIMIT/OFFSET or keyset pagination for a complete result.
           </td>
         </tr>
       <% } %>

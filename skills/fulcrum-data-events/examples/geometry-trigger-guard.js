@@ -3,6 +3,17 @@
 // A new record has no geometry until the user captures it, so new-record and
 // load-record cannot assume LOCATION() is populated.
 
+function handleWeather(error, response, body) {
+  if (error) {
+    ALERT('Weather request failed: ' + INSPECT(error));
+    return;
+  }
+
+  if (response) {
+    INSPECT(response);
+  }
+}
+
 /*
 AVOID — fires on new-record while geometry is still empty.
 ON('new-record', function (event) {

@@ -110,9 +110,10 @@ initialization: a `change` handler alone leaves a dependent field's
 visibility and a cascaded option list untouched when a record is opened.
 Each now applies an idempotent function on `new-record`, on `edit-record`,
 and on change. The C06 storage example uses a bounded key scoped to the form
-and saved record; an unsaved record has no stable `RECORDID()`, so its
-baseline stays in ordinary script state for the current record-editor session
-without writing an unscoped persistent key. C10 and C11 are rewrites
+and an existing saved record; a newly created record cannot be re-keyed during
+`save-record` because that event runs before persistence, so its baseline stays
+in ordinary script state for the current record-editor session without writing
+an unscoped persistent key. C10 and C11 are rewrites
 because the originals embedded a
 literal-looking identifier and a credential-shaped string; both now use
 neutral placeholders, and C11 adds the middleware alternative. C18 is a
