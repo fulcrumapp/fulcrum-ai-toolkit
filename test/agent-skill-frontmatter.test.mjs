@@ -53,19 +53,14 @@ test('rejects Agent Skills name length and directory violations', () => {
   assert.ok(errors({ ...validFrontmatter }, 'different-directory').some((failure) => failure.includes('name does not match directory')));
 });
 
-test('accepts normalized internationalized skill names', () => {
-  assert.deepEqual(
-    errors({ ...validFrontmatter, name: '技能' }, '技能'),
-    []
-  );
-  assert.deepEqual(
-    errors({ ...validFrontmatter, name: 'e\u0301' }, 'é'),
-    []
-  );
-  assert.deepEqual(
-    errors({ ...validFrontmatter, name: ' example-skill ' }),
-    []
-  );
+test('rejects non-ASCII and padded skill names', () => {
+  for (const name of ['技能', 'e\u0301', ' example-skill ']) {
+    assert.ok(
+      errors({ ...validFrontmatter, name }).some((failure) =>
+        failure.includes('name must be 1-64')
+      )
+    );
+  }
 });
 
 test('rejects whitespace-only descriptions', () => {
