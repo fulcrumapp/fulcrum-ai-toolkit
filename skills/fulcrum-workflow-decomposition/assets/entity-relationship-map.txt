@@ -1,0 +1,13 @@
+# Source: https://help.fulcrumapp.com/en/articles/74922-repeatables-record-links-comparison
+# Purpose: sketch entity cardinality before choosing apps and Record Links.
+# Notation: 1 ──── * reads "one parent, many children". Replace the bracketed
+# names with the workflow's own entities.
+
+[Site]        1 ──── *  [Inspection]        one site, many inspections over time
+[Site]        1 ──── *  [Work Order]        one site, many work orders
+[Inspection]  * ──── 1  [Species List]      many inspections reference one lookup
+
+# The child record links to the parent, not the other way around. Use a Record
+# Link field for the connection. Keep entities in one app when one person fills
+# them out in one visit, they share a lifecycle, and splitting would produce a
+# linked app with only a handful of fields.

@@ -5,6 +5,12 @@ instructions for a loader to fetch missing skills. Keep all skill
 directories and their supporting files together, and retain the package
 `LICENSE`. Do not flatten the directories or upload only one `SKILL.md`.
 
+The package directory is the portable Agent Plugins bundle. Its core is
+`plugin.json`, `mcp.json`, and `skills/`. Claude's native command adapter and
+skill discovery tree live at the repository root, and Gemini's native manifest
+lives under `adapters/gemini/`; both are outside the portable package. Strict
+portable consumers should load the core files and omit native host adapters.
+
 These are alpha installation targets. Host versions, administrator policy,
 skill discovery, and support for token-authenticated remote MCP vary.
 Installing skills does not connect a Fulcrum tenant.
@@ -16,31 +22,39 @@ command is `codex plugin add fulcrum-ai-toolkit@fulcrum-ai-toolkit`.
 
 When a private repository includes this toolkit as a git submodule and registers
 the submodule directory directly as a Claude plugin, use the submodule root.
-Its `.claude-plugin/plugin.json` points to the distributable package's shared
-`skills/` directory. Do not register the parent private repository as the plugin
-root unless its own marketplace entry selects the toolkit submodule path.
-For ordinary marketplace installation, the marketplace continues to select the
-nested package directly.
+Its `.claude-plugin/plugin.json` registers the root-level Claude-native manual
+command adapter at `commands/fulcrum-solution-document.md`. Claude auto-discovers
+the validator-checked copies of the distributable package's shared skills from
+the repository-root `skills/` directory; that directory intentionally excludes
+`fulcrum-solution-document`. Do not register the nested
+portable package directly as a Claude plugin: its fixed `skills/` directory
+must remain complete for Agent Plugins consumers, so it cannot enforce
+Claude's manual-only invocation policy. The Claude marketplace selects the
+repository root; the other marketplaces continue to select the nested
+portable package.
 
 ## Cursor
 
 Use Cursor's plugin installation UI or repository import with
-`plugins/fulcrum-ai-toolkit/` as the plugin package. Its
-`.cursor-plugin/plugin.json` points to `./skills/`.
+`plugins/fulcrum-ai-toolkit/` as the plugin package. Cursor requires the
+package's `.cursor-plugin/plugin.json` adapter, which points to the shared
+`skills/` directory. Portable clients should ignore that native wrapper.
 If the available UI cannot select a nested package, use the complete
 skills-loader installation from the repository README instead.
 
 ## Gemini CLI
 
-Clone the repository, then run from its root:
+Clone the repository, assemble the native bundle, then install it:
 
 ```bash
-gemini extensions install ./plugins/fulcrum-ai-toolkit
+node scripts/build-gemini-extension.mjs
+gemini extensions install ./plugins/fulcrum-ai-toolkit-gemini
 ```
 
-The local directory contains `gemini-extension.json` and the full `skills/`
-collection. Do not substitute the repository-root URL or a GitHub `tree/` URL:
-the extension installer is not the skills installer's subdirectory interface.
+The build copies the Gemini-native `gemini-extension.json`, the package license,
+and the full canonical `skills/` collection into an ignored generated directory.
+Do not substitute the portable package, repository-root URL, or a GitHub `tree/`
+URL: the Gemini extension installer requires the generated native bundle.
 
 ## Hermes
 
