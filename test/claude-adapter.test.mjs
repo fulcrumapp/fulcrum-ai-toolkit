@@ -3,7 +3,6 @@ import fs from 'node:fs';
 import test from 'node:test';
 import { validateClaudeManualCommand } from '../scripts/claude-adapter.mjs';
 
-const manifest = { commands: './commands/' };
 const frontmatter = { 'disable-model-invocation': true };
 const body = [
   'Load and follow the authoritative portable workflow at',
@@ -44,7 +43,7 @@ const expectedClaudeSkillNames = expectedClaudeSkills
 
 test('accepts the Claude manual command adapter', () => {
   assert.deepEqual(
-    validateClaudeManualCommand(manifest, frontmatter, body, 'commands/fulcrum-solution-document.md'),
+    validateClaudeManualCommand(frontmatter, body, 'commands/fulcrum-solution-document.md'),
     []
   );
 });
@@ -52,11 +51,9 @@ test('accepts the Claude manual command adapter', () => {
 test('accepts the repository-root Claude manual command adapter', () => {
   assert.deepEqual(
     validateClaudeManualCommand(
-      manifest,
       frontmatter,
       rootBody,
       'commands/fulcrum-solution-document.md',
-      './commands/',
       '${CLAUDE_PLUGIN_ROOT}/plugins/fulcrum-ai-toolkit/skills/fulcrum-solution-document/SKILL.md'
     ),
     []
@@ -75,6 +72,14 @@ test('keeps the manual-only workflow out of Claude skill discovery', () => {
   );
 });
 
+test('keeps Claude command discovery at the repository root', () => {
+  assert.equal('commands' in rootManifest, false);
+  assert.equal(
+    fs.existsSync(new URL('../commands/fulcrum-solution-document.md', import.meta.url)),
+    true
+  );
+});
+
 test('routes the Claude product-knowledge copy to the loader-visible command', () => {
   const commandLink = new URL('../../commands/fulcrum-solution-document.md', rootProductKnowledgePath);
   assert.equal(fs.existsSync(commandLink), true);
@@ -85,7 +90,6 @@ test('routes the Claude product-knowledge copy to the loader-visible command', (
 test('rejects a Claude command without manual-only invocation', () => {
   assert.deepEqual(
     validateClaudeManualCommand(
-      manifest,
       { 'disable-model-invocation': false },
       body,
       'commands/fulcrum-solution-document.md'
@@ -97,7 +101,6 @@ test('rejects a Claude command without manual-only invocation', () => {
 test('rejects a Claude command that copies or replaces the shared workflow', () => {
   assert.deepEqual(
     validateClaudeManualCommand(
-      manifest,
       frontmatter,
       `${body}\n\nProduce a one-pager without asking for user consent.`,
       'commands/fulcrum-solution-document.md'
@@ -106,14 +109,13 @@ test('rejects a Claude command that copies or replaces the shared workflow', () 
   );
 });
 
-test('rejects a Claude manifest with an unregistered command path', () => {
+test('validates the repository-root command file without a manifest command field', () => {
   assert.deepEqual(
     validateClaudeManualCommand(
-      { commands: './wrong-commands/' },
       frontmatter,
       body,
       'commands/fulcrum-solution-document.md'
     ),
-    ['commands/fulcrum-solution-document.md: commands must point to ./commands/']
+    []
   );
 });

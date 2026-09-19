@@ -706,17 +706,13 @@ for (const skillName of expectedClaudeSkillNames) {
 
 const claudeCommandDefinitions = [
   {
-    manifestPath: rootClaudeManifestPath,
     commandRelativePath: 'commands/fulcrum-solution-document.md',
-    commandsPath: './commands/',
     sharedSkillPath:
       '${CLAUDE_PLUGIN_ROOT}/plugins/fulcrum-ai-toolkit/skills/fulcrum-solution-document/SKILL.md'
   }
 ];
 for (const {
-  manifestPath,
   commandRelativePath,
-  commandsPath,
   sharedSkillPath
 } of claudeCommandDefinitions) {
   const commandPath = path.join(ROOT, commandRelativePath);
@@ -730,11 +726,9 @@ for (const {
   try {
     const frontmatter = YAML.parse(commandParts[1]);
     failures.push(...validateClaudeManualCommand(
-      jsonDocuments[manifestPath],
       frontmatter,
       commandParts.slice(2).join('---').trim(),
       commandRelativePath,
-      commandsPath,
       sharedSkillPath
     ));
   } catch (err) {
