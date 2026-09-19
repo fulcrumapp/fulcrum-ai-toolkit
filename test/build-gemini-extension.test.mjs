@@ -74,6 +74,15 @@ test('rejects dangerous or source-tree Gemini destinations before deletion', () 
       () => validateGeminiDestination(path.join(repositoryLink, 'plugins', 'fulcrum-ai-toolkit')),
       /destination must not|destinations inside/
     );
+
+    const externalTarget = path.join(parent, 'external-target');
+    const externalLink = path.join(parent, 'external-link');
+    fs.mkdirSync(externalTarget);
+    fs.symlinkSync(externalTarget, externalLink, 'dir');
+    assert.throws(
+      () => validateGeminiDestination(externalLink),
+      /destination must not be an existing symbolic link/
+    );
   } finally {
     fs.rmSync(parent, { recursive: true, force: true });
   }

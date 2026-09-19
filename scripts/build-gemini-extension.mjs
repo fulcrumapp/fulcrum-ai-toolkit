@@ -17,6 +17,14 @@ function isSameOrAncestor(candidate, child) {
   return child === candidate || child.startsWith(`${candidate}${path.sep}`);
 }
 
+function rejectFinalSymlink(target) {
+  const stats = fs.lstatSync(target, { throwIfNoEntry: false });
+
+  if (stats?.isSymbolicLink()) {
+    throw new Error('Gemini extension destination must not be an existing symbolic link');
+  }
+}
+
 function canonicalizeDestination(target) {
   let existingParent = target;
   while (!fs.existsSync(existingParent)) {
@@ -32,7 +40,9 @@ function canonicalizeDestination(target) {
 }
 
 export function validateGeminiDestination(destination) {
-  const target = canonicalizeDestination(path.resolve(destination));
+  const lexicalTarget = path.resolve(destination);
+  rejectFinalSymlink(lexicalTarget);
+  const target = canonicalizeDestination(lexicalTarget);
   const filesystemRoot = path.parse(target).root;
 
   if (target === filesystemRoot) {

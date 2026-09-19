@@ -29,10 +29,10 @@
 // secret and nothing here treats it as one.
 //
 // Unreachable is not the same as reclaimed, and a crashed session cannot run
-// its own cleanup. Each session records its draft key under one fixed pointer
-// per app, and the next session removes whatever that pointer names before
-// starting, so at most one abandoned entry per app survives a crash and it is
-// removed without being read.
+// its own cleanup. Each session owns only its unique key, so concurrent editors
+// never remove one another's baselines. Abandoned entries remain unreachable
+// until the storage is cleared; unsafe cross-session reclamation would risk
+// deleting a live editor's baseline.
 //
 // Events used below are the documented record lifecycle: load-record fires when
 // the editor is displayed, cancel-record fires after an editing session is
@@ -43,17 +43,12 @@
 // repeatable, media, location, and personal-data values do not belong in it.
 
 var BASELINE_KEY_PREFIX = 'baseline:';
-var SESSION_POINTER_SUFFIX = ':session-latest';
 var BASELINE_FIELDS = ['condition', 'status'];
 var MAX_BASELINE_TEXT_LENGTH = 256;
 var baselineKey = null;
 
 function formScope() {
   return BASELINE_KEY_PREFIX + FORM().id;
-}
-
-function sessionPointerKey() {
-  return formScope() + SESSION_POINTER_SUFFIX;
 }
 
 function sessionNonce() {
@@ -126,18 +121,6 @@ function ensureBaseline() {
   return baseline;
 }
 
-// Removes the entry a previous session abandoned, without reading it: it was
-// derived from a different editing session and means nothing here.
-function discardAbandonedSession() {
-  var storage = STORAGE();
-  var abandoned = storage.getItem(sessionPointerKey());
-
-  if (abandoned) {
-    storage.removeItem(abandoned);
-    storage.removeItem(sessionPointerKey());
-  }
-}
-
 // Idempotent: removeItem on an absent key is a no-op.
 function clearBaseline() {
   if (!baselineKey) {
@@ -146,19 +129,11 @@ function clearBaseline() {
 
   var storage = STORAGE();
   storage.removeItem(baselineKey);
-
-  if (storage.getItem(sessionPointerKey()) === baselineKey) {
-    storage.removeItem(sessionPointerKey());
-  }
-
   baselineKey = null;
 }
 
 ON('load-record', function (event) {
-  discardAbandonedSession();
   baselineKey = baselineStorageKey();
-  STORAGE().setItem(sessionPointerKey(), baselineKey);
-
   ensureBaseline();
 });
 
