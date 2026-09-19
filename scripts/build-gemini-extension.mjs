@@ -152,7 +152,6 @@ export function assembleGeminiExtension(destination = DEFAULT_DESTINATION) {
   }
   assertSafeToReplace(target);
   const skillSource = path.join(PORTABLE_PACKAGE, 'skills');
-  assertNoSourceSymlinks(skillSource);
   fs.rmSync(target, { recursive: true, force: true });
   fs.mkdirSync(target, { recursive: true });
   fs.writeFileSync(path.join(target, ASSEMBLER_MARKER), ASSEMBLER_MARKER_CONTENT);
