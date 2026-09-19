@@ -53,25 +53,24 @@ test('rejects Agent Skills name length and directory violations', () => {
   assert.ok(errors({ ...validFrontmatter }, 'different-directory').some((failure) => failure.includes('name does not match directory')));
 });
 
-test('rejects non-ASCII skill names', () => {
+test('accepts lowercase Unicode letters and numeric characters', () => {
   for (const name of ['café-skill', '技能-skill', 'example-²']) {
     assert.deepEqual(
       errors({ ...validFrontmatter, name }, name),
-      [
-        'skills/example-skill/SKILL.md: frontmatter name must be 1-64 characters using lowercase ASCII letters, numbers, and hyphens, without leading, trailing, or consecutive hyphens'
-      ]
+      []
     );
   }
 });
 
-test('rejects non-normalized or padded skill names', () => {
-  for (const name of ['e\u0301-skill', ' example-skill ']) {
-    assert.ok(
-      errors({ ...validFrontmatter, name }).some((failure) =>
-        failure.includes('name must be 1-64')
-      )
-    );
-  }
+test('trims and NFKC-normalizes skill names before validation', () => {
+  assert.deepEqual(
+    errors({ ...validFrontmatter, name: ' example-skill ' }),
+    []
+  );
+  assert.deepEqual(
+    errors({ ...validFrontmatter, name: 'e\u0301-skill' }, 'é-skill'),
+    []
+  );
 });
 
 test('rejects whitespace-only descriptions', () => {
