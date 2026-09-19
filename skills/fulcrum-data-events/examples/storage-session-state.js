@@ -10,7 +10,7 @@
 // from one record leaks into another. Values must be strings, so serialize
 // objects. Never place credentials or personal data in storage.
 //
-// Two documented identifiers scope the key:
+// Two documented identifiers scope the record portion of the key:
 //
 //   FORM().id  identifies the app, so two apps on one device cannot share an
 //              entry even when both run this script.
@@ -20,13 +20,13 @@
 //              unsaved record reads back the previous unsaved record's
 //              baseline.
 //
-// An unsaved record is therefore scoped by a nonce generated once per editing
-// session. A session that crashed before its cleanup ran leaves behind a key
-// the next session never computes, and a key that is never computed is never
-// read: the stale value is unreachable immediately, not merely deleted later.
-// The nonce names a cache entry rather than guarding one, so Date.now() and
-// Math.random() are the right tools; the value is not a secret and nothing
-// here treats it as one.
+// A nonce generated once per editing session scopes the cache entry for both
+// saved and unsaved records. A session that crashed before its cleanup ran
+// leaves behind a key the next session never computes, and a key that is never
+// computed is never read: the stale value is unreachable immediately, not
+// merely deleted later. The nonce names a cache entry rather than guarding
+// one, so Date.now() and Math.random() are the right tools; the value is not a
+// secret and nothing here treats it as one.
 //
 // Unreachable is not the same as reclaimed, and a crashed session cannot run
 // its own cleanup. Each session records its draft key under one fixed pointer
@@ -43,7 +43,7 @@
 // repeatable, media, location, and personal-data values do not belong in it.
 
 var BASELINE_KEY_PREFIX = 'baseline:';
-var DRAFT_POINTER_SUFFIX = ':draft-latest';
+var SESSION_POINTER_SUFFIX = ':session-latest';
 var BASELINE_FIELDS = ['condition', 'status'];
 var MAX_BASELINE_TEXT_LENGTH = 256;
 var baselineKey = null;
@@ -52,21 +52,21 @@ function formScope() {
   return BASELINE_KEY_PREFIX + FORM().id;
 }
 
-function draftPointerKey() {
-  return formScope() + DRAFT_POINTER_SUFFIX;
+function sessionPointerKey() {
+  return formScope() + SESSION_POINTER_SUFFIX;
 }
 
 function sessionNonce() {
   return Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 10);
 }
 
-// A saved record is named by its own identifier; an unsaved one is named by
-// this editing session, which no other session reproduces.
+// Every baseline is named by this editing session, so reopening the same saved
+// record cannot reuse a baseline left by an interrupted prior session.
 function baselineStorageKey() {
   var recordId = RECORDID();
 
   return recordId
-    ? formScope() + ':record:' + recordId
+    ? formScope() + ':record:' + recordId + ':session:' + sessionNonce()
     : formScope() + ':draft:' + sessionNonce();
 }
 
@@ -127,14 +127,14 @@ function ensureBaseline() {
 }
 
 // Removes the entry a previous session abandoned, without reading it: it was
-// derived from a different record and means nothing here.
-function discardAbandonedDraft() {
+// derived from a different editing session and means nothing here.
+function discardAbandonedSession() {
   var storage = STORAGE();
-  var abandoned = storage.getItem(draftPointerKey());
+  var abandoned = storage.getItem(sessionPointerKey());
 
   if (abandoned) {
     storage.removeItem(abandoned);
-    storage.removeItem(draftPointerKey());
+    storage.removeItem(sessionPointerKey());
   }
 }
 
@@ -147,20 +147,17 @@ function clearBaseline() {
   var storage = STORAGE();
   storage.removeItem(baselineKey);
 
-  if (storage.getItem(draftPointerKey()) === baselineKey) {
-    storage.removeItem(draftPointerKey());
+  if (storage.getItem(sessionPointerKey()) === baselineKey) {
+    storage.removeItem(sessionPointerKey());
   }
 
   baselineKey = null;
 }
 
 ON('load-record', function (event) {
-  discardAbandonedDraft();
+  discardAbandonedSession();
   baselineKey = baselineStorageKey();
-
-  if (!RECORDID()) {
-    STORAGE().setItem(draftPointerKey(), baselineKey);
-  }
+  STORAGE().setItem(sessionPointerKey(), baselineKey);
 
   ensureBaseline();
 });
