@@ -382,12 +382,12 @@
     {
       "path": "skills/fulcrum-report-building/examples/html-filter-form.ejs",
       "kind": "fragment",
-      "sha256": "a5050a6e2221c498ad9493e714f60b55fe730921fbf935e01061a9e2cb1b1c62"
+      "sha256": "fa1975d35b248a27f444b99f27db1d4b744dc776185366e0df924c8980d5b847"
     },
     {
       "path": "skills/fulcrum-report-building/examples/params-date-range.ejs",
       "kind": "fragment",
-      "sha256": "4430e2058e53e8ff3b9febcaa7d746a4cd1d5f8f171805aa90e69607063c0efe"
+      "sha256": "a84b2f82da4a83b97f81150f9b832334d0a209ff84009daeae84d6dbac6814a8"
     },
     {
       "path": "skills/fulcrum-report-building/examples/photo-url-signed-src.ejs",
@@ -402,7 +402,7 @@
     {
       "path": "skills/fulcrum-report-building/examples/query-repeatable-join.ejs",
       "kind": "fragment",
-      "sha256": "64a1ee6ddb91501dd02e7fe255b7b9c6b48ea9c4adcf2008540de65d47804829"
+      "sha256": "43bdb831f878d2a7c8f503d5e93a4826e3d3b014d141d1d3755e0c1115a6177c"
     },
     {
       "path": "skills/fulcrum-report-building/examples/query-rows-iteration.ejs",
