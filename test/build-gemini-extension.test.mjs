@@ -6,6 +6,8 @@ import { fileURLToPath } from 'node:url';
 import test from 'node:test';
 import {
   assembleGeminiExtension,
+  copySkillTree,
+  assertNoSourceSymlinks,
   validateGeminiDestination
 } from '../scripts/build-gemini-extension.mjs';
 
@@ -115,6 +117,31 @@ test('does not treat a matching manifest as destination ownership', () => {
       /must be empty or contain the assembler marker/
     );
     assert.equal(fs.existsSync(path.join(destination, 'customized.txt')), true);
+  } finally {
+    fs.rmSync(parent, { recursive: true, force: true });
+  }
+});
+
+test('rejects symlinks in the Gemini source tree before copying', () => {
+  const parent = fs.mkdtempSync(path.join(os.tmpdir(), 'fulcrum-gemini-source-'));
+  const source = path.join(parent, 'skills');
+  const destination = path.join(parent, 'output');
+  const externalFile = path.join(parent, 'external.txt');
+
+  try {
+    fs.mkdirSync(source, { recursive: true });
+    fs.writeFileSync(externalFile, 'external');
+    fs.symlinkSync(externalFile, path.join(source, 'external.txt'));
+
+    assert.throws(
+      () => assertNoSourceSymlinks(source),
+      /Gemini source tree must not contain symbolic links/
+    );
+    assert.throws(
+      () => copySkillTree(source, destination),
+      /Gemini source tree must not contain symbolic links/
+    );
+    assert.equal(fs.existsSync(destination), false);
   } finally {
     fs.rmSync(parent, { recursive: true, force: true });
   }

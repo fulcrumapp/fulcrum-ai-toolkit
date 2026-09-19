@@ -55,6 +55,29 @@ function hasAssemblerMarker(target) {
   );
 }
 
+export function assertNoSourceSymlinks(sourceRoot) {
+  for (const entry of fs.readdirSync(sourceRoot, { withFileTypes: true })) {
+    const sourcePath = path.join(sourceRoot, entry.name);
+    const stats = fs.lstatSync(sourcePath);
+
+    if (stats.isSymbolicLink()) {
+      throw new Error(`Gemini source tree must not contain symbolic links: ${sourcePath}`);
+    }
+
+    if (stats.isDirectory()) {
+      assertNoSourceSymlinks(sourcePath);
+    }
+  }
+}
+
+export function copySkillTree(source, destination) {
+  assertNoSourceSymlinks(source);
+  fs.cpSync(source, destination, {
+    recursive: true,
+    dereference: true
+  });
+}
+
 function assertSafeToReplace(target) {
   const stats = fs.lstatSync(target, { throwIfNoEntry: false });
 
@@ -120,17 +143,16 @@ export function assembleGeminiExtension(destination = DEFAULT_DESTINATION) {
   if (manifest.name !== path.basename(target)) {
     throw new Error(`Gemini manifest name must match destination directory: ${manifest.name}`);
   }
-
   assertSafeToReplace(target);
+  assertSafeToReplace(target);
+  const skillSource = path.join(PORTABLE_PACKAGE, 'skills');
+  assertNoSourceSymlinks(skillSource);
   fs.rmSync(target, { recursive: true, force: true });
   fs.mkdirSync(target, { recursive: true });
   fs.writeFileSync(path.join(target, ASSEMBLER_MARKER), ASSEMBLER_MARKER_CONTENT);
   fs.copyFileSync(GEMINI_MANIFEST, path.join(target, 'gemini-extension.json'));
   fs.copyFileSync(path.join(PORTABLE_PACKAGE, 'LICENSE'), path.join(target, 'LICENSE'));
-  fs.cpSync(path.join(PORTABLE_PACKAGE, 'skills'), path.join(target, 'skills'), {
-    recursive: true,
-    dereference: true
-  });
+  copySkillTree(skillSource, path.join(target, 'skills'));
   return target;
 }
 
