@@ -109,7 +109,7 @@ the dependent field shows its full designed option list until the controlling
 field is touched.
 
 ### Load reference data
-`LOADRECORDS()` takes an options object and an asynchronous callback; it does not return records directly. See
+`LOADRECORDS()` takes an options object and an asynchronous callback; it does not return records directly. For a separate lookup form, configure its explicit form ID rather than using `FORM().id`, which identifies the app containing this script. See
 [`examples/load-reference-records.js`](examples/load-reference-records.js).
 
 > **Verify availability:** For `LOADRECORDS()` and `LOADFILE()`, follow the sibling [Plan And Licensing Check](../fulcrum-product-knowledge/resources/plan-and-licensing-reference.md). Check [current pricing](https://www.fulcrumapp.com/pricing/), the function's public documentation, and the organization's permissions/configuration. Do not infer access or failure behavior from a plan name. If access is unresolved, flag the dependency and offer a fallback that does not depend on it.

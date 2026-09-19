@@ -27,7 +27,7 @@ template.
 
 | File | What it shows |
 | --- | --- |
-| [`query-related-records.ejs`](query-related-records.ejs) | `QUERY(sql, options)` and reading `rows` into a complete table. |
+| [`query-related-records.ejs`](query-related-records.ejs) | `QUERY(sql, options)`, bounded first-100 rendering, and a partial-result warning. |
 | [`query-rows-iteration.ejs`](query-rows-iteration.ejs) | The minimal `rows` iteration form. |
 | [`query-repeatable-join.ejs`](query-repeatable-join.ejs) | Joining a repeatable table on `_parent_id`. |
 | [`api-fulcrum-rest.ejs`](api-fulcrum-rest.ejs) | `API(path, options)` for Fulcrum REST resources. |
