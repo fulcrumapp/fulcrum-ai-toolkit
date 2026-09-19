@@ -19,23 +19,23 @@ requires its own authorized request.
 | Function | Purpose |
 |----------|---------|
 | API(path, options) | Execute REST API calls to Fulcrum paths |
-| AUDIOURL(id, options) | Generate public audio file URL |
+| AUDIOURL(id, options) | Generate signed audio file URL |
 | FORMATDATE(date, options) | Format date values using Intl.DateTimeFormat options |
 | GET(url, options) | Perform synchronous HTTP GET request |
 | GETBLOB(url, options) | Fetch binary data via HTTP GET (returns ArrayBuffer) |
 | JSONREQUEST(options) | Perform a request and automatically parse JSON |
 | LOG(string) | Output debug messages to report results |
-| PHOTOURL(id, options) | Generate public photo URL |
+| PHOTOURL(id, options) | Generate signed photo URL |
 | QS(object) | Convert object into URL query string |
 | QUERY(sql, options) | Execute a SQL query on the Query API from report EJS |
 | QUERYVALUE(sql) | Run SQL and return first column of first row |
 | RENDER(feature, options, eachFunction) | Recursively process form elements with nesting context |
 | RENDERVALUES(feature, options, eachFunction) | Recursively process form values |
-| SIGNATUREURL(id, options) | Generate public signature file URL |
-| SKETCHURL(id, options) | Generate public sketch URL |
+| SIGNATUREURL(id, options) | Generate signed signature file URL |
+| SKETCHURL(id, options) | Generate signed sketch URL |
 | STATICMAP(options) | Create Google or Esri static map image |
 | TOJSON(json) | Stringify a JSON value |
-| VIDEOURL(id, options) | Generate public video file URL |
+| VIDEOURL(id, options) | Generate signed video file URL |
 
 ## Report Context Object
 
