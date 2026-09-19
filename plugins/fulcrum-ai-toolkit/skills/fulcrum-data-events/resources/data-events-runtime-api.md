@@ -153,5 +153,5 @@ the two APIs serve different contexts.
 5. Data events run on mobile devices — keep code lightweight, avoid heavy computation
 6. console.log is not available — use ALERT or INSPECT for debugging
 7. LOADFILE takes an options object, not a URL or positional filename
-8. STORAGE() is device-wide and persistent — scope every key with `FORM().id` and the record it belongs to, and remove it on `cancel-record` and `unload-record`. The storage-session example intentionally keeps its baseline in script memory instead, assuming one script context per editing session.
+8. STORAGE() is device-wide and persistent — scope every key with `FORM().id` and a saved `RECORDID()`, bound the payload, and remove it on `cancel-record` and `unload-record`. This is record-scoped rather than concurrent-editor-scoped because STORAGE() has no atomic compare-and-delete operation. The storage-session example computes unsaved baselines only for the current callback because ordinary script globals are ephemeral.
 9. RECORDID() is null until a new record has been saved, so it cannot distinguish one unsaved record from the next

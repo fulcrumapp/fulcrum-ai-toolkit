@@ -91,7 +91,7 @@ row fails the suite.
 | C03 | `fulcrum-data-events/SKILL.md` | 3 | Cascading choices with `SETCHOICES()` | `rewrite` | [`cascading-choices.js`](../skills/fulcrum-data-events/examples/cascading-choices.js) |
 | C04 | `fulcrum-data-events/SKILL.md` | 4 | `LOADRECORDS()` callback contract | `externalized` | [`load-reference-records.js`](../skills/fulcrum-data-events/examples/load-reference-records.js) |
 | C05 | `fulcrum-data-events/SKILL.md` | 5 | `LOADFILE()` shared helpers | `externalized` | [`loadfile-shared-helpers.js`](../skills/fulcrum-data-events/examples/loadfile-shared-helpers.js) |
-| C06 | `fulcrum-data-events/SKILL.md` | 6 | In-memory session state | `rewrite` | [`storage-session-state.js`](../skills/fulcrum-data-events/examples/storage-session-state.js) |
+| C06 | `fulcrum-data-events/SKILL.md` | 6 | Form-and-record-scoped `STORAGE()` state | `rewrite` | [`storage-session-state.js`](../skills/fulcrum-data-events/examples/storage-session-state.js) |
 | C07 | `fulcrum-data-events/SKILL.md` | 7 | Validate before save | `externalized` | [`validate-record-photo-required.js`](../skills/fulcrum-data-events/examples/validate-record-photo-required.js) |
 | C08 | `fulcrum-data-events/SKILL.md` | 8 | Geometry trigger anti-pattern | `externalized` | [`geometry-trigger-guard.js`](../skills/fulcrum-data-events/examples/geometry-trigger-guard.js) |
 | C09 | `fulcrum-data-events/SKILL.md` | 9 | Hardcoded field-list anti-pattern | `externalized` | [`field-names-bulk-readonly.js`](../skills/fulcrum-data-events/examples/field-names-bulk-readonly.js) |
@@ -109,11 +109,10 @@ C02, C03, and C06 are rewrites because the originals registered no
 initialization: a `change` handler alone leaves a dependent field's
 visibility and a cascaded option list untouched when a record is opened.
 Each now applies an idempotent function on `new-record`, on `edit-record`,
-and on change. The C06 storage example intentionally keeps its baseline in
-script memory rather than using device-wide persistent `STORAGE()` keys;
-this assumes lifecycle callbacks for one editing session share a script
-context, and hosts that recreate that context need an ephemeral session
-mechanism. C10 and C11 are rewrites because the originals embedded a
+and on change. The C06 storage example uses a bounded key scoped to the form
+and saved record; an unsaved record has no stable `RECORDID()`, so its
+baseline is computed only for the current callback. C10 and C11 are rewrites
+because the originals embedded a
 literal-looking identifier and a credential-shaped string; both now use
 neutral placeholders, and C11 adds the middleware alternative. C18 is a
 rewrite because visibility now uses documented `SETHIDDEN()` rather than an
