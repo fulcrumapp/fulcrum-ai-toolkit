@@ -83,6 +83,17 @@ test('rejects dangerous or source-tree Gemini destinations before deletion', () 
       () => validateGeminiDestination(externalLink),
       /destination must not be an existing symbolic link/
     );
+
+    const sourceTreeLink = path.join(repositoryRoot, 'plugins', '.gemini-review-link');
+    fs.symlinkSync(externalTarget, sourceTreeLink, 'dir');
+    try {
+      assert.throws(
+        () => validateGeminiDestination(path.join(sourceTreeLink, 'generated')),
+        /destinations inside the repository/
+      );
+    } finally {
+      fs.unlinkSync(sourceTreeLink);
+    }
   } finally {
     fs.rmSync(parent, { recursive: true, force: true });
   }
