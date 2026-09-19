@@ -81,10 +81,19 @@ test('rejects whitespace-only descriptions', () => {
   );
 });
 
-test('accepts empty compatibility', () => {
-  assert.deepEqual(
-    errors({ ...validFrontmatter, compatibility: '' }),
-    []
+test('rejects empty compatibility', () => {
+  assert.ok(
+    errors({ ...validFrontmatter, compatibility: '' }).some((failure) =>
+      failure.includes('compatibility must be a non-empty string')
+    )
+  );
+});
+
+test('rejects whitespace-only compatibility', () => {
+  assert.ok(
+    errors({ ...validFrontmatter, compatibility: '\t\n' }).some((failure) =>
+      failure.includes('compatibility must be a non-empty string')
+    )
   );
 });
 
@@ -103,7 +112,7 @@ test('rejects non-string metadata values and optional fields', () => {
   });
 
   assert.ok(failures.some((failure) => failure.includes('license must be a string')));
-  assert.ok(failures.some((failure) => failure.includes('compatibility must be a string')));
+  assert.ok(failures.some((failure) => failure.includes('compatibility must be a non-empty string')));
   assert.ok(failures.some((failure) => failure.includes('metadata value for "version" must be a string')));
   assert.ok(failures.some((failure) => failure.includes('allowed-tools must be a space-separated string')));
 });
