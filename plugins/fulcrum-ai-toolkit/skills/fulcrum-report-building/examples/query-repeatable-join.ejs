@@ -40,9 +40,9 @@
     <% if (hasMoreItems) { %>
       <tr>
         <td colspan="2" class="report-warning">
-          Showing up to 100 line items. Because the Query API caps each response
-          at 100 rows, this result may be partial; narrow the query or use SQL
-          LIMIT/OFFSET or keyset pagination for a complete result.
+          Showing up to 100 line items. Because this query requests LIMIT 100,
+          this result may be partial; narrow the query or use SQL LIMIT/OFFSET
+          or keyset pagination for a complete result.
         </td>
       </tr>
     <% } %>
