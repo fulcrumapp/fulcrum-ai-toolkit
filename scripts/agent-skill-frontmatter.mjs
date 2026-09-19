@@ -16,7 +16,7 @@ function characterLength(value) {
 }
 
 function isSkillNameCharacter(value) {
-  return /^[\p{L}\p{N}-]$/u.test(value);
+  return /^[a-z0-9-]$/.test(value);
 }
 
 function hasOwn(object, key) {
@@ -54,7 +54,7 @@ export function validateAgentSkillFrontmatter(frontmatter, relativePath, directo
       !nameCharacters.every(isSkillNameCharacter)
     ) {
       addFailure(
-        'frontmatter name must be 1-64 characters using normalized lowercase Unicode letters, numbers, and hyphens, without leading, trailing, or consecutive hyphens'
+        'frontmatter name must be 1-64 characters using lowercase ASCII letters, numbers, and hyphens, without leading, trailing, or consecutive hyphens'
       );
     }
     if (normalizedSkillName !== directoryName) {
