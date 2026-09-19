@@ -4,7 +4,7 @@
 <%# QUERY() returns a result object; the row objects are on `rows`. %>
 
 <% const result = QUERY(
-  `SELECT * FROM "Inspections"
+  `SELECT _record_id FROM "Inspections"
    WHERE _status = 'complete'
    ORDER BY _created_at DESC
    LIMIT 100`,

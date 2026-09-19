@@ -16,7 +16,7 @@ function characterLength(value) {
 }
 
 function isSkillNameCharacter(value) {
-  return /^[\p{L}\p{N}-]$/u.test(value);
+  return /^[a-z0-9-]$/.test(value);
 }
 
 function hasOwn(object, key) {
@@ -41,7 +41,7 @@ export function validateAgentSkillFrontmatter(frontmatter, relativePath, directo
   if (typeof frontmatter.name !== 'string' || frontmatter.name.trim().length === 0) {
     addFailure('frontmatter name must be a non-empty string');
   } else {
-    const skillName = frontmatter.name.normalize('NFKC').trim();
+    const skillName = frontmatter.name;
     const nameCharacters = Array.from(skillName);
     if (
       characterLength(skillName) > MAX_SKILL_NAME_LENGTH ||
@@ -52,10 +52,10 @@ export function validateAgentSkillFrontmatter(frontmatter, relativePath, directo
       !nameCharacters.every(isSkillNameCharacter)
     ) {
       addFailure(
-        'frontmatter name must be 1-64 characters using lowercase Unicode letters, numbers, and hyphens, without leading, trailing, or consecutive hyphens'
+        'frontmatter name must be 1-64 characters using lowercase ASCII letters, numbers, and hyphens, without leading, trailing, or consecutive hyphens'
       );
     }
-    if (skillName !== directoryName.normalize('NFKC')) {
+    if (skillName !== directoryName) {
       addFailure('frontmatter name does not match directory');
     }
   }
