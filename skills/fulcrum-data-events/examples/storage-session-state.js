@@ -2,18 +2,19 @@
 // Source: https://docs.fulcrumapp.com/docs/data-events-reference
 // Source: https://docs.fulcrumapp.com/docs/data-events-loadrecords
 // Source: https://docs.fulcrumapp.com/docs/app-extensions-introduction
-// Purpose: cache a bounded baseline for one saved record's editing session.
+// Purpose: cache a bounded baseline for one existing saved record's editing
+// session.
 //
 // STORAGE() returns a local-storage-like object with getItem, setItem,
 // removeItem, and clear. That store is device-wide and persistent, so every
 // key below is scoped to the form and saved record. Never place credentials
 // or personal data in storage.
 //
-// RECORDID() is null until a new record has been saved. Saved records use one
-// stable key so the baseline survives a recreated script context and does not
-// create one persistent key per edit. Unsaved records have no stable storage
-// scope, so baselineValue keeps their value in the current editor session
-// without writing an unscoped persistent key.
+// RECORDID() is null until a new record has been saved. Existing saved records
+// use one stable key so the baseline survives a recreated script context and
+// does not create one persistent key per edit. A newly created record cannot be
+// re-keyed after save because save-record fires before persistence, so its
+// baseline remains in memory for the current editor session only.
 //
 // Persistent entries expire after 30 minutes without a callback that reloads
 // the context. This bounds stale data after an interrupted session. STORAGE()

@@ -6,7 +6,7 @@ import { validateClaudeManualCommand } from '../scripts/claude-adapter.mjs';
 const frontmatter = { 'disable-model-invocation': true };
 const body = [
   'Load and follow the authoritative portable workflow at',
-  '`${CLAUDE_PLUGIN_ROOT}/skills/fulcrum-solution-document/SKILL.md`.',
+  '`${CLAUDE_PLUGIN_ROOT}/plugins/fulcrum-ai-toolkit/skills/fulcrum-solution-document/SKILL.md`.',
   '',
   '## References',
   '',

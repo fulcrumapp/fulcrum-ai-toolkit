@@ -1,5 +1,5 @@
 const SHARED_SOLUTION_SKILL_PATH =
-  '${CLAUDE_PLUGIN_ROOT}/skills/fulcrum-solution-document/SKILL.md';
+  '${CLAUDE_PLUGIN_ROOT}/plugins/fulcrum-ai-toolkit/skills/fulcrum-solution-document/SKILL.md';
 
 function manualCommandBody(sharedSkillPath) {
   return [
