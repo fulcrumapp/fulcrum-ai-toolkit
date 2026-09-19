@@ -13,6 +13,7 @@ import { validateAgentPluginManifest } from './agent-plugin-manifest.mjs';
 import { validateAgentMcpConfig } from './agent-mcp-config.mjs';
 import { pathEntryExists, validateForbiddenPackagePaths } from './package-invariants.mjs';
 import { validateClaudeManualCommand } from './claude-adapter.mjs';
+import { validateExampleBlockInventory } from './example-inventory.mjs';
 
 const require = createRequire(import.meta.url);
 let YAML;
@@ -113,6 +114,7 @@ const REQUIRED_COVERAGE_DOMAINS = [
 
 const failures = [];
 const jsonDocuments = {};
+failures.push(...validateExampleBlockInventory(ROOT));
 
 for (const entrypoint of BUNDLE_ENTRYPOINTS) {
   const relativePath = repoRelativePath(entrypoint);
