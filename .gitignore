@@ -7,3 +7,6 @@
 
 # Node dependencies for the pinned format validator
 node_modules/
+
+# Generated native Gemini extension bundle
+plugins/fulcrum-ai-toolkit-gemini/

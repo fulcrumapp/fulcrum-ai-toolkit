@@ -33,13 +33,20 @@ const HERE = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(HERE, '..');
 const PLUGIN_RELATIVE_PATH = path.join('plugins', 'fulcrum-ai-toolkit');
 const PLUGIN_DIR = path.join(ROOT, PLUGIN_RELATIVE_PATH);
+const GEMINI_ADAPTER_RELATIVE_PATH = path.join(
+  'adapters',
+  'gemini',
+  'gemini-extension.json'
+);
+const GEMINI_ADAPTER_PATH = path.join(ROOT, GEMINI_ADAPTER_RELATIVE_PATH);
 const SKILLS_DIR = path.join(PLUGIN_DIR, 'skills');
 const FORBIDDEN_PACKAGE_PATHS = [
   path.join(PLUGIN_RELATIVE_PATH, '.cursor-plugin', 'plugin.json'),
   path.join(PLUGIN_RELATIVE_PATH, '.codex-plugin', 'plugin.json'),
   path.join(PLUGIN_RELATIVE_PATH, '.mcp.json'),
   path.join(PLUGIN_RELATIVE_PATH, '.claude-plugin', 'plugin.json'),
-  path.join(PLUGIN_RELATIVE_PATH, 'commands', 'fulcrum-solution-document.md')
+  path.join(PLUGIN_RELATIVE_PATH, 'commands', 'fulcrum-solution-document.md'),
+  path.join(PLUGIN_RELATIVE_PATH, 'gemini-extension.json')
 ];
 
 const EXPECTED_SKILLS = [
@@ -414,6 +421,7 @@ const jsonSearchDirs = [
   path.join(ROOT, '.claude-plugin'),
   path.join(ROOT, '.github', 'plugin'),
   path.join(ROOT, '.agents', 'plugins'),
+  path.join(ROOT, 'adapters', 'gemini'),
   PLUGIN_DIR,
   path.join(PLUGIN_DIR, '.claude-plugin'),
 ];
@@ -444,7 +452,8 @@ const publicTextPaths = [
   path.join(ROOT, '.claude-plugin', 'marketplace.json'),
   path.join(ROOT, '.github', 'plugin', 'marketplace.json'),
   path.join(ROOT, '.agents', 'plugins', 'marketplace.json'),
-  ...filesUnder(PLUGIN_DIR)
+  ...filesUnder(PLUGIN_DIR),
+  ...filesUnder(path.dirname(GEMINI_ADAPTER_PATH))
 ];
 
 const uniqueTextPaths = [...new Set(publicTextPaths)].filter((p) => fs.existsSync(p) && fs.statSync(p).isFile());
@@ -661,10 +670,7 @@ for (const relativePath of claudeManifestPaths) {
   }
 }
 
-for (const relativePath of [
-  ...claudeManifestPaths,
-  `${PLUGIN_RELATIVE_PATH}/gemini-extension.json`
-]) {
+for (const relativePath of [...claudeManifestPaths, GEMINI_ADAPTER_RELATIVE_PATH]) {
   const manifest = jsonDocuments[relativePath];
   if (!manifest || !agentManifest?.version || manifest.version !== agentManifest.version) {
     failures.push(`${relativePath}: version must match the root plugin manifest`);
