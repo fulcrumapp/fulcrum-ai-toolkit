@@ -55,12 +55,7 @@ function hasAssemblerMarker(target) {
   );
 }
 
-function hasKnownGeneratedManifest(target, manifestContents) {
-  const manifest = path.join(target, 'gemini-extension.json');
-  return hasRegularFile(manifest) && fs.readFileSync(manifest, 'utf8') === manifestContents;
-}
-
-function assertSafeToReplace(target, manifestContents) {
+function assertSafeToReplace(target) {
   const stats = fs.lstatSync(target, { throwIfNoEntry: false });
 
   if (!stats) {
@@ -75,9 +70,9 @@ function assertSafeToReplace(target, manifestContents) {
     return;
   }
 
-  if (!hasAssemblerMarker(target) && !hasKnownGeneratedManifest(target, manifestContents)) {
+  if (!hasAssemblerMarker(target)) {
     throw new Error(
-      'Gemini extension destination must be empty or contain the assembler marker or known generated manifest'
+      'Gemini extension destination must be empty or contain the assembler marker'
     );
   }
 }
@@ -126,7 +121,7 @@ export function assembleGeminiExtension(destination = DEFAULT_DESTINATION) {
     throw new Error(`Gemini manifest name must match destination directory: ${manifest.name}`);
   }
 
-  assertSafeToReplace(target, manifestContents);
+  assertSafeToReplace(target);
   fs.rmSync(target, { recursive: true, force: true });
   fs.mkdirSync(target, { recursive: true });
   fs.writeFileSync(path.join(target, ASSEMBLER_MARKER), ASSEMBLER_MARKER_CONTENT);
