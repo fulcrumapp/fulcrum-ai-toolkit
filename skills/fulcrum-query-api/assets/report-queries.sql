@@ -26,7 +26,7 @@ LIMIT 100;
 -- requests LIMIT 100; a full response at that self-imposed query limit is
 -- potentially partial. Narrow the query or use SQL LIMIT/OFFSET or keyset
 -- pagination for more children.
-SELECT r._child_record_id, r._created_at
+SELECT r._record_id AS _child_record_id, r._created_at
 FROM "Work Orders/line_items" r
 WHERE r._parent_id = :record_id
 ORDER BY r._created_at DESC
