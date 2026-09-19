@@ -4,7 +4,8 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 
-const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
+const ROOT_LEXICAL = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
+const ROOT = fs.realpathSync.native(ROOT_LEXICAL);
 const PORTABLE_PACKAGE = path.join(ROOT, 'plugins', 'fulcrum-ai-toolkit');
 const GEMINI_MANIFEST = path.join(ROOT, 'adapters', 'gemini', 'gemini-extension.json');
 const DEFAULT_DESTINATION = path.join(ROOT, 'plugins', 'fulcrum-ai-toolkit-gemini');
@@ -41,6 +42,15 @@ function canonicalizeDestination(target) {
 
 export function validateGeminiDestination(destination) {
   const lexicalTarget = path.resolve(destination);
+  if (
+    isSameOrDescendant(lexicalTarget, ROOT_LEXICAL) &&
+    lexicalTarget !== DEFAULT_DESTINATION
+  ) {
+    throw new Error(
+      'Gemini extension destinations inside the repository are limited to the generated bundle path'
+    );
+  }
+
   rejectFinalSymlink(lexicalTarget);
   const target = canonicalizeDestination(lexicalTarget);
   const filesystemRoot = path.parse(target).root;
@@ -51,6 +61,10 @@ export function validateGeminiDestination(destination) {
 
   if (isSameOrAncestor(target, ROOT)) {
     throw new Error('Gemini extension destination must not be the repository or one of its ancestors');
+  }
+
+  if (lexicalTarget === DEFAULT_DESTINATION && target !== DEFAULT_DESTINATION) {
+    throw new Error('Gemini extension default destination must not resolve through a symbolic link');
   }
 
   if (isSameOrDescendant(target, ROOT) && target !== DEFAULT_DESTINATION) {

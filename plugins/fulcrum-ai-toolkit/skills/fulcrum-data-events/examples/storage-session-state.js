@@ -20,19 +20,16 @@
 //              unsaved record reads back the previous unsaved record's
 //              baseline.
 //
-// A nonce generated once per editing session scopes the cache entry for both
-// saved and unsaved records. A session that crashed before its cleanup ran
-// leaves behind a key the next session never computes, and a key that is never
-// computed is never read: the stale value is unreachable immediately, not
-// merely deleted later. The nonce names a cache entry rather than guarding
-// one, so Date.now() and Math.random() are the right tools; the value is not a
-// secret and nothing here treats it as one.
+// Saved records use one stable key per record and overwrite it on load, so
+// interrupted sessions cannot accumulate one key per edit. Each stored value
+// includes a nonce for the session that wrote it. Cleanup removes the key only
+// when that nonce still owns it, so concurrent editors cannot delete a newer
+// editor's baseline.
 //
-// Unreachable is not the same as reclaimed, and a crashed session cannot run
-// its own cleanup. Each session owns only its unique key, so concurrent editors
-// never remove one another's baselines. Abandoned entries remain unreachable
-// until the storage is cleared; unsafe cross-session reclamation would risk
-// deleting a live editor's baseline.
+// New records have no RECORDID(), so their baseline stays in this editing
+// session's memory instead of creating an unbounded persistent draft-key
+// collection. The session nonce names an owner rather than a secret; Date.now()
+// and Math.random() are sufficient for this purpose.
 //
 // Events used below are the documented record lifecycle: load-record fires when
 // the editor is displayed, cancel-record fires after an editing session is
@@ -46,6 +43,8 @@ var BASELINE_KEY_PREFIX = 'baseline:';
 var BASELINE_FIELDS = ['condition', 'status'];
 var MAX_BASELINE_TEXT_LENGTH = 256;
 var baselineKey = null;
+var baselineOwner = null;
+var baselineValue = null;
 
 function formScope() {
   return BASELINE_KEY_PREFIX + FORM().id;
@@ -55,17 +54,30 @@ function sessionNonce() {
   return Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 10);
 }
 
-// Every baseline is named by this editing session, so reopening the same saved
-// record cannot reuse a baseline left by an interrupted prior session.
+// Every saved baseline is stamped with this editing session's owner, so
+// reopening the same saved record overwrites any prior session's baseline.
 function baselineStorageKey() {
   var recordId = RECORDID();
 
-  return recordId
-    ? formScope() + ':record:' + recordId + ':session:' + sessionNonce()
-    : formScope() + ':draft:' + sessionNonce();
+  return recordId ? formScope() + ':record:' + recordId : null;
+}
+
+function parseStoredEnvelope(stored) {
+  try {
+    return JSON.parse(stored);
+  } catch (error) {
+    if (error instanceof SyntaxError) {
+      return null;
+    }
+    throw error;
+  }
 }
 
 function readBaseline() {
+  if (baselineValue !== null) {
+    return baselineValue;
+  }
+
   if (!baselineKey) {
     return null;
   }
@@ -77,12 +89,13 @@ function readBaseline() {
     return null;
   }
 
-  try {
-    return JSON.parse(stored);
-  } catch (error) {
-    storage.removeItem(baselineKey);
+  var envelope = parseStoredEnvelope(stored);
+  if (!envelope || envelope.owner !== baselineOwner) {
     return null;
   }
+
+  baselineValue = envelope.value;
+  return baselineValue;
 }
 
 function computeBaseline() {
@@ -116,23 +129,36 @@ function ensureBaseline() {
 
   var storage = STORAGE();
   var baseline = computeBaseline();
-  storage.setItem(baselineKey, JSON.stringify(baseline));
+  baselineValue = baseline;
+
+  if (baselineKey) {
+    storage.setItem(
+      baselineKey,
+      JSON.stringify({ owner: baselineOwner, value: baseline })
+    );
+  }
 
   return baseline;
 }
 
-// Idempotent: removeItem on an absent key is a no-op.
+// Idempotent: cleanup only removes a key still owned by this session.
 function clearBaseline() {
-  if (!baselineKey) {
-    return;
+  if (baselineKey) {
+    var storage = STORAGE();
+    var envelope = parseStoredEnvelope(storage.getItem(baselineKey));
+
+    if (envelope && envelope.owner === baselineOwner) {
+      storage.removeItem(baselineKey);
+    }
   }
 
-  var storage = STORAGE();
-  storage.removeItem(baselineKey);
   baselineKey = null;
+  baselineOwner = null;
+  baselineValue = null;
 }
 
 ON('load-record', function (event) {
+  baselineOwner = sessionNonce();
   baselineKey = baselineStorageKey();
   ensureBaseline();
 });
