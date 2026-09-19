@@ -17,9 +17,33 @@
 <% const resultItems = itemResults.rows; %>
 <% const hasMoreItems = resultItems.length > MAX_ITEMS; %>
 <% const items = hasMoreItems ? resultItems.slice(0, MAX_ITEMS) : resultItems; %>
-<% if (hasMoreItems) { %>
-  <p class="report-warning">
-    Showing the first 100 line items only. More results exist; narrow the
-    query or retrieve additional pages before treating this as complete.
-  </p>
-<% } %>
+<table class="report-table">
+  <thead>
+    <tr>
+      <th scope="col">Record</th>
+      <th scope="col">Created</th>
+    </tr>
+  </thead>
+  <tbody>
+    <% if (items.length === 0) { %>
+      <tr>
+        <td colspan="2">No line items found.</td>
+      </tr>
+    <% } else { %>
+      <% items.forEach(function (item) { %>
+        <tr>
+          <td><%= item._record_id %></td>
+          <td><%= item._created_at %></td>
+        </tr>
+      <% }); %>
+    <% } %>
+    <% if (hasMoreItems) { %>
+      <tr>
+        <td colspan="2" class="report-warning">
+          Showing the first 100 line items only. More results exist; narrow the
+          query or retrieve additional pages before treating this as complete.
+        </td>
+      </tr>
+    <% } %>
+  </tbody>
+</table>

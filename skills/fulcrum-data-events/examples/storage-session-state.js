@@ -15,6 +15,12 @@
 // scope, so ensureBaseline() computes their value for the current callback
 // without caching it across callbacks.
 //
+// Persistent entries expire after 30 minutes without a callback that reloads
+// the context. This bounds stale data after an interrupted session. STORAGE()
+// has no session identifier, so a new edit opened within that window cannot be
+// distinguished from context recreation; use a host-specific session store
+// when exact concurrent-session isolation is required.
+//
 // Events used below are the documented record lifecycle: load-record fires when
 // the editor is displayed, cancel-record fires after an editing session is
 // cancelled, and unload-record fires when the editor has closed.
@@ -26,6 +32,7 @@
 var BASELINE_KEY_PREFIX = 'baseline:';
 var BASELINE_FIELDS = ['condition', 'status'];
 var MAX_BASELINE_TEXT_LENGTH = 256;
+var BASELINE_TTL_MS = 30 * 60 * 1000;
 var baselineKey = null;
 var baselineValue = null;
 
@@ -44,7 +51,9 @@ function parseStoredBaseline(stored) {
     return parsed &&
       parsed.value &&
       typeof parsed.value === 'object' &&
-      !Array.isArray(parsed.value)
+      !Array.isArray(parsed.value) &&
+      Number.isFinite(parsed.expiresAt) &&
+      parsed.expiresAt > Date.now()
       ? parsed.value
       : null;
   } catch (error) {
@@ -71,6 +80,20 @@ function readBaseline() {
   }
 
   baselineValue = parseStoredBaseline(stored);
+
+  if (baselineValue === null) {
+    STORAGE().removeItem(baselineKey);
+    return null;
+  }
+
+  STORAGE().setItem(
+    baselineKey,
+    JSON.stringify({
+      value: baselineValue,
+      expiresAt: Date.now() + BASELINE_TTL_MS
+    })
+  );
+
   return baselineValue;
 }
 
@@ -104,10 +127,16 @@ function ensureBaseline() {
   }
 
   var baseline = computeBaseline();
-  baselineValue = baseline;
 
   if (baselineKey) {
-    STORAGE().setItem(baselineKey, JSON.stringify({ value: baseline }));
+    baselineValue = baseline;
+    STORAGE().setItem(
+      baselineKey,
+      JSON.stringify({
+        value: baseline,
+        expiresAt: Date.now() + BASELINE_TTL_MS
+      })
+    );
   }
 
   return baseline;
