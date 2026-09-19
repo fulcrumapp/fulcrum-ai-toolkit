@@ -312,10 +312,16 @@ For an existing app:
 11. Complete the final record-count recheck required by
     `fulcrum-app-editing`. If it differs from the approved baseline, stop and
     reconcile through that skill before writing.
-12. Start the update payload with `elements: composedElements`. Only
-   `if (removedElementKeys.length > 0)`, set
-   `updatePayload.removed_element_keys = removedElementKeys`, then send the
-   complete payload with `fulcrum_forms_update(updatePayload)`. The annotated call is
+12. Start the update payload from the fresh form's writable `FormBody` fields,
+   not by spreading the complete read response. Include `id`, `name`, and
+   `elements: composedElements`, and preserve any present supported settings:
+   `description`, `status_field`, `title_field_keys`, `record_prefix`,
+   `geometry_types`, `geometry_required`, `script`, `projects_enabled`,
+   `assignment_enabled`, `auto_assign`, and `hidden_on_dashboard`. Do not
+   forward response-only metadata. Only `if (removedElementKeys.length > 0)`,
+   set `updatePayload.removed_element_keys = removedElementKeys`, then send
+   the complete payload with `fulcrum_forms_update(updatePayload)`. The
+   annotated call is
    [`examples/forms-update-preserving-keys.js`](examples/forms-update-preserving-keys.js).
 
 Omit `removed_element_keys` when `removedElementKeys` is empty. Never declare a key that is still present in `elements`.
