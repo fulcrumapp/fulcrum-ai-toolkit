@@ -9,6 +9,8 @@ const ROOT = fs.realpathSync.native(ROOT_LEXICAL);
 const PORTABLE_PACKAGE = path.join(ROOT, 'plugins', 'fulcrum-ai-toolkit');
 const GEMINI_MANIFEST = path.join(ROOT, 'adapters', 'gemini', 'gemini-extension.json');
 const DEFAULT_DESTINATION = path.join(ROOT, 'plugins', 'fulcrum-ai-toolkit-gemini');
+const ASSEMBLER_MARKER = '.fulcrum-ai-toolkit-gemini-generated';
+const ASSEMBLER_MARKER_CONTENT = 'fulcrum-ai-toolkit-gemini\n';
 
 function isSameOrDescendant(candidate, parent) {
   return candidate === parent || candidate.startsWith(`${parent}${path.sep}`);
@@ -38,6 +40,46 @@ function canonicalizeDestination(target) {
 
   const canonicalParent = fs.realpathSync.native(existingParent);
   return path.resolve(canonicalParent, path.relative(existingParent, target));
+}
+
+function hasRegularFile(target) {
+  const stats = fs.lstatSync(target, { throwIfNoEntry: false });
+  return stats?.isFile() === true;
+}
+
+function hasAssemblerMarker(target) {
+  const marker = path.join(target, ASSEMBLER_MARKER);
+  return (
+    hasRegularFile(marker) &&
+    fs.readFileSync(marker, 'utf8') === ASSEMBLER_MARKER_CONTENT
+  );
+}
+
+function hasKnownGeneratedManifest(target, manifestContents) {
+  const manifest = path.join(target, 'gemini-extension.json');
+  return hasRegularFile(manifest) && fs.readFileSync(manifest, 'utf8') === manifestContents;
+}
+
+function assertSafeToReplace(target, manifestContents) {
+  const stats = fs.lstatSync(target, { throwIfNoEntry: false });
+
+  if (!stats) {
+    return;
+  }
+
+  if (!stats.isDirectory()) {
+    throw new Error('Gemini extension destination must be an existing directory or a new path');
+  }
+
+  if (fs.readdirSync(target).length === 0) {
+    return;
+  }
+
+  if (!hasAssemblerMarker(target) && !hasKnownGeneratedManifest(target, manifestContents)) {
+    throw new Error(
+      'Gemini extension destination must be empty or contain the assembler marker or known generated manifest'
+    );
+  }
 }
 
 export function validateGeminiDestination(destination) {
@@ -78,13 +120,16 @@ export function validateGeminiDestination(destination) {
 
 export function assembleGeminiExtension(destination = DEFAULT_DESTINATION) {
   const target = validateGeminiDestination(destination);
-  const manifest = JSON.parse(fs.readFileSync(GEMINI_MANIFEST, 'utf8'));
+  const manifestContents = fs.readFileSync(GEMINI_MANIFEST, 'utf8');
+  const manifest = JSON.parse(manifestContents);
   if (manifest.name !== path.basename(target)) {
     throw new Error(`Gemini manifest name must match destination directory: ${manifest.name}`);
   }
 
+  assertSafeToReplace(target, manifestContents);
   fs.rmSync(target, { recursive: true, force: true });
   fs.mkdirSync(target, { recursive: true });
+  fs.writeFileSync(path.join(target, ASSEMBLER_MARKER), ASSEMBLER_MARKER_CONTENT);
   fs.copyFileSync(GEMINI_MANIFEST, path.join(target, 'gemini-extension.json'));
   fs.copyFileSync(path.join(PORTABLE_PACKAGE, 'LICENSE'), path.join(target, 'LICENSE'));
   fs.cpSync(path.join(PORTABLE_PACKAGE, 'skills'), path.join(target, 'skills'), {
