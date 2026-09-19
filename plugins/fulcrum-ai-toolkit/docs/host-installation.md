@@ -36,9 +36,9 @@ portable package.
 ## Cursor
 
 Use Cursor's plugin installation UI or repository import with
-`plugins/fulcrum-ai-toolkit/` as the plugin package. Cursor reads the
-portable root `plugin.json` and discovers the shared `skills/` directory;
-portable clients should ignore the native wrapper files.
+`plugins/fulcrum-ai-toolkit/` as the plugin package. Cursor requires the
+package's `.cursor-plugin/plugin.json` adapter, which points to the shared
+`skills/` directory. Portable clients should ignore that native wrapper.
 If the available UI cannot select a nested package, use the complete
 skills-loader installation from the repository README instead.
 
