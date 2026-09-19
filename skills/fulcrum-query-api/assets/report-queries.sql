@@ -20,9 +20,14 @@ ORDER BY _created_at DESC
 LIMIT 100;
 
 -- Repeatable line items for the current record.
+-- Request one extra row so the caller can detect a partial result before
+-- rendering the first 100 children. Narrow the query or page it outside the
+-- template when the complete child set is required.
 SELECT r.*
 FROM "Work Orders/line_items" r
-WHERE r._parent_id = :record_id;
+WHERE r._parent_id = :record_id
+ORDER BY r._created_at DESC
+LIMIT 101;
 
 -- A bounded date-range report driven by validated $params values. The range is
 -- half-open: >= start and < the day after the end day. BETWEEN is inclusive of
@@ -30,7 +35,7 @@ WHERE r._parent_id = :record_id;
 -- end day and drops every later reading that day. See
 -- ../../fulcrum-report-building/examples/params-date-range.ejs, which parses
 -- and round-trips both days before emitting these literals.
-SELECT *
+SELECT _record_id, _created_at, _status
 FROM "Inspections"
 WHERE _created_at >= :start_date
   AND _created_at < :end_date_exclusive

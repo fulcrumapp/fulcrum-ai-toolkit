@@ -24,7 +24,7 @@ export function validateAgentMcpConfig(config, relativePath = 'mcp.json') {
     }
   }
 
-  if (!isObject(config?.mcpServers) || Object.keys(config.mcpServers).length !== 0) {
+  if (isObject(config) && (!isObject(config.mcpServers) || Object.keys(config.mcpServers).length !== 0)) {
     addFailure('keep mcpServers empty; users must explicitly select their tenant endpoint');
   }
 

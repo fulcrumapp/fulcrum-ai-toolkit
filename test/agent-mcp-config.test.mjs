@@ -19,7 +19,7 @@ test('rejects a non-object MCP configuration', () => {
   const failures = errors(null);
 
   assert.ok(failures.some((failure) => failure.includes('configuration must be a JSON object')));
-  assert.ok(failures.some((failure) => failure.includes('keep mcpServers empty')));
+  assert.equal(failures.some((failure) => failure.includes('keep mcpServers empty')), false);
 });
 
 test('rejects missing schema and unknown top-level fields', () => {
