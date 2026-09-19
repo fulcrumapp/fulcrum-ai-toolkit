@@ -2,11 +2,16 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 import test from 'node:test';
-import { assembleGeminiExtension } from '../scripts/build-gemini-extension.mjs';
+import {
+  assembleGeminiExtension,
+  validateGeminiDestination
+} from '../scripts/build-gemini-extension.mjs';
 
 test('assembles a Gemini-native extension outside the portable package', () => {
-  const destination = fs.mkdtempSync(path.join(os.tmpdir(), 'fulcrum-gemini-'));
+  const parent = fs.mkdtempSync(path.join(os.tmpdir(), 'fulcrum-gemini-'));
+  const destination = path.join(parent, 'fulcrum-ai-toolkit-gemini');
 
   try {
     assembleGeminiExtension(destination);
@@ -15,7 +20,8 @@ test('assembles a Gemini-native extension outside the portable package', () => {
     );
     const skillNames = fs.readdirSync(path.join(destination, 'skills')).sort();
 
-    assert.equal(manifest.name, 'fulcrum-ai-toolkit');
+    assert.equal(manifest.name, 'fulcrum-ai-toolkit-gemini');
+    assert.equal(manifest.name, path.basename(destination));
     assert.equal(manifest.version, '0.1.2');
     assert.deepEqual(skillNames, [
       'fulcrum-access-management',
@@ -40,6 +46,23 @@ test('assembles a Gemini-native extension outside the portable package', () => {
     assert.equal(fs.existsSync(path.join(destination, 'plugin.json')), false);
     assert.equal(fs.existsSync(path.join(destination, 'mcp.json')), false);
   } finally {
-    fs.rmSync(destination, { recursive: true, force: true });
+    fs.rmSync(parent, { recursive: true, force: true });
+  }
+});
+
+test('rejects dangerous or source-tree Gemini destinations before deletion', () => {
+  const repositoryRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
+  const portablePackage = path.join(repositoryRoot, 'plugins', 'fulcrum-ai-toolkit');
+  const filesystemRoot = path.parse(repositoryRoot).root;
+  const dangerousDestinations = [
+    filesystemRoot,
+    path.dirname(repositoryRoot),
+    repositoryRoot,
+    portablePackage,
+    path.join(repositoryRoot, 'adapters', 'gemini')
+  ];
+
+  for (const destination of dangerousDestinations) {
+    assert.throws(() => validateGeminiDestination(destination), /destination must not|destinations inside/);
   }
 });
