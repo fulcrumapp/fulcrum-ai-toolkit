@@ -57,7 +57,7 @@
 <% const endDay = requestedEnd ? parseIsoDay(requestedEnd) : today; %>
 <% const startDay = requestedStart
      ? parseIsoDay(requestedStart)
-     : parseIsoDay(isoDay(addDays(endDay || today, -DEFAULT_WINDOW_DAYS))); %>
+     : parseIsoDay(isoDay(addDays(endDay || today, -(DEFAULT_WINDOW_DAYS - 1)))); %>
 
 <% const rangeError = !startDay || !endDay
      ? 'start_date and end_date must be calendar dates in YYYY-MM-DD form.'
