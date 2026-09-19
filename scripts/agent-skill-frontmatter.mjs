@@ -15,12 +15,8 @@ function characterLength(value) {
   return Array.from(value).length;
 }
 
-function normalizeSkillName(value) {
-  return value.normalize('NFKC').trim();
-}
-
 function isSkillNameCharacter(value) {
-  return /^[\p{Letter}\p{Number}-]$/u.test(value);
+  return /^[a-z0-9-]$/.test(value);
 }
 
 function hasOwn(object, key) {
@@ -42,24 +38,23 @@ export function validateAgentSkillFrontmatter(frontmatter, relativePath, directo
     }
   }
 
-  if (typeof frontmatter.name !== 'string' || normalizeSkillName(frontmatter.name).length === 0) {
+  if (typeof frontmatter.name !== 'string' || frontmatter.name.trim().length === 0) {
     addFailure('frontmatter name must be a non-empty string');
   } else {
-    const normalizedName = normalizeSkillName(frontmatter.name);
-    const nameCharacters = Array.from(normalizedName);
+    const skillName = frontmatter.name;
+    const nameCharacters = Array.from(skillName);
     if (
-      characterLength(normalizedName) > MAX_SKILL_NAME_LENGTH ||
-      normalizedName !== normalizedName.toLowerCase() ||
-      normalizedName.startsWith('-') ||
-      normalizedName.endsWith('-') ||
-      normalizedName.includes('--') ||
+      characterLength(skillName) > MAX_SKILL_NAME_LENGTH ||
+      skillName.startsWith('-') ||
+      skillName.endsWith('-') ||
+      skillName.includes('--') ||
       !nameCharacters.every(isSkillNameCharacter)
     ) {
       addFailure(
         'frontmatter name must be 1-64 characters using lowercase letters, numbers, and hyphens, without leading, trailing, or consecutive hyphens'
       );
     }
-    if (normalizedName !== directoryName.normalize('NFKC')) {
+    if (skillName !== directoryName) {
       addFailure('frontmatter name does not match directory');
     }
   }

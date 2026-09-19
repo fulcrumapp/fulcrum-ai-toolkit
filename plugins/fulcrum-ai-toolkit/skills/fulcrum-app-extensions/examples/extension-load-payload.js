@@ -19,6 +19,12 @@ Fulcrum.load(function (payload) {
   var data = payload.data;
   var currentValue = data.current_value;
   var recordId = data.record_id;
+  if (currentValue === null || typeof currentValue === 'undefined') {
+    currentValue = '';
+  }
+  if (recordId === null || typeof recordId === 'undefined') {
+    recordId = null;
+  }
 
   if (
     typeof currentValue !== 'string' ||
