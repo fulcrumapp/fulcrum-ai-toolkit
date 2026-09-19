@@ -160,7 +160,7 @@ size/update-frequency trade-offs, not an automatic app-score deduction or cap;
 follow [the shared guidance](../fulcrum-performance-review/SKILL.md#reference-file-sync-warning).
 
 ### Session state with STORAGE
-`STORAGE()` returns a local-storage-like object with `getItem`, `setItem`, `removeItem`, and `clear` methods. Values must be strings, so serialize objects with `JSON.stringify()`. The store is device-wide and persistent, so scope every key with `FORM().id` and a saved `RECORDID()`, keep the payload to an explicit bounded allowlist, and clear it on lifecycle exits. The example expires persistent entries after 30 minutes without a context reload to bound abandoned sessions. This is record-scoped rather than concurrent-editor-scoped; `STORAGE()` has no session identifier or atomic compare-and-delete operation, so a new edit opened within that window cannot be distinguished from context recreation. Use a host-specific session store when exact session isolation is required. `RECORDID()` is null until a new record has been saved; the example computes an unsaved record's baseline only for the current callback rather than pretending ordinary script globals survive between callbacks. See
+`STORAGE()` returns a local-storage-like object with `getItem`, `setItem`, `removeItem`, and `clear` methods. Values must be strings, so serialize objects with `JSON.stringify()`. The store is device-wide and persistent, so scope every key with `FORM().id` and a saved `RECORDID()`, keep the payload to an explicit bounded allowlist, and clear it on lifecycle exits. The example expires persistent entries after 30 minutes without a context reload to bound abandoned sessions. This is record-scoped rather than concurrent-editor-scoped; `STORAGE()` has no session identifier or atomic compare-and-delete operation, so a new edit opened within that window cannot be distinguished from context recreation. Use a host-specific session store when exact session isolation is required. `RECORDID()` is null until a new record has been saved; the example retains an unsaved record's baseline in ordinary script state for the current editor session and does not write an unscoped persistent key. See
 [`examples/storage-session-state.js`](examples/storage-session-state.js).
 
 ### Validate before save
@@ -271,9 +271,9 @@ for event-specific APIs.
 
 ## Platform Constraints
 
-- **No server execution** — Data events run on-device. Ordinary script state is
-  ephemeral; `STORAGE()` is the explicit device-persistent exception and must
-  use scoped keys with lifecycle cleanup.
+- **No server execution** — Data events run on-device. Ordinary script state
+  lasts for the current record-editor session; `STORAGE()` is the explicit
+  device-persistent exception and must use scoped keys with lifecycle cleanup.
 - **No module imports** — No `require()`, no `import`. All code is a single script.
 - **Callback-based async, no async/await** — `REQUEST()`, `LOADRECORDS()`, and callback-based `LOADFILE()` work asynchronously. `validate-record`, `validate-repeatable`, and `save-record` cannot perform asynchronous work.
 - **Single script per form** — All event handlers share one script. Naming collisions are possible.

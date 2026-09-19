@@ -24,7 +24,7 @@ LIMIT 101;
 -- Request one extra row so the caller can detect a partial result before
 -- rendering the first 100 children. Narrow the query or page it outside the
 -- template when the complete child set is required.
-SELECT r._child_record_id, r._created_at
+SELECT r._record_id, r._created_at
 FROM "Work Orders/line_items" r
 WHERE r._parent_id = :record_id
 ORDER BY r._created_at DESC
