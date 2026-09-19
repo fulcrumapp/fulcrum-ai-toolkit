@@ -12,8 +12,12 @@
 // Omit removed_element_keys when removedElementKeys is empty. Declare only the
 // root key of an approved removed subtree, and never declare a key that is
 // still present in elements.
+// `form` is the fresh full form object from the immediately preceding read.
+// Preserve its required top-level fields (including name) and replace only
+// the approved elements and optional removal list.
 
 var updatePayload = {
+  ...form,
   id: formId,
   elements: composedElements
 };

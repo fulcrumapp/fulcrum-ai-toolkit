@@ -261,10 +261,13 @@ For an existing app:
    `removedElementKeys`, revalidate the full form, and re-review the result.
    Obtain reapproval for material differences and repeat this final fresh read
    after approval. Follow the pre-write safeguard; never replay stale values.
-10. Start the update payload with `elements: composedElements`. Only
-   `if (removedElementKeys.length > 0)`, set
-   `updatePayload.removed_element_keys = removedElementKeys`, then send the
-   complete payload with `fulcrum_forms_update(updatePayload)`. The annotated call is
+10. Start the update payload from the fresh full form object, preserving its
+   required top-level fields such as `id` and `name` and any other supported
+   fields returned by the read. Replace only the approved
+   `elements: composedElements`. Only `if (removedElementKeys.length > 0)`,
+   set `updatePayload.removed_element_keys = removedElementKeys`, then send
+   the complete payload with `fulcrum_forms_update(updatePayload)`. The
+   annotated call is
    [`examples/forms-update-preserving-keys.js`](examples/forms-update-preserving-keys.js).
 
 Omit `removed_element_keys` when `removedElementKeys` is empty. Never declare a key that is still present in `elements`.
