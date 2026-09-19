@@ -20,11 +20,11 @@
 //              unsaved record reads back the previous unsaved record's
 //              baseline.
 //
-// Saved records use one stable key per record and overwrite it on load, so
-// interrupted sessions cannot accumulate one key per edit. Each stored value
-// includes a nonce for the session that wrote it. Cleanup removes the key only
-// when that nonce still owns it, so concurrent editors cannot delete a newer
-// editor's baseline.
+// Saved records use one unique key per editing session. Each stored value
+// includes the same nonce used in its key, so concurrent editors never share a
+// key and cleanup cannot delete another editor's baseline. Completed lifecycle
+// callbacks remove the session key; a host that can interrupt callbacks should
+// provide an ephemeral session store or a retention policy for stale keys.
 //
 // New records have no RECORDID(), so their baseline stays in this editing
 // session's memory instead of creating an unbounded persistent draft-key
@@ -59,7 +59,9 @@ function sessionNonce() {
 function baselineStorageKey() {
   var recordId = RECORDID();
 
-  return recordId ? formScope() + ':record:' + recordId : null;
+  return recordId
+    ? formScope() + ':record:' + recordId + ':session:' + baselineOwner
+    : null;
 }
 
 function parseStoredEnvelope(stored) {
@@ -141,15 +143,10 @@ function ensureBaseline() {
   return baseline;
 }
 
-// Idempotent: cleanup only removes a key still owned by this session.
+// Idempotent: this session has an exclusive storage key.
 function clearBaseline() {
   if (baselineKey) {
-    var storage = STORAGE();
-    var envelope = parseStoredEnvelope(storage.getItem(baselineKey));
-
-    if (envelope && envelope.owner === baselineOwner) {
-      storage.removeItem(baselineKey);
-    }
+    STORAGE().removeItem(baselineKey);
   }
 
   baselineKey = null;

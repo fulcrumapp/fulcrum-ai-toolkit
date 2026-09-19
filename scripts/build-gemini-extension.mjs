@@ -56,6 +56,13 @@ function hasAssemblerMarker(target) {
 }
 
 export function assertNoSourceSymlinks(sourceRoot) {
+  const rootStats = fs.lstatSync(sourceRoot, { throwIfNoEntry: false });
+  if (!rootStats?.isDirectory() || rootStats.isSymbolicLink()) {
+    throw new Error(
+      'Gemini source tree root must be an existing directory and must not be a symbolic link'
+    );
+  }
+
   for (const entry of fs.readdirSync(sourceRoot, { withFileTypes: true })) {
     const sourcePath = path.join(sourceRoot, entry.name);
     const stats = fs.lstatSync(sourcePath);
@@ -143,7 +150,6 @@ export function assembleGeminiExtension(destination = DEFAULT_DESTINATION) {
   if (manifest.name !== path.basename(target)) {
     throw new Error(`Gemini manifest name must match destination directory: ${manifest.name}`);
   }
-  assertSafeToReplace(target);
   assertSafeToReplace(target);
   const skillSource = path.join(PORTABLE_PACKAGE, 'skills');
   assertNoSourceSymlinks(skillSource);
