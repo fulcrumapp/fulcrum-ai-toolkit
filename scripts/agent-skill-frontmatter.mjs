@@ -16,7 +16,7 @@ function characterLength(value) {
 }
 
 function isSkillNameCharacter(value) {
-  return /^[\p{Ll}\p{Nd}-]$/u.test(value);
+  return /^[\p{L}\p{N}-]$/u.test(value);
 }
 
 function hasOwn(object, key) {
@@ -50,6 +50,7 @@ export function validateAgentSkillFrontmatter(frontmatter, relativePath, directo
       skillName.endsWith('-') ||
       skillName.includes('--') ||
       normalizedSkillName !== skillName ||
+      skillName !== skillName.toLowerCase() ||
       !nameCharacters.every(isSkillNameCharacter)
     ) {
       addFailure(

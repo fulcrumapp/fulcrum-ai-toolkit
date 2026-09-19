@@ -60,6 +60,15 @@ test('accepts normalized Unicode lowercase skill names', () => {
   );
 });
 
+test('accepts uncased Unicode letters and numeric characters', () => {
+  for (const name of ['技能-skill', 'example-²']) {
+    assert.deepEqual(
+      errors({ ...validFrontmatter, name }, name),
+      []
+    );
+  }
+});
+
 test('rejects non-normalized or padded skill names', () => {
   for (const name of ['e\u0301-skill', ' example-skill ']) {
     assert.ok(
