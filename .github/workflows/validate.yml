@@ -35,7 +35,7 @@ jobs:
         env:
           FULCRUM_SKILL_VERSION_BASE: ${{ github.event.pull_request.base.sha || github.event.before || github.sha }}
         run: node scripts/validate-skill-version-bumps.mjs
-      - name: Validate toolkit tests
+      - name: Run Node contract tests
         run: node --test test/*.test.mjs
       - name: Build Microsoft 365 Copilot bundle
         run: node scripts/build-m365-bundle.mjs

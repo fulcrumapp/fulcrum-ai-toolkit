@@ -9,8 +9,42 @@ const PORTABLE_PACKAGE = path.join(ROOT, 'plugins', 'fulcrum-ai-toolkit');
 const GEMINI_MANIFEST = path.join(ROOT, 'adapters', 'gemini', 'gemini-extension.json');
 const DEFAULT_DESTINATION = path.join(ROOT, 'plugins', 'fulcrum-ai-toolkit-gemini');
 
-export function assembleGeminiExtension(destination = DEFAULT_DESTINATION) {
+function isSameOrDescendant(candidate, parent) {
+  return candidate === parent || candidate.startsWith(`${parent}${path.sep}`);
+}
+
+function isSameOrAncestor(candidate, child) {
+  return child === candidate || child.startsWith(`${candidate}${path.sep}`);
+}
+
+export function validateGeminiDestination(destination) {
   const target = path.resolve(destination);
+  const filesystemRoot = path.parse(target).root;
+
+  if (target === filesystemRoot) {
+    throw new Error('Gemini extension destination must not be a filesystem root');
+  }
+
+  if (isSameOrAncestor(target, ROOT)) {
+    throw new Error('Gemini extension destination must not be the repository or one of its ancestors');
+  }
+
+  if (isSameOrDescendant(target, ROOT) && target !== DEFAULT_DESTINATION) {
+    throw new Error(
+      'Gemini extension destinations inside the repository are limited to the generated bundle path'
+    );
+  }
+
+  return target;
+}
+
+export function assembleGeminiExtension(destination = DEFAULT_DESTINATION) {
+  const target = validateGeminiDestination(destination);
+  const manifest = JSON.parse(fs.readFileSync(GEMINI_MANIFEST, 'utf8'));
+  if (manifest.name !== path.basename(target)) {
+    throw new Error(`Gemini manifest name must match destination directory: ${manifest.name}`);
+  }
+
   fs.rmSync(target, { recursive: true, force: true });
   fs.mkdirSync(target, { recursive: true });
   fs.copyFileSync(GEMINI_MANIFEST, path.join(target, 'gemini-extension.json'));

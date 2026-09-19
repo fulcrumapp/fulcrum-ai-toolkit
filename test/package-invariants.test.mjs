@@ -7,7 +7,8 @@ const forbiddenPaths = [
   'plugins/example/.codex-plugin/plugin.json',
   'plugins/example/.mcp.json',
   'plugins/example/.claude-plugin/plugin.json',
-  'plugins/example/commands/fulcrum-solution-document.md'
+  'plugins/example/commands/fulcrum-solution-document.md',
+  'plugins/example/gemini-extension.json'
 ];
 
 test('accepts a package without forbidden vendor-specific files', () => {
