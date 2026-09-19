@@ -5,12 +5,11 @@ instructions for a loader to fetch missing skills. Keep all skill
 directories and their supporting files together, and retain the package
 `LICENSE`. Do not flatten the directories or upload only one `SKILL.md`.
 
-The package directory is a multi-format bundle. Its portable Agent Plugins
-core is `plugin.json`, `mcp.json`, and `skills/`; the package also includes
-Gemini's native extension manifest. Claude's native command adapter and skill
-discovery tree live at the repository root rather than inside the portable
-package. Strict portable consumers should load the core files and omit native
-host adapters.
+The package directory is the portable Agent Plugins bundle. Its core is
+`plugin.json`, `mcp.json`, and `skills/`. Claude's native command adapter and
+skill discovery tree live at the repository root, and Gemini's native manifest
+lives under `adapters/gemini/`; both are outside the portable package. Strict
+portable consumers should load the core files and omit native host adapters.
 
 These are alpha installation targets. Host versions, administrator policy,
 skill discovery, and support for token-authenticated remote MCP vary.
@@ -45,15 +44,17 @@ skills-loader installation from the repository README instead.
 
 ## Gemini CLI
 
-Clone the repository, then run from its root:
+Clone the repository, assemble the native bundle, then install it:
 
 ```bash
-gemini extensions install ./plugins/fulcrum-ai-toolkit
+node scripts/build-gemini-extension.mjs
+gemini extensions install ./plugins/fulcrum-ai-toolkit-gemini
 ```
 
-The local directory contains the Gemini-native `gemini-extension.json` and the
-full `skills/` collection. Do not substitute the repository-root URL or a GitHub `tree/` URL:
-the extension installer is not the skills installer's subdirectory interface.
+The build copies the Gemini-native `gemini-extension.json`, the package license,
+and the full canonical `skills/` collection into an ignored generated directory.
+Do not substitute the portable package, repository-root URL, or a GitHub `tree/`
+URL: the Gemini extension installer requires the generated native bundle.
 
 ## Hermes
 

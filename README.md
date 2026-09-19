@@ -148,11 +148,12 @@ app or extension assessment.
 
 ## Alpha install matrix
 
-The repository publishes `plugins/fulcrum-ai-toolkit/` as a multi-format bundle.
-Its portable Agent Plugins core is the `plugin.json`, `mcp.json`, and
-`skills/` set. Gemini's native extension manifest is package-local, while
-Claude's native command adapter and skill-discovery tree live at the repository
-root because Claude requires those locations. Therefore the complete
+The repository publishes `plugins/fulcrum-ai-toolkit/` as a portable Agent
+Plugins bundle. Its core is the `plugin.json`, `mcp.json`, and `skills/` set.
+Gemini's native extension manifest is kept in `adapters/gemini/` and assembled
+with the canonical skills into an ignored native bundle, while Claude's native
+command adapter and skill-discovery tree live at the repository root because
+Claude requires those locations. Therefore the complete
 repository is not claimed as a strict single-format Agent Plugins package. A
 strict portable consumer should load the portable core files and ignore native
 host adapters; native installers should use the host-specific paths documented
@@ -165,7 +166,7 @@ below.
 | Cursor | Install `plugins/fulcrum-ai-toolkit/` as a plugin | Yes | Connector-dependent | Target |
 | Codex | Add the repository marketplace, then install the plugin | Yes | Connector-dependent | Target |
 | GitHub Copilot | Add this marketplace, then install the plugin | Yes | Connector-dependent | Target |
-| Gemini CLI | Clone, then install the local package directory as an extension | Yes | Connector-dependent | Verify |
+| Gemini CLI | Run `node scripts/build-gemini-extension.mjs`, then install `plugins/fulcrum-ai-toolkit-gemini/` | Yes | Connector-dependent | Verify |
 | Hermes | Configure the full local `skills/` directory via `skills.external_dirs` | Yes | Connector-dependent | Verify |
 | Claude Code in Desktop | Use Claude Code's marketplace/plugin installation | Yes | Connector-dependent | Target |
 | Claude Desktop chat / Cowork | Requires account-level skill packaging that preserves dependencies; repo copying is insufficient | Not packaged | Host authentication support required | Later |
@@ -189,8 +190,10 @@ directory/name consistency, corporate absolute paths, privacy and provenance con
 portable and client JSON manifests, and README inventory. The portable core's
 `plugin.json` includes the Agent Plugins schema and is the canonical manifest
 for strict portable consumers; Claude and Gemini retain native wrappers outside
-that core because their installers require those locations. The validator also keeps
-release versions aligned, requires the packaged license and Codex
+that core because their installers require those locations. The Gemini build
+script creates a native extension directory containing the manifest, license,
+and copied skills without placing vendor-specific files in the portable package.
+The validator also keeps release versions aligned, requires the packaged license and Codex
 manual-invocation policies, and guards the regional MCP endpoint map and empty
 default server configuration.
 Guidance contract tests check the rubric inventory, sibling links, worked
@@ -386,7 +389,7 @@ Plugin configs are included for multiple AI platforms:
 | Cursor | Portable core in `plugins/fulcrum-ai-toolkit/` |
 | Codex | Portable core in `plugins/fulcrum-ai-toolkit/` |
 | Hermes | Shared `skills/` directory; root `plugin.json` for hosts supporting Agent Plugins v1 |
-| Gemini | `plugins/fulcrum-ai-toolkit/gemini-extension.json` |
+| Gemini | `adapters/gemini/gemini-extension.json`; assemble with `node scripts/build-gemini-extension.mjs` |
 | MCP | `plugins/fulcrum-ai-toolkit/mcp.json`; configure a tenant-specific server separately |
 
 All hosts discover or reference the package's shared `skills/` directory; they

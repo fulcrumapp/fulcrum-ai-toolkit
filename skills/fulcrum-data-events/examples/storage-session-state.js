@@ -78,7 +78,16 @@ function readBaseline() {
   var storage = STORAGE();
   var stored = storage.getItem(baselineKey);
 
-  return stored ? JSON.parse(stored) : null;
+  if (!stored) {
+    return null;
+  }
+
+  try {
+    return JSON.parse(stored);
+  } catch (error) {
+    storage.removeItem(baselineKey);
+    return null;
+  }
 }
 
 function computeBaseline() {
