@@ -12,34 +12,34 @@
 -- placeholders below stand for encoded literals, not binds. See
 -- ../../fulcrum-report-building/examples/sanitize-params-for-sql.ejs.
 
--- Related records for the current record's site. Request one extra row so a
--- report can render the first 100 and warn when the result is partial.
+-- Related records for the current record's site. The Query API returns at most
+-- 100 rows per response, so a full response is potentially partial. Narrow
+-- the filter or use SQL LIMIT/OFFSET or keyset pagination for more rows.
 SELECT inspector_name, inspection_date, status
 FROM "Site Inspections"
 WHERE site_id = :site_id
 ORDER BY _created_at DESC
-LIMIT 101;
+LIMIT 100;
 
--- Repeatable line items for the current record.
--- Request one extra row so the caller can detect a partial result before
--- rendering the first 100 children. Narrow the query or page it outside the
--- template when the complete child set is required.
+-- Repeatable line items for the current record. The Query API returns at most
+-- 100 rows per response, so a full response is potentially partial. Narrow
+-- the query or use SQL LIMIT/OFFSET or keyset pagination for more children.
 SELECT r._child_record_id, r._created_at
 FROM "Work Orders/line_items" r
 WHERE r._parent_id = :record_id
 ORDER BY r._created_at DESC
-LIMIT 101;
+LIMIT 100;
 
 -- A bounded date-range report driven by validated $params values. The range is
 -- half-open: >= start and < the day after the end day. BETWEEN is inclusive of
 -- its upper bound, so against a timestamp column it keeps only midnight on the
 -- end day and drops every later reading that day. See
 -- ../../fulcrum-report-building/examples/params-date-range.ejs, which parses
--- and round-trips both days before emitting these literals; it renders the
--- first 500 rows and uses the extra row to warn when the result is partial.
+-- and round-trips both days before emitting these literals; it renders up to
+-- 100 rows and treats a full response as potentially partial.
 SELECT _record_id, _created_at, _status
 FROM "Inspections"
 WHERE _created_at >= :start_date
   AND _created_at < :end_date_exclusive
 ORDER BY _created_at DESC
-LIMIT 501;
+LIMIT 100;
