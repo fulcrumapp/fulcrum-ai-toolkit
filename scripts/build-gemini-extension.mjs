@@ -17,8 +17,22 @@ function isSameOrAncestor(candidate, child) {
   return child === candidate || child.startsWith(`${candidate}${path.sep}`);
 }
 
+function canonicalizeDestination(target) {
+  let existingParent = target;
+  while (!fs.existsSync(existingParent)) {
+    const parent = path.dirname(existingParent);
+    if (parent === existingParent) {
+      return target;
+    }
+    existingParent = parent;
+  }
+
+  const canonicalParent = fs.realpathSync.native(existingParent);
+  return path.resolve(canonicalParent, path.relative(existingParent, target));
+}
+
 export function validateGeminiDestination(destination) {
-  const target = path.resolve(destination);
+  const target = canonicalizeDestination(path.resolve(destination));
   const filesystemRoot = path.parse(target).root;
 
   if (target === filesystemRoot) {
