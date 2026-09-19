@@ -402,12 +402,12 @@
     {
       "path": "skills/fulcrum-report-building/examples/query-repeatable-join.ejs",
       "kind": "fragment",
-      "sha256": "43bdb831f878d2a7c8f503d5e93a4826e3d3b014d141d1d3755e0c1115a6177c"
+      "sha256": "949fde91988bc86842c315f7e876f58d6d09aafa3c0336dd15cbdf0a6da19f55"
     },
     {
       "path": "skills/fulcrum-report-building/examples/query-rows-iteration.ejs",
       "kind": "fragment",
-      "sha256": "5f9addfb7d88703838c079868887da8e70c8abe720ad02d0e9937789e597ddaa"
+      "sha256": "069a8f833e73d9f2b56a1403cd7c5e8c6eb28328cbbfeb03518c16d4dd10184d"
     },
     {
       "path": "skills/fulcrum-report-building/examples/record-field-access.ejs",

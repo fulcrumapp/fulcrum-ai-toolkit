@@ -12,8 +12,8 @@
 // RECORDID() is null until a new record has been saved. Saved records use one
 // stable key so the baseline survives a recreated script context and does not
 // create one persistent key per edit. Unsaved records have no stable storage
-// scope, so ensureBaseline() computes their value for the current callback
-// without caching it across callbacks.
+// scope, so baselineValue keeps their value in the current editor session
+// without writing an unscoped persistent key.
 //
 // Persistent entries expire after 30 minutes without a callback that reloads
 // the context. This bounds stale data after an interrupted session. STORAGE()
@@ -118,7 +118,8 @@ function computeBaseline() {
   return baseline;
 }
 
-// Idempotent: repeated calls within one session reuse the cached value.
+// Idempotent: repeated calls within the current editor session reuse the
+// cached value, including for unsaved records.
 function ensureBaseline() {
   var existing = readBaseline();
 
@@ -128,8 +129,9 @@ function ensureBaseline() {
 
   var baseline = computeBaseline();
 
+  baselineValue = baseline;
+
   if (baselineKey) {
-    baselineValue = baseline;
     STORAGE().setItem(
       baselineKey,
       JSON.stringify({
@@ -142,8 +144,8 @@ function ensureBaseline() {
   return baseline;
 }
 
-// Idempotent: saved records use one stable scoped key; unsaved records are
-// computed for the current callback because RECORDID() is not available yet.
+// Idempotent: saved records use one stable scoped key; unsaved records remain
+// in session-scoped memory because RECORDID() is not available yet.
 function clearBaseline() {
   var key = baselineKey || baselineStorageKey();
 

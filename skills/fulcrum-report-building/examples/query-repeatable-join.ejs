@@ -6,7 +6,7 @@
 <%# converts without naming `String`, which a template could rebind. %>
 
 <% const itemResults = QUERY(
-  `SELECT r._child_record_id, r._created_at
+  `SELECT r._record_id, r._created_at
    FROM "Work Orders/line_items" r
    WHERE r._parent_id = '${('' + record.id).replace(/[^A-Za-z0-9_-]/g, '')}'
    ORDER BY r._created_at DESC
@@ -32,7 +32,7 @@
     <% } else { %>
       <% items.forEach(function (item) { %>
         <tr>
-          <td><%= item._child_record_id %></td>
+          <td><%= item._record_id %></td>
           <td><%= item._created_at %></td>
         </tr>
       <% }); %>
