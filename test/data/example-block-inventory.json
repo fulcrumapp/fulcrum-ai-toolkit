@@ -402,7 +402,7 @@
     {
       "path": "skills/fulcrum-report-building/examples/query-repeatable-join.ejs",
       "kind": "fragment",
-      "sha256": "e483ee031dfa30a56a722ff257ae50218ea45e80209ac4170a11fc555bd0ee19"
+      "sha256": "35ec7bf06cbf2ea8a38d5d751eff41ac6f17988bba811abd03c79ef62af56741"
     },
     {
       "path": "skills/fulcrum-report-building/examples/query-rows-iteration.ejs",
