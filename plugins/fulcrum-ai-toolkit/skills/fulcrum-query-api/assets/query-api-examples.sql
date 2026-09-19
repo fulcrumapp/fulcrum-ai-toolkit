@@ -37,4 +37,4 @@ SELECT _record_id, _status, _created_at, _updated_at, _created_by_id, _updated_b
 
 -- 5. System table lookup. The current Query API source is authoritative for the
 --    available system tables and their columns.
-SELECT form_id, name FROM forms LIMIT 25;
+SELECT id, name FROM forms LIMIT 25;

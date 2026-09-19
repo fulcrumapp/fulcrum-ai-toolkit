@@ -13,18 +13,28 @@
 
   A <tr> is only valid inside a table, so the rows are wrapped in one here and
   an empty result gets its own spanning row.
+
+  This example intentionally caps the rendered result at 100 rows. It requests
+  one extra row so the report can mark a partial result instead of presenting
+  the cap as the complete related-record set. Narrow the filter, remove the cap,
+  or use the Query API's page/per_page controls outside this template to retrieve
+  more.
 %>
 
 <% const siteIdField = record.formValues.find('site_id'); %>
 <% const siteId = siteIdField ? siteIdField.value : ''; %>
+<% const MAX_ROWS = 100; %>
 <% const relatedInspections = QUERY(
   `SELECT inspector_name, inspection_date, status
    FROM "Site Inspections"
    WHERE site_id = '${('' + siteId).replace(/[^A-Za-z0-9_-]/g, '')}'
    ORDER BY _created_at DESC
-   LIMIT 100`,
+   LIMIT 101`,
   { format: 'json' }
 ); %>
+<% const resultRows = relatedInspections.rows; %>
+<% const hasMoreRows = resultRows.length > MAX_ROWS; %>
+<% const visibleRows = hasMoreRows ? resultRows.slice(0, MAX_ROWS) : resultRows; %>
 
 <table class="report-table">
   <thead>
@@ -35,18 +45,27 @@
     </tr>
   </thead>
   <tbody>
-    <% if (relatedInspections.rows.length === 0) { %>
+    <% if (visibleRows.length === 0) { %>
       <tr>
         <td colspan="3">No related inspections.</td>
       </tr>
     <% } else { %>
-      <% relatedInspections.rows.forEach(function (row) { %>
+      <% visibleRows.forEach(function (row) { %>
         <tr>
           <td><%= row.inspector_name %></td>
           <td><%= row.inspection_date %></td>
           <td><%= row.status %></td>
         </tr>
       <% }); %>
+      <% if (hasMoreRows) { %>
+        <tr>
+          <td colspan="3" class="report-warning">
+            Showing the first 100 related inspections only. More results
+            exist; narrow the filter or retrieve additional pages before
+            treating this as a complete result.
+          </td>
+        </tr>
+      <% } %>
     <% } %>
   </tbody>
 </table>

@@ -28,10 +28,16 @@
   rows below are wrapped in one here rather than left to the surrounding
   template: a rejected range renders a message, an empty result renders a single
   spanning row, and neither leaves a <tr> loose in the document.
+
+  This example intentionally caps the rendered result at 500 rows. It requests
+  one extra row so the report can mark a partial result instead of presenting
+  the cap as the complete date range. Narrow the range, remove the cap, or use
+  the Query API's page/per_page controls outside this template to retrieve more.
 %>
 
 <% const MS_PER_DAY = 86400000; %>
 <% const DEFAULT_WINDOW_DAYS = 90; %>
+<% const MAX_ROWS = 500; %>
 
 <% function parseIsoDay(value) {
      const text = '' + value;
@@ -70,9 +76,12 @@
         WHERE _created_at >= '${('' + startDate).replace(/[^0-9-]/g, '')}'
           AND _created_at < '${('' + endExclusiveDate).replace(/[^0-9-]/g, '')}'
         ORDER BY _created_at DESC
-        LIMIT 500`,
+        LIMIT 501`,
        { format: 'json' }
      ); %>
+<% const resultRows = recordResults.rows; %>
+<% const hasMoreRows = resultRows.length > MAX_ROWS; %>
+<% const visibleRows = hasMoreRows ? resultRows.slice(0, MAX_ROWS) : resultRows; %>
 <table class="report-table">
   <thead>
     <tr>
@@ -86,18 +95,27 @@
       <tr>
         <td colspan="3" class="report-error"><%= rangeError %> No query was run.</td>
       </tr>
-    <% } else if (recordResults.rows.length === 0) { %>
+    <% } else if (visibleRows.length === 0) { %>
       <tr>
         <td colspan="3">No inspections in this range.</td>
       </tr>
     <% } else { %>
-      <% recordResults.rows.forEach(function (row) { %>
+      <% visibleRows.forEach(function (row) { %>
         <tr>
           <td><%= row._record_id %></td>
           <td><%= row._created_at %></td>
           <td><%= row._status %></td>
         </tr>
       <% }); %>
+      <% if (hasMoreRows) { %>
+        <tr>
+          <td colspan="3" class="report-warning">
+            Showing the first 500 inspections only. The date range has more
+            results; narrow the range or retrieve additional pages before
+            treating this as a complete result.
+          </td>
+        </tr>
+      <% } %>
     <% } %>
   </tbody>
 </table>
