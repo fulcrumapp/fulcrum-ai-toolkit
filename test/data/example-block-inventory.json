@@ -397,7 +397,7 @@
     {
       "path": "skills/fulcrum-report-building/examples/query-related-records.ejs",
       "kind": "fragment",
-      "sha256": "3e413407fdacdbfa407e5bc02ae52e4651f7aef043848efec7f11ea47678feb3"
+      "sha256": "0c7c2f069014c0f7eb61d8825d253b6d7a105b6673990cc1825184ed29356198"
     },
     {
       "path": "skills/fulcrum-report-building/examples/query-repeatable-join.ejs",
