@@ -2,6 +2,7 @@
 
 import fs from 'node:fs';
 import path from 'node:path';
+import { randomUUID } from 'node:crypto';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 
 const ROOT_LEXICAL = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
@@ -152,12 +153,55 @@ export function assembleGeminiExtension(destination = DEFAULT_DESTINATION) {
   }
   assertSafeToReplace(target);
   const skillSource = path.join(PORTABLE_PACKAGE, 'skills');
-  fs.rmSync(target, { recursive: true, force: true });
-  fs.mkdirSync(target, { recursive: true });
-  fs.writeFileSync(path.join(target, ASSEMBLER_MARKER), ASSEMBLER_MARKER_CONTENT);
-  fs.copyFileSync(GEMINI_MANIFEST, path.join(target, 'gemini-extension.json'));
-  fs.copyFileSync(path.join(PORTABLE_PACKAGE, 'LICENSE'), path.join(target, 'LICENSE'));
-  copySkillTree(skillSource, path.join(target, 'skills'));
+  const stagingTarget = path.join(
+    path.dirname(target),
+    `.${path.basename(target)}.tmp-${process.pid}-${randomUUID()}`
+  );
+  const backupTarget = path.join(
+    path.dirname(target),
+    `.${path.basename(target)}.backup-${process.pid}-${randomUUID()}`
+  );
+  let movedExistingTarget = false;
+
+  try {
+    fs.mkdirSync(stagingTarget, { recursive: true });
+    fs.writeFileSync(
+      path.join(stagingTarget, ASSEMBLER_MARKER),
+      ASSEMBLER_MARKER_CONTENT
+    );
+    fs.copyFileSync(
+      GEMINI_MANIFEST,
+      path.join(stagingTarget, 'gemini-extension.json')
+    );
+    fs.copyFileSync(
+      path.join(PORTABLE_PACKAGE, 'LICENSE'),
+      path.join(stagingTarget, 'LICENSE')
+    );
+    copySkillTree(skillSource, path.join(stagingTarget, 'skills'));
+
+    if (fs.lstatSync(target, { throwIfNoEntry: false })) {
+      fs.renameSync(target, backupTarget);
+      movedExistingTarget = true;
+    }
+    fs.renameSync(stagingTarget, target);
+
+    if (movedExistingTarget) {
+      fs.rmSync(backupTarget, { recursive: true, force: true });
+    }
+  } catch (error) {
+    fs.rmSync(stagingTarget, { recursive: true, force: true });
+
+    if (
+      movedExistingTarget &&
+      !fs.lstatSync(target, { throwIfNoEntry: false }) &&
+      fs.lstatSync(backupTarget, { throwIfNoEntry: false })
+    ) {
+      fs.renameSync(backupTarget, target);
+    }
+
+    throw error;
+  }
+
   return target;
 }
 
