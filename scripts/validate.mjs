@@ -11,7 +11,7 @@ import { createRequire } from 'node:module';
 import { validateAgentSkillFrontmatter } from './agent-skill-frontmatter.mjs';
 import { validateAgentPluginManifest } from './agent-plugin-manifest.mjs';
 import { validateAgentMcpConfig } from './agent-mcp-config.mjs';
-import { validateForbiddenPackagePaths } from './package-invariants.mjs';
+import { pathEntryExists, validateForbiddenPackagePaths } from './package-invariants.mjs';
 import { validateClaudeManualCommand } from './claude-adapter.mjs';
 
 const require = createRequire(import.meta.url);
@@ -421,7 +421,7 @@ if (JSON.stringify(actualSkillNames) !== JSON.stringify(EXPECTED_SKILLS.slice().
 
 failures.push(
   ...validateForbiddenPackagePaths(FORBIDDEN_PACKAGE_PATHS, (relativePath) =>
-    fs.existsSync(path.join(ROOT, relativePath))
+    pathEntryExists(path.join(ROOT, relativePath))
   )
 );
 
