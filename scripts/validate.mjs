@@ -47,7 +47,6 @@ const DEFAULT_BUNDLE_ENTRYPOINTS = [
 ];
 const BUNDLE_ENTRYPOINTS = resolveBundleEntrypoints(process.env.FULCRUM_VALIDATE_BUNDLE_ENTRYPOINTS);
 const FORBIDDEN_PACKAGE_PATHS = [
-  path.join(PLUGIN_RELATIVE_PATH, '.cursor-plugin', 'plugin.json'),
   path.join(PLUGIN_RELATIVE_PATH, '.codex-plugin', 'plugin.json'),
   path.join(PLUGIN_RELATIVE_PATH, '.mcp.json'),
   path.join(PLUGIN_RELATIVE_PATH, '.claude-plugin', 'plugin.json'),
@@ -496,6 +495,7 @@ const jsonSearchDirs = [
   path.join(ROOT, '.agents', 'plugins'),
   path.join(ROOT, 'adapters', 'gemini'),
   PLUGIN_DIR,
+  path.join(PLUGIN_DIR, '.cursor-plugin'),
   path.join(PLUGIN_DIR, '.claude-plugin'),
 ];
 
@@ -663,6 +663,7 @@ if (fs.existsSync(reportSkillPath)) {
 }
 
 const rootClaudeManifestPath = '.claude-plugin/plugin.json';
+const cursorManifestPath = `${PLUGIN_RELATIVE_PATH}/.cursor-plugin/plugin.json`;
 const rootClaudeManifest = jsonDocuments[rootClaudeManifestPath];
 const expectedClaudeSkillNames = EXPECTED_SKILLS
   .filter((skillName) => !USER_INVOKED_SKILLS.has(skillName))
@@ -737,7 +738,16 @@ for (const relativePath of claudeManifestPaths) {
   }
 }
 
-for (const relativePath of [...claudeManifestPaths, GEMINI_ADAPTER_RELATIVE_PATH]) {
+const cursorManifest = jsonDocuments[cursorManifestPath];
+if (!cursorManifest || cursorManifest.skills !== './skills/') {
+  failures.push(`${cursorManifestPath}: skills must point to ./skills/`);
+}
+
+for (const relativePath of [
+  ...claudeManifestPaths,
+  cursorManifestPath,
+  GEMINI_ADAPTER_RELATIVE_PATH
+]) {
   const manifest = jsonDocuments[relativePath];
   if (!manifest || !agentManifest?.version || manifest.version !== agentManifest.version) {
     failures.push(`${relativePath}: version must match the root plugin manifest`);

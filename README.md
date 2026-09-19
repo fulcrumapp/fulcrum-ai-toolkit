@@ -189,8 +189,8 @@ The repository validator checks the expected skill inventory, skill frontmatter,
 directory/name consistency, corporate absolute paths, privacy and provenance contracts,
 portable and client JSON manifests, and README inventory. The portable core's
 `plugin.json` includes the Agent Plugins schema and is the canonical manifest
-for strict portable consumers; Claude and Gemini retain native wrappers outside
-that core because their installers require those locations. The Gemini build
+for strict portable consumers; Cursor, Claude, and Gemini retain native wrappers
+because their installers require those locations. The Gemini build
 script creates a native extension directory containing the manifest, license,
 and copied skills without placing vendor-specific files in the portable package.
 The validator also keeps release versions aligned, requires the packaged license and Codex
@@ -386,7 +386,7 @@ Plugin configs are included for multiple AI platforms:
 | ---------- | -------- |
 | GitHub Copilot CLI | `.github/plugin/marketplace.json` and `plugins/fulcrum-ai-toolkit/plugin.json` |
 | Claude Code | `.claude-plugin/plugin.json` at the repository root; Claude auto-discovers non-manual shared skills from root `skills/` and uses the root `commands/` adapter |
-| Cursor | Portable core in `plugins/fulcrum-ai-toolkit/` |
+| Cursor | `.cursor-plugin/plugin.json` in `plugins/fulcrum-ai-toolkit/` |
 | Codex | Portable core in `plugins/fulcrum-ai-toolkit/` |
 | Hermes | Shared `skills/` directory; root `plugin.json` for hosts supporting Agent Plugins v1 |
 | Gemini | `adapters/gemini/gemini-extension.json`; assemble with `node scripts/build-gemini-extension.mjs` |

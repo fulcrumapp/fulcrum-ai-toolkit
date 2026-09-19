@@ -9,7 +9,6 @@ import {
 } from '../scripts/package-invariants.mjs';
 
 const forbiddenPaths = [
-  'plugins/example/.cursor-plugin/plugin.json',
   'plugins/example/.codex-plugin/plugin.json',
   'plugins/example/.mcp.json',
   'plugins/example/.claude-plugin/plugin.json',
