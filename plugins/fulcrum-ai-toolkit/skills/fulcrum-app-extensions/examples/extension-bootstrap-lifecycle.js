@@ -9,7 +9,18 @@
 // event.source against an expected value before trusting a message.
 
 Fulcrum.load(function (payload) {
-  initialize(payload.data || {});
+  if (
+    !payload ||
+    typeof payload !== 'object' ||
+    !payload.data ||
+    typeof payload.data !== 'object' ||
+    Array.isArray(payload.data)
+  ) {
+    console.error('Invalid extension payload: expected an object in data');
+    return;
+  }
+
+  initialize(payload.data);
 });
 
 function initialize(data) {

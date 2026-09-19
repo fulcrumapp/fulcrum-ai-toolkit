@@ -12,14 +12,10 @@ const body = [
   '',
   '- [Claude Code skill invocation](https://code.claude.com/docs/en/skills#control-who-invokes-a-skill)'
 ].join('\n');
-const rootBody = [
-  'Load and follow the authoritative portable workflow at',
-  '`${CLAUDE_PLUGIN_ROOT}/plugins/fulcrum-ai-toolkit/skills/fulcrum-solution-document/SKILL.md`.',
-  '',
-  '## References',
-  '',
-  '- [Claude Code skill invocation](https://code.claude.com/docs/en/skills#control-who-invokes-a-skill)'
-].join('\n');
+const rootCommandPath = new URL('../commands/fulcrum-solution-document.md', import.meta.url);
+const rootCommandBody = fs.readFileSync(rootCommandPath, 'utf8')
+  .replace(/^---[\s\S]*?---\n/, '')
+  .trim();
 const rootManifest = JSON.parse(
   fs.readFileSync(new URL('../.claude-plugin/plugin.json', import.meta.url), 'utf8')
 );
@@ -52,7 +48,7 @@ test('accepts the repository-root Claude manual command adapter', () => {
   assert.deepEqual(
     validateClaudeManualCommand(
       frontmatter,
-      rootBody,
+      rootCommandBody,
       'commands/fulcrum-solution-document.md',
       '${CLAUDE_PLUGIN_ROOT}/plugins/fulcrum-ai-toolkit/skills/fulcrum-solution-document/SKILL.md'
     ),
@@ -74,10 +70,7 @@ test('keeps the manual-only workflow out of Claude skill discovery', () => {
 
 test('keeps Claude command discovery at the repository root', () => {
   assert.equal('commands' in rootManifest, false);
-  assert.equal(
-    fs.existsSync(new URL('../commands/fulcrum-solution-document.md', import.meta.url)),
-    true
-  );
+  assert.equal(fs.existsSync(rootCommandPath), true);
 });
 
 test('routes the Claude product-knowledge copy to the loader-visible command', () => {

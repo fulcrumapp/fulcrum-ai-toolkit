@@ -12,12 +12,13 @@
 -- placeholders below stand for encoded literals, not binds. See
 -- ../../fulcrum-report-building/examples/sanitize-params-for-sql.ejs.
 
--- Related records for the current record's site.
+-- Related records for the current record's site. Request one extra row so a
+-- report can render the first 100 and warn when the result is partial.
 SELECT inspector_name, inspection_date, status
 FROM "Site Inspections"
 WHERE site_id = :site_id
 ORDER BY _created_at DESC
-LIMIT 100;
+LIMIT 101;
 
 -- Repeatable line items for the current record.
 -- Request one extra row so the caller can detect a partial result before
@@ -34,10 +35,11 @@ LIMIT 101;
 -- its upper bound, so against a timestamp column it keeps only midnight on the
 -- end day and drops every later reading that day. See
 -- ../../fulcrum-report-building/examples/params-date-range.ejs, which parses
--- and round-trips both days before emitting these literals.
+-- and round-trips both days before emitting these literals; it renders the
+-- first 500 rows and uses the extra row to warn when the result is partial.
 SELECT _record_id, _created_at, _status
 FROM "Inspections"
 WHERE _created_at >= :start_date
   AND _created_at < :end_date_exclusive
 ORDER BY _created_at DESC
-LIMIT 500;
+LIMIT 501;
