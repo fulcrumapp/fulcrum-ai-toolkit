@@ -29,11 +29,11 @@
   template: a rejected range renders a message, an empty result renders a single
   spanning row, and neither leaves a <tr> loose in the document.
 
-  This example intentionally caps the rendered result at 100 rows, the maximum
-  returned by one Query API response. A response at that cap is treated as
-  potentially partial because the endpoint does not return a count. Narrow
-  the range or issue additional queries with SQL LIMIT/OFFSET or keyset
-  pagination when the complete date range is required.
+  This example intentionally caps the rendered result with SQL LIMIT 100. A
+  response at that self-imposed query limit is treated as potentially partial
+  because the endpoint does not return a count. Narrow the range or issue
+  additional queries with SQL LIMIT/OFFSET or keyset pagination when the
+  complete date range is required.
 %>
 
 <% const MS_PER_DAY = 86400000; %>
@@ -111,9 +111,9 @@
       <% if (hasMoreRows) { %>
         <tr>
           <td colspan="3" class="report-warning">
-            Showing up to 100 inspections. Because the Query API caps each
-            response at 100 rows, this result may be partial; narrow the range
-            or use SQL LIMIT/OFFSET or keyset pagination for a complete result.
+            Showing up to 100 inspections. Because this query requests LIMIT
+            100, this result may be partial; narrow the range or use SQL
+            LIMIT/OFFSET or keyset pagination for a complete result.
           </td>
         </tr>
       <% } %>
