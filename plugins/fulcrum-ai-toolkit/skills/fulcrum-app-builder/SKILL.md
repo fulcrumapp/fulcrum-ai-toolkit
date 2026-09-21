@@ -81,10 +81,12 @@ Start by offering a choice:
 
 If the user's prompt already answers some of these clearly, confirm them ("It sounds like this app is for X, producing Y, used by Z — is that right?") and ask only what's missing.
 
-For an existing app, invoke
+For an existing app, begin
 [`fulcrum-app-editing`](../fulcrum-app-editing/SKILL.md) before proposing or
-composing the edit. It establishes the record-count, data-impact, and
-production/sandbox gates required before any `fulcrum_forms_update`.
+composing the edit. Complete its entry gate, record detection, classification,
+and impact analysis before planning the change. For a production-sensitive
+edit, complete its clone and promotion-approval phases before the final
+reconciliation below; do not attempt its reconcile-and-promote phase yet.
 
 **Discovery Questions** — work into conversation as needed, don't ask all at once:
 
@@ -193,13 +195,14 @@ Before each live write, apply the
 full-form payloads, scripts, Reference Files, and Report Templates, including
 reapproval and coupled file/script writes.
 
-For every write to an existing form, complete
-[`fulcrum-app-editing`](../fulcrum-app-editing/SKILL.md) first. It requires
-Query MCP record detection before each `fulcrum_forms_update` and routes
-production-sensitive work through clone, diff, explicit promotion approval,
-and a final fresh production reconciliation. It applies to schema and Data
-Event script updates alike; do not bypass it because the requested change is
-small.
+For every write to an existing form, use
+[`fulcrum-app-editing`](../fulcrum-app-editing/SKILL.md). It requires Query MCP
+record detection before each `fulcrum_forms_update` and routes
+production-sensitive work through clone, diff, and explicit promotion approval.
+For a production-sensitive edit, the existing-app sequence below is that
+skill's reconcile-and-promote phase, not a second update after it. It applies
+to schema and Data Event script updates alike; do not bypass it because the
+requested change is small.
 
 When App MCP is available, follow its live schemas exactly. Do not hand-write new element JSON when a registered schema builder owns that shape.
 
@@ -256,8 +259,11 @@ Reuse prior approval only when it covers the same content and operation.
 For an existing app:
 
 1. Complete the `fulcrum-app-editing` entry gate, required record detection,
-   impact analysis, and applicable production safety flow before composing a
-   live update.
+   classification, and impact analysis. For a production-sensitive edit,
+   complete its production safety flow through explicit promotion approval
+   (Steps 1-6). Steps 2-12 below are that flow's Step 7,
+   **Reconcile and promote**; they compose and issue the single approved live
+   update rather than following a completed promotion.
 2. Fetch the current form with `fulcrum_forms_get`. Compare it with the version
    assessed for approval; reconcile intervening changes rather than overwriting
    them, and return to Step 3 if the approved design or assessment is affected.
