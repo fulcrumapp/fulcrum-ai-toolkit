@@ -145,6 +145,11 @@ The extension HTML file is uploaded as a **Reference File** on the form. When Ap
 
 The generate, read, review/approve, upload, re-read, and update sequence is in
 [`assets/app-mcp-extension-publish-sequence.txt`](assets/app-mcp-extension-publish-sequence.txt).
+Before that sequence updates an existing form's script, complete
+[`fulcrum-app-editing`](../fulcrum-app-editing/SKILL.md). It requires record
+detection and routes production-sensitive changes through its clone and
+approval flow; rerun its final record-count check immediately before
+`fulcrum_forms_update`.
 After `fulcrum_extensions_generate`, read the existing form and dependencies
 with authorized read operations and compose the complete script. Complete
 the performance review and obtain design approval before

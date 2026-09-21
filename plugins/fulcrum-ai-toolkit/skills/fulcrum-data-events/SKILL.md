@@ -37,18 +37,26 @@ use the gated shared-code sequence below instead; it owns both the file and
 script writes. For script-only changes:
 
 1. Read the form and its current `script` with `fulcrum_forms_get`.
-2. Compose the handler with the complete existing script and inspect all
+2. Complete the [`fulcrum-app-editing`](../fulcrum-app-editing/SKILL.md)
+   entry gate and required record detection before proposing the script change.
+   It owns the production/sandbox classification, data-impact analysis, and
+   clone/approval flow for any production-sensitive form update.
+3. Compose the handler with the complete existing script and inspect all
    attached/loaded dependencies. Do not overwrite unrelated handlers.
-3. Complete the performance review and present the score, advice, and relevant
+4. Complete the performance review and present the score, advice, and relevant
    sync warnings using
    [the builder's confirmation contract](../fulcrum-app-builder/SKILL.md#score-and-advice-at-every-design-confirmation).
    Obtain explicit approval before any live write.
-4. Always re-read the current form and relevant dependencies immediately before
+5. Always re-read the current form and relevant dependencies immediately before
    the write, even if no change is known. Reconcile the approved edits into the
    freshly read script, preserving intervening handlers, and re-review the
    final composition. If material changes need updated approval, return to
-   step 3 and repeat this fresh read after approval.
-5. Write the reviewed, approved final script with `fulcrum_forms_update`;
+   step 4 and repeat this fresh read after approval.
+6. Complete the final record-count recheck required by
+   `fulcrum-app-editing` immediately before writing. If the count, form
+   identity, or production/sandbox classification differs from the approved
+   baseline, stop and reconcile through that skill.
+7. Write the reviewed, approved final script with `fulcrum_forms_update`;
    never write the earlier script snapshot.
 
 > Connector authority: Live installed App MCP schemas define the registered
@@ -127,30 +135,38 @@ For App MCP-managed shared code, use this order:
 1. Inspect the current Reference File with `fulcrum_reference_files_list` or
    `fulcrum_reference_files_get`, and read the current script with
    `fulcrum_forms_get`. Inspect actual contents, not just file metadata.
-2. Compose the proposed shared-file contents and full form script, preserving
+2. Complete the [`fulcrum-app-editing`](../fulcrum-app-editing/SKILL.md)
+   entry gate and required record detection before proposing either artifact.
+   Its production-safe clone, approval, and promotion flow applies to the
+   eventual form-script update.
+3. Compose the proposed shared-file contents and full form script, preserving
    unrelated handlers. Inventory attached/loaded dependencies and known
    consumers affected by replacing shared code.
-3. Complete the no-write performance review of the proposed Reference File,
+4. Complete the no-write performance review of the proposed Reference File,
    its dependencies, and the composed script. Present the app score, advice,
    unknowns, and sync warnings and obtain explicit approval covering the file
    upload/replacement and script update. Do not upload before this gate:
    existing consumers can load a replacement without a script change.
-4. Immediately re-read the current Reference File, dependencies, and known
+5. Immediately re-read the current Reference File, dependencies, and known
    consumers before upload. Apply
    [the pre-write freshness safeguard](../fulcrum-app-builder/resources/pre-write-freshness.md):
    compare content/hash/revision with the approved baseline, reconcile changes,
    and obtain updated approval for material differences. Repeat this fresh read
    after approval; a later form read cannot protect an already overwritten file.
-5. Upload the reviewed, approved file with `fulcrum_reference_files_upload`
+6. Upload the reviewed, approved file with `fulcrum_reference_files_upload`
    and verify the live content matches the approved artifact.
-6. Re-read the form and re-review the final composed script with its loaded
+7. Re-read the form and re-review the final composed script with its loaded
    dependencies immediately before the write, even if no change is known.
    Preserve intervening changes; refresh the score/advice and obtain updated
    approval if the design or assessment changed materially. Repeat this fresh
-   read after reapproval before continuing to step 7. If reapproval changes the
+   read after reapproval before continuing to step 8. If reapproval changes the
    approved file content, repeat steps 4-5 and verify that replacement before
    writing the script. Do not repeat the upload when approved content is unchanged.
-7. Write only the reviewed, approved complete script with `fulcrum_forms_update`.
+8. Complete the final record-count recheck required by
+   `fulcrum-app-editing` immediately before writing. If the count, form
+   identity, or production/sandbox classification differs from the approved
+   baseline, stop and reconcile through that skill.
+9. Write only the reviewed, approved complete script with `fulcrum_forms_update`.
 
 > Verify `LOADFILE()` eligibility as described above before designing around shared Reference Files.
 

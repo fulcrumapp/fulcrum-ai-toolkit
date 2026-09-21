@@ -122,11 +122,11 @@ test('extension publishing reviews and approves composed artifacts before either
     'Verify that the live file matches the approved content',
     'fulcrum_forms_get(',
     're-review the final composed script',
-    'return to Step 5 for updated approval',
+    'return to Step 6 for updated approval',
     'fulcrum_forms_update('
   ]);
   assert.match(sequence, /both the Reference File upload or replacement and the composed script/);
-  assert.match(sequence, /repeat Steps 6-7 and verify the new file before writing its dependent script/);
+  assert.match(sequence, /repeat Steps 7-8 and verify the new file before writing its dependent script/);
   const extension = read('fulcrum-app-extensions/SKILL.md');
   const manual = compact(extension.split('### Manual UI fallback')[1]?.split('## Anti-Patterns')[0] ?? '');
   assertInOrder(manual, [
@@ -148,6 +148,8 @@ test('direct Data Event and shared-file writes remain behind performance and app
   const controlPlane = compact(events.split('## App MCP Control Plane')[1]?.split('## Event Lifecycle')[0] ?? '');
   assertInOrder(controlPlane, [
     'fulcrum_forms_get',
+    'fulcrum-app-editing',
+    'required record detection',
     'Compose the handler',
     'Complete the performance review',
     'Obtain explicit approval before any live write',
@@ -155,12 +157,15 @@ test('direct Data Event and shared-file writes remain behind performance and app
     'Reconcile the approved edits',
     're-review the final composition',
     'repeat this fresh read after approval',
+    'final record-count recheck',
     'fulcrum_forms_update'
   ]);
   assert.match(controlPlane, /even if no change is known/);
   const sharedCode = compact(events.split('### Share code across apps with LOADFILE')[1]?.split('### Session state')[0] ?? '');
   assertInOrder(sharedCode, [
     'Inspect the current Reference File',
+    'fulcrum-app-editing',
+    'required record detection',
     'Compose the proposed shared-file contents',
     'Complete the no-write performance review',
     'obtain explicit approval',
@@ -170,10 +175,29 @@ test('direct Data Event and shared-file writes remain behind performance and app
     'verify the live content matches the approved artifact',
     'Re-read the form and re-review the final composed script',
     'obtain updated approval',
+    'final record-count recheck',
     'fulcrum_forms_update'
   ]);
   assert.match(sharedCode, /existing consumers can load a replacement without a script change/);
   assert.match(sharedCode, /repeat steps 4-5 and verify that replacement before writing the script/);
+});
+
+test('extension publishing applies existing-form safety gates before form updates', () => {
+  const extension = read('fulcrum-app-extensions/SKILL.md');
+  const sequence = compact(read('fulcrum-app-extensions/assets/app-mcp-extension-publish-sequence.txt'));
+  assert.match(extension, /Before that sequence updates an existing form's script, complete.*fulcrum-app-editing/s);
+  assertInOrder(sequence, [
+    'fulcrum_forms_get(',
+    'Existing-form editing gate',
+    'fulcrum-app-editing',
+    'Query MCP record detection',
+    'Performance review and approval gate',
+    'fulcrum_reference_files_upload(',
+    'fulcrum_forms_get(',
+    'Final record-count recheck',
+    'fulcrum_forms_update('
+  ]);
+  assert.match(sequence, /If the count, form identity, or production\/sandbox classification differs from the approved baseline, stop/);
 });
 
 test('shared pre-write safeguards cover freshness, artifact consistency, and non-atomic failures', () => {

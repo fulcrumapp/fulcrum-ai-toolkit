@@ -23,7 +23,13 @@ Step 4  fulcrum_forms_get(id=...)
         Read the current form and complete script. Inspect existing Reference
         Files and all attached/loaded dependencies before composing the change.
 
-Step 5  Performance review and approval gate (no live writes)
+Step 5  Existing-form editing gate (no live writes)
+        Complete ../fulcrum-app-editing/SKILL.md before proposing the extension
+        script change. It requires Query MCP record detection, production or
+        sandbox classification, data-impact analysis, and the applicable
+        clone/approval flow for a production-sensitive form.
+
+Step 6  Performance review and approval gate (no live writes)
         Compose the existing script plus the generated Data Event without
         discarding unrelated handlers. Run fulcrum-performance-review on the
         generated HTML, composed script, and attached/loaded dependencies.
@@ -31,18 +37,18 @@ Step 5  Performance review and approval gate (no live writes)
         and advisory sync warnings using the builder's confirmation contract.
         Obtain explicit approval covering both the Reference File upload or
         replacement and the composed script. Advisory improvements are optional.
-        Complete this gate before continuing to Step 6: replacing a file can
+        Complete this gate before continuing to Step 7: replacing a file can
         affect existing consumers even before the form script is updated.
 
-Step 6  Pre-upload freshness gate (no live writes)
+Step 7  Pre-upload freshness gate (no live writes)
         Follow ../../fulcrum-app-builder/resources/pre-write-freshness.md.
         Immediately re-read the target Reference File, dependencies, and known
         consumers; compare content/hash/revision with the approved baseline.
-        Reconcile intervening changes and return to Step 5 for updated approval
+        Reconcile intervening changes and return to Step 6 for updated approval
         if the proposed content or assessment changed materially. Repeat this
         freshness gate after approval before uploading.
 
-Step 7  fulcrum_reference_files_upload(
+Step 8  fulcrum_reference_files_upload(
           form_id=...,
           file_name="species-picker.html",
           content=<generated HTML>
@@ -53,21 +59,27 @@ Step 7  fulcrum_reference_files_upload(
         ../examples/open-species-picker.js. Verify that the live file matches
         the approved content before proceeding.
 
-Step 8  fulcrum_forms_get(id=...)
+Step 9  fulcrum_forms_get(id=...)
         Always re-read immediately before updating, even if no change is known.
         Preserve intervening changes and re-review the final composed script
         and dependencies. If unapproved changes affect
-        the design, score, or risks materially, return to Step 5 for updated
-        approval, then repeat this fresh read before Step 9. If the approved
-        file content changed, repeat Steps 6-7 and verify the new file before
+        the design, score, or risks materially, return to Step 6 for updated
+        approval, then repeat this fresh read before Step 10. If the approved
+        file content changed, repeat Steps 7-8 and verify the new file before
         writing its dependent script. Otherwise do not repeat the upload.
         Do not replay a stale snapshot.
 
-Step 9  fulcrum_forms_update(
+Step 10 Final record-count recheck (no live writes)
+        Immediately after Step 9 and before updating, rerun the record-count
+        check required by ../fulcrum-app-editing/SKILL.md. If the count, form
+        identity, or production/sandbox classification differs from the
+        approved baseline, stop and reconcile through that skill.
+
+Step 11 fulcrum_forms_update(
           id=...,
           script=<reviewed and approved composed script>
         )
-        This write remains behind the Step 5 approval gate. There is no
+        This write remains behind the Step 6 approval gate. There is no
         standalone Data Event update tool; preserve unrelated handlers.
 
 Optional cleanup  After the form script no longer references the attachment://
