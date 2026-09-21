@@ -23,11 +23,12 @@ Step 4  fulcrum_forms_get(id=...)
         Read the current form and complete script. Inspect existing Reference
         Files and all attached/loaded dependencies before composing the change.
 
-Step 5  Existing-form editing gate (no live writes)
-        Complete ../fulcrum-app-editing/SKILL.md before proposing the extension
-        script change. It requires Query MCP record detection, production or
-        sandbox classification, data-impact analysis, and the applicable
-        clone/approval flow for a production-sensitive form.
+Step 5  Existing-form entry and impact gate (no live writes)
+        Complete the entry, Query MCP record detection, production or sandbox
+        classification, data-impact analysis, and dependency inventory from
+        ../fulcrum-app-editing/SKILL.md. Do not start the production clone
+        flow yet: the proposed extension script must be composed and reviewed
+        first.
 
 Step 6  Performance review and approval gate (no live writes)
         Compose the existing script plus the generated Data Event without
@@ -40,15 +41,25 @@ Step 6  Performance review and approval gate (no live writes)
         Complete this gate before continuing to Step 7: replacing a file can
         affect existing consumers even before the form script is updated.
 
-Step 7  Pre-upload freshness gate (no live writes)
+Step 7  Production rehearsal and promotion approval (no production writes)
+        For a production-sensitive form, follow the applicable
+        ../fulcrum-app-editing/SKILL.md clone flow after Step 6: obtain
+        approval for the same-organization clone, make the proposed change on
+        the clone, show the human-readable production diff, and obtain
+        explicit promotion approval. Apply the normal validation, dependency
+        classification, and freshness safeguards to the clone. Approval of
+        the clone does not authorize a production write.
+
+Step 8  Pre-upload freshness gate and approved artifact upload
         Follow ../../fulcrum-app-builder/resources/pre-write-freshness.md.
         Immediately re-read the target Reference File, dependencies, and known
         consumers; compare content/hash/revision with the approved baseline.
         Reconcile intervening changes and return to Step 6 for updated approval
-        if the proposed content or assessment changed materially. Repeat this
-        freshness gate after approval before uploading.
+        if the proposed content or assessment changed materially. After the
+        approved production rehearsal and promotion approval, upload only the
+        reviewed, approved HTML:
 
-Step 8  fulcrum_reference_files_upload(
+        fulcrum_reference_files_upload(
           form_id=...,
           file_name="species-picker.html",
           content=<generated HTML>
@@ -59,13 +70,13 @@ Step 8  fulcrum_reference_files_upload(
         ../examples/open-species-picker.js. Verify that the live file matches
         the approved content before proceeding.
 
-Step 9  fulcrum_forms_get(id=...)
+Step 9  Final production reconciliation: fulcrum_forms_get(id=...)
         Always re-read immediately before updating, even if no change is known.
         Preserve intervening changes and re-review the final composed script
         and dependencies. If unapproved changes affect
         the design, score, or risks materially, return to Step 6 for updated
         approval, then repeat this fresh read before Step 10. If the approved
-        file content changed, repeat Steps 7-8 and verify the new file before
+        file content changed, repeat Steps 8-9 and verify the new file before
         writing its dependent script. Otherwise do not repeat the upload.
         Do not replay a stale snapshot.
 
