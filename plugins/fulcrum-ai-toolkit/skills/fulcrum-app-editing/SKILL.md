@@ -13,7 +13,8 @@ freshness requirements.
 Treat live installed Fulcrum MCP gateway schemas as authoritative for available
 tool names, arguments, result shapes, and permissions. Use App MCP for
 configuration and Query MCP only for read-only record detection and impact
-analysis. When an MCP operation is available, never escape to raw API calls.
+analysis. Never use raw API calls or unregistered tools. If a required MCP
+operation is unavailable, stop and provide a handoff.
 
 > Source: [Fulcrum Forms API](https://docs.fulcrumapp.com/reference/forms-intro)
 > and [Query API introduction](https://docs.fulcrumapp.com/reference/query-intro).
@@ -173,7 +174,8 @@ identities, dependencies, or permissions transfer between organizations.
 - Never promote while a dependency affecting data capture, integrations, or
   runtime behavior is unresolved. Never silently exclude another dependency;
   surface it and obtain explicit approval.
-- Never use raw API calls or unregistered tools when MCP tools are available.
+- Never use raw API calls or unregistered tools. If a required MCP operation is
+  unavailable, stop and provide a handoff.
 - Never claim that a query, clone, diff, approval, or promotion occurred when
   the supported operation was unavailable or failed.
 
