@@ -87,7 +87,7 @@ test('existing-app updates require production-safety record and impact gates', (
   const build = compact(builder.split('## Step 4: Build Or Hand Off')[1]?.split('## Step 5:')[0] ?? '');
   assert.match(normalizedEditing, /Before any `fulcrum_forms_update` for an existing form/);
   assert.match(normalizedEditing, /form_summaries.*get_form_query_tables\(form_id\).*query_records/);
-  assert.match(normalizedEditing, /COUNT\(DISTINCT \.\.\.\)/);
+  assert.match(normalizedEditing, /COUNT\(DISTINCT record_identifier\)/);
   assert.match(normalizedEditing, /record presence is unknown: do not issue `fulcrum_forms_update`/);
   assert.match(normalizedEditing, /positive record count as production-sensitive/);
   assert.match(normalizedEditing, /data in 137 of 412 records.*make that data inaccessible/);
