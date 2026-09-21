@@ -93,8 +93,9 @@ test('existing-app updates require production-safety record and impact gates', (
   assert.match(normalizedEditing, /data in 137 of 412 records.*make that data inaccessible/);
   assert.match(normalizedEditing, /preserved.*recreated.*excluded.*unresolved/);
   assert.match(normalizedEditing, /data capture, integrations, or runtime behavior blocks promotion until it is resolved/);
-  assert.match(normalizedEditing, /Obtain clone-creation approval.*Create a sandbox clone.*Show a human-readable diff.*Obtain explicit promotion approval.*Reconcile and promote/i);
-  assert.match(normalizedEditing, /Never use raw API calls or unregistered tools\. If a required MCP operation is unavailable, stop and provide a handoff/);
+  assert.match(normalizedEditing, /COUNT\(DISTINCT record_identifier\)/);
+  assert.match(normalizedEditing, /Validate and approve the clone plan.*fulcrum-performance-review.*obtain explicit approval to create the sandbox clone.*Do not create a sandbox clone before this approval.*Create a sandbox clone.*Show a human-readable diff.*Obtain explicit promotion approval.*Reconcile and promote/i);
+  assert.match(normalizedEditing, /Never use raw API calls or unregistered tools.*required MCP operation is unavailable, stop and provide a handoff/);
   assert.match(build, /fulcrum-app-editing.*Query MCP record detection before each `fulcrum_forms_update`/);
   assert.match(build, /Complete the final record-count recheck.*fulcrum-app-editing/);
 });

@@ -52,8 +52,8 @@ Before any `fulcrum_forms_update` for an existing form:
 2. From those discovered identifiers, submit one read-only, single-line
    aggregate query through `query_records`. Count records only after metadata
    confirms the selected app table has one row per record; otherwise use the
-   discovered record identifier in `COUNT(DISTINCT ...)`. Retrieve no record
-   values.
+   discovered record identifier in a `COUNT(DISTINCT record_identifier)`
+   aggregate. Retrieve no record values.
 3. Surface the exact count, source form identity, query limitation, and the
    user's production/sandbox classification before proposing the change.
 4. Immediately after the final fresh form read and before the approved
@@ -120,6 +120,16 @@ behavior blocks promotion until it is resolved. For other exclusions or
 unresolved dependencies, show the user the specific limitation and obtain
 explicit approval before promotion.
 
+## Code Performance Evaluation
+
+Whenever authoring, modifying, or reviewing a Data Event script or other code
+as part of an app edit, complete
+[`fulcrum-performance-review`](../fulcrum-performance-review/SKILL.md) before
+delivery or persistence. Review the final composed code, trigger frequency,
+repeated lookups or requests, calculation chains, and synchronous
+validation/save work; do not treat a clone as authorization to skip this
+review.
+
 ## Production Safety Flow
 
 For a production-sensitive edit, use this approval-gated same-organization
@@ -129,10 +139,15 @@ workflow:
    target identity, current revision/content fingerprint when available,
    requested change, impact counts, dependency classifications, and user
    classification.
-2. **Obtain clone-creation approval.** Present the intended sandbox form,
-   organization, clone scope, and known dependency limitations. Obtain explicit
-   approval before creating the sandbox form. This approval authorizes only the
-   rehearsal environment, not a production update.
+2. **Validate and approve the clone plan.** Complete the builder's validation
+   for the proposed clone and change. When the proposal authors or changes a
+   Data Event script or other code, complete
+   [`fulcrum-performance-review`](../fulcrum-performance-review/SKILL.md)
+   before any sandbox or production write. Present the intended sandbox form,
+   organization, clone scope, requested change, impact counts, dependency
+   limitations, and operation, then obtain explicit approval to create the
+   sandbox clone. Do not create a sandbox clone before this approval; it
+   authorizes only the rehearsal environment, not a production update.
 3. **Create a sandbox clone.** Use only a currently advertised App MCP
    create/build workflow to create a separate form in the same organization.
    Build new clone elements with supported schema builders; do not reuse
@@ -142,7 +157,8 @@ workflow:
    scripts, Reference Files, or extensions were cloned unless the live MCP
    result verifies each one.
 4. **Make the proposed change on the clone.** Apply the normal builder
-   validation and performance review. The clone is a rehearsal environment,
+   validation and repeat the performance review before any clone write when
+   the final composition contains code. The clone is a rehearsal environment,
    not authorization to skip removal approval or impact reporting.
 5. **Show a human-readable diff.** Compare the fresh production baseline with
    the reviewed clone intent. Identify additions, removals, moved/restructured
