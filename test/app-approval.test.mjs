@@ -87,19 +87,20 @@ test('existing-app updates require production-safety record and impact gates', (
   const build = compact(builder.split('## Step 4: Build Or Hand Off')[1]?.split('## Step 5:')[0] ?? '');
   assert.match(normalizedEditing, /Before any `fulcrum_forms_update` for an existing form/);
   assert.match(normalizedEditing, /form_summaries.*get_form_query_tables\(form_id\).*query_records/);
+  assert.match(normalizedEditing, /COUNT\(DISTINCT \.\.\.\)/);
   assert.match(normalizedEditing, /record presence is unknown: do not issue `fulcrum_forms_update`/);
   assert.match(normalizedEditing, /positive record count as production-sensitive/);
   assert.match(normalizedEditing, /data in 137 of 412 records.*make that data inaccessible/);
   assert.match(normalizedEditing, /preserved.*recreated.*excluded.*unresolved/);
   assert.match(normalizedEditing, /data capture, integrations, or runtime behavior blocks promotion until it is resolved/);
-  assert.match(normalizedEditing, /Create a sandbox clone.*Show a human-readable diff.*Obtain explicit promotion approval.*Reconcile and promote/i);
-  assert.match(normalizedEditing, /Never use raw API calls or unregistered tools when MCP tools are available/);
+  assert.match(normalizedEditing, /Obtain clone-creation approval.*Create a sandbox clone.*Show a human-readable diff.*Obtain explicit promotion approval.*Reconcile and promote/i);
+  assert.match(normalizedEditing, /Never use raw API calls or unregistered tools\. If a required MCP operation is unavailable, stop and provide a handoff/);
   assert.match(build, /fulcrum-app-editing.*Query MCP record detection before each `fulcrum_forms_update`/);
   assert.match(build, /Complete the final record-count recheck.*fulcrum-app-editing/);
 });
 
 const codeSkills = [
-  'fulcrum-app-builder', 'fulcrum-app-design', 'fulcrum-app-extensions',
+  'fulcrum-app-builder', 'fulcrum-app-design', 'fulcrum-app-editing', 'fulcrum-app-extensions',
   'fulcrum-data-events', 'fulcrum-report-building', 'fulcrum-query-api',
   'fulcrum-integration-patterns', 'fulcrum-data-migration', 'fulcrum-gis-mapping',
   'fulcrum-workflow-decomposition'

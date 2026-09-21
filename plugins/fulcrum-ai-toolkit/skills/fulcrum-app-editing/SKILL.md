@@ -16,6 +16,11 @@ configuration and Query MCP only for read-only record detection and impact
 analysis. Never use raw API calls or unregistered tools. If a required MCP
 operation is unavailable, stop and provide a handoff.
 
+Whenever authoring, modifying, or reviewing code, including a Data Event
+script, complete
+[`fulcrum-performance-review`](../fulcrum-performance-review/SKILL.md) before
+persistence.
+
 > Source: [Fulcrum Forms API](https://docs.fulcrumapp.com/reference/forms-intro)
 > and [Query API introduction](https://docs.fulcrumapp.com/reference/query-intro).
 
@@ -47,7 +52,8 @@ Before any `fulcrum_forms_update` for an existing form:
 2. From those discovered identifiers, submit one read-only, single-line
    aggregate query through `query_records`. Count records only after metadata
    confirms the selected app table has one row per record; otherwise use the
-   discovered record identifier in the aggregate. Retrieve no record values.
+   discovered record identifier in `COUNT(DISTINCT ...)`. Retrieve no record
+   values.
 3. Surface the exact count, source form identity, query limitation, and the
    user's production/sandbox classification before proposing the change.
 4. Immediately after the final fresh form read and before the approved
@@ -123,7 +129,11 @@ workflow:
    target identity, current revision/content fingerprint when available,
    requested change, impact counts, dependency classifications, and user
    classification.
-2. **Create a sandbox clone.** Use only a currently advertised App MCP
+2. **Obtain clone-creation approval.** Present the intended sandbox form,
+   organization, clone scope, and known dependency limitations. Obtain explicit
+   approval before creating the sandbox form. This approval authorizes only the
+   rehearsal environment, not a production update.
+3. **Create a sandbox clone.** Use only a currently advertised App MCP
    create/build workflow to create a separate form in the same organization.
    Build new clone elements with supported schema builders; do not reuse
    production element or choice keys. Preserve field data names only when the
@@ -131,26 +141,26 @@ workflow:
    record links, shared choice lists, classifications, webhooks, reports,
    scripts, Reference Files, or extensions were cloned unless the live MCP
    result verifies each one.
-3. **Make the proposed change on the clone.** Apply the normal builder
+4. **Make the proposed change on the clone.** Apply the normal builder
    validation and performance review. The clone is a rehearsal environment,
    not authorization to skip removal approval or impact reporting.
-4. **Show a human-readable diff.** Compare the fresh production baseline with
+5. **Show a human-readable diff.** Compare the fresh production baseline with
    the reviewed clone intent. Identify additions, removals, moved/restructured
    elements, type/setting/choice/script changes, field keys/data names, impact
    counts, and every dependency classification. Explicitly show excluded and
    unresolved resources. Do not present raw JSON alone as the review artifact.
-5. **Obtain explicit promotion approval.** State the production form identity,
+6. **Obtain explicit promotion approval.** State the production form identity,
    exact approved changes, record and impact counts, known limitations, and
    the final operation. Approval of the clone does not authorize production.
    Do not request promotion approval while a data-capture, integration, or
    runtime-affecting dependency remains unresolved.
-6. **Reconcile and promote.** Follow the builder's
+7. **Reconcile and promote.** Follow the builder's
    [pre-write freshness safeguard](../fulcrum-app-builder/resources/pre-write-freshness.md):
    re-read production and dependencies, reconcile only approved changes into
    the fresh production schema, preserve every existing element and choice key,
    revalidate the composed form, rerun required impact/count checks, and
    reapprove material differences. Only then call `fulcrum_forms_update`.
-7. **Report the result.** State the production form identity, applied changes,
+8. **Report the result.** State the production form identity, applied changes,
    final record count, final dependency classifications, errors, and any
    partial state.
    A failed update after a successful clone is not a promotion; do not replay
