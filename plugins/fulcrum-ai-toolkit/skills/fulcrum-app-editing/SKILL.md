@@ -156,10 +156,15 @@ workflow:
    record links, shared choice lists, classifications, webhooks, reports,
    scripts, Reference Files, or extensions were cloned unless the live MCP
    result verifies each one.
-4. **Make the proposed change on the clone.** Apply the normal builder
-   validation and repeat the performance review before any clone write when
-   the final composition contains code. The clone is a rehearsal environment,
-   not authorization to skip removal approval or impact reporting.
+4. **Make the proposed change on the clone.** Treat the clone as an existing
+   live form: apply the normal builder validation, present the clone-specific
+   operation and impact/removal report, and obtain explicit approval for that
+   modification. Immediately before writing, apply the builder's
+   [pre-write freshness safeguard](../fulcrum-app-builder/resources/pre-write-freshness.md)
+   to re-read and reconcile the clone and its dependencies. Repeat the
+   performance review before any clone write when the final composition
+   contains code. The clone is a rehearsal environment, not authorization to
+   skip removal approval or impact reporting.
 5. **Show a human-readable diff.** Compare the fresh production baseline with
    the reviewed clone intent. Identify additions, removals, moved/restructured
    elements, type/setting/choice/script changes, field keys/data names, impact
