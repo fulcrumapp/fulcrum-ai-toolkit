@@ -87,13 +87,20 @@ test('existing-app updates require production-safety record and impact gates', (
   const build = compact(builder.split('## Step 4: Build Or Hand Off')[1]?.split('## Step 5:')[0] ?? '');
   assert.match(normalizedEditing, /Before any `fulcrum_forms_update` for an existing form/);
   assert.match(normalizedEditing, /form_summaries.*get_form_query_tables\(form_id\).*query_records/);
-  assert.match(normalizedEditing, /COUNT\(DISTINCT record_identifier\)/);
+  const recordDetection = compact(normalizedEditing.split('## Required Record Detection')[1]?.split('## Classify The Edit')[0] ?? '');
+  assertInOrder(recordDetection, [
+    'COUNT(DISTINCT record_identifier)',
+    'Surface the exact count',
+    'Immediately after the final fresh form read',
+    'rerun the count-only aggregate',
+    'differs from the approved baseline, stop',
+    'obtain approval again'
+  ]);
   assert.match(normalizedEditing, /record presence is unknown: do not issue `fulcrum_forms_update`/);
   assert.match(normalizedEditing, /positive record count as production-sensitive/);
   assert.match(normalizedEditing, /data in 137 of 412 records.*make that data inaccessible/);
   assert.match(normalizedEditing, /preserved.*recreated.*excluded.*unresolved/);
   assert.match(normalizedEditing, /data capture, integrations, or runtime behavior blocks promotion until it is resolved/);
-  assert.match(normalizedEditing, /COUNT\(DISTINCT record_identifier\)/);
   assert.match(normalizedEditing, /Validate and approve the clone plan.*fulcrum-performance-review.*obtain explicit approval to create the sandbox clone.*Do not create a sandbox clone before this approval.*Create a sandbox clone.*Show a human-readable diff.*Obtain explicit promotion approval.*Reconcile and promote/i);
   assert.match(normalizedEditing, /Make the proposed change on the clone.*Treat the clone as an existing live form.*obtain explicit approval for that modification.*pre-write freshness safeguard.*re-read and reconcile the clone and its dependencies/i);
   assert.match(normalizedEditing, /Never use raw API calls or unregistered tools.*required MCP operation is unavailable, stop and provide a handoff/);
