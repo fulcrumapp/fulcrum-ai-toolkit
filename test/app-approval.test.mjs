@@ -5,6 +5,7 @@ import test from 'node:test';
 const skillsRoot = new URL('../plugins/fulcrum-ai-toolkit/skills/', import.meta.url);
 const read = (file) => fs.readFileSync(new URL(file, skillsRoot), 'utf8');
 const builder = read('fulcrum-app-builder/SKILL.md');
+const editing = read('fulcrum-app-editing/SKILL.md');
 const performance = read('fulcrum-performance-review/SKILL.md');
 const compact = (text) => text.replace(/\s+/g, ' ');
 const approval = compact(builder.split('### Score And Advice At Every Design Confirmation')[1]?.split('## Step 4:')[0] ?? '');
@@ -79,6 +80,22 @@ test('assessment uses the composed edit and revisits material changes before wri
     'Write the reviewed, approved final script with `fulcrum_forms_update`'
   ]);
   assert.match(scriptUpdate, /even if no change is known/);
+});
+
+test('existing-app updates require production-safety record and impact gates', () => {
+  const normalizedEditing = compact(editing);
+  const build = compact(builder.split('## Step 4: Build Or Hand Off')[1]?.split('## Step 5:')[0] ?? '');
+  assert.match(normalizedEditing, /Before any `fulcrum_forms_update` for an existing form/);
+  assert.match(normalizedEditing, /form_summaries.*get_form_query_tables\(form_id\).*query_records/);
+  assert.match(normalizedEditing, /record presence is unknown: do not issue `fulcrum_forms_update`/);
+  assert.match(normalizedEditing, /positive record count as production-sensitive/);
+  assert.match(normalizedEditing, /data in 137 of 412 records.*make that data inaccessible/);
+  assert.match(normalizedEditing, /preserved.*recreated.*excluded.*unresolved/);
+  assert.match(normalizedEditing, /data capture, integrations, or runtime behavior blocks promotion until it is resolved/);
+  assert.match(normalizedEditing, /Create a sandbox clone.*Show a human-readable diff.*Obtain explicit promotion approval.*Reconcile and promote/i);
+  assert.match(normalizedEditing, /Never use raw API calls or unregistered tools when MCP tools are available/);
+  assert.match(build, /fulcrum-app-editing.*Query MCP record detection before each `fulcrum_forms_update`/);
+  assert.match(build, /Complete the final record-count recheck.*fulcrum-app-editing/);
 });
 
 const codeSkills = [
@@ -335,6 +352,7 @@ test('new approval and performance guidance links resolve in the portable bundle
     'fulcrum-performance-review/SKILL.md',
     'fulcrum-app-builder/resources/approval-cases.md',
     'fulcrum-app-builder/resources/pre-write-freshness.md',
+    'fulcrum-app-editing/SKILL.md',
     'fulcrum-app-builder/assets/README.md',
     'fulcrum-app-builder/examples/README.md',
     'fulcrum-app-extensions/resources/extension-bridge-api.md',
