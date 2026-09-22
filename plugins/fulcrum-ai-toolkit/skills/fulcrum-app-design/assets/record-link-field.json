@@ -11,5 +11,9 @@
   "allow_existing_records": true,
   "allow_creating_records": false,
   "allow_updating_records": false,
-  "allow_empty_records": true
+  "allow_multiple_records": false,
+  "record_conditions_type": null,
+  "record_conditions": null,
+  "record_defaults": null,
+  "default_previous_value": false
 }

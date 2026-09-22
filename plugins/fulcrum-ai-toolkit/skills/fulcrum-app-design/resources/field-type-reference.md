@@ -186,16 +186,26 @@ Link to records in another app (or the same app).
 
 | Property | Type | Description |
 |----------|------|-------------|
-| form_id | string | Resource ID of the form whose records can be linked |
-| allow_existing_records | boolean | Allow linking to existing records |
-| allow_creating_records | boolean | Allow creating new linked records inline |
-| allow_updating_records | boolean | Allow editing linked records inline |
-| allow_empty_records | boolean | Allow saving without selecting a linked record |
+| form_id | string | Resource id of an existing form in this account. Required. `linked_form_id` is not an element attribute. |
+| allow_existing_records | boolean | Allow selecting existing records. At least one of this or `allow_creating_records` must be true. The API does not default a missing flag. |
+| allow_creating_records | boolean | Allow creating a linked record in the mobile app. A schema flag, not a record-creation API. |
+| allow_updating_records | boolean | Allow editing a linked record inline. Omitted values are stored as false. |
+| allow_multiple_records | boolean | Allow linking more than one record. Omitted values are stored as false. When true, `record_defaults` are ignored. |
+| record_conditions_type | string or null | `"all"` or `"any"`. Null when there are no conditions. Omitted conditions are stored as `"any"`. |
+| record_conditions | array or null | Filters on the linked form. Each item has `linked_form_field_key`, `operator`, and either `value` or `value_field_key`. |
+| record_defaults | array or null | Values copied onto a newly created linked record. Each item has `source_field_key` and `destination_field_key`. |
+| default_previous_value | boolean | Pre-fill the previously used link. Omitted values are stored as false. |
+
+Saving without a link is the universal `required` boolean. `allow_empty_records`
+is not a RecordLink attribute and is dropped on save. The account plan must
+have record links enabled, or the form is rejected.
 
 A complete element is
 [`record-link-field.json`](../assets/record-link-field.json). There is no
 `record_link_default_form_id`, `record_link_conditions`, `min_length`, or
-`max_length` on this element type.
+`max_length` on this element type. The public Forms introduction has a property
+table and no JSON example. A saved Rails element is in
+`db/system_app_templates/basic_issue.json.erb`.
 
 ## Section
 

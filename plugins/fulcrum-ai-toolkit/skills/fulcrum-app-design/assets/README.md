@@ -12,18 +12,22 @@ comment. Strict JSON cannot hold comments, so its source is recorded here.
 ## Notes
 
 - `record-link-field.json` is a complete element, not a fragment. Every
-  property in it is defined by the
-  [public OpenAPI contract](https://raw.githubusercontent.com/fulcrumapp/api/v2/reference/rest-api.json):
-  `type`, `key`, `data_name`, and `label` are required for every element, and
-  `form_id`, `allow_existing_records`, `allow_creating_records`,
-  `allow_updating_records`, and `allow_empty_records` are the RecordLinkField
-  properties. There is no `allow_multiple_records` or `linked_form_id` element
-  attribute.
-  Source: [OpenAPI and Postman collection](https://docs.fulcrumapp.com/reference/openapi-and-postman-collection).
+  property in it is defined by the Forms API contract in
+  [fulcrumapp/api#93](https://github.com/fulcrumapp/api/pull/93), which matches
+  the Rails `Form::RecordLinkField` element. `type`, `key`, `data_name`, and
+  `label` are required for every element. `form_id` is required for a record
+  link. `allow_existing_records`, `allow_creating_records`,
+  `allow_updating_records`, `allow_multiple_records`,
+  `record_conditions_type`, `record_conditions`, `record_defaults`, and
+  `default_previous_value` are the RecordLink properties. There is no
+  `linked_form_id` or `allow_empty_records` attribute.
+  Source: [Forms API introduction](https://docs.fulcrumapp.com/reference/forms-intro)
+  and Rails `app/classes/form/record_link_field.rb`.
 - `record-link-field.json` uses `form_id`, not `linked_form_id` or
-  `record_link_form_id`, and at least one of `allow_existing_records` or
+  `record_link_form_id`. At least one of `allow_existing_records` or
   `allow_creating_records` must be `true`. The API does not default a missing
-  allow flag.
+  allow flag. The example uses the form-builder values, which are not API
+  defaults. Replace `form_id` with a real form resource id before sending.
 - `key` is the element's unique four-character hex key within the form, and
   `form_id` is a form ID. Both values here are neutral placeholders;
   read the real values from the live form before sending an update.
