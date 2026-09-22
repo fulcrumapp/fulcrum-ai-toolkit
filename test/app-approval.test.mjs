@@ -150,6 +150,7 @@ test('extension publishing reviews and approves composed artifacts before either
   ]);
   assert.match(sequence, /both the Reference File upload or replacement and the composed script/);
   assert.match(sequence, /repeat Steps 8-9 and verify the new file before writing its dependent script/);
+  assert.match(sequence, /manual UI is not an alternate live-write path/);
   const extension = read('fulcrum-app-extensions/SKILL.md');
   const manual = compact(extension.split('### Manual UI fallback')[1]?.split('## Anti-Patterns')[0] ?? '');
   assertInOrder(manual, [
@@ -163,6 +164,12 @@ test('extension publishing reviews and approves composed artifacts before either
     'State that no live changes were made'
   ]);
   assert.doesNotMatch(manual, /In Fulcrum, open the target form|upload the reviewed file|Save the reviewed, approved composed script/);
+  const bridge = compact(read('fulcrum-app-extensions/resources/extension-bridge-api.md'));
+  assert.match(bridge, /only to prepare an artifact and provide a handoff/);
+  assert.match(bridge, /cannot authorize or perform a live upload/);
+  const examples = compact(read('fulcrum-app-extensions/examples/README.md'));
+  assert.match(examples, /manual workflow is preparation and handoff only/);
+  assert.match(examples, /does not authorize either live write/);
 });
 
 test('direct Data Event and shared-file writes remain behind performance and approval gates', () => {

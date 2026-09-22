@@ -1,8 +1,8 @@
 # Source: https://docs.fulcrumapp.com/docs/app-extensions-introduction
 # Purpose: the automation path for publishing an extension with App MCP.
 # Live installed App MCP schemas define the exact arguments; the order below is
-# the part that matters. This is an automation convenience, not a prerequisite:
-# the manual Reference File upload in the Fulcrum UI reaches the same result.
+# the part that matters. Connector-independent users may prepare an artifact
+# and handoff, but the manual UI is not an alternate live-write path.
 
 Step 1  fulcrum_extensions_list_patterns()
         Review the registered patterns before choosing one.

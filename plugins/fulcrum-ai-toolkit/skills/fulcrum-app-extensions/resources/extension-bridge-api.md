@@ -58,9 +58,10 @@ Immediately before the script update, re-read the current form and dependencies,
 reconcile intervening changes, and re-review the final composition. Repeat the
 fresh read after any required reapproval; never publish a stale script snapshot.
 
-For connector-independent work, follow
-[the manual UI workflow](../SKILL.md#manual-ui-fallback), which requires the
-same review, approval, and fresh-read safeguards.
+For connector-independent work, use
+[the manual UI workflow](../SKILL.md#manual-ui-fallback) only to prepare an
+artifact and provide a handoff. It cannot authorize or perform a live upload,
+file replacement, or script edit when the required MCP gates are unavailable.
 
 For optional cleanup, first update the form script so it no longer references
 the `attachment://` URL. Immediately before deletion, obtain explicit
