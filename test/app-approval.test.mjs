@@ -153,17 +153,16 @@ test('extension publishing reviews and approves composed artifacts before either
   const extension = read('fulcrum-app-extensions/SKILL.md');
   const manual = compact(extension.split('### Manual UI fallback')[1]?.split('## Anti-Patterns')[0] ?? '');
   assertInOrder(manual, [
-    'Inspect the target form',
-    'Complete the no-write performance review',
-    'obtain explicit approval',
-    'Immediately re-read the target Reference File',
-    'Repeat this check after approval',
-    'upload the reviewed file',
-    'Recheck the current form',
-    're-review any intervening changes',
-    'Save the reviewed, approved composed script'
+    'fulcrum-app-editing',
+    'Stop before any live upload',
+    'do not use the UI as an alternate write path',
+    'Save the proposed extension',
+    'Review the proposed HTML locally',
+    'does not authorize a live write',
+    'Provide a handoff',
+    'State that no live changes were made'
   ]);
-  assert.match(manual, /repeat steps 4-5 and verify the replacement before writing its dependent script/);
+  assert.doesNotMatch(manual, /In Fulcrum, open the target form|upload the reviewed file|Save the reviewed, approved composed script/);
 });
 
 test('direct Data Event and shared-file writes remain behind performance and approval gates', () => {
