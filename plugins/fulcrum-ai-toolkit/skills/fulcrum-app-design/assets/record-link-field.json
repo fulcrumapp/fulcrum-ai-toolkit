@@ -7,7 +7,7 @@
   "required": false,
   "disabled": false,
   "hidden": false,
-  "linked_form_id": "00000000-0000-4000-8000-000000000000",
+  "form_id": "00000000-0000-4000-8000-000000000000",
   "allow_existing_records": true,
   "allow_creating_records": false,
   "allow_updating_records": false,

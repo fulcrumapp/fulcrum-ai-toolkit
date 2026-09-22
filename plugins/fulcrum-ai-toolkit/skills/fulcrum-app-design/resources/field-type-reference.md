@@ -186,7 +186,7 @@ Link to records in another app (or the same app).
 
 | Property | Type | Description |
 |----------|------|-------------|
-| linked_form_id | string | ID of the form whose records can be linked |
+| form_id | string | Resource ID of the form whose records can be linked |
 | allow_existing_records | boolean | Allow linking to existing records |
 | allow_creating_records | boolean | Allow creating new linked records inline |
 | allow_updating_records | boolean | Allow editing linked records inline |
@@ -258,7 +258,7 @@ Every field element **MUST** include `required`, `hidden`, and `disabled` as exp
 
 ### RecordLinkField — correct parameter name
 
-The API field is `linked_form_id` (not `form_id` or `record_link_form_id`). Additionally, at least one of `allow_existing_records` or `allow_creating_records` must be `true`. The other RecordLinkField properties are `allow_updating_records` and `allow_empty_records`; there is no `allow_multiple_records`. A complete element, carrying the required common properties `type`, `key`, `data_name`, and `label` alongside explicit `required`, `hidden`, and `disabled` booleans, is
+The API field is `form_id` (not `linked_form_id` or `record_link_form_id`). Additionally, at least one of `allow_existing_records` or `allow_creating_records` must be `true`; the API does not apply a default when both are omitted. `allow_creating_records` only enables inline creation in the mobile app. It does not add a record-creation API. The other RecordLinkField properties are `allow_updating_records` and `allow_empty_records`; there is no `allow_multiple_records`. A complete element, carrying the required common properties `type`, `key`, `data_name`, and `label` alongside explicit `required`, `hidden`, and `disabled` booleans, is
 [`record-link-field.json`](../assets/record-link-field.json); its public source
 is recorded in [`assets/README.md`](../assets/README.md).
 
