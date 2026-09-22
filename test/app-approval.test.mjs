@@ -149,7 +149,7 @@ test('extension publishing reviews and approves composed artifacts before either
     'fulcrum_forms_update('
   ]);
   assert.match(sequence, /both the Reference File upload or replacement and the composed script/);
-  assert.match(sequence, /repeat Steps 7-8 and verify the new file before writing its dependent script/);
+  assert.match(sequence, /repeat Steps 8-9 and verify the new file before writing its dependent script/);
   const extension = read('fulcrum-app-extensions/SKILL.md');
   const manual = compact(extension.split('### Manual UI fallback')[1]?.split('## Anti-Patterns')[0] ?? '');
   assertInOrder(manual, [

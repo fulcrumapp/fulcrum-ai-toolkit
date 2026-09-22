@@ -23,12 +23,12 @@ Step 4  fulcrum_forms_get(id=...)
         Read the current form and complete script. Inspect existing Reference
         Files and all attached/loaded dependencies before composing the change.
 
-Step 5  Existing-form entry and impact gate (no live writes)
-        Complete the entry, Query MCP record detection, production or sandbox
-        classification, data-impact analysis, and dependency inventory from
-        ../fulcrum-app-editing/SKILL.md. Do not start the production clone
-        flow yet: the proposed extension script must be composed and reviewed
-        first.
+Step 5  Existing-form editing gate (no live writes)
+        Complete the entry gate from ../fulcrum-app-editing/SKILL.md, including
+        Query MCP record detection, production or sandbox classification,
+        data-impact analysis, and dependency inventory. Do not start the
+        production clone flow yet: the proposed extension script must be
+        composed and reviewed first.
 
 Step 6  Performance review and approval gate (no live writes)
         Compose the existing script plus the generated Data Event without
@@ -50,10 +50,11 @@ Step 7  Production rehearsal and promotion approval (no production writes)
         classification, and freshness safeguards to the clone. Approval of
         the clone does not authorize a production write.
 
-Step 8  Pre-upload freshness gate and approved artifact upload
+Step 8  Pre-upload freshness gate (no live writes) and approved artifact upload
         Follow ../../fulcrum-app-builder/resources/pre-write-freshness.md.
         Immediately re-read the target Reference File, dependencies, and known
         consumers; compare content/hash/revision with the approved baseline.
+        Repeat this freshness gate after approval before any live upload.
         Reconcile intervening changes and return to Step 6 for updated approval
         if the proposed content or assessment changed materially. After the
         approved production rehearsal and promotion approval, upload only the
