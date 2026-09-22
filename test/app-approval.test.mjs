@@ -101,6 +101,21 @@ test('existing-app updates require production-safety record and impact gates', (
   assert.match(normalizedEditing, /data in 137 of 412 records.*make that data inaccessible/);
   assert.match(normalizedEditing, /preserved.*recreated.*excluded.*unresolved/);
   assert.match(normalizedEditing, /data capture, integrations, or runtime behavior blocks promotion until it is resolved/);
+  const decisionRules = compact(normalizedEditing.split('## Edit Decision Rules')[1]?.split('## Analyze Data And Dependency Impact')[0] ?? '');
+  assertInOrder(decisionRules, [
+    'Add a new field',
+    'Eligible as a non-destructive edit',
+    'Change labels',
+    'Remove a field',
+    'Impact-gated migration',
+    'Add or modify Data Event scripts',
+    'Code/dependency-gated edit',
+    'unknown field mapping',
+    'Do not write',
+    'Cross-organization promotion',
+    'Handoff required',
+    'type change is always impact-gated'
+  ]);
   assert.match(normalizedEditing, /Validate and approve the clone plan.*fulcrum-performance-review.*obtain explicit approval to create the sandbox clone.*Do not create a sandbox clone before this approval.*Create a sandbox clone.*Show a human-readable diff.*Obtain explicit promotion approval.*Reconcile and promote/i);
   assert.match(normalizedEditing, /Make the proposed change on the clone.*Treat the clone as an existing live form.*obtain explicit approval for that modification.*pre-write freshness safeguard.*re-read and reconcile the clone and its dependencies/i);
   assert.match(normalizedEditing, /Never use raw API calls or unregistered tools.*required MCP operation is unavailable, stop and provide a handoff/);

@@ -82,6 +82,27 @@ The zero-record route is not authorization to destroy a field, change its
 concrete type, or overwrite concurrent edits. It retains every explicit
 confirmation and freshness gate from the builder.
 
+## Edit Decision Rules
+
+Classify the requested operation before selecting a write route. "Eligible"
+means the operation may proceed only after the stated validation, freshness,
+and user-approval gates; it is not permission to write automatically.
+
+| Operation | Decision | Required evidence and gates |
+| --- | --- | --- |
+| Add a new field, section, or choice without changing existing elements, keys, data names, or runtime code | **Eligible as a non-destructive edit** | Validate the composed form, confirm no existing key or data name is replaced, inspect dependencies, obtain explicit approval, and perform the final fresh read before `fulcrum_forms_update`. |
+| Change labels, descriptions, layout, or non-semantic presentation settings only | **Eligible as a non-destructive edit** | Prove the setting is presentation-only in the live schema; preserve keys and data names; obtain explicit approval and complete the final fresh read. |
+| Remove a field or subtree, change a field's concrete type, change repeatable/link structure, or change field data semantics | **Impact-gated migration** | Use Query MCP metadata and aggregate counts to report populated and total records, inspect dependencies, obtain explicit removal/migration approval, and use the production clone/diff/promotion flow when production-sensitive. |
+| Add or modify Data Event scripts, integrations, webhooks, reports, Reference Files, or App Extensions | **Code/dependency-gated edit** | Complete the applicable performance review, dependency inspection, composed-artifact review, explicit approval, and fresh-read safeguards before each live write. |
+| Any operation with an unknown field mapping, parent cardinality, record count, dependency, supported MCP operation, or resulting data behavior | **Do not write** | Stop, explain what is unknown, and provide the smallest authorized discovery or handoff needed to resolve it. |
+| Cross-organization promotion, unsupported destructive migration, or a change that cannot preserve/reconcile existing keys and data safely | **Handoff required** | Do not attempt the mutation; provide a migration plan covering mapping, authorization, dry run, cutover, and rollback. |
+
+An add-field request is therefore not automatically safe: it is eligible only
+when it is purely additive and does not alter existing data semantics or
+runtime behavior. A type change is always impact-gated, even when the target
+field appears empty or the user describes the app as a sandbox; an empty or
+unverified count never proves that the change is safe.
+
 ## Analyze Data And Dependency Impact
 
 Before approval, determine whether the requested change removes a field,
