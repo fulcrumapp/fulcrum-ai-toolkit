@@ -199,7 +199,8 @@ workflow:
 7. **Reconcile and promote.** Follow the builder's
    [pre-write freshness safeguard](../fulcrum-app-builder/resources/pre-write-freshness.md):
    re-read production and dependencies, reconcile only approved changes into
-   the fresh production schema, preserve every existing element and choice key,
+   the fresh production schema, preserve every retained existing element and
+   choice key, omit only elements or choices explicitly approved for removal,
    revalidate the composed form, rerun required impact/count checks, and
    reapprove material differences. Only then call `fulcrum_forms_update`.
 8. **Report the result.** State the production form identity, applied changes,

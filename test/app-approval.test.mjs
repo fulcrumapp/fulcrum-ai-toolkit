@@ -202,7 +202,7 @@ test('direct Data Event and shared-file writes remain behind performance and app
     'fulcrum_forms_update'
   ]);
   assert.match(sharedCode, /existing consumers can load a replacement without a script change/);
-  assert.match(sharedCode, /repeat steps 4-5 and verify that replacement before writing the script/);
+  assert.match(sharedCode, /repeat steps 5-6 and verify that replacement before writing the script/);
 });
 
 test('extension publishing applies existing-form safety gates before form updates', () => {

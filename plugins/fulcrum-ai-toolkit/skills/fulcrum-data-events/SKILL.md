@@ -160,7 +160,7 @@ For App MCP-managed shared code, use this order:
    Preserve intervening changes; refresh the score/advice and obtain updated
    approval if the design or assessment changed materially. Repeat this fresh
    read after reapproval before continuing to step 8. If reapproval changes the
-   approved file content, repeat steps 4-5 and verify that replacement before
+   approved file content, repeat steps 5-6 and verify that replacement before
    writing the script. Do not repeat the upload when approved content is unchanged.
 8. Complete the final record-count recheck required by
    `fulcrum-app-editing` immediately before writing. If the count, form
