@@ -15,6 +15,24 @@
           {
             "type": "object",
             "required": ["form_id"],
+            "anyOf": [
+              {
+                "required": ["allow_existing_records"],
+                "properties": {
+                  "allow_existing_records": {
+                    "const": true
+                  }
+                }
+              },
+              {
+                "required": ["allow_creating_records"],
+                "properties": {
+                  "allow_creating_records": {
+                    "const": true
+                  }
+                }
+              }
+            ],
             "properties": {
               "type": {
                 "type": "string",

@@ -191,7 +191,7 @@ Link to records in another app (or the same app).
 | allow_creating_records | boolean | Allow creating a linked record in the mobile app. A schema flag, not a record-creation API. |
 | allow_updating_records | boolean | Allow editing a linked record inline. Omitted values are stored as false. |
 | allow_multiple_records | boolean | Allow linking more than one record. Omitted values are stored as false. When true, `record_defaults` are ignored. |
-| record_conditions_type | string or null | `"all"` or `"any"`. Null when there are no conditions. Omitted conditions are stored as `"any"`. |
+| record_conditions_type | string or null | `"all"` or `"any"`. Null when there are no conditions. When conditions are present and this is omitted or not `"all"`, it is stored as `"any"`. |
 | record_conditions | array or null | Filters on the linked form. Each item has `linked_form_field_key`, `operator`, and either `value` or `value_field_key`. |
 | record_defaults | array or null | Values copied onto a newly created linked record. Each item has `source_field_key` and `destination_field_key`. |
 | default_previous_value | boolean | Pre-fill the previously used link. Omitted values are stored as false. |
@@ -268,7 +268,7 @@ Every field element **MUST** include `required`, `hidden`, and `disabled` as exp
 
 ### RecordLinkField — correct parameter name
 
-The API field is `form_id` (not `linked_form_id` or `record_link_form_id`). Additionally, at least one of `allow_existing_records` or `allow_creating_records` must be `true`; the API does not apply a default when both are omitted. `allow_creating_records` only enables inline creation in the mobile app. It does not add a record-creation API. The other RecordLinkField properties are `allow_updating_records` and `allow_empty_records`; there is no `allow_multiple_records`. A complete element, carrying the required common properties `type`, `key`, `data_name`, and `label` alongside explicit `required`, `hidden`, and `disabled` booleans, is
+The API field is `form_id` (not `linked_form_id` or `record_link_form_id`). At least one of `allow_existing_records` or `allow_creating_records` must be `true`; the API does not apply a default when both are omitted or both are false. `allow_creating_records` only enables inline creation in the mobile app. It does not add a record-creation API. Also send `allow_updating_records`, `allow_multiple_records`, `record_conditions_type`, `record_conditions`, `record_defaults`, and `default_previous_value` when those behaviors matter. Do not send `allow_empty_records`; saving without a link is the universal `required` boolean, and that key is dropped on save. A complete element, carrying the required common properties `type`, `key`, `data_name`, and `label` alongside explicit `required`, `hidden`, and `disabled` booleans, is
 [`record-link-field.json`](../assets/record-link-field.json); its public source
 is recorded in [`assets/README.md`](../assets/README.md).
 
