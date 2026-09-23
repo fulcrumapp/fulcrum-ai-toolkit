@@ -1,6 +1,6 @@
 ---
 name: fulcrum-ai-toolkit
-description: Portable Fulcrum AI skills for designing, building, reviewing, integrating, mapping, querying, securing, and documenting field-data apps and workflows. Use the focused skill files in skills/ when a request needs detailed platform guidance.
+description: Portable Fulcrum AI skills for designing, building, reviewing, integrating, mapping, querying, securing, and documenting field-data apps and workflows. Use the focused skill files in plugins/fulcrum-ai-toolkit/skills/ when a request needs detailed platform guidance.
 ---
 
 # Fulcrum AI Toolkit
