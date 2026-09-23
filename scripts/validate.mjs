@@ -29,10 +29,11 @@ const ROOT = path.resolve(HERE, '..');
 const PLUGIN_RELATIVE_PATH = path.join('plugins', 'fulcrum-ai-toolkit');
 const PLUGIN_DIR = path.join(ROOT, PLUGIN_RELATIVE_PATH);
 const SKILLS_DIR = path.join(PLUGIN_DIR, 'skills');
-const BUNDLE_ENTRYPOINTS = [
+const DEFAULT_BUNDLE_ENTRYPOINTS = [
   path.join(ROOT, 'SKILL.md'),
   path.join(PLUGIN_DIR, 'SKILL.md')
 ];
+const BUNDLE_ENTRYPOINTS = resolveBundleEntrypoints(process.env.FULCRUM_VALIDATE_BUNDLE_ENTRYPOINTS);
 
 const EXPECTED_SKILLS = [
   'fulcrum-access-management',
@@ -120,6 +121,18 @@ for (const entrypoint of BUNDLE_ENTRYPOINTS) {
 
 function repoRelativePath(filePath) {
   return path.relative(ROOT, filePath);
+}
+
+function resolveBundleEntrypoints(override) {
+  if (!override) return DEFAULT_BUNDLE_ENTRYPOINTS;
+
+  const paths = override
+    .split(path.delimiter)
+    .map((entry) => entry.trim())
+    .filter(Boolean)
+    .map((entry) => (path.isAbsolute(entry) ? entry : path.resolve(ROOT, entry)));
+
+  return paths.length > 0 ? paths : DEFAULT_BUNDLE_ENTRYPOINTS;
 }
 
 function filesUnder(directory) {
