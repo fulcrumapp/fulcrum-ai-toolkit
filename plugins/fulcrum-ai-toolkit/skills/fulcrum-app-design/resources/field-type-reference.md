@@ -192,8 +192,8 @@ Link to records in another app (or the same app).
 | allow_updating_records | boolean | Allow editing a linked record inline. Omitted values are stored as false. |
 | allow_multiple_records | boolean | Allow linking more than one record. Omitted values are stored as false. When true, `record_defaults` are ignored. |
 | record_conditions_type | string or null | `"all"` or `"any"`. Null when there are no conditions. When conditions are present and this is omitted or not `"all"`, it is stored as `"any"`. |
-| record_conditions | array or null | Filters on the linked form. Each item has `linked_form_field_key`, `operator`, and either `value` or `value_field_key`. |
-| record_defaults | array or null | Values copied onto a newly created linked record. Each item has `source_field_key` and `destination_field_key`. |
+| record_conditions | array or null | Filters on the linked form. A serialized item has `linked_form_field_key`, `operator`, and either `value` or `value_field_key`. Missing input keys are not rejected; they are stored as null. `value` keeps its JSON type. |
+| record_defaults | array or null | Values copied onto a newly created linked record. A serialized item has `source_field_key` and `destination_field_key`. Missing input keys are not rejected; they are stored as null. |
 | default_previous_value | boolean | Pre-fill the previously used link. Omitted values are stored as false. |
 
 Saving without a link is the universal `required` boolean. `allow_empty_records`
