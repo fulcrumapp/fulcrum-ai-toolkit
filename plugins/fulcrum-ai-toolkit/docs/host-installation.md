@@ -68,8 +68,8 @@ uploading individual skills and assuming their siblings remain available.
 
 ## Microsoft 365 Copilot
 
-Microsoft 365 Copilot requires an uploaded `SKILL.md` or a ZIP containing
-`SKILL.md` at the ZIP's root. Build the staged bundle from the repository root:
+Microsoft 365 Copilot requires uploading a ZIP with `SKILL.md` at the archive
+root. Build the staged bundle from the repository root:
 
 ```bash
 node scripts/build-m365-bundle.mjs
