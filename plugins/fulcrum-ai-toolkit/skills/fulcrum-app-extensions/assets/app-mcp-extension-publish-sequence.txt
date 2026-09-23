@@ -55,10 +55,12 @@ Step 8  Pre-upload freshness gate (no live writes) and approved artifact upload
         Immediately re-read the target Reference File, dependencies, and known
         consumers; compare content/hash/revision with the approved baseline.
         Repeat this freshness gate after approval before any live upload.
-        Reconcile intervening changes and return to Step 6 for updated approval
-        if the proposed content or assessment changed materially. After the
-        approved production rehearsal and promotion approval, upload only the
-        reviewed, approved HTML:
+        Reconcile intervening changes and return to Step 4 for a fresh form,
+        Reference File, dependency, and consumer read, then repeat Step 5's
+        entry/count/impact gate before Step 6's updated review and approval if
+        the proposed content, dependencies, or assessment changed materially.
+        After the approved production rehearsal and promotion approval, upload
+        only the reviewed, approved HTML:
 
         fulcrum_reference_files_upload(
           form_id=...,
@@ -75,10 +77,12 @@ Step 9  Final production reconciliation: fulcrum_forms_get(id=...)
         Always re-read immediately before updating, even if no change is known.
         Preserve intervening changes and re-review the final composed script
         and dependencies. If unapproved changes affect
-        the design, score, or risks materially, return to Step 6 for updated
-        approval, then repeat this fresh read before Step 10. If the approved
-        file content changed, repeat Steps 8-9 and verify the new file before
-        writing its dependent script. Otherwise do not repeat the upload.
+        the design, score, or risks materially, return to Step 4 for a fresh
+        form/dependency read, repeat Step 5's entry/count/impact gate, and then
+        return through Step 6 for updated approval before repeating this fresh
+        read. If the approved file content changed, repeat Steps 4-5, then
+        Steps 8-9, and verify the new file before writing its dependent script.
+        Otherwise do not repeat the upload.
         Do not replay a stale snapshot.
 
 Step 10 Final record-count recheck (no live writes)
