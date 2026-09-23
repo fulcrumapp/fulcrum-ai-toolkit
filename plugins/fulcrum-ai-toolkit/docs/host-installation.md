@@ -69,18 +69,19 @@ uploading individual skills and assuming their siblings remain available.
 ## Microsoft 365 Copilot
 
 Microsoft 365 Copilot requires an uploaded `SKILL.md` or a ZIP containing
-`SKILL.md` at the ZIP's root. Create the archive from the package directory,
-not from the repository root:
+`SKILL.md` at the ZIP's root. Build the staged bundle from the repository root:
 
 ```bash
-cd plugins/fulcrum-ai-toolkit
-zip -r ../../fulcrum-ai-toolkit-m365.zip SKILL.md skills LICENSE
+node scripts/build-m365-bundle.mjs
 ```
 
 Upload `fulcrum-ai-toolkit-m365.zip`. Do not upload a ZIP whose first path
 component is `fulcrum-ai-toolkit/`, `plugins/`, or the repository name; that
 would place `SKILL.md` below the archive root and produce
 “Bundle is missing a root-level SKILL.md”.
+The staging build preserves skill references and converts `.ejs`, `.css`,
+`.sql`, and `LICENSE` into Markdown files that satisfy the current M365 custom
+skills file-type support matrix.
 
 ## Connect Separately
 
