@@ -164,13 +164,22 @@ function hasRequiredFrontmatter(frontmatter) {
     frontmatter &&
     typeof frontmatter === 'object' &&
     !Array.isArray(frontmatter) &&
-    isNonEmptyString(frontmatter.name) &&
-    isNonEmptyString(frontmatter.description)
+    isValidSkillName(frontmatter.name) &&
+    isValidDescription(frontmatter.description)
   );
 }
 
 function isNonEmptyString(value) {
   return typeof value === 'string' && value.trim().length > 0;
+}
+
+function isValidSkillName(value) {
+  if (!isNonEmptyString(value)) return false;
+  return /^(?!-)(?!.*--)[a-z0-9-]{1,64}(?<!-)$/.test(value);
+}
+
+function isValidDescription(value) {
+  return isNonEmptyString(value) && value.length <= 1024;
 }
 
 function referencesSectionHasUrl(text) {

@@ -73,6 +73,16 @@ const malformedCases = [
     name: 'rejects whitespace-only description',
     fixture: 'description-whitespace.md',
     expected: /frontmatter needs name and description/
+  },
+  {
+    name: 'rejects invalid name format',
+    fixture: 'name-invalid-format.md',
+    expected: /frontmatter needs name and description/
+  },
+  {
+    name: 'rejects descriptions longer than 1024 characters',
+    fixture: 'description-too-long.md',
+    expected: /frontmatter needs name and description/
   }
 ];
 
