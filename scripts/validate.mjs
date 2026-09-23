@@ -103,19 +103,18 @@ for (const entrypoint of BUNDLE_ENTRYPOINTS) {
   }
 
   const text = fs.readFileSync(entrypoint, 'utf8');
-  const parts = text.split(/^---\s*$/m);
-  if (parts.length < 3) {
+  const { frontmatter, error } = parseYamlFrontmatter(text);
+  if (error === 'missing') {
     failures.push(`${relativePath}: missing YAML frontmatter`);
     continue;
   }
+  if (error) {
+    failures.push(`${relativePath}: invalid YAML frontmatter (${error})`);
+    continue;
+  }
 
-  try {
-    const frontmatter = YAML.parse(parts[1]);
-    if (!frontmatter || typeof frontmatter !== 'object' || !frontmatter.name || !frontmatter.description) {
-      failures.push(`${relativePath}: frontmatter needs name and description`);
-    }
-  } catch (err) {
-    failures.push(`${relativePath}: invalid YAML frontmatter (${err.message.split('\n')[0].trim()})`);
+  if (!hasRequiredFrontmatter(frontmatter)) {
+    failures.push(`${relativePath}: frontmatter needs name and description`);
   }
 }
 
@@ -132,6 +131,33 @@ function filesUnder(directory) {
     }
   }
   return files.sort();
+}
+
+function parseYamlFrontmatter(text) {
+  const match = text.match(/^---\s*\r?\n([\s\S]*?)\r?\n---\s*(?:\r?\n|$)/);
+  if (!match) {
+    return { frontmatter: null, error: 'missing' };
+  }
+
+  try {
+    return { frontmatter: YAML.parse(match[1]), error: null };
+  } catch (err) {
+    return { frontmatter: null, error: err.message.split('\n')[0].trim() };
+  }
+}
+
+function hasRequiredFrontmatter(frontmatter) {
+  return (
+    frontmatter &&
+    typeof frontmatter === 'object' &&
+    !Array.isArray(frontmatter) &&
+    isNonEmptyString(frontmatter.name) &&
+    isNonEmptyString(frontmatter.description)
+  );
+}
+
+function isNonEmptyString(value) {
+  return typeof value === 'string' && value.trim().length > 0;
 }
 
 function referencesSectionHasUrl(text) {
@@ -328,22 +354,17 @@ for (const skillPath of skillPaths) {
   const relativePath = repoRelativePath(skillPath);
   const directoryName = path.basename(path.dirname(skillPath));
   const text = fs.readFileSync(skillPath, 'utf8');
-  const parts = text.split(/^---\s*$/m);
-
-  if (parts.length < 3) {
+  const { frontmatter, error } = parseYamlFrontmatter(text);
+  if (error === 'missing') {
     failures.push(`${relativePath}: missing YAML frontmatter`);
     continue;
   }
-
-  let frontmatter;
-  try {
-    frontmatter = YAML.parse(parts[1]);
-  } catch (err) {
-    failures.push(`${relativePath}: invalid YAML frontmatter (${err.message.split('\n')[0].trim()})`);
+  if (error) {
+    failures.push(`${relativePath}: invalid YAML frontmatter (${error})`);
     continue;
   }
 
-  if (!frontmatter || typeof frontmatter !== 'object' || !frontmatter.name || !frontmatter.description) {
+  if (!hasRequiredFrontmatter(frontmatter)) {
     failures.push(`${relativePath}: frontmatter needs name and description`);
   }
 
