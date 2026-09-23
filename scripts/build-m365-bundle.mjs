@@ -7,9 +7,6 @@ import { fileURLToPath } from 'node:url';
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(HERE, '..');
-const PACKAGE_DIR = path.join(ROOT, 'plugins', 'fulcrum-ai-toolkit');
-const STAGE_DIR = path.join(ROOT, '.m365-bundle-stage');
-const OUTPUT_ZIP = path.join(ROOT, 'fulcrum-ai-toolkit-m365.zip');
 
 const CONVERTIBLE_EXTENSIONS = new Map([
   ['.ejs', 'html'],
@@ -37,14 +34,14 @@ function convertToMarkdown(targetPath, language, sourceText, sourceRelativePath)
   fs.writeFileSync(targetPath, markdown, 'utf8');
 }
 
-function stageFile(sourcePath) {
-  const sourceRelativePath = path.relative(PACKAGE_DIR, sourcePath);
+function stageFile(sourcePath, packageDir, stageDir) {
+  const sourceRelativePath = path.relative(packageDir, sourcePath);
   const basename = path.basename(sourcePath);
   const ext = path.extname(sourcePath).toLowerCase();
 
   if (basename === 'LICENSE' && ext === '') {
     const targetRelativePath = `${sourceRelativePath}.md`;
-    const targetPath = path.join(STAGE_DIR, targetRelativePath);
+    const targetPath = path.join(stageDir, targetRelativePath);
     ensureDir(path.dirname(targetPath));
     convertToMarkdown(targetPath, 'text', fs.readFileSync(sourcePath, 'utf8'), sourceRelativePath);
     return;
@@ -52,7 +49,7 @@ function stageFile(sourcePath) {
 
   if (CONVERTIBLE_EXTENSIONS.has(ext)) {
     const targetRelativePath = `${sourceRelativePath}.md`;
-    const targetPath = path.join(STAGE_DIR, targetRelativePath);
+    const targetPath = path.join(stageDir, targetRelativePath);
     ensureDir(path.dirname(targetPath));
     convertToMarkdown(
       targetPath,
@@ -63,24 +60,24 @@ function stageFile(sourcePath) {
     return;
   }
 
-  const targetPath = path.join(STAGE_DIR, sourceRelativePath);
+  const targetPath = path.join(stageDir, sourceRelativePath);
   ensureDir(path.dirname(targetPath));
   fs.copyFileSync(sourcePath, targetPath);
 }
 
-function stageDirectory(sourceDir) {
+function stageDirectory(sourceDir, packageDir, stageDir) {
   const entries = fs.readdirSync(sourceDir, { withFileTypes: true });
   for (const entry of entries) {
     const sourcePath = path.join(sourceDir, entry.name);
     if (entry.isDirectory()) {
-      stageDirectory(sourcePath);
+      stageDirectory(sourcePath, packageDir, stageDir);
       continue;
     }
-    stageFile(sourcePath);
+    stageFile(sourcePath, packageDir, stageDir);
   }
 }
 
-function rewriteMarkdownLinks() {
+function rewriteMarkdownLinks(stageDir) {
   const markdownFiles = [];
   const visit = (dir) => {
     const entries = fs.readdirSync(dir, { withFileTypes: true });
@@ -94,7 +91,7 @@ function rewriteMarkdownLinks() {
     }
   };
 
-  visit(STAGE_DIR);
+  visit(stageDir);
 
   for (const markdownFile of markdownFiles) {
     const text = fs.readFileSync(markdownFile, 'utf8');
@@ -103,7 +100,7 @@ function rewriteMarkdownLinks() {
       (candidate) => {
         const nextCandidate = candidate === 'LICENSE' ? 'LICENSE.md' : `${candidate}.md`;
         const candidatePath = path.resolve(path.dirname(markdownFile), nextCandidate);
-        if (!candidatePath.startsWith(STAGE_DIR)) {
+        if (!candidatePath.startsWith(stageDir)) {
           return candidate;
         }
         return fs.existsSync(candidatePath) ? nextCandidate : candidate;
@@ -115,20 +112,26 @@ function rewriteMarkdownLinks() {
   }
 }
 
-function build() {
-  fs.rmSync(STAGE_DIR, { recursive: true, force: true });
-  fs.rmSync(OUTPUT_ZIP, { force: true });
-  ensureDir(STAGE_DIR);
+export function build(root = ROOT) {
+  const packageDir = path.join(root, 'plugins', 'fulcrum-ai-toolkit');
+  const stageDir = path.join(root, '.m365-bundle-stage');
+  const outputZip = path.join(root, 'fulcrum-ai-toolkit-m365.zip');
 
-  stageFile(path.join(PACKAGE_DIR, 'SKILL.md'));
-  stageDirectory(path.join(PACKAGE_DIR, 'skills'));
-  stageFile(path.join(PACKAGE_DIR, 'LICENSE'));
-  rewriteMarkdownLinks();
+  fs.rmSync(stageDir, { recursive: true, force: true });
+  fs.rmSync(outputZip, { force: true });
+  ensureDir(stageDir);
 
-  execFileSync('zip', ['-rq', OUTPUT_ZIP, '.'], {
-    cwd: STAGE_DIR,
+  stageFile(path.join(packageDir, 'SKILL.md'), packageDir, stageDir);
+  stageDirectory(path.join(packageDir, 'skills'), packageDir, stageDir);
+  stageFile(path.join(packageDir, 'LICENSE'), packageDir, stageDir);
+  rewriteMarkdownLinks(stageDir);
+
+  execFileSync('zip', ['-rq', outputZip, '.'], {
+    cwd: stageDir,
     stdio: 'inherit'
   });
 }
 
-build();
+if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
+  build();
+}
