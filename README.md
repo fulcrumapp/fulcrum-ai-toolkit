@@ -46,6 +46,19 @@ For a standalone skills loader, install the complete collection:
 npx skills@latest add https://github.com/fulcrumapp/fulcrum-ai-toolkit/tree/main/plugins/fulcrum-ai-toolkit/skills --skill '*'
 ```
 
+For Microsoft 365 Copilot's skill upload, create the ZIP from the
+distributable package directory so `SKILL.md` is at the archive root:
+
+```bash
+cd plugins/fulcrum-ai-toolkit
+zip -r ../../fulcrum-ai-toolkit-m365.zip SKILL.md skills LICENSE
+```
+
+Upload `fulcrum-ai-toolkit-m365.zip`, not a ZIP of the repository or its
+parent directory. The package includes a bundle-level `SKILL.md` with the
+required YAML `name` and `description` fields and preserves the focused skills
+and their supporting resources.
+
 The supported distribution unit is the **complete skill bundle**. Skills link
 to sibling skills and their resources; an individual directory is not a
 self-contained package, and loaders do not automatically install dependencies.

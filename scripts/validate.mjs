@@ -29,6 +29,10 @@ const ROOT = path.resolve(HERE, '..');
 const PLUGIN_RELATIVE_PATH = path.join('plugins', 'fulcrum-ai-toolkit');
 const PLUGIN_DIR = path.join(ROOT, PLUGIN_RELATIVE_PATH);
 const SKILLS_DIR = path.join(PLUGIN_DIR, 'skills');
+const BUNDLE_ENTRYPOINTS = [
+  path.join(ROOT, 'SKILL.md'),
+  path.join(PLUGIN_DIR, 'SKILL.md')
+];
 
 const EXPECTED_SKILLS = [
   'fulcrum-access-management',
@@ -90,6 +94,30 @@ const REQUIRED_COVERAGE_DOMAINS = [
 
 const failures = [];
 const jsonDocuments = {};
+
+for (const entrypoint of BUNDLE_ENTRYPOINTS) {
+  const relativePath = repoRelativePath(entrypoint);
+  if (!fs.existsSync(entrypoint)) {
+    failures.push(`${relativePath}: bundle entrypoint is missing`);
+    continue;
+  }
+
+  const text = fs.readFileSync(entrypoint, 'utf8');
+  const parts = text.split(/^---\s*$/m);
+  if (parts.length < 3) {
+    failures.push(`${relativePath}: missing YAML frontmatter`);
+    continue;
+  }
+
+  try {
+    const frontmatter = YAML.parse(parts[1]);
+    if (!frontmatter || typeof frontmatter !== 'object' || !frontmatter.name || !frontmatter.description) {
+      failures.push(`${relativePath}: frontmatter needs name and description`);
+    }
+  } catch (err) {
+    failures.push(`${relativePath}: invalid YAML frontmatter (${err.message.split('\n')[0].trim()})`);
+  }
+}
 
 function repoRelativePath(filePath) {
   return path.relative(ROOT, filePath);

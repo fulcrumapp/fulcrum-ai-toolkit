@@ -66,6 +66,22 @@ does not yet ship a Desktop upload artifact that preserves the bundle's
 cross-skill dependencies. Use a supported whole-bundle host rather than
 uploading individual skills and assuming their siblings remain available.
 
+## Microsoft 365 Copilot
+
+Microsoft 365 Copilot requires an uploaded `SKILL.md` or a ZIP containing
+`SKILL.md` at the ZIP's root. Create the archive from the package directory,
+not from the repository root:
+
+```bash
+cd plugins/fulcrum-ai-toolkit
+zip -r ../../fulcrum-ai-toolkit-m365.zip SKILL.md skills LICENSE
+```
+
+Upload `fulcrum-ai-toolkit-m365.zip`. Do not upload a ZIP whose first path
+component is `fulcrum-ai-toolkit/`, `plugins/`, or the repository name; that
+would place `SKILL.md` below the archive root and produce
+“Bundle is missing a root-level SKILL.md”.
+
 ## Connect Separately
 
 Use the [regional App MCP setup guide](../skills/fulcrum-app-builder/resources/mcp-setup.md).
