@@ -27,6 +27,12 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
+          node scripts/build-m365-bundle.mjs
+          if [[ ! -f fulcrum-ai-toolkit-m365.zip ]]; then
+            echo "::error::Missing fulcrum-ai-toolkit-m365.zip"
+            exit 1
+          fi
+
           version="$(node --print "require('./plugins/fulcrum-ai-toolkit/plugin.json').version")"
           if [[ ! "$version" =~ ^[0-9]+\.[0-9]+\.[0-9]+([+-][0-9A-Za-z.-]+)?$ ]]; then
             echo "::error::Invalid toolkit version: $version"
@@ -43,4 +49,5 @@ jobs:
             --repo "$GITHUB_REPOSITORY" \
             --target "$GITHUB_SHA" \
             --title "$tag" \
-            --generate-notes
+            --generate-notes \
+            fulcrum-ai-toolkit-m365.zip

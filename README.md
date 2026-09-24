@@ -59,6 +59,10 @@ the required YAML `name` and `description` fields, preserves sibling skill
 references, and converts `.js`, `.ejs`, `.css`, `.sql`, and `LICENSE` into Markdown
 files accepted by the current Microsoft 365 skill-upload contract.
 
+CI also builds this bundle automatically on every push and pull request in the
+`fulcrum-ai-toolkit-m365` workflow artifact, and publishes it as a release
+asset on versioned releases.
+
 The supported distribution unit is the **complete skill bundle**. Skills link
 to sibling skills and their resources; an individual directory is not a
 self-contained package, and loaders do not automatically install dependencies.

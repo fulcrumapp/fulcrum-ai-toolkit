@@ -82,6 +82,8 @@ would place `SKILL.md` below the archive root and produce
 The staging build preserves skill references and converts `.ejs`, `.css`,
 `.sql`, `.js`, and `LICENSE` into Markdown files that satisfy the current M365 custom
 skills file-type support matrix.
+CI publishes the same artifact as `fulcrum-ai-toolkit-m365` on push/PR runs and
+attaches it to versioned releases.
 
 ## Connect Separately
 
