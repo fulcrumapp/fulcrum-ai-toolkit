@@ -9,6 +9,7 @@ const HERE = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(HERE, '..');
 
 const CONVERTIBLE_EXTENSIONS = new Map([
+  ['.js', 'javascript'],
   ['.ejs', 'html'],
   ['.css', 'css'],
   ['.sql', 'sql']
@@ -96,7 +97,7 @@ function rewriteMarkdownLinks(stageDir) {
   for (const markdownFile of markdownFiles) {
     const text = fs.readFileSync(markdownFile, 'utf8');
     const updated = text.replace(
-      /(?<![A-Za-z0-9_./-])(?:LICENSE|[A-Za-z0-9_./-]+\.(?:ejs|css|sql))(?![A-Za-z0-9_./-])/g,
+      /(?<![A-Za-z0-9_./-])(?:LICENSE|[A-Za-z0-9_./-]+\.(?:js|ejs|css|sql))(?![A-Za-z0-9_./-])/g,
       (candidate) => {
         const nextCandidate = candidate === 'LICENSE' ? 'LICENSE.md' : `${candidate}.md`;
         const candidatePath = path.resolve(path.dirname(markdownFile), nextCandidate);

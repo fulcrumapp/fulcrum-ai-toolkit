@@ -80,7 +80,7 @@ component is `fulcrum-ai-toolkit/`, `plugins/`, or the repository name; that
 would place `SKILL.md` below the archive root and produce
 “Bundle is missing a root-level SKILL.md”.
 The staging build preserves skill references and converts `.ejs`, `.css`,
-`.sql`, and `LICENSE` into Markdown files that satisfy the current M365 custom
+`.sql`, `.js`, and `LICENSE` into Markdown files that satisfy the current M365 custom
 skills file-type support matrix.
 
 ## Connect Separately

@@ -56,7 +56,7 @@ node scripts/build-m365-bundle.mjs
 Upload `fulcrum-ai-toolkit-m365.zip`, not a ZIP of the repository or its
 parent directory. The staged bundle includes a bundle-level `SKILL.md` with
 the required YAML `name` and `description` fields, preserves sibling skill
-references, and converts `.ejs`, `.css`, `.sql`, and `LICENSE` into Markdown
+references, and converts `.js`, `.ejs`, `.css`, `.sql`, and `LICENSE` into Markdown
 files accepted by the current Microsoft 365 skill-upload contract.
 
 The supported distribution unit is the **complete skill bundle**. Skills link
