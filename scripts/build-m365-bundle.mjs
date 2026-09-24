@@ -107,21 +107,27 @@ function rewriteMarkdownLinks(stageDir) {
 
   for (const markdownFile of markdownFiles) {
     const text = fs.readFileSync(markdownFile, 'utf8');
-    const updated = text.replace(
-      /(?<![A-Za-z0-9_./-])(?:LICENSE|[A-Za-z0-9_./-]+\.(?:js|ejs|css|sql))(?![A-Za-z0-9_./-])/g,
-      (candidate) => {
-        const nextCandidate = convertedRelativePath(candidate);
-        const candidatePath = path.resolve(path.dirname(markdownFile), nextCandidate);
-        if (!candidatePath.startsWith(stageDir)) {
-          return candidate;
-        }
-        return fs.existsSync(candidatePath) ? nextCandidate : candidate;
-      }
-    );
+    const updated = rewriteMarkdownLinkTargets(text, path.dirname(markdownFile), stageDir);
     if (updated !== text) {
       fs.writeFileSync(markdownFile, updated, 'utf8');
     }
   }
+}
+
+function rewriteMarkdownLinkTargets(text, baseDir, stageDir) {
+  const segments = text.split(/(```[\s\S]*?```)/g);
+  return segments.map((segment) => {
+    if (segment.startsWith('```')) return segment;
+    return segment.replace(/(\[[^\]]*?\]\()([^)]+)(\))/g, (_whole, prefix, target, suffix) => {
+      const convertedTarget = convertedRelativePath(target);
+      if (convertedTarget === target) return `${prefix}${target}${suffix}`;
+      const candidatePath = path.resolve(baseDir, convertedTarget);
+      if (!candidatePath.startsWith(stageDir)) return `${prefix}${target}${suffix}`;
+      return fs.existsSync(candidatePath)
+        ? `${prefix}${convertedTarget}${suffix}`
+        : `${prefix}${target}${suffix}`;
+    });
+  }).join('');
 }
 
 export function build(root = ROOT) {
