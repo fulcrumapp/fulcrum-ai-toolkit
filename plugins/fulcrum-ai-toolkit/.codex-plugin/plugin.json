@@ -20,5 +20,16 @@
     "access-management",
     "data-migration"
   ],
-  "skills": "./skills/"
+  "skills": "./skills/",
+  "interface": {
+    "displayName": "Fulcrum AI Toolkit",
+    "shortDescription": "Guided Fulcrum app-building and operations workflows.",
+    "longDescription": "Portable Fulcrum workflows for app design, data events, reports, integrations, mapping, query guidance, access setup, and migration planning.",
+    "developerName": "Fulcrum",
+    "category": "Productivity",
+    "capabilities": [
+      "Read",
+      "Write"
+    ]
+  }
 }

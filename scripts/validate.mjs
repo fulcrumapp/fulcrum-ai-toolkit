@@ -604,6 +604,31 @@ for (const relativePath of [
   }
 }
 
+const codexManifestPath = `${PLUGIN_RELATIVE_PATH}/.codex-plugin/plugin.json`;
+const codexManifest = jsonDocuments[codexManifestPath];
+const codexInterfaceRequiredFields = [
+  'displayName',
+  'shortDescription',
+  'longDescription',
+  'developerName',
+  'category',
+  'capabilities'
+];
+if (codexManifest) {
+  const iface = codexManifest.interface;
+  if (!iface || typeof iface !== 'object' || Array.isArray(iface)) {
+    failures.push(
+      `${codexManifestPath}: interface is required and must include ${codexInterfaceRequiredFields.join(', ')}`
+    );
+  } else {
+    for (const field of codexInterfaceRequiredFields) {
+      if (!(field in iface)) {
+        failures.push(`${codexManifestPath}: interface.${field} is required`);
+      }
+    }
+  }
+}
+
 const copilotMarketplace = jsonDocuments['.github/plugin/marketplace.json'];
 if (
   !agentManifest?.version ||

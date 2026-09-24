@@ -13,6 +13,10 @@ Installing skills does not connect a Fulcrum tenant.
 
 Use the marketplace commands in the repository README. For Codex the install
 command is `codex plugin add fulcrum-ai-toolkit@fulcrum-ai-toolkit`.
+Manual ChatGPT/Codex plugin ZIP uploads require
+`plugins/fulcrum-ai-toolkit/.codex-plugin/plugin.json` to include an
+`interface` object with `displayName`, `shortDescription`,
+`longDescription`, `developerName`, `category`, and `capabilities`.
 
 When a private repository includes this toolkit as a git submodule and registers
 the submodule directory directly as a Claude plugin, use the submodule root.
