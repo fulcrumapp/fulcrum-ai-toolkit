@@ -20,7 +20,9 @@ comment. Strict JSON cannot hold comments, so its source is recorded here.
   `allow_updating_records`, `allow_multiple_records`,
   `record_conditions_type`, `record_conditions`, `record_defaults`, and
   `default_previous_value` are the RecordLink properties. There is no
-  `linked_form_id` or `allow_empty_records` attribute.
+  `linked_form_id` or `allow_empty_records` element attribute. Rails stores
+  the target form's database id in `forms_links.linked_form_id`; that
+  association column is not part of the element.
   Source: [Forms API introduction](https://docs.fulcrumapp.com/reference/forms-intro)
   and Rails `app/classes/form/record_link_field.rb`.
 - `record-link-field.json` uses `form_id`, not `linked_form_id` or
