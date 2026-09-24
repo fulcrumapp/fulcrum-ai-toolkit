@@ -34,17 +34,17 @@ test('M365 bundle stages root entrypoint, converts resources, rewrites links, an
 
   const stagePath = path.join(root, '.m365-bundle-stage');
   const stagedEntrypoint = fs.readFileSync(path.join(stagePath, 'SKILL.md'), 'utf8');
-  assert.match(stagedEntrypoint, /\]\(skills\/example\/template\.ejs\.md\)/);
-  assert.match(stagedEntrypoint, /\]\(skills\/example\/helper\.js\.md\)/);
+  assert.match(stagedEntrypoint, /\]\(skills\/example\/template-ejs\.md\)/);
+  assert.match(stagedEntrypoint, /\]\(skills\/example\/helper-js\.md\)/);
   assert.match(stagedEntrypoint, /\]\(LICENSE\.md\)/);
   assert.match(
-    fs.readFileSync(path.join(stagePath, 'skills/example/template.ejs.md'), 'utf8'),
+    fs.readFileSync(path.join(stagePath, 'skills/example/template-ejs.md'), 'utf8'),
     /```html\n<h1>Fixture<\/h1>\n```/
   );
-  assert.match(fs.readFileSync(path.join(stagePath, 'skills/example/theme.css.md'), 'utf8'), /```css/);
-  assert.match(fs.readFileSync(path.join(stagePath, 'skills/example/query.sql.md'), 'utf8'), /```sql/);
+  assert.match(fs.readFileSync(path.join(stagePath, 'skills/example/theme-css.md'), 'utf8'), /```css/);
+  assert.match(fs.readFileSync(path.join(stagePath, 'skills/example/query-sql.md'), 'utf8'), /```sql/);
   assert.match(
-    fs.readFileSync(path.join(stagePath, 'skills/example/helper.js.md'), 'utf8'),
+    fs.readFileSync(path.join(stagePath, 'skills/example/helper-js.md'), 'utf8'),
     /```javascript\nconst helper = \(\) => 42;\n```/
   );
   assert.match(fs.readFileSync(path.join(stagePath, 'LICENSE.md'), 'utf8'), /Fixture license text/);
@@ -58,8 +58,8 @@ test('M365 bundle stages root entrypoint, converts resources, rewrites links, an
     .split('\n')
     .sort();
   assert.ok(firstArchiveEntries.includes('SKILL.md'));
-  assert.ok(firstArchiveEntries.includes('skills/example/template.ejs.md'));
-  assert.ok(firstArchiveEntries.includes('skills/example/helper.js.md'));
+  assert.ok(firstArchiveEntries.includes('skills/example/template-ejs.md'));
+  assert.ok(firstArchiveEntries.includes('skills/example/helper-js.md'));
   assert.equal(firstArchiveEntries.some((entry) => entry.endsWith('.js')), false);
 
   writeFixture(stagePath, 'stale-build-artifact.txt', 'must be removed on rebuild');

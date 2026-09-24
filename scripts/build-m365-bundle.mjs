@@ -23,6 +23,17 @@ function toPosix(relativePath) {
   return relativePath.split(path.sep).join('/');
 }
 
+function convertedRelativePath(sourceRelativePath, ext = path.extname(sourceRelativePath).toLowerCase()) {
+  if (path.basename(sourceRelativePath) === 'LICENSE' && ext === '') {
+    return `${sourceRelativePath}.md`;
+  }
+  if (!CONVERTIBLE_EXTENSIONS.has(ext)) {
+    return sourceRelativePath;
+  }
+  const suffix = ext.slice(1);
+  return `${sourceRelativePath.slice(0, -ext.length)}-${suffix}.md`;
+}
+
 function convertToMarkdown(targetPath, language, sourceText, sourceRelativePath) {
   const markdown = [
     `# Converted source: ${toPosix(sourceRelativePath)}`,
@@ -41,7 +52,7 @@ function stageFile(sourcePath, packageDir, stageDir) {
   const ext = path.extname(sourcePath).toLowerCase();
 
   if (basename === 'LICENSE' && ext === '') {
-    const targetRelativePath = `${sourceRelativePath}.md`;
+    const targetRelativePath = convertedRelativePath(sourceRelativePath, ext);
     const targetPath = path.join(stageDir, targetRelativePath);
     ensureDir(path.dirname(targetPath));
     convertToMarkdown(targetPath, 'text', fs.readFileSync(sourcePath, 'utf8'), sourceRelativePath);
@@ -49,7 +60,7 @@ function stageFile(sourcePath, packageDir, stageDir) {
   }
 
   if (CONVERTIBLE_EXTENSIONS.has(ext)) {
-    const targetRelativePath = `${sourceRelativePath}.md`;
+    const targetRelativePath = convertedRelativePath(sourceRelativePath, ext);
     const targetPath = path.join(stageDir, targetRelativePath);
     ensureDir(path.dirname(targetPath));
     convertToMarkdown(
@@ -99,7 +110,7 @@ function rewriteMarkdownLinks(stageDir) {
     const updated = text.replace(
       /(?<![A-Za-z0-9_./-])(?:LICENSE|[A-Za-z0-9_./-]+\.(?:js|ejs|css|sql))(?![A-Za-z0-9_./-])/g,
       (candidate) => {
-        const nextCandidate = candidate === 'LICENSE' ? 'LICENSE.md' : `${candidate}.md`;
+        const nextCandidate = convertedRelativePath(candidate);
         const candidatePath = path.resolve(path.dirname(markdownFile), nextCandidate);
         if (!candidatePath.startsWith(stageDir)) {
           return candidate;
