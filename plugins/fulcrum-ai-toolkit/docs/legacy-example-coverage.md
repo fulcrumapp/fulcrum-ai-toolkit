@@ -186,10 +186,10 @@ The asset distinguishes a top-level `return` from a valid helper return
 and replaces the assignment in the conditional example with a numeric
 comparison.
 
-C44 is a rewrite: the original element carried an `allow_multiple_records`
-property that the public Forms schema does not define and omitted the
-required common properties. It is now a complete element. It is strict JSON,
-so its exact public source is recorded in
+C44 is a rewrite: the original element omitted the required common
+properties. `allow_multiple_records` is a real RecordLink attribute and is
+included. `allow_empty_records` is not. It is strict JSON, so its exact
+source is recorded in
 [`assets/README.md`](../skills/fulcrum-app-design/assets/README.md).
 
 ### fulcrum-app-builder, fulcrum-discovery, fulcrum-workflow-decomposition, fulcrum-solution-document — 5 blocks
