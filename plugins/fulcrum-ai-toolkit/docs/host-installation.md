@@ -66,6 +66,25 @@ does not yet ship a Desktop upload artifact that preserves the bundle's
 cross-skill dependencies. Use a supported whole-bundle host rather than
 uploading individual skills and assuming their siblings remain available.
 
+## Microsoft 365 Copilot
+
+Microsoft 365 Copilot requires uploading a ZIP with `SKILL.md` at the archive
+root. Build the staged bundle from the repository root:
+
+```bash
+node scripts/build-m365-bundle.mjs
+```
+
+Upload `fulcrum-ai-toolkit-m365.zip`. Do not upload a ZIP whose first path
+component is `fulcrum-ai-toolkit/`, `plugins/`, or the repository name; that
+would place `SKILL.md` below the archive root and produce
+“Bundle is missing a root-level SKILL.md”.
+The staging build preserves skill references and converts `.ejs`, `.css`,
+`.sql`, `.js`, and `LICENSE` into Markdown files that satisfy the current M365 custom
+skills file-type support matrix.
+CI publishes the same artifact as `fulcrum-ai-toolkit-m365` on push/PR runs and
+attaches it to versioned releases.
+
 ## Connect Separately
 
 Use the [regional App MCP setup guide](../skills/fulcrum-app-builder/resources/mcp-setup.md).

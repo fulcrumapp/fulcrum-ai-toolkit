@@ -29,8 +29,16 @@ jobs:
         working-directory: tools/format-validator
       - name: Validate skills and manifests
         run: node scripts/validate.mjs
-      - name: Validate app scoring and review guidance
-        run: node --test test/app-scorecard.test.mjs test/app-approval.test.mjs
+      - name: Validate app scoring, review guidance, and M365 bundle
+        run: node --test test/app-scorecard.test.mjs test/app-approval.test.mjs test/build-m365-bundle.test.mjs test/validate-entrypoint-frontmatter.test.mjs
+      - name: Build Microsoft 365 Copilot bundle
+        run: node scripts/build-m365-bundle.mjs
+      - name: Upload Microsoft 365 Copilot bundle artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: fulcrum-ai-toolkit-m365
+          path: fulcrum-ai-toolkit-m365.zip
+          if-no-files-found: error
       - name: Validate Anthropic Claude plugin marketplace
         uses: anthropics/claude-plugins-community/.github/actions/validate-plugins@a727be1c7bd6064419b6f60d71993a19198adc17
         with:

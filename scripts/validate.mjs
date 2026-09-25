@@ -29,6 +29,11 @@ const ROOT = path.resolve(HERE, '..');
 const PLUGIN_RELATIVE_PATH = path.join('plugins', 'fulcrum-ai-toolkit');
 const PLUGIN_DIR = path.join(ROOT, PLUGIN_RELATIVE_PATH);
 const SKILLS_DIR = path.join(PLUGIN_DIR, 'skills');
+const DEFAULT_BUNDLE_ENTRYPOINTS = [
+  path.join(ROOT, 'SKILL.md'),
+  path.join(PLUGIN_DIR, 'SKILL.md')
+];
+const BUNDLE_ENTRYPOINTS = resolveBundleEntrypoints(process.env.FULCRUM_VALIDATE_BUNDLE_ENTRYPOINTS);
 
 const EXPECTED_SKILLS = [
   'fulcrum-access-management',
@@ -91,8 +96,43 @@ const REQUIRED_COVERAGE_DOMAINS = [
 const failures = [];
 const jsonDocuments = {};
 
+for (const entrypoint of BUNDLE_ENTRYPOINTS) {
+  const relativePath = repoRelativePath(entrypoint);
+  if (!fs.existsSync(entrypoint)) {
+    failures.push(`${relativePath}: bundle entrypoint is missing`);
+    continue;
+  }
+
+  const text = fs.readFileSync(entrypoint, 'utf8');
+  const { frontmatter, error } = parseYamlFrontmatter(text);
+  if (error === 'missing') {
+    failures.push(`${relativePath}: missing YAML frontmatter`);
+    continue;
+  }
+  if (error) {
+    failures.push(`${relativePath}: invalid YAML frontmatter (${error})`);
+    continue;
+  }
+
+  if (!hasRequiredFrontmatter(frontmatter)) {
+    failures.push(`${relativePath}: frontmatter needs name and description`);
+  }
+}
+
 function repoRelativePath(filePath) {
   return path.relative(ROOT, filePath);
+}
+
+function resolveBundleEntrypoints(override) {
+  if (!override) return DEFAULT_BUNDLE_ENTRYPOINTS;
+
+  const paths = override
+    .split(path.delimiter)
+    .map((entry) => entry.trim())
+    .filter(Boolean)
+    .map((entry) => (path.isAbsolute(entry) ? entry : path.resolve(ROOT, entry)));
+
+  return paths.length > 0 ? paths : DEFAULT_BUNDLE_ENTRYPOINTS;
 }
 
 function filesUnder(directory) {
@@ -104,6 +144,42 @@ function filesUnder(directory) {
     }
   }
   return files.sort();
+}
+
+function parseYamlFrontmatter(text) {
+  const match = text.match(/^---\s*\r?\n([\s\S]*?)\r?\n---\s*(?:\r?\n|$)/);
+  if (!match) {
+    return { frontmatter: null, error: 'missing' };
+  }
+
+  try {
+    return { frontmatter: YAML.parse(match[1]), error: null };
+  } catch (err) {
+    return { frontmatter: null, error: err.message.split('\n')[0].trim() };
+  }
+}
+
+function hasRequiredFrontmatter(frontmatter) {
+  return (
+    frontmatter &&
+    typeof frontmatter === 'object' &&
+    !Array.isArray(frontmatter) &&
+    isValidSkillName(frontmatter.name) &&
+    isValidDescription(frontmatter.description)
+  );
+}
+
+function isNonEmptyString(value) {
+  return typeof value === 'string' && value.trim().length > 0;
+}
+
+function isValidSkillName(value) {
+  if (!isNonEmptyString(value)) return false;
+  return /^(?!-)(?!.*--)[a-z0-9-]{1,64}(?<!-)$/.test(value);
+}
+
+function isValidDescription(value) {
+  return isNonEmptyString(value) && value.length <= 1024;
 }
 
 function referencesSectionHasUrl(text) {
@@ -300,22 +376,17 @@ for (const skillPath of skillPaths) {
   const relativePath = repoRelativePath(skillPath);
   const directoryName = path.basename(path.dirname(skillPath));
   const text = fs.readFileSync(skillPath, 'utf8');
-  const parts = text.split(/^---\s*$/m);
-
-  if (parts.length < 3) {
+  const { frontmatter, error } = parseYamlFrontmatter(text);
+  if (error === 'missing') {
     failures.push(`${relativePath}: missing YAML frontmatter`);
     continue;
   }
-
-  let frontmatter;
-  try {
-    frontmatter = YAML.parse(parts[1]);
-  } catch (err) {
-    failures.push(`${relativePath}: invalid YAML frontmatter (${err.message.split('\n')[0].trim()})`);
+  if (error) {
+    failures.push(`${relativePath}: invalid YAML frontmatter (${error})`);
     continue;
   }
 
-  if (!frontmatter || typeof frontmatter !== 'object' || !frontmatter.name || !frontmatter.description) {
+  if (!hasRequiredFrontmatter(frontmatter)) {
     failures.push(`${relativePath}: frontmatter needs name and description`);
   }
 
