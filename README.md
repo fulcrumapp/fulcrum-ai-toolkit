@@ -23,7 +23,11 @@ In Claude Code, add the marketplace and install the plugin:
 
 Private repositories may also include this repository as a git submodule and
 use the submodule root as a Claude plugin. The root
-`.claude-plugin/plugin.json` points Claude to the nested package's shared skills.
+`.claude-plugin/plugin.json` registers the root-level manual command adapter.
+Claude auto-discovers the validator-checked shared skill copies from the
+repository-root `skills/` directory; the manual-only solution-document
+workflow is intentionally absent from that directory and remains available
+through the command.
 
 In Codex, add the repository marketplace, then install
 `fulcrum-ai-toolkit` from the Plugins directory:
@@ -144,10 +148,16 @@ app or extension assessment.
 
 ## Alpha install matrix
 
-The distributable package uses the portable
-`plugins/fulcrum-ai-toolkit/skills/*/SKILL.md` layout. Host-specific manifests
-are adapters inside that package and either discover the standard `skills/`
-directory or explicitly point to it when the host contract supports that field.
+The repository publishes `plugins/fulcrum-ai-toolkit/` as a portable Agent
+Plugins bundle. Its core is the `plugin.json`, `mcp.json`, and `skills/` set.
+Gemini's native extension manifest is kept in `adapters/gemini/` and assembled
+with the canonical skills into an ignored native bundle, while Claude's native
+command adapter and skill-discovery tree live at the repository root because
+Claude requires those locations. Therefore the complete
+repository is not claimed as a strict single-format Agent Plugins package. A
+strict portable consumer should load the portable core files and ignore native
+host adapters; native installers should use the host-specific paths documented
+below.
 
 | Host | Install path | Skills | Live Fulcrum actions | Alpha status |
 | --- | --- | --- | --- | --- |
@@ -156,7 +166,7 @@ directory or explicitly point to it when the host contract supports that field.
 | Cursor | Install `plugins/fulcrum-ai-toolkit/` as a plugin | Yes | Connector-dependent | Target |
 | Codex | Add the repository marketplace, then install the plugin | Yes | Connector-dependent | Target |
 | GitHub Copilot | Add this marketplace, then install the plugin | Yes | Connector-dependent | Target |
-| Gemini CLI | Clone, then install the local package directory as an extension | Yes | Connector-dependent | Verify |
+| Gemini CLI | Run `node scripts/build-gemini-extension.mjs`, then install `plugins/fulcrum-ai-toolkit-gemini/` | Yes | Connector-dependent | Verify |
 | Hermes | Configure the full local `skills/` directory via `skills.external_dirs` | Yes | Connector-dependent | Verify |
 | Claude Code in Desktop | Use Claude Code's marketplace/plugin installation | Yes | Connector-dependent | Target |
 | Claude Desktop chat / Cowork | Requires account-level skill packaging that preserves dependencies; repo copying is insufficient | Not packaged | Host authentication support required | Later |
@@ -172,17 +182,20 @@ Validation runs entirely on Node.js. Install dependencies for the format validat
 npm ci --prefix tools/format-validator
 npm run --prefix tools/format-validator validate
 node scripts/validate.mjs
-node --test test/app-scorecard.test.mjs test/app-approval.test.mjs test/build-m365-bundle.test.mjs test/validate-entrypoint-frontmatter.test.mjs
+node --test test/*.test.mjs
 ```
 
 The repository validator checks the expected skill inventory, skill frontmatter,
 directory/name consistency, corporate absolute paths, privacy and provenance contracts,
-portable and client JSON manifests, and README inventory. The portable
-`plugin.json` intentionally omits `$schema` because Claude's SDK warns on
-unknown top-level fields when it encounters that manifest.
-It also keeps release versions aligned, requires the packaged license and
-Codex manual-invocation policies, and guards the regional MCP endpoint map
-and empty default server configuration.
+portable and client JSON manifests, and README inventory. The portable core's
+`plugin.json` includes the Agent Plugins schema and is the canonical manifest
+for strict portable consumers; Cursor, Claude, and Gemini retain native wrappers
+because their installers require those locations. The Gemini build
+script creates a native extension directory containing the manifest, license,
+and copied skills without placing vendor-specific files in the portable package.
+The validator also keeps release versions aligned, requires the packaged license and Codex
+manual-invocation policies, and guards the regional MCP endpoint map and empty
+default server configuration.
 Guidance contract tests check the rubric inventory, sibling links, worked
 scoring arithmetic, and required approval/performance instructions; they do
 not prove an agent's live app assessment or runtime performance.
@@ -318,10 +331,12 @@ One skill is intended to be **user-invoked** — request it explicitly:
 
 - `fulcrum-solution-document` — after building, document what was built, review it for privacy, and prepare it for a destination chosen by the user
 
-For `fulcrum-solution-document`, Claude Code and Cursor use
-`disable-model-invocation: true`, while Codex uses the skill's
-`agents/openai.yaml` policy. These are host adapters, not guarantees provided by
-the Agent Skills standard. On other hosts, invocation behavior may differ.
+For `fulcrum-solution-document`, the manual-invocation requirement is stated in
+the portable skill body. Claude additionally exposes a native
+`commands/fulcrum-solution-document.md` adapter with Claude's
+`disable-model-invocation: true` policy, and Codex uses the skill's
+`agents/openai.yaml` policy. These are host adapters, not guarantees provided
+by the Agent Skills standard. On other hosts, invocation behavior may differ.
 Contextual discovery still asks the user to choose a quick check-in or full
 interview, and explicit approval remains required before an external send.
 
@@ -370,19 +385,26 @@ Plugin configs are included for multiple AI platforms:
 | Platform | Config |
 | ---------- | -------- |
 | GitHub Copilot CLI | `.github/plugin/marketplace.json` and `plugins/fulcrum-ai-toolkit/plugin.json` |
-| Claude Code | `.claude-plugin/plugin.json` at the repository root, or the nested package manifest at `plugins/fulcrum-ai-toolkit/.claude-plugin/plugin.json` |
-| Cursor | `plugins/fulcrum-ai-toolkit/.cursor-plugin/plugin.json` |
-| Codex | `plugins/fulcrum-ai-toolkit/.codex-plugin/plugin.json` |
+| Claude Code | `.claude-plugin/plugin.json` at the repository root; Claude auto-discovers non-manual shared skills from root `skills/` and uses the root `commands/` adapter |
+| Cursor | `.cursor-plugin/plugin.json` in `plugins/fulcrum-ai-toolkit/` |
+| Codex | Portable core in `plugins/fulcrum-ai-toolkit/` |
 | Hermes | Shared `skills/` directory; root `plugin.json` for hosts supporting Agent Plugins v1 |
-| Gemini | `plugins/fulcrum-ai-toolkit/gemini-extension.json` |
-| MCP | Empty `.mcp.json` and `mcp.json`; configure a tenant-specific server separately |
+| Gemini | `adapters/gemini/gemini-extension.json`; assemble with `node scripts/build-gemini-extension.mjs` |
+| MCP | `plugins/fulcrum-ai-toolkit/mcp.json`; configure a tenant-specific server separately |
 
 All hosts discover or reference the package's shared `skills/` directory; they
-do not maintain separate copies of skill content. GitHub Copilot marketplace
+do not maintain separate copies of skill content, except for Claude's native
+repository-root adapter, which carries validator-checked copies of the
+non-manual skills because Claude only scans its plugin-root `skills/` directory.
+Claude explicitly omits the manual-only solution-document skill from automatic
+skill discovery; its command adapter delegates to the shared skill rather than
+copying its workflow. Native wrapper files are not
+portable Agent Plugins components and are retained only for the installers that
+require them. GitHub Copilot marketplace
 metadata is available at `.github/plugin/marketplace.json`; the same catalog is
-also available at `.claude-plugin/marketplace.json` for Claude and Copilot's
-fallback lookup. A root `.claude-plugin/plugin.json` supports repositories that
-consume this repository as a plugin submodule. The legacy root
+also available at `.claude-plugin/marketplace.json` for Claude. A root
+`.claude-plugin/plugin.json` supports repositories that consume this repository
+as a plugin submodule. The legacy root
 `marketplace.json` is kept for existing installers. Codex marketplace metadata is available at
 `.agents/plugins/marketplace.json` and points to the package under `plugins/`.
 

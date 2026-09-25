@@ -8,6 +8,12 @@ import path from 'node:path';
 import process from 'node:process';
 import { fileURLToPath } from 'node:url';
 import { createRequire } from 'node:module';
+import { validateAgentSkillFrontmatter } from './agent-skill-frontmatter.mjs';
+import { validateAgentPluginManifest } from './agent-plugin-manifest.mjs';
+import { validateAgentMcpConfig } from './agent-mcp-config.mjs';
+import { pathEntryExists, validateForbiddenPackagePaths } from './package-invariants.mjs';
+import { validateClaudeManualCommand } from './claude-adapter.mjs';
+import { validateExampleBlockInventory } from './example-inventory.mjs';
 
 const require = createRequire(import.meta.url);
 let YAML;
@@ -28,12 +34,25 @@ const HERE = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(HERE, '..');
 const PLUGIN_RELATIVE_PATH = path.join('plugins', 'fulcrum-ai-toolkit');
 const PLUGIN_DIR = path.join(ROOT, PLUGIN_RELATIVE_PATH);
+const GEMINI_ADAPTER_RELATIVE_PATH = path.join(
+  'adapters',
+  'gemini',
+  'gemini-extension.json'
+);
+const GEMINI_ADAPTER_PATH = path.join(ROOT, GEMINI_ADAPTER_RELATIVE_PATH);
 const SKILLS_DIR = path.join(PLUGIN_DIR, 'skills');
 const DEFAULT_BUNDLE_ENTRYPOINTS = [
   path.join(ROOT, 'SKILL.md'),
   path.join(PLUGIN_DIR, 'SKILL.md')
 ];
 const BUNDLE_ENTRYPOINTS = resolveBundleEntrypoints(process.env.FULCRUM_VALIDATE_BUNDLE_ENTRYPOINTS);
+const FORBIDDEN_PACKAGE_PATHS = [
+  path.join(PLUGIN_RELATIVE_PATH, '.codex-plugin', 'plugin.json'),
+  path.join(PLUGIN_RELATIVE_PATH, '.mcp.json'),
+  path.join(PLUGIN_RELATIVE_PATH, '.claude-plugin', 'plugin.json'),
+  path.join(PLUGIN_RELATIVE_PATH, 'commands', 'fulcrum-solution-document.md'),
+  path.join(PLUGIN_RELATIVE_PATH, 'gemini-extension.json')
+];
 
 const EXPECTED_SKILLS = [
   'fulcrum-access-management',
@@ -56,7 +75,6 @@ const EXPECTED_SKILLS = [
   'fulcrum-workflow-decomposition'
 ];
 const USER_INVOKED_SKILLS = new Set(['fulcrum-solution-document']);
-
 const COVERAGE_MAP_RELATIVE_PATH = path.join(
   PLUGIN_RELATIVE_PATH,
   'docs',
@@ -95,6 +113,7 @@ const REQUIRED_COVERAGE_DOMAINS = [
 
 const failures = [];
 const jsonDocuments = {};
+failures.push(...validateExampleBlockInventory(ROOT));
 
 for (const entrypoint of BUNDLE_ENTRYPOINTS) {
   const relativePath = repoRelativePath(entrypoint);
@@ -180,6 +199,36 @@ function isValidSkillName(value) {
 
 function isValidDescription(value) {
   return isNonEmptyString(value) && value.length <= 1024;
+}
+
+function directorySnapshot(directory) {
+  if (!fs.existsSync(directory) || !fs.statSync(directory).isDirectory()) return null;
+  return filesUnder(directory)
+    .map((filePath) => [
+      path.relative(directory, filePath),
+      fs.readFileSync(filePath).toString('base64')
+    ])
+    .sort(([left], [right]) => left.localeCompare(right));
+}
+
+function applyClaudeSkillMirrorRewrites(skillName, snapshot) {
+  if (skillName !== 'fulcrum-product-knowledge') {
+    return snapshot;
+  }
+
+  return snapshot.map(([relativePath, encodedContent]) => {
+    if (relativePath !== 'SKILL.md') {
+      return [relativePath, encodedContent];
+    }
+
+    const content = Buffer.from(encodedContent, 'base64')
+      .toString('utf8')
+      .replace(
+        '../fulcrum-solution-document/SKILL.md',
+        '../../commands/fulcrum-solution-document.md'
+      );
+    return [relativePath, Buffer.from(content).toString('base64')];
+  });
 }
 
 function referencesSectionHasUrl(text) {
@@ -371,6 +420,12 @@ if (JSON.stringify(actualSkillNames) !== JSON.stringify(EXPECTED_SKILLS.slice().
   failures.push(`skill inventory mismatch (missing: ${missing.join(', ')}; unexpected: ${unexpected.join(', ')})`);
 }
 
+failures.push(
+  ...validateForbiddenPackagePaths(FORBIDDEN_PACKAGE_PATHS, (relativePath) =>
+    pathEntryExists(path.join(ROOT, relativePath))
+  )
+);
+
 // 2. Validate each skill
 for (const skillPath of skillPaths) {
   const relativePath = repoRelativePath(skillPath);
@@ -386,19 +441,10 @@ for (const skillPath of skillPaths) {
     continue;
   }
 
-  if (!hasRequiredFrontmatter(frontmatter)) {
-    failures.push(`${relativePath}: frontmatter needs name and description`);
-  }
-
-  if (frontmatter && frontmatter.name !== directoryName) {
-    failures.push(`${relativePath}: frontmatter name does not match directory`);
-  }
+  failures.push(...validateAgentSkillFrontmatter(frontmatter, relativePath, directoryName));
 
   const policyPath = path.join(path.dirname(skillPath), 'agents', 'openai.yaml');
   if (USER_INVOKED_SKILLS.has(directoryName)) {
-    if (frontmatter?.['disable-model-invocation'] !== true) {
-      failures.push(`${relativePath}: user-invoked skills must disable model invocation`);
-    }
     if (!fs.existsSync(policyPath)) {
       failures.push(`${repoRelativePath(policyPath)}: Codex invocation policy is missing`);
     } else {
@@ -412,9 +458,6 @@ for (const skillPath of skillPaths) {
       }
     }
   } else {
-    if (frontmatter?.['disable-model-invocation'] === true) {
-      failures.push(`${relativePath}: model-invoked skills must not disable model invocation`);
-    }
     if (fs.existsSync(policyPath)) {
       try {
         const config = YAML.parse(fs.readFileSync(policyPath, 'utf8'));
@@ -448,13 +491,12 @@ for (const skillPath of skillPaths) {
 const jsonSearchDirs = [
   ROOT,
   path.join(ROOT, '.claude-plugin'),
-  path.join(ROOT, '.cursor-plugin'),
   path.join(ROOT, '.github', 'plugin'),
   path.join(ROOT, '.agents', 'plugins'),
+  path.join(ROOT, 'adapters', 'gemini'),
   PLUGIN_DIR,
-  path.join(PLUGIN_DIR, '.claude-plugin'),
   path.join(PLUGIN_DIR, '.cursor-plugin'),
-  path.join(PLUGIN_DIR, '.codex-plugin')
+  path.join(PLUGIN_DIR, '.claude-plugin'),
 ];
 
 const foundJsonPaths = new Set();
@@ -483,7 +525,8 @@ const publicTextPaths = [
   path.join(ROOT, '.claude-plugin', 'marketplace.json'),
   path.join(ROOT, '.github', 'plugin', 'marketplace.json'),
   path.join(ROOT, '.agents', 'plugins', 'marketplace.json'),
-  ...filesUnder(PLUGIN_DIR)
+  ...filesUnder(PLUGIN_DIR),
+  ...filesUnder(path.dirname(GEMINI_ADAPTER_PATH))
 ];
 
 const uniqueTextPaths = [...new Set(publicTextPaths)].filter((p) => fs.existsSync(p) && fs.statSync(p).isFile());
@@ -520,31 +563,11 @@ for (const p of uniqueTextPaths) {
 }
 
 // 5. Manifest checks
-const AGENT_MCP_SCHEMA = 'https://agent-plugins.org/schemas/1.0.0/mcp.schema.json';
 const agentManifest = jsonDocuments[`${PLUGIN_RELATIVE_PATH}/plugin.json`];
-if (agentManifest) {
-  if ('$schema' in agentManifest) {
-    failures.push(`${PLUGIN_RELATIVE_PATH}/plugin.json: omit $schema because Claude rejects unknown top-level fields`);
-  }
-  if (!agentManifest.name) {
-    failures.push(`${PLUGIN_RELATIVE_PATH}/plugin.json: name is required`);
-  }
-}
+failures.push(...validateAgentPluginManifest(agentManifest, `${PLUGIN_RELATIVE_PATH}/plugin.json`));
 
 const agentMcp = jsonDocuments[`${PLUGIN_RELATIVE_PATH}/mcp.json`];
-if (agentMcp) {
-  if (agentMcp.$schema !== AGENT_MCP_SCHEMA) {
-    failures.push(`${PLUGIN_RELATIVE_PATH}/mcp.json: $schema must identify Agent Plugins MCP 1.0.0`);
-  }
-}
-
-for (const name of ['mcp.json', '.mcp.json']) {
-  const relativePath = `${PLUGIN_RELATIVE_PATH}/${name}`;
-  const servers = jsonDocuments[relativePath]?.mcpServers;
-  if (!servers || typeof servers !== 'object' || Array.isArray(servers) || Object.keys(servers).length !== 0) {
-    failures.push(`${relativePath}: keep mcpServers empty; users must explicitly select their tenant endpoint`);
-  }
-}
+failures.push(...validateAgentMcpConfig(agentMcp, `${PLUGIN_RELATIVE_PATH}/mcp.json`));
 
 const setupPath = path.join(SKILLS_DIR, 'fulcrum-app-builder', 'resources', 'mcp-setup.md');
 if (!fs.existsSync(setupPath)) {
@@ -639,23 +662,75 @@ if (fs.existsSync(reportSkillPath)) {
   }
 }
 
+const rootClaudeManifestPath = '.claude-plugin/plugin.json';
 const cursorManifestPath = `${PLUGIN_RELATIVE_PATH}/.cursor-plugin/plugin.json`;
-const cursorManifest = jsonDocuments[cursorManifestPath];
-if (cursorManifest) {
-  if (cursorManifest.skills !== './skills/') {
-    failures.push(`${cursorManifestPath}: skills must point to ./skills/`);
+const rootClaudeManifest = jsonDocuments[rootClaudeManifestPath];
+const expectedClaudeSkillNames = EXPECTED_SKILLS
+  .filter((skillName) => !USER_INVOKED_SKILLS.has(skillName))
+  .sort();
+const rootClaudeSkillsPath = path.join(ROOT, 'skills');
+const rootClaudeSkillEntries = fs.existsSync(rootClaudeSkillsPath) && fs.statSync(rootClaudeSkillsPath).isDirectory()
+  ? fs.readdirSync(rootClaudeSkillsPath, { withFileTypes: true }).sort((left, right) =>
+    left.name.localeCompare(right.name)
+  )
+  : [];
+if (rootClaudeManifest?.skills !== undefined) {
+  failures.push(`${rootClaudeManifestPath}: omit unsupported skills field; use the plugin-root skills/ directory`);
+}
+if (
+  JSON.stringify(rootClaudeSkillEntries.map((entry) => entry.name)) !==
+  JSON.stringify(expectedClaudeSkillNames) ||
+  rootClaudeSkillEntries.some((entry) => !entry.isDirectory())
+) {
+  failures.push(
+    `skills/: must contain every shared skill except ${[...USER_INVOKED_SKILLS].join(', ')}`
+  );
+}
+for (const skillName of expectedClaudeSkillNames) {
+  const sourceSnapshot = directorySnapshot(path.join(SKILLS_DIR, skillName));
+  const claudeSnapshot = directorySnapshot(path.join(rootClaudeSkillsPath, skillName));
+  if (
+    JSON.stringify(applyClaudeSkillMirrorRewrites(skillName, sourceSnapshot)) !==
+    JSON.stringify(claudeSnapshot)
+  ) {
+    failures.push(`skills/${skillName}: must mirror the portable skill directory`);
   }
 }
 
-const rootClaudeManifestPath = '.claude-plugin/plugin.json';
-const rootClaudeManifest = jsonDocuments[rootClaudeManifestPath];
-if (rootClaudeManifest?.skills !== `./${PLUGIN_RELATIVE_PATH}/skills/`) {
-  failures.push(`${rootClaudeManifestPath}: skills must point to ./${PLUGIN_RELATIVE_PATH}/skills/`);
+const claudeCommandDefinitions = [
+  {
+    commandRelativePath: 'commands/fulcrum-solution-document.md',
+    sharedSkillPath:
+      '${CLAUDE_PLUGIN_ROOT}/plugins/fulcrum-ai-toolkit/skills/fulcrum-solution-document/SKILL.md'
+  }
+];
+for (const {
+  commandRelativePath,
+  sharedSkillPath
+} of claudeCommandDefinitions) {
+  const commandPath = path.join(ROOT, commandRelativePath);
+  const commandParts = fs.existsSync(commandPath)
+    ? fs.readFileSync(commandPath, 'utf8').split(/^---\s*$/m)
+    : [];
+  if (commandParts.length < 3) {
+    failures.push(`${commandRelativePath}: missing YAML frontmatter`);
+    continue;
+  }
+  try {
+    const frontmatter = YAML.parse(commandParts[1]);
+    failures.push(...validateClaudeManualCommand(
+      frontmatter,
+      commandParts.slice(2).join('---').trim(),
+      commandRelativePath,
+      sharedSkillPath
+    ));
+  } catch (err) {
+    failures.push(`${commandRelativePath}: invalid YAML frontmatter (${err.message.split('\n')[0].trim()})`);
+  }
 }
 
 const claudeManifestPaths = [
-  rootClaudeManifestPath,
-  `${PLUGIN_RELATIVE_PATH}/.claude-plugin/plugin.json`
+  rootClaudeManifestPath
 ];
 for (const relativePath of claudeManifestPaths) {
   if ('$schema' in (jsonDocuments[relativePath] ?? {})) {
@@ -663,11 +738,15 @@ for (const relativePath of claudeManifestPaths) {
   }
 }
 
+const cursorManifest = jsonDocuments[cursorManifestPath];
+if (!cursorManifest || cursorManifest.skills !== './skills/') {
+  failures.push(`${cursorManifestPath}: skills must point to ./skills/`);
+}
+
 for (const relativePath of [
   ...claudeManifestPaths,
-  `${PLUGIN_RELATIVE_PATH}/.codex-plugin/plugin.json`,
   cursorManifestPath,
-  `${PLUGIN_RELATIVE_PATH}/gemini-extension.json`
+  GEMINI_ADAPTER_RELATIVE_PATH
 ]) {
   const manifest = jsonDocuments[relativePath];
   if (!manifest || !agentManifest?.version || manifest.version !== agentManifest.version) {
@@ -697,7 +776,7 @@ if (!fs.existsSync(rootLicensePath) || !fs.existsSync(packageLicensePath)) {
 
 const marketplaceSources = {
   '.github/plugin/marketplace.json': './plugins/fulcrum-ai-toolkit',
-  '.claude-plugin/marketplace.json': './plugins/fulcrum-ai-toolkit',
+  '.claude-plugin/marketplace.json': './',
   'marketplace.json': './plugins/fulcrum-ai-toolkit'
 };
 for (const [relPath, expectedSource] of Object.entries(marketplaceSources)) {

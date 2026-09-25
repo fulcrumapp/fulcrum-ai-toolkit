@@ -29,8 +29,8 @@ jobs:
         working-directory: tools/format-validator
       - name: Validate skills and manifests
         run: node scripts/validate.mjs
-      - name: Validate app scoring, review guidance, and M365 bundle
-        run: node --test test/app-scorecard.test.mjs test/app-approval.test.mjs test/build-m365-bundle.test.mjs test/validate-entrypoint-frontmatter.test.mjs
+      - name: Run Node contract tests
+        run: node --test test/*.test.mjs
       - name: Build Microsoft 365 Copilot bundle
         run: node scripts/build-m365-bundle.mjs
       - name: Upload Microsoft 365 Copilot bundle artifact
