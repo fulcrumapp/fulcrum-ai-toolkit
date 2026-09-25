@@ -81,6 +81,13 @@ Start by offering a choice:
 
 If the user's prompt already answers some of these clearly, confirm them ("It sounds like this app is for X, producing Y, used by Z — is that right?") and ask only what's missing.
 
+For an existing app, begin
+[`fulcrum-app-editing`](../fulcrum-app-editing/SKILL.md) before proposing or
+composing the edit. Complete its entry gate, record detection, classification,
+and impact analysis before planning the change. For a production-sensitive
+edit, complete its clone and promotion-approval phases before the final
+reconciliation below; do not attempt its reconcile-and-promote phase yet.
+
 **Discovery Questions** — work into conversation as needed, don't ask all at once:
 
 1. What does the app track or collect?
@@ -188,6 +195,15 @@ Before each live write, apply the
 full-form payloads, scripts, Reference Files, and Report Templates, including
 reapproval and coupled file/script writes.
 
+For every write to an existing form, use
+[`fulcrum-app-editing`](../fulcrum-app-editing/SKILL.md). It requires Query MCP
+record detection before each `fulcrum_forms_update` and routes
+production-sensitive work through clone, diff, and explicit promotion approval.
+For a production-sensitive edit, the existing-app sequence below is that
+skill's reconcile-and-promote phase, not a second update after it. It applies
+to schema and Data Event script updates alike; do not bypass it because the
+requested change is small.
+
 When App MCP is available, follow its live schemas exactly. Do not hand-write new element JSON when a registered schema builder owns that shape.
 
 > Connector authority: Live installed App MCP schemas define the create/update
@@ -242,26 +258,35 @@ Reuse prior approval only when it covers the same content and operation.
 
 For an existing app:
 
-1. Fetch the current form with `fulcrum_forms_get`. Compare it with the version
+1. Complete the `fulcrum-app-editing` entry gate, required record detection,
+   classification, and impact analysis. For a production-sensitive edit,
+   complete its production safety flow through explicit promotion approval
+   (Steps 1-6). Steps 2-12 below are that flow's Step 7,
+   **Reconcile and promote**; they compose and issue the single approved live
+   update rather than following a completed promotion.
+2. Fetch the current form with `fulcrum_forms_get`. Compare it with the version
    assessed for approval; reconcile intervening changes rather than overwriting
    them, and return to Step 3 if the approved design or assessment is affected.
-2. Copy its complete element tree and preserve every existing element key,
+3. Copy its complete element tree and preserve every existing element key,
    concrete `type`, and inline-choice key.
-3. Modify requested properties in place without changing their keys.
-4. Use `fulcrum_schema_build_field` only for genuinely new field additions, then insert those additions into the copied tree.
-5. Preservation is the default. Preserve every unrequested element and choice. Omit `removed_element_keys` when nothing was removed.
-6. If the user requests an element removal, explain the data and integration impact and obtain explicit approval. After approval, omit the removed subtree from the copied tree and collect only that subtree root's existing key in `removed_element_keys`; one root key authorizes its descendants. Choice removals also require approval, but choice keys do not belong in `removed_element_keys`.
-7. Validate the composed full form with `fulcrum_forms_validate`.
-8. Complete the performance review of the composed code and dependencies,
+4. Modify requested properties in place without changing their keys.
+5. Use `fulcrum_schema_build_field` only for genuinely new field additions, then insert those additions into the copied tree.
+6. Preservation is the default. Preserve every unrequested element and choice. Omit `removed_element_keys` when nothing was removed.
+7. If the user requests an element removal, explain the data and integration impact and obtain explicit approval. After approval, omit the removed subtree from the copied tree and collect only that subtree root's existing key in `removed_element_keys`; one root key authorizes its descendants. Choice removals also require approval, but choice keys do not belong in `removed_element_keys`.
+8. Validate the composed full form with `fulcrum_forms_validate`.
+9. Complete the performance review of the composed code and dependencies,
    including unchanged code. Return to Step 3 if the design or assessment
    changed materially; complete any required reapproval before the update.
-9. Always re-read the full form and relevant dependencies immediately before
+10. Always re-read the full form and relevant dependencies immediately before
    the update. Reconcile only approved edits into that fresh state, preserving
    intervening fields, choices, and handlers. Recompute `composedElements` and
    `removedElementKeys`, revalidate the full form, and re-review the result.
    Obtain reapproval for material differences and repeat this final fresh read
    after approval. Follow the pre-write safeguard; never replay stale values.
-10. Start the update payload with `elements: composedElements`. Only
+11. Complete the final record-count recheck required by
+    `fulcrum-app-editing`. If it differs from the approved baseline, stop and
+    reconcile through that skill before writing.
+12. Start the update payload with `elements: composedElements`. Only
    `if (removedElementKeys.length > 0)`, set
    `updatePayload.removed_element_keys = removedElementKeys`, then send the
    complete payload with `fulcrum_forms_update(updatePayload)`. The annotated call is
@@ -325,7 +350,13 @@ After a build or handoff, summarize:
 
 ## Scope
 
-This skill orchestrates app creation and updates. Defer deep platform questions to `fulcrum-product-knowledge`, discovery to `fulcrum-discovery`, app structure to `fulcrum-app-design`, safety to `fulcrum-safety`, data events to `fulcrum-data-events`, extensions to `fulcrum-app-extensions`, reporting to `fulcrum-report-building`, and post-build documentation and sharing to `fulcrum-solution-document`.
+This skill orchestrates app creation and updates. Defer production-safe
+existing-app editing to `fulcrum-app-editing`, deep platform questions to
+`fulcrum-product-knowledge`, discovery to `fulcrum-discovery`, app structure
+to `fulcrum-app-design`, safety to `fulcrum-safety`, data events to
+`fulcrum-data-events`, extensions to `fulcrum-app-extensions`, reporting to
+`fulcrum-report-building`, and post-build documentation and sharing to
+`fulcrum-solution-document`.
 
 ## References
 

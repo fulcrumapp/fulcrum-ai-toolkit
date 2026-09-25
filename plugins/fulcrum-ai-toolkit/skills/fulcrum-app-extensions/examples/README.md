@@ -5,11 +5,13 @@ native `Source:` comment naming its public documentation. Prefer the artifacts
 returned by `fulcrum_extensions_generate` when App MCP is registered; use these
 to review a generated artifact or to work without a connector.
 
-Before uploading or attaching an example, follow the
+Before proposing an upload or attachment, follow the
 [canonical publishing sequence](../assets/app-mcp-extension-publish-sequence.txt)
-or [manual UI workflow](../SKILL.md#manual-ui-fallback). Review and approve
-the page, complete script, and dependencies before either live write;
-fresh-read and reconcile the current script immediately before updating it.
+or [manual UI workflow](../SKILL.md#manual-ui-fallback). The manual workflow
+is preparation and handoff only; it does not authorize either live write.
+Review and approve the page, complete script, and dependencies before handoff
+or either live write; fresh-read and reconcile the current script immediately
+before updating it.
 
 ## Extension page
 

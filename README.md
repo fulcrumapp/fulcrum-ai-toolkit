@@ -114,10 +114,13 @@ shapes and take precedence over toolkit prose.
    check-in or full interview and honor the user's choice.
 2. Define the goal and deliverable with `fulcrum-app-goal`.
 3. Use `fulcrum-app-builder` and `fulcrum-app-design` to propose and approve a schema.
-4. Route integration, mapping, Query API, access, and migration decisions to
+4. Before changing an existing app, use `fulcrum-app-editing` to detect records,
+   analyze destructive-field impact, and apply the production-safe clone, diff,
+   and approval flow.
+5. Route integration, mapping, Query API, access, and migration decisions to
    their focused skills.
-5. Build through Fulcrum App MCP when available, or use the approved handoff.
-6. Test the workflow and document the result with `fulcrum-solution-document`.
+6. Build through Fulcrum App MCP when available, or use the approved handoff.
+7. Test the workflow and document the result with `fulcrum-solution-document`.
 
 To assess an existing or proposed app instead of building one, use
 `fulcrum-app-scorecard`: an evidence-based **1 (poor) to 10 (excellent)** design
@@ -271,6 +274,7 @@ activation, an authenticated MCP connection, or successful live app creation.
 | `fulcrum-access-management` | Roles, resource access, memberships, SSO/SCIM, and least-privilege reasoning | Model-invoked |
 | `fulcrum-data-migration` | Supported migration assessment, mapping, dry runs, reconciliation, cutover, and rollback design | Model-invoked |
 | `fulcrum-app-builder` | Novice-friendly app discovery, schema approval, App MCP orchestration, and connector-independent handoff | Model-invoked |
+| `fulcrum-app-editing` | Production-safe existing-app edits with record detection, data-impact analysis, and approval-gated clone/diff/promotion | Model-invoked |
 | `fulcrum-app-design` | App structure, field types, linked apps vs single app, repeatables | Model-invoked |
 | `fulcrum-app-scorecard` | Evidence-based 1-10 app design scoring, repeatable ceiling, and extensible rubric | Model-invoked |
 | `fulcrum-performance-review` | Workload-based performance evaluation for every code artifact, with constructive advice and explicit measurement limits | Model-invoked |
@@ -304,6 +308,8 @@ uses the focused skill to:
 - Clarify new app and workflow requirements with a quick check-in or an optional
   full interview (`fulcrum-discovery`)
 - Guide app discovery, schema approval, and App MCP-dependent execution (`fulcrum-app-builder`)
+- Safely edit existing apps through record detection, impact analysis, and
+  approval-gated same-organization promotion (`fulcrum-app-editing`)
 - Check that every app has a clear goal before building (`fulcrum-app-goal`)
 - Select appropriate field types and app structure (`fulcrum-app-design`)
 - Score existing or proposed apps and prioritize design improvements (`fulcrum-app-scorecard`)
