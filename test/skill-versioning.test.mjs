@@ -22,7 +22,7 @@ function addSkill(root, name, version) {
   fs.writeFileSync(skillFile, skillContent(version).replace('example-skill', name), 'utf8');
 }
 
-function createRepository(t, baseVersion) {
+function createRepository(t, baseVersion, baseSkillPath = skillPath, baseResourcePath = resourcePath) {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), 'skill-versioning-'));
   t.after(() => fs.rmSync(root, { recursive: true, force: true }));
 
@@ -30,11 +30,11 @@ function createRepository(t, baseVersion) {
   runGit(root, ['config', 'user.name', 'Skill Version Test']);
   runGit(root, ['config', 'user.email', 'skill-version-test@example.invalid']);
 
-  const skillFile = path.join(root, skillPath);
+  const skillFile = path.join(root, baseSkillPath);
   fs.mkdirSync(path.dirname(skillFile), { recursive: true });
   fs.writeFileSync(skillFile, skillContent(baseVersion), 'utf8');
 
-  const resourceFile = path.join(root, resourcePath);
+  const resourceFile = path.join(root, baseResourcePath);
   fs.mkdirSync(path.dirname(resourceFile), { recursive: true });
   fs.writeFileSync(resourceFile, 'Initial resource\n', 'utf8');
 
@@ -109,6 +109,42 @@ test('rejects a new skill that does not start at version 1.0.0', (t) => {
   const result = runValidator(root);
   assert.equal(result.status, 1);
   assert.match(result.stderr, /new skills must start at 1\.0\.0; found 1\.0\.1/);
+});
+
+test('preserves a moved skill version but rejects resetting it', (t) => {
+  const oldSkillPath = 'plugins/legacy-toolkit/skills/example-skill/SKILL.md';
+  const oldResourcePath = 'plugins/legacy-toolkit/skills/example-skill/resources/example.md';
+  const { root, skillFile, resourceFile } = createRepository(
+    t,
+    '1.2.0',
+    oldSkillPath,
+    oldResourcePath
+  );
+  const movedSkillFile = path.join(root, skillPath);
+  const movedResourceFile = path.join(root, resourcePath);
+  fs.mkdirSync(path.dirname(movedResourceFile), { recursive: true });
+  fs.renameSync(skillFile, movedSkillFile);
+  fs.renameSync(resourceFile, movedResourceFile);
+  runGit(root, ['add', '-A']);
+  runGit(root, ['commit', '-m', 'Move existing skill']);
+
+  const preservedVersion = runValidator(root);
+  assert.equal(preservedVersion.status, 0, preservedVersion.stderr);
+
+  fs.writeFileSync(movedSkillFile, skillContent('1.0.0'), 'utf8');
+  runGit(root, ['add', '.']);
+  runGit(root, ['commit', '-m', 'Reset moved skill version']);
+
+  const resetVersion = runValidator(root);
+  assert.equal(resetVersion.status, 1);
+  assert.match(resetVersion.stderr, /version must increase above 1\.2\.0; found 1\.0\.0/);
+
+  fs.writeFileSync(movedSkillFile, skillContent('1.2.1'), 'utf8');
+  runGit(root, ['add', '.']);
+  runGit(root, ['commit', '-m', 'Increment moved skill version']);
+
+  const increasedVersion = runValidator(root);
+  assert.equal(increasedVersion.status, 0, increasedVersion.stderr);
 });
 
 test('rejects an invalid base version instead of treating it as a migration', (t) => {

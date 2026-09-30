@@ -28,7 +28,7 @@ if (!BASE_REF) {
 
 const changedResult = spawnSync(
   'git',
-  ['diff', '--name-only', '--diff-filter=ACMRTD', `${BASE_REF}...HEAD`],
+  ['diff', '--name-status', '-M', '--diff-filter=ACMRTD', '-z', `${BASE_REF}...HEAD`],
   { cwd: ROOT, encoding: 'utf8' }
 );
 
@@ -40,9 +40,58 @@ if (changedResult.error || changedResult.status !== 0) {
 }
 
 const changedSkillNames = new Set();
-for (const relativePath of changedResult.stdout.split('\n').filter(Boolean)) {
-  const match = relativePath.match(/^plugins\/fulcrum-ai-toolkit\/skills\/([^/]+)\//);
-  if (match) changedSkillNames.add(match[1]);
+const skillChangesByName = new Map();
+const baseSkillPathsByName = new Map();
+const changedPaths = changedResult.stdout.split('\0');
+const changeRecords = [];
+for (let index = 0; index < changedPaths.length;) {
+  const status = changedPaths[index++];
+  if (!status) continue;
+
+  const isRename = status.startsWith('R') || status.startsWith('C');
+  const firstPath = changedPaths[index++];
+  const oldPath = isRename || status === 'D' ? firstPath : null;
+  const currentPath = isRename ? changedPaths[index++] : status === 'D' ? null : firstPath;
+  const change = { status, oldPath, currentPath };
+  changeRecords.push(change);
+
+  const currentSkillName = skillNameFromPath(currentPath);
+  const oldSkillName = skillNameFromPath(oldPath);
+  if (currentSkillName) {
+    changedSkillNames.add(currentSkillName);
+    const skillChanges = skillChangesByName.get(currentSkillName) || [];
+    skillChanges.push(change);
+    skillChangesByName.set(currentSkillName, skillChanges);
+  } else if (oldSkillName) {
+    changedSkillNames.add(oldSkillName);
+  }
+
+  if (
+    isRename &&
+    oldPath?.endsWith('/SKILL.md') &&
+    currentPath?.endsWith('/SKILL.md') &&
+    currentSkillName
+  ) {
+    baseSkillPathsByName.set(currentSkillName, oldPath);
+  }
+}
+
+const movedSkillNamesByBaseDirectory = new Map();
+for (const [skillName, baseSkillPath] of baseSkillPathsByName) {
+  const baseDirectory = skillDirectoryPath(baseSkillPath);
+  const currentDirectory = `${SKILLS_PREFIX}${skillName}`;
+  if (baseDirectory !== currentDirectory) {
+    movedSkillNamesByBaseDirectory.set(baseDirectory, skillName);
+  }
+}
+for (const change of changeRecords) {
+  if (change.currentPath || !change.oldPath) continue;
+  const movedSkillName = movedSkillNamesByBaseDirectory.get(skillDirectoryPath(change.oldPath));
+  if (!movedSkillName) continue;
+
+  const skillChanges = skillChangesByName.get(movedSkillName) || [];
+  skillChanges.push(change);
+  skillChangesByName.set(movedSkillName, skillChanges);
 }
 
 const failures = [];
@@ -59,7 +108,8 @@ for (const skillName of [...changedSkillNames].sort()) {
     continue;
   }
 
-  const basePathResult = spawnSync('git', ['ls-tree', '-z', BASE_REF, '--', skillPath], {
+  const baseSkillPath = baseSkillPathsByName.get(skillName) || skillPath;
+  const basePathResult = spawnSync('git', ['ls-tree', '-z', BASE_REF, '--', baseSkillPath], {
     cwd: ROOT,
     encoding: 'utf8'
   });
@@ -76,7 +126,7 @@ for (const skillName of [...changedSkillNames].sort()) {
     continue;
   }
 
-  const baseResult = spawnSync('git', ['show', `${BASE_REF}:${skillPath}`], {
+  const baseResult = spawnSync('git', ['show', `${BASE_REF}:${baseSkillPath}`], {
     cwd: ROOT,
     encoding: 'utf8'
   });
@@ -100,7 +150,13 @@ for (const skillName of [...changedSkillNames].sort()) {
     failures.push(`${skillPath}: base metadata.version is not stable SemVer (${base.version})`);
     continue;
   }
-  if (compareSemver(current.version, base.version) <= 0) {
+  const comparison = compareSemver(current.version, base.version);
+  const locationOnlyMove = isLocationOnlyMove(
+    skillChangesByName.get(skillName) || [],
+    baseSkillPath,
+    skillPath
+  );
+  if (comparison < 0 || (comparison === 0 && !locationOnlyMove)) {
     failures.push(`${skillPath}: version must increase above ${base.version}; found ${current.version}`);
   }
 }
@@ -115,6 +171,33 @@ console.log(
     (migrationBaselines ? `; ${migrationBaselines} unversioned base skill(s) initialized` : '') +
     '.'
 );
+
+function skillNameFromPath(relativePath) {
+  if (!relativePath) return null;
+  return relativePath.match(/^plugins\/fulcrum-ai-toolkit\/skills\/([^/]+)\//)?.[1] || null;
+}
+
+function skillDirectoryPath(relativePath) {
+  const match = relativePath.match(/^(.*?\/skills\/[^/]+)(?:\/|$)/);
+  return match ? match[1] : path.posix.dirname(relativePath);
+}
+
+function isLocationOnlyMove(changes, baseSkillPath, currentSkillPath) {
+  const baseDirectory = skillDirectoryPath(baseSkillPath);
+  const currentDirectory = skillDirectoryPath(currentSkillPath);
+  return (
+    baseDirectory !== currentDirectory &&
+    changes.length > 0 &&
+    changes.every(
+      ({ status, oldPath, currentPath }) =>
+        status === 'R100' &&
+        oldPath &&
+        currentPath &&
+        skillDirectoryPath(oldPath) === baseDirectory &&
+        skillDirectoryPath(currentPath) === currentDirectory
+    )
+  );
+}
 
 function readSkillVersion(text) {
   const match = text.match(/^---\s*\r?\n([\s\S]*?)\r?\n---\s*(?:\r?\n|$)/);

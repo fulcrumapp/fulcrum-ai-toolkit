@@ -28,6 +28,9 @@ Use stable numeric SemVer in the quoted form `MAJOR.MINOR.PATCH`:
 Start a newly created skill at `1.0.0`. Never reset an existing skill's version
 when reorganizing files or moving it between hosts. The bundle's plugin version
 is separate; changing a plugin manifest does not replace the per-skill bump.
+A location-only move that leaves skill content unchanged preserves its existing
+version; if content or supporting files change during the move, increment it as
+usual.
 
 ## Change Workflow
 
