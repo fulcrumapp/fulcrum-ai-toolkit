@@ -42,6 +42,8 @@ if (changedResult.error || changedResult.status !== 0) {
 const changedSkillNames = new Set();
 const skillChangesByName = new Map();
 const baseSkillPathsByName = new Map();
+const failures = [];
+let migrationBaselines = 0;
 const changedPaths = changedResult.stdout.split('\0');
 const changeRecords = [];
 for (let index = 0; index < changedPaths.length;) {
@@ -76,6 +78,69 @@ for (let index = 0; index < changedPaths.length;) {
   }
 }
 
+const addedSkillsByIdentity = new Map();
+for (const change of changeRecords) {
+  const skillName = skillNameFromPath(change.currentPath);
+  if (change.status !== 'A' || !skillName || !change.currentPath.endsWith('/SKILL.md')) continue;
+
+  const currentPath = path.join(ROOT, change.currentPath);
+  const current = readSkillVersion(fs.readFileSync(currentPath, 'utf8'));
+  if (current.error || !current.name) continue;
+
+  const addedSkills = addedSkillsByIdentity.get(current.name) || [];
+  addedSkills.push({ path: change.currentPath, skillName });
+  addedSkillsByIdentity.set(current.name, addedSkills);
+}
+
+const deletedSkillsByIdentity = new Map();
+if (addedSkillsByIdentity.size > 0) {
+  for (const change of changeRecords) {
+    if (
+      change.status !== 'D' ||
+      !change.oldPath?.endsWith('/SKILL.md') ||
+      !/(?:^|\/)skills\/[^/]+\/SKILL\.md$/.test(change.oldPath)
+    ) {
+      continue;
+    }
+
+    const baseResult = spawnSync('git', ['show', `${BASE_REF}:${change.oldPath}`], {
+      cwd: ROOT,
+      encoding: 'utf8'
+    });
+    if (baseResult.error || baseResult.status !== 0) {
+      failures.push(
+        `${change.oldPath}: unable to read the deleted base skill (${baseResult.error?.message || baseResult.stderr.trim()})`
+      );
+      continue;
+    }
+
+    const base = readSkillVersion(baseResult.stdout);
+    if (base.error) {
+      failures.push(`${change.oldPath}: deleted base skill has invalid frontmatter (${base.error})`);
+      continue;
+    }
+    if (!base.name) continue;
+
+    const deletedSkills = deletedSkillsByIdentity.get(base.name) || [];
+    deletedSkills.push(change.oldPath);
+    deletedSkillsByIdentity.set(base.name, deletedSkills);
+  }
+
+  for (const [identity, deletedSkills] of deletedSkillsByIdentity) {
+    const addedSkills = addedSkillsByIdentity.get(identity) || [];
+    if (addedSkills.length === 0) continue;
+    if (deletedSkills.length !== 1 || addedSkills.length !== 1) {
+      failures.push(`${identity}: unable to unambiguously match the moved skill by frontmatter name`);
+      continue;
+    }
+
+    const [{ skillName }] = addedSkills;
+    if (!baseSkillPathsByName.has(skillName)) {
+      baseSkillPathsByName.set(skillName, deletedSkills[0]);
+    }
+  }
+}
+
 const movedSkillNamesByBaseDirectory = new Map();
 for (const [skillName, baseSkillPath] of baseSkillPathsByName) {
   const baseDirectory = skillDirectoryPath(baseSkillPath);
@@ -93,9 +158,6 @@ for (const change of changeRecords) {
   skillChanges.push(change);
   skillChangesByName.set(movedSkillName, skillChanges);
 }
-
-const failures = [];
-let migrationBaselines = 0;
 
 for (const skillName of [...changedSkillNames].sort()) {
   const skillPath = `${SKILLS_PREFIX}${skillName}/SKILL.md`;
@@ -201,30 +263,31 @@ function isLocationOnlyMove(changes, baseSkillPath, currentSkillPath) {
 
 function readSkillVersion(text) {
   const match = text.match(/^---\s*\r?\n([\s\S]*?)\r?\n---\s*(?:\r?\n|$)/);
-  if (!match) return { error: 'missing YAML frontmatter', hasVersion: false, version: null };
+  if (!match) return { error: 'missing YAML frontmatter', hasVersion: false, version: null, name: null };
 
   let frontmatter;
   try {
     frontmatter = YAML.parse(match[1]);
   } catch (error) {
-    return { error: error.message.split('\n')[0].trim(), hasVersion: false, version: null };
+    return { error: error.message.split('\n')[0].trim(), hasVersion: false, version: null, name: null };
   }
 
   if (!frontmatter || typeof frontmatter !== 'object' || Array.isArray(frontmatter)) {
-    return { error: 'frontmatter must be a mapping', hasVersion: false, version: null };
+    return { error: 'frontmatter must be a mapping', hasVersion: false, version: null, name: null };
   }
+  const name = typeof frontmatter.name === 'string' ? frontmatter.name : null;
   if (!Object.hasOwn(frontmatter, 'metadata')) {
-    return { error: null, hasVersion: false, version: null };
+    return { error: null, hasVersion: false, version: null, name };
   }
 
   const metadata = frontmatter.metadata;
   if (!metadata || typeof metadata !== 'object' || Array.isArray(metadata)) {
-    return { error: 'metadata must be a mapping', hasVersion: false, version: null };
+    return { error: 'metadata must be a mapping', hasVersion: false, version: null, name };
   }
   if (!Object.hasOwn(metadata, 'version')) {
-    return { error: null, hasVersion: false, version: null };
+    return { error: null, hasVersion: false, version: null, name };
   }
-  return { error: null, hasVersion: true, version: metadata.version };
+  return { error: null, hasVersion: true, version: metadata.version, name };
 }
 
 function parseSemver(value) {

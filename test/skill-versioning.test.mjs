@@ -147,6 +147,45 @@ test('preserves a moved skill version but rejects resetting it', (t) => {
   assert.equal(increasedVersion.status, 0, increasedVersion.stderr);
 });
 
+test('correlates substantially rewritten moves by frontmatter identity', (t) => {
+  const oldSkillPath = 'plugins/legacy-toolkit/skills/example-skill/SKILL.md';
+  const oldResourcePath = 'plugins/legacy-toolkit/skills/example-skill/resources/example.md';
+  const { root, skillFile, resourceFile } = createRepository(
+    t,
+    '4.2.0',
+    oldSkillPath,
+    oldResourcePath
+  );
+  const movedSkillFile = path.join(root, skillPath);
+  const movedResourceFile = path.join(root, resourcePath);
+  fs.mkdirSync(path.dirname(movedResourceFile), { recursive: true });
+  fs.renameSync(skillFile, movedSkillFile);
+  fs.renameSync(resourceFile, movedResourceFile);
+  const rewrittenBody = `\n${'New workflow section with distinct content.\n'.repeat(100)}`;
+  fs.writeFileSync(movedSkillFile, `${skillContent('1.0.0')}${rewrittenBody}`, 'utf8');
+  runGit(root, ['add', '-A']);
+  runGit(root, ['commit', '-m', 'Move and rewrite existing skill']);
+
+  const moveDiff = spawnSync('git', ['diff', '--name-status', '-M', 'main...HEAD'], {
+    cwd: root,
+    encoding: 'utf8'
+  });
+  assert.equal(moveDiff.status, 0, moveDiff.stderr);
+  assert.match(moveDiff.stdout, /^D\tplugins\/legacy-toolkit\/skills\/example-skill\/SKILL\.md$/m);
+  assert.match(moveDiff.stdout, /^A\tplugins\/fulcrum-ai-toolkit\/skills\/example-skill\/SKILL\.md$/m);
+
+  const resetVersion = runValidator(root);
+  assert.equal(resetVersion.status, 1);
+  assert.match(resetVersion.stderr, /version must increase above 4\.2\.0; found 1\.0\.0/);
+
+  fs.writeFileSync(movedSkillFile, `${skillContent('4.2.1')}${rewrittenBody}`, 'utf8');
+  runGit(root, ['add', '.']);
+  runGit(root, ['commit', '-m', 'Increment moved skill version']);
+
+  const increasedVersion = runValidator(root);
+  assert.equal(increasedVersion.status, 0, increasedVersion.stderr);
+});
+
 test('rejects an invalid base version instead of treating it as a migration', (t) => {
   const { root, skillFile, resourceFile } = createRepository(t, 'v1.0.0');
   fs.writeFileSync(resourceFile, 'Updated resource\n', 'utf8');
