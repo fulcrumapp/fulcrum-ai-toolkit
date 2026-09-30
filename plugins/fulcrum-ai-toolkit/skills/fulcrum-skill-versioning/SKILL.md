@@ -2,7 +2,7 @@
 name: fulcrum-skill-versioning
 description: Use before every change to a Fulcrum AI Toolkit skill or its supporting resources, examples, or assets—not just during release work. Identify each affected skill and increment its SemVer version in the same change.
 metadata:
-  version: "1.0.1"
+  version: "1.0.0"
 ---
 
 # Fulcrum Skill Versioning

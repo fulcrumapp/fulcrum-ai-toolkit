@@ -59,15 +59,33 @@ for (const skillName of [...changedSkillNames].sort()) {
     continue;
   }
 
+  const basePathResult = spawnSync('git', ['ls-tree', '-z', BASE_REF, '--', skillPath], {
+    cwd: ROOT,
+    encoding: 'utf8'
+  });
+  if (basePathResult.error || basePathResult.status !== 0) {
+    failures.push(
+      `${skillPath}: unable to inspect the base skill (${basePathResult.error?.message || basePathResult.stderr.trim()})`
+    );
+    continue;
+  }
+  if (basePathResult.stdout.length === 0) {
+    if (current.version !== '1.0.0') {
+      failures.push(`${skillPath}: new skills must start at 1.0.0; found ${current.version}`);
+    }
+    continue;
+  }
+
   const baseResult = spawnSync('git', ['show', `${BASE_REF}:${skillPath}`], {
     cwd: ROOT,
     encoding: 'utf8'
   });
-  if (baseResult.error) {
-    failures.push(`${skillPath}: unable to read the base version (${baseResult.error.message})`);
+  if (baseResult.error || baseResult.status !== 0) {
+    failures.push(
+      `${skillPath}: unable to read the base version (${baseResult.error?.message || baseResult.stderr.trim()})`
+    );
     continue;
   }
-  if (baseResult.status !== 0) continue;
 
   const base = readSkillVersion(baseResult.stdout);
   if (base.error) {

@@ -16,6 +16,12 @@ function skillContent(version) {
   return `---\nname: example-skill\n${metadata}description: Example skill for tests\n---\n\n# Example\n`;
 }
 
+function addSkill(root, name, version) {
+  const skillFile = path.join(root, 'plugins/fulcrum-ai-toolkit/skills', name, 'SKILL.md');
+  fs.mkdirSync(path.dirname(skillFile), { recursive: true });
+  fs.writeFileSync(skillFile, skillContent(version).replace('example-skill', name), 'utf8');
+}
+
 function createRepository(t, baseVersion) {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), 'skill-versioning-'));
   t.after(() => fs.rmSync(root, { recursive: true, force: true }));
@@ -86,15 +92,23 @@ test('accepts existing unversioned skills as a one-time migration baseline', (t)
 
 test('accepts a new skill with an initial version', (t) => {
   const { root } = createRepository(t, null);
-  const newSkillPath = 'plugins/fulcrum-ai-toolkit/skills/new-skill/SKILL.md';
-  const newSkillFile = path.join(root, newSkillPath);
-  fs.mkdirSync(path.dirname(newSkillFile), { recursive: true });
-  fs.writeFileSync(newSkillFile, skillContent('1.0.0').replace('example-skill', 'new-skill'), 'utf8');
+  addSkill(root, 'new-skill', '1.0.0');
   runGit(root, ['add', '.']);
   runGit(root, ['commit', '-m', 'Add new skill']);
 
   const result = runValidator(root);
   assert.equal(result.status, 0, result.stderr);
+});
+
+test('rejects a new skill that does not start at version 1.0.0', (t) => {
+  const { root } = createRepository(t, null);
+  addSkill(root, 'new-skill', '1.0.1');
+  runGit(root, ['add', '.']);
+  runGit(root, ['commit', '-m', 'Add new skill']);
+
+  const result = runValidator(root);
+  assert.equal(result.status, 1);
+  assert.match(result.stderr, /new skills must start at 1\.0\.0; found 1\.0\.1/);
 });
 
 test('rejects an invalid base version instead of treating it as a migration', (t) => {
