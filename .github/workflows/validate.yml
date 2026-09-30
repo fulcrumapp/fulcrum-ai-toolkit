@@ -30,7 +30,8 @@ jobs:
       - name: Validate skills and manifests
         run: node scripts/validate.mjs
       - name: Validate changed skill version bumps
-        if: github.event_name != 'push' || github.event.before != '0000000000000000000000000000000000000000'
+        # Feature-branch pushes use the prior commit, not the PR's target base.
+        if: ${{ github.event_name == 'pull_request' || (github.event_name == 'push' && github.ref_name == github.event.repository.default_branch && github.event.before != '0000000000000000000000000000000000000000') }}
         env:
           FULCRUM_SKILL_VERSION_BASE: ${{ github.event.pull_request.base.sha || github.event.before || github.sha }}
         run: node scripts/validate-skill-version-bumps.mjs
