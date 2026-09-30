@@ -1,5 +1,7 @@
 ---
 name: fulcrum-solution-document
+metadata:
+  version: "1.0.0"
 description: "User-invoked workflow to document a completed Fulcrum app, extension, workflow, report, or integration. Produce an audience-appropriate one-pager, review it for privacy, and prepare optional share formats for a destination chosen by the user. Run only when someone requests documentation, review, handoff, or sharing."
 disable-model-invocation: true
 ---

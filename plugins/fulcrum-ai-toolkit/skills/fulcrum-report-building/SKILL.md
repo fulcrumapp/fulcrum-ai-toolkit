@@ -1,5 +1,7 @@
 ---
 name: fulcrum-report-building
+metadata:
+  version: "1.1.0"
 description: Use when building, modifying, generating, or debugging Fulcrum reports and Report Templates. Covers the documented Report Builder runtime, App MCP template CRUD and report generation, EJS patterns, context objects, QUERY() for multi-record reports, and common mistakes.
 ---
 

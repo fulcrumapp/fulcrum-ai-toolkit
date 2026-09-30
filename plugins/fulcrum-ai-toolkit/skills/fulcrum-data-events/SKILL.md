@@ -1,5 +1,7 @@
 ---
 name: fulcrum-data-events
+metadata:
+  version: "1.1.0"
 description: Use when writing, reviewing, persisting, or debugging Fulcrum Data Event JavaScript. Defers current hooks and signatures to App MCP knowledge, stores the single script through form get/update operations, and covers patterns, constraints, lifecycle, offline behavior, and security.
 ---
 

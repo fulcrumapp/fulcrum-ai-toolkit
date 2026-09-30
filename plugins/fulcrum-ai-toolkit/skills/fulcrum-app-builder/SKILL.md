@@ -1,5 +1,7 @@
 ---
 name: fulcrum-app-builder
+metadata:
+  version: "1.1.0"
 description: Guided, novice-friendly workflow for creating or updating a Fulcrum app. Use when a user wants to build an app, add or change fields, or asks whether a Fulcrum app can support a workflow. Explain capabilities and limits, ask focused discovery questions, propose a plain-English schema for approval, then use Fulcrum App MCP as the default control plane when it is available. If App MCP is unavailable, produce a ready-to-implement schema and handoff instead.
 ---
 

@@ -1,5 +1,7 @@
 ---
 name: fulcrum-data-migration
+metadata:
+  version: "1.1.0"
 description: Assess and design supported Fulcrum data migrations. Use for inventory, identity and key mapping, history/timestamp/media/URL risk, dry runs, reconciliation, cutover, rollback, and public API boundaries.
 ---
 

@@ -32,6 +32,8 @@ focused skill that best matches the request and follow its instructions:
 - `skills/fulcrum-app-scorecard/SKILL.md` and
   `skills/fulcrum-performance-review/SKILL.md` for assessment and review
 - `skills/fulcrum-solution-document/SKILL.md` for documenting the result
+- `skills/fulcrum-skill-versioning/SKILL.md` when creating, editing, reviewing,
+  or versioning toolkit skills
 
 Keep the complete `skills/` directory together. The focused skills reference
 one another and their supporting resources by relative path. This bundle

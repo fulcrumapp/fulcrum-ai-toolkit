@@ -172,11 +172,12 @@ Validation runs entirely on Node.js. Install dependencies for the format validat
 npm ci --prefix tools/format-validator
 npm run --prefix tools/format-validator validate
 node scripts/validate.mjs
-node --test test/app-scorecard.test.mjs test/app-approval.test.mjs test/build-m365-bundle.test.mjs test/validate-entrypoint-frontmatter.test.mjs
+FULCRUM_SKILL_VERSION_BASE="<base-ref>" node scripts/validate-skill-version-bumps.mjs
+node --test test/app-scorecard.test.mjs test/app-approval.test.mjs test/build-m365-bundle.test.mjs test/validate-entrypoint-frontmatter.test.mjs test/skill-versioning.test.mjs
 ```
 
-The repository validator checks the expected skill inventory, skill frontmatter,
-directory/name consistency, corporate absolute paths, privacy and provenance contracts,
+The repository validator checks the expected skill inventory, skill frontmatter
+and SemVer values, directory/name consistency, corporate absolute paths, privacy and provenance contracts,
 portable and client JSON manifests, and README inventory. The portable
 `plugin.json` intentionally omits `$schema` because Claude's SDK warns on
 unknown top-level fields when it encounters that manifest.
@@ -186,6 +187,8 @@ and empty default server configuration.
 Guidance contract tests check the rubric inventory, sibling links, worked
 scoring arithmetic, and required approval/performance instructions; they do
 not prove an agent's live app assessment or runtime performance.
+The changed-skill version validator compares every modified skill directory,
+including supporting files, against the supplied base revision.
 Structural and schema validation for externalized examples and assets runs via
 `tools/format-validator` using Ajv and pinned parsers.
 In CI, GitHub Actions also validates the Claude plugin marketplace using Anthropic's official
@@ -276,6 +279,7 @@ activation, an authenticated MCP connection, or successful live app creation.
 | `fulcrum-performance-review` | Workload-based performance evaluation for every code artifact, with constructive advice and explicit measurement limits | Model-invoked |
 | `fulcrum-app-goal` | Ensure every app has a clear goal and defined deliverable | Model-invoked |
 | `fulcrum-safety` | Flag missing safety steps in field workflows | Model-invoked |
+| `fulcrum-skill-versioning` | SemVer for every changed toolkit skill and its supporting files | Model-invoked |
 | `fulcrum-data-events` | Data event patterns, anti-patterns, and platform constraints | Model-invoked |
 | `fulcrum-workflow-decomposition` | Break monolithic apps into composable, maintainable pieces | Model-invoked |
 | `fulcrum-app-extensions` | App extension anatomy, FS bridge API, offline support, picker anti-pattern | Model-invoked |
@@ -359,9 +363,14 @@ that must remain private or be dropped.
 
 Skills follow the [Agent Skills specification](https://agentskills.io/specification):
 each distributable skill under `plugins/fulcrum-ai-toolkit/skills/` is a
-directory containing a `SKILL.md` with YAML frontmatter (`name` and
-`description`) plus a Markdown body. Host-specific invocation fields and
-sidecars supplement the portable content; unsupported hosts may ignore them.
+directory containing a `SKILL.md` with YAML frontmatter (`name`, `description`,
+and `metadata.version`) plus a Markdown body. Use a quoted stable
+SemVer value (`MAJOR.MINOR.PATCH`) for `metadata.version`. Increment the
+version for every change to a skill directory, including its resources,
+examples, and assets, in the same change—not only when preparing a release.
+The repository validator checks changes against the selected base revision.
+Host-specific invocation fields and sidecars supplement the portable content;
+unsupported hosts may ignore them.
 
 ### Platform support
 
