@@ -14,6 +14,15 @@ Customize and add instructions and documentation that will provide context to th
 ## Code Style Guidelines
 <!-- Describe any coding standards to follow. -->
 
+## Skill Versioning
+
+Before changing any distributable skill under
+`plugins/fulcrum-ai-toolkit/skills/`, follow
+[Fulcrum Skill Versioning](plugins/fulcrum-ai-toolkit/skills/fulcrum-skill-versioning/SKILL.md).
+Every changed skill directory, including edits to supporting resources, examples,
+or assets, must increment its own `metadata.version` SemVer value in the same
+change. Do not defer versioning until release preparation.
+
 ## Test Guidelines
 
 When adding or changing JSON in a toolkit skill's `examples/` or `assets/`

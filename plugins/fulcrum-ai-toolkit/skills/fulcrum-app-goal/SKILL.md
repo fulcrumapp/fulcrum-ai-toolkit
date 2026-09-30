@@ -1,5 +1,7 @@
 ---
 name: fulcrum-app-goal
+metadata:
+  version: "1.0.0"
 description: Use when creating a new Fulcrum app or reviewing an existing one — ensures every app has a clear goal, a defined deliverable, and a known audience before building begins. Flag when a goal is missing or unclear.
 ---
 

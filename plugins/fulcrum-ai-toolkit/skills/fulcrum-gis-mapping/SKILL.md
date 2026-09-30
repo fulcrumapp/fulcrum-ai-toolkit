@@ -1,5 +1,7 @@
 ---
 name: fulcrum-gis-mapping
+metadata:
+  version: "1.1.0"
 description: Select Fulcrum GIS and mapping capabilities. Use for layers, basemaps, ArcGIS, online/offline maps, geometry capture, spatial import/export, and current web/mobile support checks.
 ---
 

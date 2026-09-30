@@ -29,8 +29,13 @@ jobs:
         working-directory: tools/format-validator
       - name: Validate skills and manifests
         run: node scripts/validate.mjs
+      - name: Validate changed skill version bumps
+        if: github.event_name != 'push' || github.event.before != '0000000000000000000000000000000000000000'
+        env:
+          FULCRUM_SKILL_VERSION_BASE: ${{ github.event.pull_request.base.sha || github.event.before || github.sha }}
+        run: node scripts/validate-skill-version-bumps.mjs
       - name: Validate app scoring, review guidance, and M365 bundle
-        run: node --test test/app-scorecard.test.mjs test/app-approval.test.mjs test/build-m365-bundle.test.mjs test/validate-entrypoint-frontmatter.test.mjs
+        run: node --test test/app-scorecard.test.mjs test/app-approval.test.mjs test/build-m365-bundle.test.mjs test/validate-entrypoint-frontmatter.test.mjs test/skill-versioning.test.mjs
       - name: Build Microsoft 365 Copilot bundle
         run: node scripts/build-m365-bundle.mjs
       - name: Upload Microsoft 365 Copilot bundle artifact

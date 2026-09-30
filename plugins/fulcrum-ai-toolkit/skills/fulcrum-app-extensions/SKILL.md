@@ -1,5 +1,7 @@
 ---
 name: fulcrum-app-extensions
+metadata:
+  version: "1.1.0"
 description: Use when building, modifying, or reviewing Fulcrum App Extensions. Defers pattern knowledge and artifact generation to App MCP, then covers the generated bridge contract, Reference File workflow, offline decisions, data exchange, and picker anti-pattern.
 ---
 
