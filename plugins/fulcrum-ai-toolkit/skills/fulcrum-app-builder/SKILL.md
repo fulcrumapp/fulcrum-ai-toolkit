@@ -1,6 +1,6 @@
 ---
 name: fulcrum-app-builder
-description: Guided, novice-friendly workflow for creating or updating a Fulcrum app. Use when a user wants to build an app, add or change fields, or asks whether a Fulcrum app can support a workflow. Explain capabilities and limits, ask focused discovery questions, propose a plain-English schema for approval, then use Fulcrum App MCP as the default control plane when it is available. If App MCP is unavailable, produce a ready-to-implement schema and handoff instead.
+description: Retrieve a live inventory of existing Fulcrum apps, or guide app creation and updates. Use when a user asks to list, show, browse, or find apps in their organization, wants to build an app, add or change fields, or asks whether a Fulcrum app can support a workflow. For an inventory, use live read-only metadata and report exact names, IDs, scope, and completeness; never invent app names. For building, explain capabilities and limits, ask focused discovery questions, and propose a plain-English schema for approval. Use Fulcrum App MCP by default when available; otherwise provide an approved implementation handoff, not a live inventory.
 ---
 
 # Fulcrum App Builder
@@ -13,6 +13,18 @@ This skill is the front door for app-building conversations. Use [fulcrum-produc
 > Source: [Fulcrum Forms API](https://docs.fulcrumapp.com/reference/forms-intro)
 > and the [public OpenAPI document](https://raw.githubusercontent.com/fulcrumapp/api/v2/reference/rest-api.json)
 > define public form and resource behavior.
+
+## Read-Only App Inventory
+
+For requests such as "List all apps in my org" or "Find my inspection app",
+follow [read-only app inventory](resources/app-inventory.md) before the build
+steps, then return the evidence-backed result. This includes checking the
+confirmed connector scope, retrieving live metadata, and reporting exact
+identities and completeness on the first answer.
+
+Do not start discovery, scoring, design approval, or writes for a read-only
+list. If the request also asks for a change, retrieve the intended app first,
+then use the build workflow below for the proposed mutation and its approval.
 
 ## Step 0: Check Execution Capability
 
@@ -325,10 +337,11 @@ After a build or handoff, summarize:
 
 ## Scope
 
-This skill orchestrates app creation and updates. Defer deep platform questions to `fulcrum-product-knowledge`, discovery to `fulcrum-discovery`, app structure to `fulcrum-app-design`, safety to `fulcrum-safety`, data events to `fulcrum-data-events`, extensions to `fulcrum-app-extensions`, reporting to `fulcrum-report-building`, and post-build documentation and sharing to `fulcrum-solution-document`.
+This skill handles read-only app inventory and orchestrates app creation and updates. Defer deep platform questions to `fulcrum-product-knowledge`, discovery to `fulcrum-discovery`, app structure to `fulcrum-app-design`, safety to `fulcrum-safety`, data events to `fulcrum-data-events`, extensions to `fulcrum-app-extensions`, reporting to `fulcrum-report-building`, and post-build documentation and sharing to `fulcrum-solution-document`.
 
 ## References
 
+- [Read-only app inventory](resources/app-inventory.md)
 - [Pre-write freshness and artifact consistency](resources/pre-write-freshness.md)
 - [Design approval and performance scenarios](resources/approval-cases.md)
 - [Fulcrum developer documentation](https://docs.fulcrumapp.com/)

@@ -110,6 +110,13 @@ shapes and take precedence over toolkit prose.
 
 ## Start here
 
+For "List all apps in my org" or finding an existing app, use
+[`fulcrum-app-builder`'s read-only inventory workflow](plugins/fulcrum-ai-toolkit/skills/fulcrum-app-builder/resources/app-inventory.md).
+It retrieves live form metadata before answering, preserves exact names and
+IDs, and reports permission, filter, and completeness limits. Without a
+connector it reports retrieval unavailable, not a plausible sample inventory.
+This path does not start a build interview or authorize changes.
+
 1. Let `fulcrum-discovery` clarify a new workflow. It will offer a quick
    check-in or full interview and honor the user's choice.
 2. Define the goal and deliverable with `fulcrum-app-goal`.
@@ -183,9 +190,11 @@ unknown top-level fields when it encounters that manifest.
 It also keeps release versions aligned, requires the packaged license and
 Codex manual-invocation policies, and guards the regional MCP endpoint map
 and empty default server configuration.
-Guidance contract tests check the rubric inventory, sibling links, worked
-scoring arithmetic, and required approval/performance instructions; they do
-not prove an agent's live app assessment or runtime performance.
+Guidance contract tests check app-inventory routing and evidence/completeness
+safeguards, the rubric inventory, sibling links, worked scoring arithmetic, and
+required approval/performance instructions; they do not prove host skill
+activation, live app-list accuracy, an agent's live app assessment, or runtime
+performance.
 Structural and schema validation for externalized examples and assets runs via
 `tools/format-validator` using Ajv and pinned parsers.
 In CI, GitHub Actions also validates the Claude plugin marketplace using Anthropic's official
@@ -270,7 +279,7 @@ activation, an authenticated MCP connection, or successful live app creation.
 | `fulcrum-query-api` | Query MCP read-only discovery, SQL modeling, execution, and validation | Model-invoked |
 | `fulcrum-access-management` | Roles, resource access, memberships, SSO/SCIM, and least-privilege reasoning | Model-invoked |
 | `fulcrum-data-migration` | Supported migration assessment, mapping, dry runs, reconciliation, cutover, and rollback design | Model-invoked |
-| `fulcrum-app-builder` | Novice-friendly app discovery, schema approval, App MCP orchestration, and connector-independent handoff | Model-invoked |
+| `fulcrum-app-builder` | Live read-only app inventory, novice-friendly schema approval, App MCP orchestration, and connector-independent handoff | Model-invoked |
 | `fulcrum-app-design` | App structure, field types, linked apps vs single app, repeatables | Model-invoked |
 | `fulcrum-app-scorecard` | Evidence-based 1-10 app design scoring, repeatable ceiling, and extensible rubric | Model-invoked |
 | `fulcrum-performance-review` | Workload-based performance evaluation for every code artifact, with constructive advice and explicit measurement limits | Model-invoked |
@@ -303,7 +312,8 @@ uses the focused skill to:
   (`fulcrum-data-migration`)
 - Clarify new app and workflow requirements with a quick check-in or an optional
   full interview (`fulcrum-discovery`)
-- Guide app discovery, schema approval, and App MCP-dependent execution (`fulcrum-app-builder`)
+- Retrieve an evidence-backed inventory of existing apps, or guide schema
+  approval and App MCP-dependent building (`fulcrum-app-builder`)
 - Check that every app has a clear goal before building (`fulcrum-app-goal`)
 - Select appropriate field types and app structure (`fulcrum-app-design`)
 - Score existing or proposed apps and prioritize design improvements (`fulcrum-app-scorecard`)

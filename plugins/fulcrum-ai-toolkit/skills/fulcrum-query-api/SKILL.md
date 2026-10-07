@@ -20,6 +20,11 @@ Use this skill for Query API table discovery, app/repeatable/link/media joins,
 system metadata, report-query modeling, spatial analysis, exports, and
 read-only analytics.
 
+For a metadata-only request such as "List my apps", follow
+[read-only app inventory](../fulcrum-app-builder/resources/app-inventory.md)
+instead of the SQL workflow below. Use advertised form metadata tools; do not
+query records or enumerate every form's Query tables just to list apps.
+
 ## When Not To Use
 
 - Use [`fulcrum-report-building`](../fulcrum-report-building/SKILL.md) for
