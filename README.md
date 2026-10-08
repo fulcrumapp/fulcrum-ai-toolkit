@@ -325,6 +325,11 @@ the Agent Skills standard. On other hosts, invocation behavior may differ.
 Contextual discovery still asks the user to choose a quick check-in or full
 interview, and explicit approval remains required before an external send.
 
+When a host exposes configurable reasoning effort, this toolkit defaults to a
+**high** effort preamble for focused skill runs. Use **medium** for bounded
+lookup/formatting requests and avoid **max** as the default, since supported
+effort levels vary across model families.
+
 ## Where this comes from
 
 The toolkit combines public Fulcrum documentation with portable workflow

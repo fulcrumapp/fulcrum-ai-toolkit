@@ -47,6 +47,13 @@ focused skills reference one another and their supporting resources by relative
 path. This bundle provides guidance only; it does not include Fulcrum
 credentials or register an MCP server.
 
+## Reasoning-effort preamble
+
+When the host supports configurable reasoning effort, prefer **high** while
+running this toolkit's focused skills. Use **medium** for clearly bounded lookups
+or formatting-only work, and avoid **max** by default so behavior remains
+portable across model families with different effort controls.
+
 ## References
 
 - [Fulcrum AI Toolkit](https://github.com/fulcrumapp/fulcrum-ai-toolkit)
