@@ -50,9 +50,12 @@ credentials or register an MCP server.
 ## Reasoning-effort preamble
 
 When the host supports configurable reasoning effort, prefer **high** while
-running this toolkit's focused skills. Use **medium** for clearly bounded lookups
-or formatting-only work, and avoid **max** by default so behavior remains
-portable across model families with different effort controls.
+running this skill, unless an explicit user setting takes precedence. Use
+**medium** for clearly bounded lookups or formatting-only work. Do not assume
+**max** or other effort names are supported. This is a recommendation, not a
+runtime setting: if the host cannot apply it, keep its configured effort and
+follow the same verification steps. Verify unfamiliar Fulcrum terms against
+the skill's authoritative sources rather than guessing their meaning.
 
 ## References
 

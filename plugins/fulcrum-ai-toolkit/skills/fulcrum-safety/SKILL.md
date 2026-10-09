@@ -3,6 +3,16 @@ name: fulcrum-safety
 description: Use when building or reviewing a Fulcrum app for field work — flags missing safety steps, ensures safety documentation is included in workflows that involve physical hazards, and recommends safety-related fields when appropriate.
 ---
 
+## Reasoning-effort preamble
+
+When the host supports configurable reasoning effort, prefer **high** while
+running this skill, unless an explicit user setting takes precedence. Use
+**medium** for clearly bounded lookups or formatting-only work. Do not assume
+**max** or other effort names are supported. This is a recommendation, not a
+runtime setting: if the host cannot apply it, keep its configured effort and
+follow the same verification steps. Verify unfamiliar Fulcrum terms against
+the skill's authoritative sources rather than guessing their meaning.
+
 Field data collection happens in the real world — construction sites, wetlands, roadsides, utility corridors, confined spaces, active traffic. An app that sends people into the field without prompting for safety is an app that normalizes skipping safety.
 
 This skill does not replace a customer's safety program. It **flags gaps** where an app handles a physical field process but includes no safety acknowledgment, hazard assessment, or PPE documentation.

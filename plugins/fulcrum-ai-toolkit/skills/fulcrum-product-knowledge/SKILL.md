@@ -3,6 +3,16 @@ name: fulcrum-product-knowledge
 description: Route cross-cutting Fulcrum platform questions to the owning portable skill or current public source. Use for capability boundaries, plan checks, public AI capabilities, offline constraints, and App MCP scope.
 ---
 
+## Reasoning-effort preamble
+
+When the host supports configurable reasoning effort, prefer **high** while
+running this skill, unless an explicit user setting takes precedence. Use
+**medium** for clearly bounded lookups or formatting-only work. Do not assume
+**max** or other effort names are supported. This is a recommendation, not a
+runtime setting: if the host cannot apply it, keep its configured effort and
+follow the same verification steps. Verify unfamiliar Fulcrum terms against
+the skill's authoritative sources rather than guessing their meaning.
+
 # Fulcrum Product Knowledge Router
 
 Use this skill to select the smallest authoritative Fulcrum workflow. Do not

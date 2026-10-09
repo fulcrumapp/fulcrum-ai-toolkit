@@ -3,6 +3,16 @@ name: fulcrum-app-scorecard
 description: Score an existing or proposed Fulcrum app from 1 (poor design) to 10 (excellent design) using an evidence-based, extensible rubric derived from the toolkit. Use for app design scoring, grading, quality assessments, or comparisons. Any app containing a repeatable is capped at 6/10.
 ---
 
+## Reasoning-effort preamble
+
+When the host supports configurable reasoning effort, prefer **high** while
+running this skill, unless an explicit user setting takes precedence. Use
+**medium** for clearly bounded lookups or formatting-only work. Do not assume
+**max** or other effort names are supported. This is a recommendation, not a
+runtime setting: if the host cannot apply it, keep its configured effort and
+follow the same verification steps. Verify unfamiliar Fulcrum terms against
+the skill's authoritative sources rather than guessing their meaning.
+
 # Fulcrum App Design Scorecard
 
 Assess a Fulcrum data-collection app, not the visual design of an arbitrary

@@ -3,6 +3,16 @@ name: fulcrum-app-builder
 description: Guided, novice-friendly workflow for creating or updating a Fulcrum app. Use when a user wants to build an app, add or change fields, or asks whether a Fulcrum app can support a workflow. Explain capabilities and limits, ask focused discovery questions, propose a plain-English schema for approval, then use Fulcrum App MCP as the default control plane when it is available. If App MCP is unavailable, produce a ready-to-implement schema and handoff instead.
 ---
 
+## Reasoning-effort preamble
+
+When the host supports configurable reasoning effort, prefer **high** while
+running this skill, unless an explicit user setting takes precedence. Use
+**medium** for clearly bounded lookups or formatting-only work. Do not assume
+**max** or other effort names are supported. This is a recommendation, not a
+runtime setting: if the host cannot apply it, keep its configured effort and
+follow the same verification steps. Verify unfamiliar Fulcrum terms against
+the skill's authoritative sources rather than guessing their meaning.
+
 # Fulcrum App Builder
 
 This skill is the front door for app-building conversations. Use [fulcrum-product-knowledge](../fulcrum-product-knowledge/SKILL.md) for platform boundaries and use the focused skills for goals, discovery, design, safety, data events, extensions, reports, and decomposition. When the Fulcrum MCP gateway is registered, treat its live App MCP schemas as the control plane for supported app configuration and knowledge operations and its Query MCP schemas as the read-only query path.

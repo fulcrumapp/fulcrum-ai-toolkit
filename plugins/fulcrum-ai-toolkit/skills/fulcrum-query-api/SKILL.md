@@ -3,6 +3,16 @@ name: fulcrum-query-api
 description: Discover, model, execute, and validate safe read-only Fulcrum queries through Query MCP. Use for system, app, repeatable, link, and media tables; metadata discovery; parameterization; and documented PostgreSQL/PostGIS analysis.
 ---
 
+## Reasoning-effort preamble
+
+When the host supports configurable reasoning effort, prefer **high** while
+running this skill, unless an explicit user setting takes precedence. Use
+**medium** for clearly bounded lookups or formatting-only work. Do not assume
+**max** or other effort names are supported. This is a recommendation, not a
+runtime setting: if the host cannot apply it, keep its configured effort and
+follow the same verification steps. Verify unfamiliar Fulcrum terms against
+the skill's authoritative sources rather than guessing their meaning.
+
 # Fulcrum Query API
 
 Discover current metadata, model a read-only query, execute it through Query
