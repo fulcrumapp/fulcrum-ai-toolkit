@@ -25,6 +25,7 @@ test('CI and contributor guidance use top-level test discovery instead of suite 
 });
 
 test('the owning CI command discovers new suites, excludes fixtures, and propagates failures', (t) => {
+  assert.equal(testCommand, 'node --test test/*.test.mjs');
   const root = fs.mkdtempSync(path.join(os.tmpdir(), 'toolkit-test-discovery-'));
   t.after(() => fs.rmSync(root, { recursive: true, force: true }));
   const testDir = path.join(root, 'test');
