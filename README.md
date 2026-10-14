@@ -166,18 +166,35 @@ not a claim that every host has been tested in this repository yet.
 
 ## Local validation
 
-Validation runs entirely on Node.js. Install dependencies for the format validator and run the checks from the repository root:
+Validation runs entirely on Node.js. The owning sources are
+[the CI workflow](.github/workflows/validate.yml) for the runtime, commands, and
+working directories, and [the format validator package](tools/format-validator/package.json)
+for its script definitions. Read those files on the branch being changed before
+selecting checks; remembered suite counts and historical command lists are not
+the validation contract.
+
+Install dependencies for the format validator and run the checks from the
+repository root with the Node version selected by the workflow:
 
 ```bash
 npm ci --prefix tools/format-validator
 npm run --prefix tools/format-validator validate
 node scripts/validate.mjs
 FULCRUM_SKILL_VERSION_BASE="<base-ref>" node scripts/validate-skill-version-bumps.mjs
-node --test test/app-scorecard.test.mjs test/app-approval.test.mjs test/build-m365-bundle.test.mjs test/validate-entrypoint-frontmatter.test.mjs test/skill-versioning.test.mjs
+node --test test/*.test.mjs
 ```
 
-The repository validator checks the expected skill inventory, skill frontmatter
-and SemVer values, directory/name consistency, corporate absolute paths, privacy and provenance contracts,
+The shell expands `test/*.test.mjs` to the current top-level suites in both the
+local command and CI. Add new suites there so they are picked up automatically;
+nested fixtures and non-test helpers are excluded. Inspect the current inventory
+instead of relying on a fixed suite count. A moved or deleted historical test
+path requires checking the owning source and Git history, not restoring it
+solely to match a remembered command. Report the commands actually run with
+their results and the checked branch/commit, distinguishing targeted checks
+from full CI. Format validator contract probes run within its package script.
+
+The repository validator checks the expected skill inventory, skill frontmatter,
+directory/name consistency, corporate absolute paths, privacy and provenance contracts,
 portable and client JSON manifests, and README inventory. The portable
 `plugin.json` intentionally omits `$schema` because Claude's SDK warns on
 unknown top-level fields when it encounters that manifest.
@@ -414,6 +431,11 @@ Fulcrum teams are welcome. Open a PR with new skills or improvements.
 Skills should encode reusable patterns, not tenant-specific configurations.
 Use public sources, distinguish workflow recommendations from product
 constraints, and omit customer data, credentials, and private attribution.
+
+For skill-authoring and validation changes, follow
+[the repository test guidance](AGENTS.md#test-guidelines) and
+[Local validation](#local-validation). Keep validation instructions aligned
+with their owning workflow and package scripts.
 
 ## License
 
