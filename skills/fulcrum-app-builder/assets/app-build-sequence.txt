@@ -23,10 +23,18 @@ Step 2  fulcrum_schema_build_field(...)
           required      boolean
           choices       inline choice labels for a ChoiceField
           expression    calculation expression for a CalculatedField
-          display_style number, currency, or string for a CalculatedField
+          display_style text, number, date, or currency for a CalculatedField
           elements      child fields for a Section or Repeatable
 
-        Preserve each returned field object unchanged. "Element" is a generic
+        Use text for a textual calculation result, not string. Check the
+        returned CalculatedField display.style before assembly, including
+        fields nested in Sections or Repeatables. If the builder returns
+        string or another unsupported style, stop and report the connector
+        mismatch; do not write the invalid result or silently change its
+        display behavior. A successful forms_validate response is not proof
+        that the API will accept an invalid calculation display style.
+
+        Preserve each valid returned field object unchanged. "Element" is a generic
         schema/model name, not a valid value for the type property. Every
         top-level and nested element must keep a concrete type returned by the
         builder, such as TextField, Section, or Repeatable.

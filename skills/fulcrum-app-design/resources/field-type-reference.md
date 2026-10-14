@@ -169,6 +169,11 @@ Auto-computed value from a simple expression or advanced JavaScript.
 | expression | string | Calculation source using JavaScript, field references, and Fulcrum functions |
 | display | object | Display configuration (currency, style, etc.) |
 
+`display.style` is `text`, `number`, `date`, or `currency`. Use `text` for
+textual results, not `string`. In App MCP, the corresponding field-builder
+argument is `display_style`; check the returned style before writing the form.
+See the [calculation display-style safeguard](../../fulcrum-app-builder/SKILL.md#calculation-display-styles).
+
 Calculations reference other fields using `$data_name` syntax. Simple
 expressions evaluate to a value directly; advanced JavaScript can use
 declarations, helper functions, and methods, with `SETRESULT(value)` to set
