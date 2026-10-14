@@ -12,11 +12,33 @@
 // Omit removed_element_keys when removedElementKeys is empty. Declare only the
 // root key of an approved removed subtree, and never declare a key that is
 // still present in elements.
+// `form` is the fresh full form object from the immediately preceding read.
+// Copy only writable FormBody fields; response-only metadata must not be
+// forwarded to the update tool.
 
 var updatePayload = {
   id: formId,
+  name: form.name,
   elements: composedElements
 };
+
+for (var field of [
+  'description',
+  'status_field',
+  'title_field_keys',
+  'record_prefix',
+  'geometry_types',
+  'geometry_required',
+  'script',
+  'projects_enabled',
+  'assignment_enabled',
+  'auto_assign',
+  'hidden_on_dashboard'
+]) {
+  if (Object.prototype.hasOwnProperty.call(form, field)) {
+    updatePayload[field] = form[field];
+  }
+}
 
 if (removedElementKeys.length > 0) {
   updatePayload.removed_element_keys = removedElementKeys;

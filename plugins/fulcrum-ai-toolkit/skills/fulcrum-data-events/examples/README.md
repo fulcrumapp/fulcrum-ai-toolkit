@@ -1,7 +1,9 @@
 # Data Event Examples Index
 
 Runnable reference snippets for the single `script` value on a Fulcrum form.
-Every file carries a `// Source:` comment naming its public documentation.
+Anti-pattern contrast blocks are comment-only; the preferred block is the
+executable portion of those files. Every file carries a `// Source:` comment
+naming its public documentation.
 
 Compose these with the form's existing script rather than replacing it.
 Follow the [script persistence workflow](../SKILL.md#app-mcp-control-plane):
@@ -53,14 +55,14 @@ when the logic is too complex for an expression.
 | --- | --- |
 | [`load-reference-records.js`](load-reference-records.js) | Reads reference records with the `LOADRECORDS()` callback API. |
 | [`loadfile-shared-helpers.js`](loadfile-shared-helpers.js) | Loads a shared helper Reference File with `LOADFILE()`. |
-| [`storage-session-state.js`](storage-session-state.js) | Caches a derived value with `STORAGE()` under a key scoped to the app and to the record — or, for an unsaved record, to the editing session — cleared on the record lifecycle exits. |
+| [`storage-session-state.js`](storage-session-state.js) | Caches a bounded baseline under a form-and-record-scoped `STORAGE()` key for existing saved records; newly created records stay in session state because `save-record` runs before an identifier is available for re-keying. |
 
 ## Anti-pattern contrasts
 
 | File | What it shows |
 | --- | --- |
 | [`geometry-trigger-guard.js`](geometry-trigger-guard.js) | Why location logic belongs on `change-geometry`. |
-| [`field-names-bulk-readonly.js`](field-names-bulk-readonly.js) | `FIELD_NAMES()` instead of a hardcoded field list. |
+| [`field-names-bulk-readonly.js`](field-names-bulk-readonly.js) | `DATANAMES()` instead of a hardcoded field list. |
 | [`avoid-hardcoded-ids.js`](avoid-hardcoded-ids.js) | Runtime discovery instead of literal identifiers. |
 | [`no-secrets-in-scripts.js`](no-secrets-in-scripts.js) | Why a credential must not live in a client-side script. |
 | [`pin-cdn-library-versions.js`](pin-cdn-library-versions.js) | Exact semver pinning for external script references. |

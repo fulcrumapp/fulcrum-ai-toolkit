@@ -28,10 +28,17 @@
   rows below are wrapped in one here rather than left to the surrounding
   template: a rejected range renders a message, an empty result renders a single
   spanning row, and neither leaves a <tr> loose in the document.
+
+  This example intentionally caps the rendered result with SQL LIMIT 100. A
+  response at that self-imposed query limit is treated as potentially partial
+  because the endpoint does not return a count. Narrow the range or issue
+  additional queries with SQL LIMIT/OFFSET or keyset pagination when the
+  complete date range is required.
 %>
 
 <% const MS_PER_DAY = 86400000; %>
 <% const DEFAULT_WINDOW_DAYS = 90; %>
+<% const MAX_ROWS = 100; %>
 
 <% function parseIsoDay(value) {
      const text = '' + value;
@@ -51,7 +58,7 @@
 <% const endDay = requestedEnd ? parseIsoDay(requestedEnd) : today; %>
 <% const startDay = requestedStart
      ? parseIsoDay(requestedStart)
-     : parseIsoDay(isoDay(addDays(endDay || today, -DEFAULT_WINDOW_DAYS))); %>
+     : parseIsoDay(isoDay(addDays(endDay || today, -(DEFAULT_WINDOW_DAYS - 1)))); %>
 
 <% const rangeError = !startDay || !endDay
      ? 'start_date and end_date must be calendar dates in YYYY-MM-DD form.'
@@ -70,9 +77,12 @@
         WHERE _created_at >= '${('' + startDate).replace(/[^0-9-]/g, '')}'
           AND _created_at < '${('' + endExclusiveDate).replace(/[^0-9-]/g, '')}'
         ORDER BY _created_at DESC
-        LIMIT 500`,
+        LIMIT 100`,
        { format: 'json' }
      ); %>
+<% const resultRows = recordResults.rows; %>
+<% const hasMoreRows = resultRows.length === MAX_ROWS; %>
+<% const visibleRows = hasMoreRows ? resultRows.slice(0, MAX_ROWS) : resultRows; %>
 <table class="report-table">
   <thead>
     <tr>
@@ -86,18 +96,27 @@
       <tr>
         <td colspan="3" class="report-error"><%= rangeError %> No query was run.</td>
       </tr>
-    <% } else if (recordResults.rows.length === 0) { %>
+    <% } else if (visibleRows.length === 0) { %>
       <tr>
         <td colspan="3">No inspections in this range.</td>
       </tr>
     <% } else { %>
-      <% recordResults.rows.forEach(function (row) { %>
+      <% visibleRows.forEach(function (row) { %>
         <tr>
           <td><%= row._record_id %></td>
           <td><%= row._created_at %></td>
           <td><%= row._status %></td>
         </tr>
       <% }); %>
+      <% if (hasMoreRows) { %>
+        <tr>
+          <td colspan="3" class="report-warning">
+            Showing up to 100 inspections. Because this query requests LIMIT
+            100, this result may be partial; narrow the range or use SQL
+            LIMIT/OFFSET or keyset pagination for a complete result.
+          </td>
+        </tr>
+      <% } %>
     <% } %>
   </tbody>
 </table>

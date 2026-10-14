@@ -1,0 +1,19 @@
+<%# Source: https://docs.fulcrumapp.com/docs/functions#api %>
+<%# Fragment: paste into a Report Template; this is not a standalone template. %>
+<%# Purpose: call Fulcrum REST resources from template EJS. %>
+<%#
+  API(path, options) takes a Fulcrum API path plus options and is already
+  authenticated as the report runtime. Never place a token, password, or other
+  credential in a template. For external URLs use a documented function such as
+  GET(url, options) or JSONREQUEST(options) — do not invent helper names.
+%>
+
+<% const choiceLists = API('/choice_lists', {
+  qs: { per_page: 1 }
+}); %>
+<% const choiceListRows = Array.isArray(choiceLists.choice_lists) ? choiceLists.choice_lists : []; %>
+<%= choiceListRows[0] ? choiceListRows[0].name : 'No shared choice lists found.' %>
+
+<% const forms = API('/forms', { qs: { per_page: 1 } }); %>
+<% const formRows = Array.isArray(forms.forms) ? forms.forms : []; %>
+<%= formRows[0] ? formRows[0].name : 'No forms found.' %>

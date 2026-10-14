@@ -11,3 +11,6 @@ node_modules/
 # Generated Microsoft 365 skill bundle artifacts
 .m365-bundle-stage/
 fulcrum-ai-toolkit-m365.zip
+
+# Generated native Gemini extension bundle
+plugins/fulcrum-ai-toolkit-gemini/

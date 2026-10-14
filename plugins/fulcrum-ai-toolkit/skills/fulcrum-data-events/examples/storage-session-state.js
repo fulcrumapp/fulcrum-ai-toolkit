@@ -2,130 +2,165 @@
 // Source: https://docs.fulcrumapp.com/docs/data-events-reference
 // Source: https://docs.fulcrumapp.com/docs/data-events-loadrecords
 // Source: https://docs.fulcrumapp.com/docs/app-extensions-introduction
-// Purpose: cache a derived baseline for one record's editing session.
+// Purpose: cache a bounded baseline for one existing saved record's editing
+// session.
 //
 // STORAGE() returns a local-storage-like object with getItem, setItem,
-// removeItem, and clear. That store is device-wide and persistent, so a bare
-// key such as 'baseline' is read back in the next record and a value derived
-// from one record leaks into another. Values must be strings, so serialize
-// objects. Never place credentials or personal data in storage.
+// removeItem, and clear. That store is device-wide and persistent, so every
+// key below is scoped to the form and saved record. Never place credentials
+// or personal data in storage.
 //
-// Two documented identifiers scope the key:
+// RECORDID() is null until a new record has been saved. Existing saved records
+// use one stable key so the baseline survives a recreated script context and
+// does not create one persistent key per edit. A newly created record cannot be
+// re-keyed after save because save-record fires before persistence, so its
+// baseline remains in memory for the current editor session only.
 //
-//   FORM().id  identifies the app, so two apps on one device cannot share an
-//              entry even when both run this script.
-//   RECORDID() identifies the record, and is null until a new record has been
-//              saved. That null is what a record identifier alone cannot
-//              solve: every unsaved record answers the same way, so one
-//              unsaved record reads back the previous unsaved record's
-//              baseline.
-//
-// An unsaved record is therefore scoped by a nonce generated once per editing
-// session. A session that crashed before its cleanup ran leaves behind a key
-// the next session never computes, and a key that is never computed is never
-// read: the stale value is unreachable immediately, not merely deleted later.
-// The nonce names a cache entry rather than guarding one, so Date.now() and
-// Math.random() are the right tools; the value is not a secret and nothing
-// here treats it as one.
-//
-// Unreachable is not the same as reclaimed, and a crashed session cannot run
-// its own cleanup. Each session records its draft key under one fixed pointer
-// per app, and the next session removes whatever that pointer names before
-// starting, so at most one abandoned entry per app survives a crash and it is
-// removed without being read.
+// Persistent entries expire after 30 minutes without a callback that reloads
+// the context. This bounds stale data after an interrupted session. STORAGE()
+// has no session identifier, so a new edit opened within that window cannot be
+// distinguished from context recreation; use a host-specific session store
+// when exact concurrent-session isolation is required.
 //
 // Events used below are the documented record lifecycle: load-record fires when
 // the editor is displayed, cancel-record fires after an editing session is
 // cancelled, and unload-record fires when the editor has closed.
+//
+// Only list explicitly approved, non-sensitive scalar fields here. Do not
+// replace this allowlist with DATANAMES(): STORAGE() is persistent and
+// repeatable, media, location, and personal-data values do not belong in it.
 
 var BASELINE_KEY_PREFIX = 'baseline:';
-var DRAFT_POINTER_SUFFIX = ':draft-latest';
+var BASELINE_FIELDS = ['condition', 'status'];
+var MAX_BASELINE_TEXT_LENGTH = 256;
+var BASELINE_TTL_MS = 30 * 60 * 1000;
 var baselineKey = null;
+var baselineValue = null;
 
-function formScope() {
-  return BASELINE_KEY_PREFIX + FORM().id;
-}
-
-function draftPointerKey() {
-  return formScope() + DRAFT_POINTER_SUFFIX;
-}
-
-function sessionNonce() {
-  return Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 10);
-}
-
-// A saved record is named by its own identifier; an unsaved one is named by
-// this editing session, which no other session reproduces.
 function baselineStorageKey() {
   var recordId = RECORDID();
 
   return recordId
-    ? formScope() + ':record:' + recordId
-    : formScope() + ':draft:' + sessionNonce();
+    ? BASELINE_KEY_PREFIX + FORM().id + ':record:' + recordId
+    : null;
+}
+
+function parseStoredBaseline(stored) {
+  try {
+    var parsed = JSON.parse(stored);
+
+    return parsed &&
+      parsed.value &&
+      typeof parsed.value === 'object' &&
+      !Array.isArray(parsed.value) &&
+      Number.isFinite(parsed.expiresAt) &&
+      parsed.expiresAt > Date.now()
+      ? parsed.value
+      : null;
+  } catch (error) {
+    if (error instanceof SyntaxError) {
+      return null;
+    }
+    throw error;
+  }
 }
 
 function readBaseline() {
+  if (baselineValue !== null) {
+    return baselineValue;
+  }
+
   if (!baselineKey) {
     return null;
   }
 
-  var storage = STORAGE();
-  var stored = storage.getItem(baselineKey);
+  var stored = STORAGE().getItem(baselineKey);
 
-  return stored ? JSON.parse(stored) : null;
-}
-
-// Idempotent: repeated calls within one session reuse the cached value.
-function ensureBaseline() {
-  var existing = readBaseline();
-
-  if (existing) {
-    return existing;
+  if (!stored) {
+    return null;
   }
 
-  var storage = STORAGE();
-  var baseline = computeBaseline();
-  storage.setItem(baselineKey, JSON.stringify(baseline));
+  baselineValue = parseStoredBaseline(stored);
+
+  if (baselineValue === null) {
+    STORAGE().removeItem(baselineKey);
+    return null;
+  }
+
+  STORAGE().setItem(
+    baselineKey,
+    JSON.stringify({
+      value: baselineValue,
+      expiresAt: Date.now() + BASELINE_TTL_MS
+    })
+  );
+
+  return baselineValue;
+}
+
+function computeBaseline() {
+  var baseline = {};
+
+  BASELINE_FIELDS.forEach(function (fieldName) {
+    var value = VALUE(fieldName);
+
+    if (typeof value === 'string' && value.length <= MAX_BASELINE_TEXT_LENGTH) {
+      baseline[fieldName] = value;
+    } else if (
+      typeof value === 'number' &&
+      Number.isFinite(value)
+    ) {
+      baseline[fieldName] = value;
+    } else if (typeof value === 'boolean') {
+      baseline[fieldName] = value;
+    }
+  });
 
   return baseline;
 }
 
-// Removes the entry a previous session abandoned, without reading it: it was
-// derived from a different record and means nothing here.
-function discardAbandonedDraft() {
-  var storage = STORAGE();
-  var abandoned = storage.getItem(draftPointerKey());
+// Idempotent: repeated calls within the current editor session reuse the
+// cached value, including for unsaved records.
+function ensureBaseline() {
+  var existing = readBaseline();
 
-  if (abandoned) {
-    storage.removeItem(abandoned);
-    storage.removeItem(draftPointerKey());
+  if (existing !== null) {
+    return existing;
   }
+
+  var baseline = computeBaseline();
+
+  baselineValue = baseline;
+
+  if (baselineKey) {
+    STORAGE().setItem(
+      baselineKey,
+      JSON.stringify({
+        value: baseline,
+        expiresAt: Date.now() + BASELINE_TTL_MS
+      })
+    );
+  }
+
+  return baseline;
 }
 
-// Idempotent: removeItem on an absent key is a no-op.
+// Idempotent: saved records use one stable scoped key; unsaved records remain
+// in session-scoped memory because RECORDID() is not available yet.
 function clearBaseline() {
-  if (!baselineKey) {
-    return;
-  }
+  var key = baselineKey || baselineStorageKey();
 
-  var storage = STORAGE();
-  storage.removeItem(baselineKey);
-
-  if (storage.getItem(draftPointerKey()) === baselineKey) {
-    storage.removeItem(draftPointerKey());
+  if (key) {
+    STORAGE().removeItem(key);
   }
 
   baselineKey = null;
+  baselineValue = null;
 }
 
 ON('load-record', function (event) {
-  discardAbandonedDraft();
+  baselineValue = null;
   baselineKey = baselineStorageKey();
-
-  if (!RECORDID()) {
-    STORAGE().setItem(draftPointerKey(), baselineKey);
-  }
-
   ensureBaseline();
 });
 
