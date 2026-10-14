@@ -5,6 +5,16 @@ metadata:
 description: Retrieve a live inventory of existing Fulcrum apps, or guide app creation and updates. Use when a user asks to list, show, browse, or find apps in their organization, wants to build an app, add or change fields, or asks whether a Fulcrum app can support a workflow. For an inventory, use live read-only metadata and report exact names, IDs, scope, and completeness; never invent app names. For building, explain capabilities and limits, ask focused discovery questions, and propose a plain-English schema for approval. Use Fulcrum App MCP by default when available; otherwise provide an approved implementation handoff, not a live inventory.
 ---
 
+## Reasoning-effort preamble
+
+When the host supports configurable reasoning effort, prefer **high** while
+running this skill, unless an explicit user setting takes precedence. Use
+**medium** for clearly bounded lookups or formatting-only work. Do not assume
+**max** or other effort names are supported. This is a recommendation, not a
+runtime setting: if the host cannot apply it, keep its configured effort and
+follow the same verification steps. Verify unfamiliar Fulcrum terms against
+the skill's authoritative sources rather than guessing their meaning.
+
 # Fulcrum App Builder
 
 This skill is the front door for app-building conversations. Use [fulcrum-product-knowledge](../fulcrum-product-knowledge/SKILL.md) for platform boundaries and use the focused skills for goals, discovery, design, safety, data events, extensions, reports, and decomposition. When the Fulcrum MCP gateway is registered, treat its live App MCP schemas as the control plane for supported app configuration and knowledge operations and its Query MCP schemas as the read-only query path.

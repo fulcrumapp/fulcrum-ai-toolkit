@@ -5,6 +5,16 @@ metadata:
 description: Use when building or modifying a Fulcrum app — guides app structure, field type selection, linked apps vs single app, repeatables, and choice list design. Also use when reviewing an existing app for structural improvements.
 ---
 
+## Reasoning-effort preamble
+
+When the host supports configurable reasoning effort, prefer **high** while
+running this skill, unless an explicit user setting takes precedence. Use
+**medium** for clearly bounded lookups or formatting-only work. Do not assume
+**max** or other effort names are supported. This is a recommendation, not a
+runtime setting: if the host cannot apply it, keep its configured effort and
+follow the same verification steps. Verify unfamiliar Fulcrum terms against
+the skill's authoritative sources rather than guessing their meaning.
+
 A Fulcrum **app** is a mobile-first data collection form. Every design decision trades **field simplicity** against **workflow fidelity** — the goal is the simplest structure that captures what the field crew actually needs to record and what the office needs to report on.
 
 For a numerical assessment, use

@@ -96,3 +96,41 @@ for (const malformed of malformedCases) {
     assert.match(result.stderr, malformed.expected);
   });
 }
+
+const effortHeading = '## Reasoning-effort preamble';
+
+function effortPreamble(text) {
+  const sections = text.split(effortHeading);
+  assert.equal(sections.length, 2, 'Each skill must contain exactly one effort preamble');
+  return sections[1].trimStart().split(/\r?\n\r?\n/)[0].trim();
+}
+
+test('bundle entrypoints recommend supported effort without claiming runtime configuration', () => {
+  const guidance = effortPreamble(fs.readFileSync(path.join(repoRoot, 'SKILL.md'), 'utf8'));
+  const packageEntrypoint = fs.readFileSync(path.join(repoRoot, 'plugins/fulcrum-ai-toolkit/SKILL.md'), 'utf8');
+  assert.equal(effortPreamble(packageEntrypoint), guidance);
+  const compact = guidance.replace(/\s+/g, ' ');
+  for (const phrase of [
+    'prefer **high**', 'explicit user setting takes precedence',
+    '**medium** for clearly bounded lookups or formatting-only work',
+    'Do not assume **max** or other effort names are supported',
+    'recommendation, not a runtime setting',
+    'keep its configured effort',
+    "Verify unfamiliar Fulcrum terms against the skill's authoritative sources"
+  ]) {
+    assert.ok(compact.includes(phrase), `Missing effort safeguard: ${phrase}`);
+  }
+});
+
+test('every directly loaded focused skill starts with the same effort guidance', () => {
+  const guidance = effortPreamble(fs.readFileSync(path.join(repoRoot, 'SKILL.md'), 'utf8'));
+  const skillsRoot = path.join(repoRoot, 'plugins/fulcrum-ai-toolkit/skills');
+  const skills = fs.readdirSync(skillsRoot, { withFileTypes: true }).filter((entry) => entry.isDirectory());
+  assert.equal(skills.length, 18);
+  for (const skill of skills) {
+    const text = fs.readFileSync(path.join(skillsRoot, skill.name, 'SKILL.md'), 'utf8');
+    const body = text.replace(/^---\r?\n[\s\S]*?\r?\n---\r?\n/, '').trimStart();
+    assert.ok(body.startsWith(effortHeading), `${skill.name}: guidance must load before workflow instructions`);
+    assert.equal(effortPreamble(text), guidance, `${skill.name}: effort guidance must match the entrypoints`);
+  }
+});

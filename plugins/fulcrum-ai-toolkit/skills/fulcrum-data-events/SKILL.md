@@ -5,6 +5,16 @@ metadata:
 description: Use when writing, reviewing, persisting, or debugging Fulcrum Data Event JavaScript. Defers current hooks and signatures to App MCP knowledge, stores the single script through form get/update operations, and covers patterns, constraints, lifecycle, offline behavior, and security.
 ---
 
+## Reasoning-effort preamble
+
+When the host supports configurable reasoning effort, prefer **high** while
+running this skill, unless an explicit user setting takes precedence. Use
+**medium** for clearly bounded lookups or formatting-only work. Do not assume
+**max** or other effort names are supported. This is a recommendation, not a
+runtime setting: if the host cannot apply it, keep its configured effort and
+follow the same verification steps. Verify unfamiliar Fulcrum terms against
+the skill's authoritative sources rather than guessing their meaning.
+
 A **data event** is JavaScript that runs inside a Fulcrum app in response to record lifecycle events. It executes on-device (mobile) and in-browser (web) — there is no server. Every data event shares a single `script` field on the form.
 
 ## Performance Evaluation

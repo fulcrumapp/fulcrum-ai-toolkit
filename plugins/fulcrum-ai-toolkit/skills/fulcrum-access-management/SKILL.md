@@ -5,6 +5,16 @@ metadata:
 description: Design least-privilege Fulcrum access. Use for system and custom roles, role-versus-resource permissions, memberships, groups, App MCP role/member inspection, SSO, SCIM, provisioning, and current plan checks.
 ---
 
+## Reasoning-effort preamble
+
+When the host supports configurable reasoning effort, prefer **high** while
+running this skill, unless an explicit user setting takes precedence. Use
+**medium** for clearly bounded lookups or formatting-only work. Do not assume
+**max** or other effort names are supported. This is a recommendation, not a
+runtime setting: if the host cannot apply it, keep its configured effort and
+follow the same verification steps. Verify unfamiliar Fulcrum terms against
+the skill's authoritative sources rather than guessing their meaning.
+
 # Fulcrum Access Management
 
 Model who may do what to which resources, verify current identity and plan

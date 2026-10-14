@@ -5,6 +5,16 @@ metadata:
 description: Use when creating a new Fulcrum app or reviewing an existing one — ensures every app has a clear goal, a defined deliverable, and a known audience before building begins. Flag when a goal is missing or unclear.
 ---
 
+## Reasoning-effort preamble
+
+When the host supports configurable reasoning effort, prefer **high** while
+running this skill, unless an explicit user setting takes precedence. Use
+**medium** for clearly bounded lookups or formatting-only work. Do not assume
+**max** or other effort names are supported. This is a recommendation, not a
+runtime setting: if the host cannot apply it, keep its configured effort and
+follow the same verification steps. Verify unfamiliar Fulcrum terms against
+the skill's authoritative sources rather than guessing their meaning.
+
 Every Fulcrum app exists to produce a **deliverable** for a **specific audience**. An app without a clear goal drifts — fields accumulate, requirements conflict, and the app becomes a monolith that serves no one well.
 
 ## The Three Questions
