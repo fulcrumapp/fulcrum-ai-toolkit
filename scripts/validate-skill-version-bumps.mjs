@@ -255,18 +255,14 @@ function skillDirectoryPath(relativePath) {
 function isLocationOnlyMove(changes, baseSkillPath, currentSkillPath) {
   const baseDirectory = skillDirectoryPath(baseSkillPath);
   const currentDirectory = skillDirectoryPath(currentSkillPath);
-  return (
-    baseDirectory !== currentDirectory &&
-    changes.length > 0 &&
-    changes.every(
-      ({ status, oldPath, currentPath }) =>
-        status === 'R100' &&
-        oldPath &&
-        currentPath &&
-        skillDirectoryPath(oldPath) === baseDirectory &&
-        skillDirectoryPath(currentPath) === currentDirectory
-    )
+  if (baseDirectory === currentDirectory || changes.length === 0) return false;
+
+  const result = spawnSync(
+    'git',
+    ['diff', '--quiet', `${BASE_REF}:${baseDirectory}`, `HEAD:${currentDirectory}`],
+    { cwd: ROOT, encoding: 'utf8' }
   );
+  return !result.error && result.status === 0;
 }
 
 function readSkillVersion(text) {
