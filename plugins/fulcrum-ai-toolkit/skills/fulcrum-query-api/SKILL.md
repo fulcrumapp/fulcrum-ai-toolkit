@@ -1,7 +1,7 @@
 ---
 name: fulcrum-query-api
 metadata:
-  version: "1.2.0"
+  version: "1.2.1"
 description: Discover, model, execute, and validate safe read-only Fulcrum queries through Query MCP. Use for system, app, repeatable, link, and media tables; metadata discovery; parameterization; and documented PostgreSQL/PostGIS analysis.
 ---
 
@@ -22,10 +22,16 @@ Use this skill for Query API table discovery, app/repeatable/link/media joins,
 system metadata, report-query modeling, spatial analysis, exports, and
 read-only analytics.
 
-For a metadata-only request such as "List my apps", follow
+For requests only to list or find existing apps, such as "List my apps" or
+"Find my inspection app", follow
 [read-only app inventory](../fulcrum-app-builder/resources/app-inventory.md)
 instead of the SQL workflow below. Use advertised form metadata tools; do not
 query records or enumerate every form's Query tables just to list apps.
+
+Requests for Query table definitions, columns, or relationships stay in this
+skill's workflow. Use the metadata discovery step below and
+`get_form_query_tables(form_id)` for the selected form; do not execute SQL
+when only table or column metadata is requested.
 
 ## When Not To Use
 

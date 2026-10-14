@@ -446,6 +446,16 @@ test('app inventory routes converge from both entrypoints, the router, and Query
   }
 });
 
+test('app inventory routing preserves Query table and column discovery', () => {
+  const usage = compact(read('fulcrum-query-api/SKILL.md').split('## When To Use')[1]?.split('## When Not To Use')[0] ?? '');
+  assert.match(usage, /For requests only to list or find existing apps/);
+  assert.match(usage, /"List my apps" or "Find my inspection app".*\[read-only app inventory\]/);
+  assert.match(usage, /Requests for Query table definitions, columns, or relationships stay in this skill's workflow/);
+  assert.match(usage, /metadata discovery step below and `get_form_query_tables\(form_id\)` for the selected form/);
+  assert.match(usage, /do not execute SQL when only table or column metadata is requested/);
+  assert.doesNotMatch(usage, /For a metadata-only request/);
+});
+
 test('app inventory requires confirmed scope and live read-only evidence', () => {
   const inventory = compact(read('fulcrum-app-builder/resources/app-inventory.md').split('## Regression Scenarios')[0]);
   for (const content of [
