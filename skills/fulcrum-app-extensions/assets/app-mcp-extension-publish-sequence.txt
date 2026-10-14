@@ -1,8 +1,8 @@
 # Source: https://docs.fulcrumapp.com/docs/app-extensions-introduction
 # Purpose: the automation path for publishing an extension with App MCP.
 # Live installed App MCP schemas define the exact arguments; the order below is
-# the part that matters. This is an automation convenience, not a prerequisite:
-# the manual Reference File upload in the Fulcrum UI reaches the same result.
+# the part that matters. Connector-independent users may prepare an artifact
+# and handoff, but the manual UI is not an alternate live-write path.
 
 Step 1  fulcrum_extensions_list_patterns()
         Review the registered patterns before choosing one.
@@ -23,7 +23,14 @@ Step 4  fulcrum_forms_get(id=...)
         Read the current form and complete script. Inspect existing Reference
         Files and all attached/loaded dependencies before composing the change.
 
-Step 5  Performance review and approval gate (no live writes)
+Step 5  Existing-form editing gate (no live writes)
+        Complete the entry gate from ../fulcrum-app-editing/SKILL.md, including
+        Query MCP record detection, production or sandbox classification,
+        data-impact analysis, and dependency inventory. Do not start the
+        production clone flow yet: the proposed extension script must be
+        composed and reviewed first.
+
+Step 6  Performance review and approval gate (no live writes)
         Compose the existing script plus the generated Data Event without
         discarding unrelated handlers. Run fulcrum-performance-review on the
         generated HTML, composed script, and attached/loaded dependencies.
@@ -31,18 +38,31 @@ Step 5  Performance review and approval gate (no live writes)
         and advisory sync warnings using the builder's confirmation contract.
         Obtain explicit approval covering both the Reference File upload or
         replacement and the composed script. Advisory improvements are optional.
-        Complete this gate before continuing to Step 6: replacing a file can
+        Complete this gate before continuing to Step 7: replacing a file can
         affect existing consumers even before the form script is updated.
 
-Step 6  Pre-upload freshness gate (no live writes)
+Step 7  Production rehearsal and promotion approval (no production writes)
+        For a production-sensitive form, follow the applicable
+        ../fulcrum-app-editing/SKILL.md clone flow after Step 6: obtain
+        approval for the same-organization clone, make the proposed change on
+        the clone, show the human-readable production diff, and obtain
+        explicit promotion approval. Apply the normal validation, dependency
+        classification, and freshness safeguards to the clone. Approval of
+        the clone does not authorize a production write.
+
+Step 8  Pre-upload freshness gate (no live writes) and approved artifact upload
         Follow ../../fulcrum-app-builder/resources/pre-write-freshness.md.
         Immediately re-read the target Reference File, dependencies, and known
         consumers; compare content/hash/revision with the approved baseline.
-        Reconcile intervening changes and return to Step 5 for updated approval
-        if the proposed content or assessment changed materially. Repeat this
-        freshness gate after approval before uploading.
+        Repeat this freshness gate after approval before any live upload.
+        Reconcile intervening changes and return to Step 4 for a fresh form,
+        Reference File, dependency, and consumer read, then repeat Step 5's
+        entry/count/impact gate before Step 6's updated review and approval if
+        the proposed content, dependencies, or assessment changed materially.
+        After the approved production rehearsal and promotion approval, upload
+        only the reviewed, approved HTML:
 
-Step 7  fulcrum_reference_files_upload(
+        fulcrum_reference_files_upload(
           form_id=...,
           file_name="species-picker.html",
           content=<generated HTML>
@@ -53,21 +73,29 @@ Step 7  fulcrum_reference_files_upload(
         ../examples/open-species-picker.js. Verify that the live file matches
         the approved content before proceeding.
 
-Step 8  fulcrum_forms_get(id=...)
+Step 9  Final production reconciliation: fulcrum_forms_get(id=...)
         Always re-read immediately before updating, even if no change is known.
         Preserve intervening changes and re-review the final composed script
         and dependencies. If unapproved changes affect
-        the design, score, or risks materially, return to Step 5 for updated
-        approval, then repeat this fresh read before Step 9. If the approved
-        file content changed, repeat Steps 6-7 and verify the new file before
-        writing its dependent script. Otherwise do not repeat the upload.
+        the design, score, or risks materially, return to Step 4 for a fresh
+        form/dependency read, repeat Step 5's entry/count/impact gate, and then
+        return through Step 6 for updated approval before repeating this fresh
+        read. If the approved file content changed, repeat Steps 4-5, then
+        Steps 8-9, and verify the new file before writing its dependent script.
+        Otherwise do not repeat the upload.
         Do not replay a stale snapshot.
 
-Step 9  fulcrum_forms_update(
+Step 10 Final record-count recheck (no live writes)
+        Immediately after Step 9 and before updating, rerun the record-count
+        check required by ../fulcrum-app-editing/SKILL.md. If the count, form
+        identity, or production/sandbox classification differs from the
+        approved baseline, stop and reconcile through that skill.
+
+Step 11 fulcrum_forms_update(
           id=...,
           script=<reviewed and approved composed script>
         )
-        This write remains behind the Step 5 approval gate. There is no
+        This write remains behind the Step 6 approval gate. There is no
         standalone Data Event update tool; preserve unrelated handlers.
 
 Optional cleanup  After the form script no longer references the attachment://

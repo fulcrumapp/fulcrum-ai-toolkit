@@ -145,6 +145,11 @@ The extension HTML file is uploaded as a **Reference File** on the form. When Ap
 
 The generate, read, review/approve, upload, re-read, and update sequence is in
 [`assets/app-mcp-extension-publish-sequence.txt`](assets/app-mcp-extension-publish-sequence.txt).
+Before that sequence updates an existing form's script, complete
+[`fulcrum-app-editing`](../fulcrum-app-editing/SKILL.md). It requires record
+detection and routes production-sensitive changes through its clone and
+approval flow; rerun its final record-count check immediately before
+`fulcrum_forms_update`.
 After `fulcrum_extensions_generate`, read the existing form and dependencies
 with authorized read operations and compose the complete script. Complete
 the performance review and obtain design approval before
@@ -163,33 +168,24 @@ Use `fulcrum_extensions_list_patterns` and `fulcrum_extensions_explain(pattern="
 
 ### Manual UI fallback
 
-When App MCP is unavailable:
+When App MCP is unavailable, follow
+[`fulcrum-app-editing`](../fulcrum-app-editing/SKILL.md) for the existing form.
+This fallback may prepare the extension locally, but it cannot complete the
+required App MCP form reads, Query MCP record detection, dependency inspection,
+or—when production-sensitive—the clone, diff, and promotion flow. Stop before
+any live upload, file replacement, or script edit when those gates cannot be
+completed; do not use the UI as an alternate write path around them.
 
-1. Save the extension as an `.html` file with all offline-required assets embedded or included as Reference Files.
-2. Inspect the target form, existing script, and attached/loaded dependencies.
-   Compose the proposed full script locally, preserving unrelated handlers.
-3. Complete the no-write performance review of the HTML, composed script,
-   and dependencies. Present the score, advice, and sync warnings using
-   [the builder's confirmation contract](../fulcrum-app-builder/SKILL.md#score-and-advice-at-every-design-confirmation)
-   and obtain explicit approval for the file upload/replacement and script edit.
-4. Immediately re-read the target Reference File, dependencies, and known
-   consumers before upload. Apply the pre-write safeguard: compare the
-   approved baseline, reconcile changes, and return to step 3 for material
-   reapproval. Repeat this check after approval.
-5. In Fulcrum, open the target form and upload the reviewed file under **Reference Files**.
-   Verify the live content matches the approved file.
-6. Recheck the current form and dependencies immediately before editing its script,
-   even if no change is known.
-   Recompose and re-review any intervening changes, returning to step 3 for
-   updated approval if the design, score, or risks changed materially. Repeat
-   this fresh read after reapproval. If approved file content changed, repeat
-   steps 4-5 and verify the replacement before writing its dependent script;
-   otherwise do not repeat the upload.
-7. Save the reviewed, approved composed script with the `OPENEXTENSION()` handler,
-   using the uploaded file's exact filename and preserving unrelated handlers.
-8. Test the trigger and the write-back behavior in the form preview, then test again on a device if the workflow must work offline.
-
-Do not treat the MCP commands above as prerequisites; they are an automation path only.
+1. Save the proposed extension as an `.html` file with all offline-required
+   assets embedded or included as proposed Reference Files.
+2. Review the proposed HTML locally. Do not claim that the complete composed
+   script or its dependencies have passed review when the required form and
+   dependency reads are unavailable. Local review or design approval does not
+   authorize a live write.
+3. Provide a handoff identifying the target form, prepared artifact, missing
+   authorized reads or operations, required record-count and dependency
+   evidence, and remaining review, approval, and freshness gates. State that no
+   live changes were made.
 
 ## Anti-Patterns
 

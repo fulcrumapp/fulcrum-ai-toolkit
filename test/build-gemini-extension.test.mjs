@@ -33,6 +33,7 @@ test('assembles a Gemini-native extension outside the portable package', () => {
       'fulcrum-access-management',
       'fulcrum-app-builder',
       'fulcrum-app-design',
+      'fulcrum-app-editing',
       'fulcrum-app-extensions',
       'fulcrum-app-goal',
       'fulcrum-app-scorecard',
