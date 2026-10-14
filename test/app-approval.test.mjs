@@ -5,6 +5,7 @@ import test from 'node:test';
 const skillsRoot = new URL('../plugins/fulcrum-ai-toolkit/skills/', import.meta.url);
 const read = (file) => fs.readFileSync(new URL(file, skillsRoot), 'utf8');
 const builder = read('fulcrum-app-builder/SKILL.md');
+const editing = read('fulcrum-app-editing/SKILL.md');
 const performance = read('fulcrum-performance-review/SKILL.md');
 const compact = (text) => text.replace(/\s+/g, ' ');
 const approval = compact(builder.split('### Score And Advice At Every Design Confirmation')[1]?.split('## Step 4:')[0] ?? '');
@@ -81,8 +82,49 @@ test('assessment uses the composed edit and revisits material changes before wri
   assert.match(scriptUpdate, /even if no change is known/);
 });
 
+test('existing-app updates require production-safety record and impact gates', () => {
+  const normalizedEditing = compact(editing);
+  const build = compact(builder.split('## Step 4: Build Or Hand Off')[1]?.split('## Step 5:')[0] ?? '');
+  assert.match(normalizedEditing, /Before any `fulcrum_forms_update` for an existing form/);
+  assert.match(normalizedEditing, /form_summaries.*get_form_query_tables\(form_id\).*query_records/);
+  const recordDetection = compact(normalizedEditing.split('## Required Record Detection')[1]?.split('## Classify The Edit')[0] ?? '');
+  assertInOrder(recordDetection, [
+    'COUNT(DISTINCT record_identifier)',
+    'Surface the exact count',
+    'Immediately after the final fresh form read',
+    'rerun the count-only aggregate',
+    'differs from the approved baseline, stop',
+    'obtain approval again'
+  ]);
+  assert.match(normalizedEditing, /record presence is unknown: do not issue `fulcrum_forms_update`/);
+  assert.match(normalizedEditing, /positive record count as production-sensitive/);
+  assert.match(normalizedEditing, /data in 137 of 412 records.*make that data inaccessible/);
+  assert.match(normalizedEditing, /preserved.*recreated.*excluded.*unresolved/);
+  assert.match(normalizedEditing, /data capture, integrations, or runtime behavior blocks promotion until it is resolved/);
+  const decisionRules = compact(normalizedEditing.split('## Edit Decision Rules')[1]?.split('## Analyze Data And Dependency Impact')[0] ?? '');
+  assertInOrder(decisionRules, [
+    'Add a new field',
+    'Eligible as a non-destructive edit',
+    'Change labels',
+    'Remove a field',
+    'Impact-gated migration',
+    'Add or modify Data Event scripts',
+    'Code/dependency-gated edit',
+    'unknown field mapping',
+    'Do not write',
+    'Cross-organization promotion',
+    'Handoff required',
+    'type change is always impact-gated'
+  ]);
+  assert.match(normalizedEditing, /Validate and approve the clone plan.*fulcrum-performance-review.*obtain explicit approval to create the sandbox clone.*Do not create a sandbox clone before this approval.*Create a sandbox clone.*Show a human-readable diff.*Obtain explicit promotion approval.*Reconcile and promote/i);
+  assert.match(normalizedEditing, /Make the proposed change on the clone.*Treat the clone as an existing live form.*obtain explicit approval for that modification.*pre-write freshness safeguard.*re-read and reconcile the clone and its dependencies/i);
+  assert.match(normalizedEditing, /Never use raw API calls or unregistered tools.*required MCP operation is unavailable, stop and provide a handoff/);
+  assert.match(build, /fulcrum-app-editing.*Query MCP record detection before each `fulcrum_forms_update`/);
+  assert.match(build, /Complete the final record-count recheck.*fulcrum-app-editing/);
+});
+
 const codeSkills = [
-  'fulcrum-app-builder', 'fulcrum-app-design', 'fulcrum-app-extensions',
+  'fulcrum-app-builder', 'fulcrum-app-design', 'fulcrum-app-editing', 'fulcrum-app-extensions',
   'fulcrum-data-events', 'fulcrum-report-building', 'fulcrum-query-api',
   'fulcrum-integration-patterns', 'fulcrum-data-migration', 'fulcrum-gis-mapping',
   'fulcrum-workflow-decomposition'
@@ -103,25 +145,33 @@ test('extension publishing reviews and approves composed artifacts before either
     'Verify that the live file matches the approved content',
     'fulcrum_forms_get(',
     're-review the final composed script',
-    'return to Step 5 for updated approval',
+    'return through Step 6 for updated approval',
     'fulcrum_forms_update('
   ]);
   assert.match(sequence, /both the Reference File upload or replacement and the composed script/);
-  assert.match(sequence, /repeat Steps 6-7 and verify the new file before writing its dependent script/);
+  assert.match(sequence, /repeat Steps 4-5, then Steps 8-9, and verify the new file before writing its dependent script/);
+  assert.match(sequence, /manual UI is not an alternate live-write path/);
+  assert.match(sequence, /return to Step 4 for a fresh form, Reference File, dependency, and consumer read, then repeat Step 5's entry\/count\/impact gate before Step 6's updated review/);
+  assert.match(sequence, /return to Step 4 for a fresh form\/dependency read, repeat Step 5's entry\/count\/impact gate, and then return through Step 6/);
   const extension = read('fulcrum-app-extensions/SKILL.md');
   const manual = compact(extension.split('### Manual UI fallback')[1]?.split('## Anti-Patterns')[0] ?? '');
   assertInOrder(manual, [
-    'Inspect the target form',
-    'Complete the no-write performance review',
-    'obtain explicit approval',
-    'Immediately re-read the target Reference File',
-    'Repeat this check after approval',
-    'upload the reviewed file',
-    'Recheck the current form',
-    're-review any intervening changes',
-    'Save the reviewed, approved composed script'
+    'fulcrum-app-editing',
+    'Stop before any live upload',
+    'do not use the UI as an alternate write path',
+    'Save the proposed extension',
+    'Review the proposed HTML locally',
+    'does not authorize a live write',
+    'Provide a handoff',
+    'State that no live changes were made'
   ]);
-  assert.match(manual, /repeat steps 4-5 and verify the replacement before writing its dependent script/);
+  assert.doesNotMatch(manual, /In Fulcrum, open the target form|upload the reviewed file|Save the reviewed, approved composed script/);
+  const bridge = compact(read('fulcrum-app-extensions/resources/extension-bridge-api.md'));
+  assert.match(bridge, /only to prepare an artifact and provide a handoff/);
+  assert.match(bridge, /cannot authorize or perform a live upload/);
+  const examples = compact(read('fulcrum-app-extensions/examples/README.md'));
+  assert.match(examples, /manual workflow is preparation and handoff only/);
+  assert.match(examples, /does not authorize either live write/);
 });
 
 test('direct Data Event and shared-file writes remain behind performance and approval gates', () => {
@@ -129,6 +179,8 @@ test('direct Data Event and shared-file writes remain behind performance and app
   const controlPlane = compact(events.split('## App MCP Control Plane')[1]?.split('## Event Lifecycle')[0] ?? '');
   assertInOrder(controlPlane, [
     'fulcrum_forms_get',
+    'fulcrum-app-editing',
+    'required record detection',
     'Compose the handler',
     'Complete the performance review',
     'Obtain explicit approval before any live write',
@@ -136,12 +188,15 @@ test('direct Data Event and shared-file writes remain behind performance and app
     'Reconcile the approved edits',
     're-review the final composition',
     'repeat this fresh read after approval',
+    'final record-count recheck',
     'fulcrum_forms_update'
   ]);
   assert.match(controlPlane, /even if no change is known/);
   const sharedCode = compact(events.split('### Share code across apps with LOADFILE')[1]?.split('### Session state')[0] ?? '');
   assertInOrder(sharedCode, [
     'Inspect the current Reference File',
+    'fulcrum-app-editing',
+    'required record detection',
     'Compose the proposed shared-file contents',
     'Complete the no-write performance review',
     'obtain explicit approval',
@@ -151,10 +206,29 @@ test('direct Data Event and shared-file writes remain behind performance and app
     'verify the live content matches the approved artifact',
     'Re-read the form and re-review the final composed script',
     'obtain updated approval',
+    'final record-count recheck',
     'fulcrum_forms_update'
   ]);
   assert.match(sharedCode, /existing consumers can load a replacement without a script change/);
-  assert.match(sharedCode, /repeat steps 4-5 and verify that replacement before writing the script/);
+  assert.match(sharedCode, /repeat steps 6-7 and verify that replacement before writing the script/);
+});
+
+test('extension publishing applies existing-form safety gates before form updates', () => {
+  const extension = read('fulcrum-app-extensions/SKILL.md');
+  const sequence = compact(read('fulcrum-app-extensions/assets/app-mcp-extension-publish-sequence.txt'));
+  assert.match(extension, /Before that sequence updates an existing form's script, complete.*fulcrum-app-editing/s);
+  assertInOrder(sequence, [
+    'fulcrum_forms_get(',
+    'Existing-form editing gate',
+    'fulcrum-app-editing',
+    'Query MCP record detection',
+    'Performance review and approval gate',
+    'fulcrum_reference_files_upload(',
+    'fulcrum_forms_get(',
+    'Final record-count recheck',
+    'fulcrum_forms_update('
+  ]);
+  assert.match(sequence, /If the count, form identity, or production\/sandbox classification differs from the approved baseline, stop/);
 });
 
 test('shared pre-write safeguards cover freshness, artifact consistency, and non-atomic failures', () => {
@@ -335,6 +409,7 @@ test('new approval and performance guidance links resolve in the portable bundle
     'fulcrum-performance-review/SKILL.md',
     'fulcrum-app-builder/resources/approval-cases.md',
     'fulcrum-app-builder/resources/pre-write-freshness.md',
+    'fulcrum-app-editing/SKILL.md',
     'fulcrum-app-builder/assets/README.md',
     'fulcrum-app-builder/examples/README.md',
     'fulcrum-app-extensions/resources/extension-bridge-api.md',
