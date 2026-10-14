@@ -24,7 +24,7 @@ test('assembles a Gemini-native extension outside the portable package', () => {
 
     assert.equal(manifest.name, 'fulcrum-ai-toolkit-gemini');
     assert.equal(manifest.name, path.basename(destination));
-    assert.equal(manifest.version, '0.1.2');
+    assert.equal(manifest.version, '0.1.3');
     assert.equal(
       fs.readFileSync(path.join(destination, '.fulcrum-ai-toolkit-gemini-generated'), 'utf8'),
       'fulcrum-ai-toolkit-gemini\n'
@@ -47,6 +47,7 @@ test('assembles a Gemini-native extension outside the portable package', () => {
       'fulcrum-query-api',
       'fulcrum-report-building',
       'fulcrum-safety',
+      'fulcrum-skill-versioning',
       'fulcrum-solution-document',
       'fulcrum-workflow-decomposition'
     ]);
