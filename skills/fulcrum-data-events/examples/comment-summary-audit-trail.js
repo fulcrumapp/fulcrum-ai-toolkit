@@ -3,22 +3,13 @@
 // This is a convenience log, not an audit control. Use Fulcrum changesets and
 // platform permissions when the trail must be tamper-evident.
 
-var MAX_SUMMARY_CHARS = 2000;
-
 function appendSummary(existing, entry) {
-  var lines = typeof existing === 'string' ? existing.split('\n') : [];
+  var previous = typeof existing === 'string' ? existing : '';
+  var separator = previous.length > 0 && previous.charAt(previous.length - 1) !== '\n'
+    ? '\n'
+    : '';
 
-  if (lines.length && lines[lines.length - 1] === '') {
-    lines.pop();
-  }
-
-  lines.push(entry);
-
-  while (lines.length > 1 && lines.join('\n').length + 1 > MAX_SUMMARY_CHARS) {
-    lines.shift();
-  }
-
-  return lines.join('\n').slice(0, MAX_SUMMARY_CHARS - 1) + '\n';
+  return previous + separator + entry + '\n';
 }
 
 ON('save-record', function (event) {
