@@ -1,5 +1,7 @@
 ---
 name: fulcrum-workflow-decomposition
+metadata:
+  version: "1.1.0"
 description: Use when a Fulcrum app has grown too complex — too many fields, too many data events, too many status paths. Guides breaking monolithic apps into composable, maintainable pieces. Also use when reviewing an app that shows signs of monolith creep.
 ---
 

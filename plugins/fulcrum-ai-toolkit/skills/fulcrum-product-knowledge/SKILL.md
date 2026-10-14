@@ -1,5 +1,7 @@
 ---
 name: fulcrum-product-knowledge
+metadata:
+  version: "1.2.0"
 description: Route Fulcrum organization app-list requests and cross-cutting platform questions to the owning portable workflow or current public source. Use for live app inventories, capability boundaries, plan checks, public AI capabilities, offline constraints, and App MCP scope.
 ---
 

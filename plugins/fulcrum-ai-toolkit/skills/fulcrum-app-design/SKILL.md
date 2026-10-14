@@ -1,5 +1,7 @@
 ---
 name: fulcrum-app-design
+metadata:
+  version: "1.1.0"
 description: Use when building or modifying a Fulcrum app — guides app structure, field type selection, linked apps vs single app, repeatables, and choice list design. Also use when reviewing an existing app for structural improvements.
 ---
 

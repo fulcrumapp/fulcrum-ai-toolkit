@@ -1,5 +1,7 @@
 ---
 name: fulcrum-app-scorecard
+metadata:
+  version: "1.0.0"
 description: Score an existing or proposed Fulcrum app from 1 (poor design) to 10 (excellent design) using an evidence-based, extensible rubric derived from the toolkit. Use for app design scoring, grading, quality assessments, or comparisons. Any app containing a repeatable is capped at 6/10.
 ---
 

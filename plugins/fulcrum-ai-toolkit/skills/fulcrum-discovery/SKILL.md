@@ -1,5 +1,7 @@
 ---
 name: fulcrum-discovery
+metadata:
+  version: "1.1.0"
 description: Discover requirements before building a new Fulcrum app or workflow. Use when a user starts a new build, needs help clarifying a field process, deliverable, users, or constraints, or would benefit from a structured pre-build interview.
 ---
 

@@ -1,6 +1,8 @@
 ---
 name: fulcrum-app-editing
 description: Safely modify an existing Fulcrum app. Use before any update to an existing form, especially for production apps, schema restructuring, field removal, or field type changes. It detects records through Query MCP, analyzes data impact, and uses an approval-gated same-organization clone, diff, and promotion workflow.
+metadata:
+  version: "1.0.0"
 ---
 
 # Fulcrum App Editing

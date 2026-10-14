@@ -1,5 +1,7 @@
 ---
 name: fulcrum-integration-patterns
+metadata:
+  version: "1.1.0"
 description: Select and design Fulcrum Workflows and integrations. Use for webhooks, global webhooks, URL Actions, REST integrations, middleware, authentication, retries, timeouts, payload safety, and delivery boundaries.
 ---
 

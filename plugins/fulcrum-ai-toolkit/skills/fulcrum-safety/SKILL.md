@@ -1,5 +1,7 @@
 ---
 name: fulcrum-safety
+metadata:
+  version: "1.0.0"
 description: Use when building or reviewing a Fulcrum app for field work — flags missing safety steps, ensures safety documentation is included in workflows that involve physical hazards, and recommends safety-related fields when appropriate.
 ---
 

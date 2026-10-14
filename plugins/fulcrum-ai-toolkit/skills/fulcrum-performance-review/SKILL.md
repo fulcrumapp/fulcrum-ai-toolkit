@@ -1,5 +1,7 @@
 ---
 name: fulcrum-performance-review
+metadata:
+  version: "1.0.0"
 description: Evaluate performance whenever authoring, modifying, or reviewing Fulcrum code, including attachments, Reference Files, embedded or indirectly loaded code, Data Events, calculations, reports/SQL, App Extensions, integrations, and migration or GIS scripts. Review workload growth, repeated I/O, rendering, memory, offline behavior, and Reference File sync warnings; distinguish static risks from measured results.
 ---
 
