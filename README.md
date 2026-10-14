@@ -291,6 +291,7 @@ activation, an authenticated MCP connection, or successful live app creation.
 | `fulcrum-access-management` | Roles, resource access, memberships, SSO/SCIM, and least-privilege reasoning | Model-invoked |
 | `fulcrum-data-migration` | Supported migration assessment, mapping, dry runs, reconciliation, cutover, and rollback design | Model-invoked |
 | `fulcrum-app-builder` | Novice-friendly app discovery, schema approval, App MCP orchestration, and connector-independent handoff | Model-invoked |
+| `fulcrum-app-editing` | Production-safe existing-app edits with record detection, data-impact analysis, and approval-gated clone/diff/promotion | Model-invoked |
 | `fulcrum-app-design` | App structure, field types, linked apps vs single app, repeatables | Model-invoked |
 | `fulcrum-app-scorecard` | Evidence-based 1-10 app design scoring, repeatable ceiling, and extensible rubric | Model-invoked |
 | `fulcrum-performance-review` | Workload-based performance evaluation for every code artifact, with constructive advice and explicit measurement limits | Model-invoked |
