@@ -121,10 +121,13 @@ This path does not start a build interview or authorize changes.
    check-in or full interview and honor the user's choice.
 2. Define the goal and deliverable with `fulcrum-app-goal`.
 3. Use `fulcrum-app-builder` and `fulcrum-app-design` to propose and approve a schema.
-4. Route integration, mapping, Query API, access, and migration decisions to
+4. Before changing an existing app, use `fulcrum-app-editing` to detect records,
+   analyze destructive-field impact, and apply the production-safe clone, diff,
+   and approval flow.
+5. Route integration, mapping, Query API, access, and migration decisions to
    their focused skills.
-5. Build through Fulcrum App MCP when available, or use the approved handoff.
-6. Test the workflow and document the result with `fulcrum-solution-document`.
+6. Build through Fulcrum App MCP when available, or use the approved handoff.
+7. Test the workflow and document the result with `fulcrum-solution-document`.
 
 To assess an existing or proposed app instead of building one, use
 `fulcrum-app-scorecard`: an evidence-based **1 (poor) to 10 (excellent)** design
@@ -173,14 +176,31 @@ not a claim that every host has been tested in this repository yet.
 
 ## Local validation
 
-Validation runs entirely on Node.js. Install dependencies for the format validator and run the checks from the repository root:
+Validation runs entirely on Node.js. The owning sources are
+[the CI workflow](.github/workflows/validate.yml) for the runtime, commands, and
+working directories, and [the format validator package](tools/format-validator/package.json)
+for its script definitions. Read those files on the branch being changed before
+selecting checks; remembered suite counts and historical command lists are not
+the validation contract.
+
+Install dependencies for the format validator and run the checks from the
+repository root with the Node version selected by the workflow:
 
 ```bash
 npm ci --prefix tools/format-validator
 npm run --prefix tools/format-validator validate
 node scripts/validate.mjs
-node --test test/app-scorecard.test.mjs test/app-approval.test.mjs test/build-m365-bundle.test.mjs test/validate-entrypoint-frontmatter.test.mjs
+node --test test/*.test.mjs
 ```
+
+The shell expands `test/*.test.mjs` to the current top-level suites in both the
+local command and CI. Add new suites there so they are picked up automatically;
+nested fixtures and non-test helpers are excluded. Inspect the current inventory
+instead of relying on a fixed suite count. A moved or deleted historical test
+path requires checking the owning source and Git history, not restoring it
+solely to match a remembered command. Report the commands actually run with
+their results and the checked branch/commit, distinguishing targeted checks
+from full CI. Format validator contract probes run within its package script.
 
 The repository validator checks the expected skill inventory, skill frontmatter,
 directory/name consistency, corporate absolute paths, privacy and provenance contracts,
@@ -280,6 +300,7 @@ activation, an authenticated MCP connection, or successful live app creation.
 | `fulcrum-access-management` | Roles, resource access, memberships, SSO/SCIM, and least-privilege reasoning | Model-invoked |
 | `fulcrum-data-migration` | Supported migration assessment, mapping, dry runs, reconciliation, cutover, and rollback design | Model-invoked |
 | `fulcrum-app-builder` | Live read-only app inventory, novice-friendly schema approval, App MCP orchestration, and connector-independent handoff | Model-invoked |
+| `fulcrum-app-editing` | Production-safe existing-app edits with record detection, data-impact analysis, and approval-gated clone/diff/promotion | Model-invoked |
 | `fulcrum-app-design` | App structure, field types, linked apps vs single app, repeatables | Model-invoked |
 | `fulcrum-app-scorecard` | Evidence-based 1-10 app design scoring, repeatable ceiling, and extensible rubric | Model-invoked |
 | `fulcrum-performance-review` | Workload-based performance evaluation for every code artifact, with constructive advice and explicit measurement limits | Model-invoked |
@@ -314,6 +335,8 @@ uses the focused skill to:
   full interview (`fulcrum-discovery`)
 - Retrieve an evidence-backed inventory of existing apps, or guide schema
   approval and App MCP-dependent building (`fulcrum-app-builder`)
+- Safely edit existing apps through record detection, impact analysis, and
+  approval-gated same-organization promotion (`fulcrum-app-editing`)
 - Check that every app has a clear goal before building (`fulcrum-app-goal`)
 - Select appropriate field types and app structure (`fulcrum-app-design`)
 - Score existing or proposed apps and prioritize design improvements (`fulcrum-app-scorecard`)
@@ -415,6 +438,11 @@ Fulcrum teams are welcome. Open a PR with new skills or improvements.
 Skills should encode reusable patterns, not tenant-specific configurations.
 Use public sources, distinguish workflow recommendations from product
 constraints, and omit customer data, credentials, and private attribution.
+
+For skill-authoring and validation changes, follow
+[the repository test guidance](AGENTS.md#test-guidelines) and
+[Local validation](#local-validation). Keep validation instructions aligned
+with their owning workflow and package scripts.
 
 ## License
 

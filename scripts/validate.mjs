@@ -39,6 +39,7 @@ const EXPECTED_SKILLS = [
   'fulcrum-access-management',
   'fulcrum-app-builder',
   'fulcrum-app-design',
+  'fulcrum-app-editing',
   'fulcrum-app-extensions',
   'fulcrum-app-goal',
   'fulcrum-app-scorecard',
@@ -672,6 +673,31 @@ for (const relativePath of [
   const manifest = jsonDocuments[relativePath];
   if (!manifest || !agentManifest?.version || manifest.version !== agentManifest.version) {
     failures.push(`${relativePath}: version must match the root plugin manifest`);
+  }
+}
+
+const codexManifestPath = `${PLUGIN_RELATIVE_PATH}/.codex-plugin/plugin.json`;
+const codexManifest = jsonDocuments[codexManifestPath];
+const codexInterfaceRequiredFields = [
+  'displayName',
+  'shortDescription',
+  'longDescription',
+  'developerName',
+  'category',
+  'capabilities'
+];
+if (codexManifest) {
+  const iface = codexManifest.interface;
+  if (!iface || typeof iface !== 'object' || Array.isArray(iface)) {
+    failures.push(
+      `${codexManifestPath}: interface is required and must include ${codexInterfaceRequiredFields.join(', ')}`
+    );
+  } else {
+    for (const field of codexInterfaceRequiredFields) {
+      if (!(field in iface)) {
+        failures.push(`${codexManifestPath}: interface.${field} is required`);
+      }
+    }
   }
 }
 
