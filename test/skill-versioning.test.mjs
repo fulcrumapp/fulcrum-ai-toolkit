@@ -22,7 +22,13 @@ function addSkill(root, name, version) {
   fs.writeFileSync(skillFile, skillContent(version).replace('example-skill', name), 'utf8');
 }
 
-function createRepository(t, baseVersion, baseSkillPath = skillPath, baseResourcePath = resourcePath) {
+function createRepository(
+  t,
+  baseVersion,
+  baseSkillPath = skillPath,
+  baseResourcePath = resourcePath,
+  additionalSkills = []
+) {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), 'skill-versioning-'));
   t.after(() => fs.rmSync(root, { recursive: true, force: true }));
 
@@ -37,6 +43,9 @@ function createRepository(t, baseVersion, baseSkillPath = skillPath, baseResourc
   const resourceFile = path.join(root, baseResourcePath);
   fs.mkdirSync(path.dirname(resourceFile), { recursive: true });
   fs.writeFileSync(resourceFile, 'Initial resource\n', 'utf8');
+  for (const { name, version } of additionalSkills) {
+    addSkill(root, name, version);
+  }
 
   runGit(root, ['add', '.']);
   runGit(root, ['commit', '-m', 'Create example skill']);
@@ -184,6 +193,80 @@ test('correlates substantially rewritten moves by frontmatter identity', (t) => 
 
   const increasedVersion = runValidator(root);
   assert.equal(increasedVersion.status, 0, increasedVersion.stderr);
+});
+
+test('requires both skills to bump when a resource moves between them', (t) => {
+  const { root, resourceFile } = createRepository(
+    t,
+    '1.0.0',
+    skillPath,
+    resourcePath,
+    [{ name: 'destination-skill', version: '1.0.0' }]
+  );
+  const destinationResource = path.join(
+    root,
+    'plugins/fulcrum-ai-toolkit/skills/destination-skill/resources/example.md'
+  );
+  fs.mkdirSync(path.dirname(destinationResource), { recursive: true });
+  fs.renameSync(resourceFile, destinationResource);
+  runGit(root, ['add', '-A']);
+  runGit(root, ['commit', '-m', 'Move resource to another skill']);
+
+  const destinationSkill = path.join(
+    root,
+    'plugins/fulcrum-ai-toolkit/skills/destination-skill/SKILL.md'
+  );
+  fs.writeFileSync(
+    destinationSkill,
+    skillContent('1.0.1').replace('example-skill', 'destination-skill'),
+    'utf8'
+  );
+  runGit(root, ['add', '.']);
+  runGit(root, ['commit', '-m', 'Bump destination skill']);
+
+  const missingSourceBump = runValidator(root);
+  assert.equal(missingSourceBump.status, 1);
+  assert.match(missingSourceBump.stderr, /example-skill\/SKILL\.md: version must increase above 1\.0\.0/);
+
+  fs.writeFileSync(path.join(root, skillPath), skillContent('1.0.1'), 'utf8');
+  runGit(root, ['add', '.']);
+  runGit(root, ['commit', '-m', 'Bump source skill']);
+
+  const bothSkillsBumped = runValidator(root);
+  assert.equal(bothSkillsBumped.status, 0, bothSkillsBumped.stderr);
+});
+
+test('requires a bump when a moved skill loses an outgoing resource rename', (t) => {
+  const oldSkillPath = 'plugins/legacy-toolkit/skills/example-skill/SKILL.md';
+  const oldResourcePath = 'plugins/legacy-toolkit/skills/example-skill/resources/example.md';
+  const { root, skillFile, resourceFile } = createRepository(
+    t,
+    '1.2.0',
+    oldSkillPath,
+    oldResourcePath
+  );
+  const movedSkillFile = path.join(root, skillPath);
+  const movedResourceFile = path.join(
+    root,
+    'plugins/fulcrum-ai-toolkit/shared/example.md'
+  );
+  fs.mkdirSync(path.dirname(movedResourceFile), { recursive: true });
+  fs.mkdirSync(path.dirname(movedSkillFile), { recursive: true });
+  fs.renameSync(skillFile, movedSkillFile);
+  fs.renameSync(resourceFile, movedResourceFile);
+  runGit(root, ['add', '-A']);
+  runGit(root, ['commit', '-m', 'Move skill without its resource']);
+
+  const unchangedVersion = runValidator(root);
+  assert.equal(unchangedVersion.status, 1);
+  assert.match(unchangedVersion.stderr, /version must increase above 1\.2\.0; found 1\.2\.0/);
+
+  fs.writeFileSync(movedSkillFile, skillContent('1.2.1'), 'utf8');
+  runGit(root, ['add', '.']);
+  runGit(root, ['commit', '-m', 'Bump moved skill after resource change']);
+
+  const incrementedVersion = runValidator(root);
+  assert.equal(incrementedVersion.status, 0, incrementedVersion.stderr);
 });
 
 test('rejects an invalid base version instead of treating it as a migration', (t) => {

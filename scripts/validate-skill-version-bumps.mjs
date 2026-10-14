@@ -64,8 +64,14 @@ for (let index = 0; index < changedPaths.length;) {
     const skillChanges = skillChangesByName.get(currentSkillName) || [];
     skillChanges.push(change);
     skillChangesByName.set(currentSkillName, skillChanges);
-  } else if (oldSkillName) {
+  }
+  if (oldSkillName) {
     changedSkillNames.add(oldSkillName);
+    if (oldSkillName !== currentSkillName) {
+      const skillChanges = skillChangesByName.get(oldSkillName) || [];
+      skillChanges.push(change);
+      skillChangesByName.set(oldSkillName, skillChanges);
+    }
   }
 
   if (
@@ -150,13 +156,15 @@ for (const [skillName, baseSkillPath] of baseSkillPathsByName) {
   }
 }
 for (const change of changeRecords) {
-  if (change.currentPath || !change.oldPath) continue;
+  if (!change.oldPath) continue;
   const movedSkillName = movedSkillNamesByBaseDirectory.get(skillDirectoryPath(change.oldPath));
   if (!movedSkillName) continue;
 
   const skillChanges = skillChangesByName.get(movedSkillName) || [];
-  skillChanges.push(change);
-  skillChangesByName.set(movedSkillName, skillChanges);
+  if (!skillChanges.includes(change)) {
+    skillChanges.push(change);
+    skillChangesByName.set(movedSkillName, skillChanges);
+  }
 }
 
 for (const skillName of [...changedSkillNames].sort()) {
