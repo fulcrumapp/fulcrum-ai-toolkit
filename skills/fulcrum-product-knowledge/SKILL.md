@@ -1,8 +1,8 @@
 ---
 name: fulcrum-product-knowledge
 metadata:
-  version: "1.1.0"
-description: Route cross-cutting Fulcrum platform questions to the owning portable skill or current public source. Use for capability boundaries, plan checks, public AI capabilities, offline constraints, and App MCP scope.
+  version: "1.2.0"
+description: Route Fulcrum organization app-list requests and cross-cutting platform questions to the owning portable workflow or current public source. Use for live app inventories, capability boundaries, plan checks, public AI capabilities, offline constraints, and App MCP scope.
 ---
 
 # Fulcrum Product Knowledge Router
@@ -18,6 +18,7 @@ answer a focused domain question from this router when an owning skill exists.
 
 | Request | Canonical destination |
 | --- | --- |
+| List, show, browse, or find existing apps in an organization | [read-only app inventory](../fulcrum-app-builder/resources/app-inventory.md), using live metadata rather than examples or inferred names |
 | Integration selection, Workflows, webhooks, URL Actions, REST integration, or middleware | [`fulcrum-integration-patterns`](../fulcrum-integration-patterns/SKILL.md) |
 | GIS, layers, basemaps, ArcGIS, geometry, or spatial import/export | [`fulcrum-gis-mapping`](../fulcrum-gis-mapping/SKILL.md) |
 | Read-only SQL, Query API tables, repeatables, metadata, or PostGIS | [`fulcrum-query-api`](../fulcrum-query-api/SKILL.md) |

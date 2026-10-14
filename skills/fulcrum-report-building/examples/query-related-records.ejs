@@ -6,9 +6,9 @@
   QUERY(sql, options) returns a result object; the row objects are on `rows`.
   The Query API is read-only and accepts one complete SQL string with no
   server-side bind parameters, so every interpolated value must be encoded
-  where it enters the statement. The site ID is rejected if it contains a
-  missing or empty site ID is rejected before string conversion, and a present
-  ID is rejected if it contains a character outside letters, digits,
+  where it enters the statement. A missing or empty site ID is rejected before
+  string conversion, and a present ID is rejected if it contains a character
+  outside letters, digits,
   underscores, and hyphens; it is never silently normalized into a different
   identifier. Invalid values render a bounded error row without running the
   query. The encoder in the SQL gap then preserves each validated value, and
