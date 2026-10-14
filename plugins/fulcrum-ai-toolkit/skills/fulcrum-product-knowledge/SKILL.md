@@ -1,5 +1,7 @@
 ---
 name: fulcrum-product-knowledge
+metadata:
+  version: "1.1.0"
 description: Route cross-cutting Fulcrum platform questions to the owning portable skill or current public source. Use for capability boundaries, plan checks, public AI capabilities, offline constraints, and App MCP scope.
 ---
 

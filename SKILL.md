@@ -41,6 +41,8 @@ request and follow its instructions:
   audits and performance reviews
 - `plugins/fulcrum-ai-toolkit/skills/fulcrum-solution-document/SKILL.md` for
   implementation handoff and documentation
+- `plugins/fulcrum-ai-toolkit/skills/fulcrum-skill-versioning/SKILL.md` when
+  creating, editing, reviewing, or versioning toolkit skills
 
 Keep the complete `plugins/fulcrum-ai-toolkit/skills/` directory together. The
 focused skills reference one another and their supporting resources by relative

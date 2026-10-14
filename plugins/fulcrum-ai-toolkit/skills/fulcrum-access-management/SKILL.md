@@ -1,5 +1,7 @@
 ---
 name: fulcrum-access-management
+metadata:
+  version: "1.0.0"
 description: Design least-privilege Fulcrum access. Use for system and custom roles, role-versus-resource permissions, memberships, groups, App MCP role/member inspection, SSO, SCIM, provisioning, and current plan checks.
 ---
 

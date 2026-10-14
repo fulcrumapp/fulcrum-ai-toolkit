@@ -53,6 +53,7 @@ const EXPECTED_SKILLS = [
   'fulcrum-query-api',
   'fulcrum-report-building',
   'fulcrum-safety',
+  'fulcrum-skill-versioning',
   'fulcrum-solution-document',
   'fulcrum-workflow-decomposition'
 ];
@@ -172,6 +173,10 @@ function hasRequiredFrontmatter(frontmatter) {
 
 function isNonEmptyString(value) {
   return typeof value === 'string' && value.trim().length > 0;
+}
+
+function isValidSkillVersion(value) {
+  return typeof value === 'string' && /^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)$/.test(value);
 }
 
 function isValidSkillName(value) {
@@ -393,6 +398,10 @@ for (const skillPath of skillPaths) {
 
   if (frontmatter && frontmatter.name !== directoryName) {
     failures.push(`${relativePath}: frontmatter name does not match directory`);
+  }
+
+  if (!isValidSkillVersion(frontmatter?.metadata?.version)) {
+    failures.push(`${relativePath}: metadata.version must be a stable MAJOR.MINOR.PATCH SemVer string`);
   }
 
   const policyPath = path.join(path.dirname(skillPath), 'agents', 'openai.yaml');
