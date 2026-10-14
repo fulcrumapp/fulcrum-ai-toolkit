@@ -217,7 +217,7 @@ Fulcrum field type and must never be used as an element's `type` value. Every
 element must retain a concrete discriminator returned by App MCP, such as
 `TextField`, `ChoiceField`, `Section`, `Repeatable`, or `RecordLinkField`.
 
-Pass the objects returned by `fulcrum_schema_build_field` through to form
+Pass valid objects returned by `fulcrum_schema_build_field` through to form
 assembly unchanged. Do not reconstruct them from tool-schema model names or
 replace their `type` values. Before create or update, call
 `fulcrum_schema_field_types` once without a category filter to obtain the
@@ -226,6 +226,18 @@ every child of a Section or Repeatable against that complete set. For a new app
 or newly added field, rebuild any element whose `type` is missing, is not a
 string, or is unsupported. For an existing element during an update, stop and
 report the invalid discriminator instead; do not rebuild it or replace its key.
+
+### Calculation display styles
+
+For `CalculatedField`, use `display_style` of `text`, `number`, `date`, or
+`currency`. A textual result uses `text`, not `string`. Before create or update,
+check each calculated field's `display.style`, including fields nested in
+Sections and Repeatables. If a builder returns `string` or another unsupported
+style, stop and report the connector mismatch rather than passing the invalid
+field through unchanged or silently changing its display behavior. Preserve
+existing field keys and unrequested settings; do not rebuild an existing field
+to repair its style. A successful `fulcrum_forms_validate` response does not
+override an invalid display style or guarantee that the API will accept a write.
 
 For a new app:
 

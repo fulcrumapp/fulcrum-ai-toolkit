@@ -10,6 +10,25 @@ const performance = read('fulcrum-performance-review/SKILL.md');
 const compact = (text) => text.replace(/\s+/g, ' ');
 const approval = compact(builder.split('### Score And Advice At Every Design Confirmation')[1]?.split('## Step 4:')[0] ?? '');
 
+test('calculated-field guidance rejects invalid display styles before a live write', () => {
+  const sequence = compact(read('fulcrum-app-builder/assets/app-build-sequence.txt'));
+  const reference = compact(read('fulcrum-app-design/resources/field-type-reference.md'));
+  const styles = compact(builder.split('### Calculation display styles')[1]?.split('For a new app:')[0] ?? '');
+  assert.match(sequence, /display_style text, number, date, or currency for a CalculatedField/);
+  for (const text of [styles, reference]) {
+    assert.match(text, /`text`, `number`, `date`, or `currency`/);
+    assert.match(text, /not `string`/);
+  }
+  for (const text of [styles, sequence]) {
+    assert.match(text, /nested in Sections (?:and|or) Repeatables/);
+    assert.match(text, /stop and report the connector mismatch/);
+    assert.match(text, /silently chang(?:e|ing) its display behavior/);
+  }
+  assert.match(styles, /Preserve existing field keys and unrequested settings/);
+  assert.match(styles, /successful `fulcrum_forms_validate` response does not override an invalid display style/);
+  assertInOrder(sequence, ['Check the returned CalculatedField display.style', 'Step 3 fulcrum_schema_build_form']);
+});
+
 function assertInOrder(text, fragments) {
   let offset = 0;
   for (const fragment of fragments) {
