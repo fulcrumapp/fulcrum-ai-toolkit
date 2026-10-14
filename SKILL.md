@@ -1,6 +1,6 @@
 ---
 name: fulcrum-ai-toolkit
-description: Portable Fulcrum AI skills for designing, building, reviewing, integrating, mapping, querying, securing, and documenting field-data apps and workflows. Use the focused skill files in plugins/fulcrum-ai-toolkit/skills/ when a request needs detailed platform guidance.
+description: Portable Fulcrum AI skills for listing existing organization apps, designing, building, reviewing, integrating, mapping, querying, securing, and documenting field-data apps and workflows. Use the focused skill files in plugins/fulcrum-ai-toolkit/skills/ when a request needs detailed platform guidance.
 ---
 
 # Fulcrum AI Toolkit
@@ -9,6 +9,9 @@ Use this repository-root entrypoint for Fulcrum platform work. Select the
 focused skill under `plugins/fulcrum-ai-toolkit/skills/` that best matches the
 request and follow its instructions:
 
+- [Read-only app inventory](plugins/fulcrum-ai-toolkit/skills/fulcrum-app-builder/resources/app-inventory.md)
+  for listing, showing, browsing, or finding existing organization apps from
+  live metadata, not examples or inferred names
 - `plugins/fulcrum-ai-toolkit/skills/fulcrum-discovery/SKILL.md` for clarifying
   the workflow and scope
 - `plugins/fulcrum-ai-toolkit/skills/fulcrum-workflow-decomposition/SKILL.md`
