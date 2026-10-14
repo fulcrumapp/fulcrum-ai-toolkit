@@ -47,7 +47,6 @@ const DEFAULT_BUNDLE_ENTRYPOINTS = [
 ];
 const BUNDLE_ENTRYPOINTS = resolveBundleEntrypoints(process.env.FULCRUM_VALIDATE_BUNDLE_ENTRYPOINTS);
 const FORBIDDEN_PACKAGE_PATHS = [
-  path.join(PLUGIN_RELATIVE_PATH, '.codex-plugin', 'plugin.json'),
   path.join(PLUGIN_RELATIVE_PATH, '.mcp.json'),
   path.join(PLUGIN_RELATIVE_PATH, '.claude-plugin', 'plugin.json'),
   path.join(PLUGIN_RELATIVE_PATH, 'commands', 'fulcrum-solution-document.md'),

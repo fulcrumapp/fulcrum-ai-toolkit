@@ -218,7 +218,8 @@ directory/name consistency, corporate absolute paths, privacy and provenance con
 portable and client JSON manifests, and README inventory. The portable core's
 `plugin.json` includes the Agent Plugins schema and is the canonical manifest
 for strict portable consumers; Cursor, Claude, and Gemini retain native wrappers
-because their installers require those locations. The Gemini build
+because their installers require those locations, and Codex retains its native
+manifest for manual ChatGPT/Codex ZIP uploads. The Gemini build
 script creates a native extension directory containing the manifest, license,
 and copied skills without placing vendor-specific files in the portable package.
 The validator also keeps release versions aligned, requires the packaged license and Codex
@@ -429,7 +430,7 @@ Plugin configs are included for multiple AI platforms:
 | GitHub Copilot CLI | `.github/plugin/marketplace.json` and `plugins/fulcrum-ai-toolkit/plugin.json` |
 | Claude Code | `.claude-plugin/plugin.json` at the repository root; Claude auto-discovers non-manual shared skills from root `skills/` and uses the root `commands/` adapter |
 | Cursor | `.cursor-plugin/plugin.json` in `plugins/fulcrum-ai-toolkit/` |
-| Codex | Portable core in `plugins/fulcrum-ai-toolkit/` |
+| Codex | `.codex-plugin/plugin.json` for plugin and manual ZIP installation |
 | Hermes | Shared `skills/` directory; root `plugin.json` for hosts supporting Agent Plugins v1 |
 | Gemini | `adapters/gemini/gemini-extension.json`; assemble with `node scripts/build-gemini-extension.mjs` |
 | MCP | `plugins/fulcrum-ai-toolkit/mcp.json`; configure a tenant-specific server separately |
@@ -441,8 +442,8 @@ non-manual skills because Claude only scans its plugin-root `skills/` directory.
 Claude explicitly omits the manual-only solution-document skill from automatic
 skill discovery; its command adapter delegates to the shared skill rather than
 copying its workflow. Native wrapper files are not
-portable Agent Plugins components and are retained only for the installers that
-require them. GitHub Copilot marketplace
+portable Agent Plugins components and are retained only for host installers
+that require them. GitHub Copilot marketplace
 metadata is available at `.github/plugin/marketplace.json`; the same catalog is
 also available at `.claude-plugin/marketplace.json` for Claude. A root
 `.claude-plugin/plugin.json` supports repositories that consume this repository
