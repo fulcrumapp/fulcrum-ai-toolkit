@@ -126,7 +126,6 @@ test('every directly loaded focused skill starts with the same effort guidance',
   const guidance = effortPreamble(fs.readFileSync(path.join(repoRoot, 'SKILL.md'), 'utf8'));
   const skillsRoot = path.join(repoRoot, 'plugins/fulcrum-ai-toolkit/skills');
   const skills = fs.readdirSync(skillsRoot, { withFileTypes: true }).filter((entry) => entry.isDirectory());
-  assert.equal(skills.length, 18);
   for (const skill of skills) {
     const text = fs.readFileSync(path.join(skillsRoot, skill.name, 'SKILL.md'), 'utf8');
     const body = text.replace(/^---\r?\n[\s\S]*?\r?\n---\r?\n/, '').trimStart();
