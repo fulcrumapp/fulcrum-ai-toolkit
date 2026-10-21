@@ -2,8 +2,18 @@
 name: fulcrum-skill-versioning
 description: Use before every change to a Fulcrum AI Toolkit skill or its supporting resources, examples, or assets—not just during release work. Identify each affected skill and increment its SemVer version in the same change.
 metadata:
-  version: "1.0.0"
+  version: "1.1.0"
 ---
+
+## Reasoning-effort preamble
+
+When the host supports configurable reasoning effort, prefer **high** while
+running this skill, unless an explicit user setting takes precedence. Use
+**medium** for clearly bounded lookups or formatting-only work. Do not assume
+**max** or other effort names are supported. This is a recommendation, not a
+runtime setting: if the host cannot apply it, keep its configured effort and
+follow the same verification steps. Verify unfamiliar Fulcrum terms against
+the skill's authoritative sources rather than guessing their meaning.
 
 # Fulcrum Skill Versioning
 
