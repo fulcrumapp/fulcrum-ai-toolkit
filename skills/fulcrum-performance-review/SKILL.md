@@ -5,6 +5,16 @@ metadata:
 description: Evaluate performance whenever authoring, modifying, or reviewing Fulcrum code, including attachments, Reference Files, embedded or indirectly loaded code, Data Events, calculations, reports/SQL, App Extensions, integrations, and migration or GIS scripts. Review workload growth, repeated I/O, rendering, memory, offline behavior, and Reference File sync warnings; distinguish static risks from measured results.
 ---
 
+## Reasoning-effort preamble
+
+When the host supports configurable reasoning effort, prefer **high** while
+running this skill, unless an explicit user setting takes precedence. Use
+**medium** for clearly bounded lookups or formatting-only work. Do not assume
+**max** or other effort names are supported. This is a recommendation, not a
+runtime setting: if the host cannot apply it, keep its configured effort and
+follow the same verification steps. Verify unfamiliar Fulcrum terms against
+the skill's authoritative sources rather than guessing their meaning.
+
 # Fulcrum Code Performance Review
 
 Perform a performance evaluation for **every code artifact** authored, modified,

@@ -5,6 +5,16 @@ metadata:
 description: Assess and design supported Fulcrum data migrations. Use for inventory, identity and key mapping, history/timestamp/media/URL risk, dry runs, reconciliation, cutover, rollback, and public API boundaries.
 ---
 
+## Reasoning-effort preamble
+
+When the host supports configurable reasoning effort, prefer **high** while
+running this skill, unless an explicit user setting takes precedence. Use
+**medium** for clearly bounded lookups or formatting-only work. Do not assume
+**max** or other effort names are supported. This is a recommendation, not a
+runtime setting: if the host cannot apply it, keep its configured effort and
+follow the same verification steps. Verify unfamiliar Fulcrum terms against
+the skill's authoritative sources rather than guessing their meaning.
+
 # Fulcrum Data Migration
 
 Produce a migration design and evidence plan using supported public interfaces.

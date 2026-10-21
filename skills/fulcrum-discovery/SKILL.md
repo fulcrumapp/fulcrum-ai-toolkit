@@ -5,6 +5,16 @@ metadata:
 description: Discover requirements before building a new Fulcrum app or workflow. Use when a user starts a new build, needs help clarifying a field process, deliverable, users, or constraints, or would benefit from a structured pre-build interview.
 ---
 
+## Reasoning-effort preamble
+
+When the host supports configurable reasoning effort, prefer **high** while
+running this skill, unless an explicit user setting takes precedence. Use
+**medium** for clearly bounded lookups or formatting-only work. Do not assume
+**max** or other effort names are supported. This is a recommendation, not a
+runtime setting: if the host cannot apply it, keep its configured effort and
+follow the same verification steps. Verify unfamiliar Fulcrum terms against
+the skill's authoritative sources rather than guessing their meaning.
+
 **Discovery before building.** The most common failure mode in Fulcrum app building is starting with fields before understanding the workflow. This skill walks through a structured interview — one question at a time — to build a clear picture before opening the app builder.
 
 ## Invocation And Consent

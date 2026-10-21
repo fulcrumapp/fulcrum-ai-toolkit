@@ -2,8 +2,18 @@
 name: fulcrum-app-editing
 description: Safely modify an existing Fulcrum app. Use before any update to an existing form, especially for production apps, schema restructuring, field removal, or field type changes. It detects records through Query MCP, analyzes data impact, and uses an approval-gated same-organization clone, diff, and promotion workflow.
 metadata:
-  version: "1.0.0"
+  version: "1.1.0"
 ---
+
+## Reasoning-effort preamble
+
+When the host supports configurable reasoning effort, prefer **high** while
+running this skill, unless an explicit user setting takes precedence. Use
+**medium** for clearly bounded lookups or formatting-only work. Do not assume
+**max** or other effort names are supported. This is a recommendation, not a
+runtime setting: if the host cannot apply it, keep its configured effort and
+follow the same verification steps. Verify unfamiliar Fulcrum terms against
+the skill's authoritative sources rather than guessing their meaning.
 
 # Fulcrum App Editing
 

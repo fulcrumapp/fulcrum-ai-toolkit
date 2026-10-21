@@ -5,6 +5,16 @@ metadata:
 description: Use when building, modifying, generating, or debugging Fulcrum reports and Report Templates. Covers the documented Report Builder runtime, App MCP template CRUD and report generation, EJS patterns, context objects, QUERY() for multi-record reports, and common mistakes.
 ---
 
+## Reasoning-effort preamble
+
+When the host supports configurable reasoning effort, prefer **high** while
+running this skill, unless an explicit user setting takes precedence. Use
+**medium** for clearly bounded lookups or formatting-only work. Do not assume
+**max** or other effort names are supported. This is a recommendation, not a
+runtime setting: if the host cannot apply it, keep its configured effort and
+follow the same verification steps. Verify unfamiliar Fulcrum terms against
+the skill's authoritative sources rather than guessing their meaning.
+
 A Fulcrum **report template** is EJS (Embedded JavaScript) that runs server-side inside a headless Chrome instance (Puppeteer). The output is a PDF or HTML page — not a live view. Every report starts from a single record's context and expands from there via `QUERY()`.
 
 ## Performance Evaluation
