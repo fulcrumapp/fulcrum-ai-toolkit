@@ -5,6 +5,16 @@ metadata:
 description: Use when a Fulcrum app has grown too complex — too many fields, too many data events, too many status paths. Guides breaking monolithic apps into composable, maintainable pieces. Also use when reviewing an app that shows signs of monolith creep.
 ---
 
+## Reasoning-effort preamble
+
+When the host supports configurable reasoning effort, prefer **high** while
+running this skill, unless an explicit user setting takes precedence. Use
+**medium** for clearly bounded lookups or formatting-only work. Do not assume
+**max** or other effort names are supported. This is a recommendation, not a
+runtime setting: if the host cannot apply it, keep its configured effort and
+follow the same verification steps. Verify unfamiliar Fulcrum terms against
+the skill's authoritative sources rather than guessing their meaning.
+
 A **monolith** is an app that tries to capture an entire business process in a single form. It starts simple, grows as requirements accumulate, and eventually becomes unmaintainable — hundreds of fields, dozens of visibility rules, data events managing edge cases nobody remembers creating.
 
 The cure is **decomposition**: splitting the monolith into purpose-built apps that each own one piece of the workflow and connect through Record Links and reference data.

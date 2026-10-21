@@ -234,6 +234,8 @@ The changed-skill version validator compares every modified skill directory,
 including supporting files, against the supplied base revision.
 Structural and schema validation for externalized examples and assets runs via
 `tools/format-validator` using Ajv and pinned parsers.
+Entrypoint tests also require consistent effort guidance in every directly
+loaded focused skill; they do not prove a host changed its model configuration.
 In CI, GitHub Actions also validates the Claude plugin marketplace using Anthropic's official
 `validate-plugins` composite action.
 
@@ -377,6 +379,15 @@ the portable skill body. Claude additionally exposes a native
 by the Agent Skills standard. On other hosts, invocation behavior may differ.
 Contextual discovery still asks the user to choose a quick check-in or full
 interview, and explicit approval remains required before an external send.
+
+Both bundle entrypoints and all 18 directly loaded focused skills include a
+reasoning-effort preamble recommending **high** when supported, with **medium**
+for bounded lookup/formatting requests. This is guidance, not a runtime
+configuration: skill text does not itself change a host's effort setting.
+Explicit user settings take precedence; unsupported controls leave the host's
+configured effort unchanged. Do not assume **max** or other effort names are
+portable across model families. Regardless of effort, verify unfamiliar Fulcrum
+terms against the skill's authoritative sources rather than guessing.
 
 ## Where this comes from
 
