@@ -552,7 +552,9 @@ const mcpPath = `${PLUGIN_RELATIVE_PATH}/mcp.json`;
 const mcpFilePath = path.join(PLUGIN_DIR, 'mcp.json');
 if (!fs.existsSync(mcpFilePath)) {
   failures.push(`${mcpPath}: required manifest is missing`);
-} else if (mcpPath in jsonDocuments) {
+} else if (!Object.hasOwn(jsonDocuments, mcpPath)) {
+  failures.push(`${mcpPath}: manifest must be valid JSON and included in validation`);
+} else {
   const mcpManifest = jsonDocuments[mcpPath];
   if (mcpManifest === null || typeof mcpManifest !== 'object' || Array.isArray(mcpManifest)) {
     failures.push(`${mcpPath}: manifest must be a JSON object`);
