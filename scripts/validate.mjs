@@ -549,9 +549,14 @@ if (agentMcp) {
 }
 
 const mcpPath = `${PLUGIN_RELATIVE_PATH}/mcp.json`;
-const mcpServers = jsonDocuments[mcpPath]?.mcpServers;
-if (!mcpServers || typeof mcpServers !== 'object' || Array.isArray(mcpServers) || Object.keys(mcpServers).length !== 0) {
-  failures.push(`${mcpPath}: keep mcpServers empty; users must explicitly select their tenant endpoint`);
+const mcpManifest = jsonDocuments[mcpPath];
+if (!mcpManifest) {
+  failures.push(`${mcpPath}: required manifest is missing`);
+} else {
+  const mcpServers = mcpManifest.mcpServers;
+  if (!mcpServers || typeof mcpServers !== 'object' || Array.isArray(mcpServers) || Object.keys(mcpServers).length !== 0) {
+    failures.push(`${mcpPath}: mcpServers must be an empty object; users must explicitly select their tenant endpoint`);
+  }
 }
 if (fs.existsSync(path.join(PLUGIN_DIR, '.mcp.json'))) {
   failures.push(`${PLUGIN_RELATIVE_PATH}/.mcp.json: remove the redundant duplicate; use mcp.json`);
