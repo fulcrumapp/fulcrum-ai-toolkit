@@ -548,11 +548,11 @@ if (agentMcp) {
   }
 }
 
-const mcpPath = `${PLUGIN_RELATIVE_PATH}/mcp.json`;
 const mcpFilePath = path.join(PLUGIN_DIR, 'mcp.json');
+const mcpPath = repoRelativePath(mcpFilePath);
 if (!fs.existsSync(mcpFilePath)) {
   failures.push(`${mcpPath}: required manifest is missing`);
-} else if (!Object.hasOwn(jsonDocuments, mcpPath)) {
+} else if (!Object.prototype.hasOwnProperty.call(jsonDocuments, mcpPath)) {
   failures.push(`${mcpPath}: manifest must be valid JSON and included in validation`);
 } else {
   const mcpManifest = jsonDocuments[mcpPath];
