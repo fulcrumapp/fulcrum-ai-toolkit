@@ -19,6 +19,8 @@ const rootCommandBody = fs.readFileSync(rootCommandPath, 'utf8')
 const rootManifest = JSON.parse(
   fs.readFileSync(new URL('../.claude-plugin/plugin.json', import.meta.url), 'utf8')
 );
+const rootMarketplacePath = new URL('../.claude-plugin/marketplace.json', import.meta.url);
+const rootMarketplace = JSON.parse(fs.readFileSync(rootMarketplacePath, 'utf8'));
 const sharedSkillsPath = new URL('../plugins/fulcrum-ai-toolkit/skills/', import.meta.url);
 const rootSkillsPath = new URL('../skills/', import.meta.url);
 const rootProductKnowledge = fs.readFileSync(
@@ -71,6 +73,18 @@ test('keeps the manual-only workflow out of Claude skill discovery', () => {
 test('keeps Claude command discovery at the repository root', () => {
   assert.equal('commands' in rootManifest, false);
   assert.equal(fs.existsSync(rootCommandPath), true);
+});
+
+test('uses a root marketplace source that resolves to the Claude plugin manifest', () => {
+  const source = rootMarketplace.plugins.find((plugin) => plugin.name === 'fulcrum-ai-toolkit').source;
+  const checkedSource = source.startsWith('./') ? source.slice(2) : source;
+  const manifestPath = new URL(
+    `${checkedSource}/.claude-plugin/plugin.json`,
+    new URL('../', rootMarketplacePath)
+  );
+
+  assert.notEqual(checkedSource, '');
+  assert.equal(fs.existsSync(manifestPath), true);
 });
 
 test('routes the Claude product-knowledge copy to the loader-visible command', () => {

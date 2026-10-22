@@ -810,7 +810,7 @@ if (!fs.existsSync(rootLicensePath) || !fs.existsSync(packageLicensePath)) {
 
 const marketplaceSources = {
   '.github/plugin/marketplace.json': './plugins/fulcrum-ai-toolkit',
-  '.claude-plugin/marketplace.json': './',
+  '.claude-plugin/marketplace.json': './.',
   'marketplace.json': './plugins/fulcrum-ai-toolkit'
 };
 for (const [relPath, expectedSource] of Object.entries(marketplaceSources)) {
