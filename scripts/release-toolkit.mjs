@@ -69,9 +69,13 @@ function releaseState(root) {
   if (!introduction) throw new Error('Cannot find release automation introduction on main');
 
   const history = git(root, 'rev-list', '--first-parent', '--reverse', 'origin/main').split('\n');
+  const introductionIndex = history.indexOf(introduction);
+  if (introductionIndex < 0) {
+    throw new Error(`Release automation introduction ${introduction} is not in origin/main first-parent history`);
+  }
   const sources = new Set();
   const checkpoints = [];
-  for (const commit of history.slice(history.indexOf(introduction))) {
+  for (const commit of history.slice(introductionIndex)) {
     const message = git(root, 'show', '-s', '--format=%B', commit);
     const source = message.match(/^Toolkit-Release-Source: ([a-f0-9]{40})$/m)?.[1];
     if (!source) {

@@ -9,6 +9,17 @@ import { bumpPluginVersion, releaseToolkit, VERSION_FILES } from '../scripts/rel
 const repoRoot = path.resolve(import.meta.dirname, '..');
 const manifest = VERSION_FILES[0];
 
+function hasCommand(command) {
+  try {
+    execFileSync(command, ['--version'], { stdio: 'ignore' });
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+const hasUnzip = hasCommand('unzip');
+
 function git(root, ...args) {
   const gitDir = root.endsWith('.git') ? ['--git-dir', root] : [];
   return execFileSync('git', [...gitDir, ...args], {
@@ -67,10 +78,12 @@ function fixture(t) {
       releases.set(tag, { tag_name: tag, draft: true, assets: [] });
     } else if (action === 'upload') {
       assert.equal(git(checkout, 'rev-parse', 'HEAD'), git(origin, 'rev-parse', `${tag}^{commit}`));
-      const entries = execFileSync('unzip', ['-Z1', args[3]], { encoding: 'utf8' });
-      assert.match(entries, /SKILL\.md/);
-      assert.equal(execFileSync('unzip', ['-p', args[3], 'SKILL.md'], { encoding: 'utf8' }).trim(),
-        git(origin, 'show', `${tag}:plugins/fulcrum-ai-toolkit/SKILL.md`));
+      if (hasUnzip) {
+        const entries = execFileSync('unzip', ['-Z1', args[3]], { encoding: 'utf8' });
+        assert.match(entries, /SKILL\.md/);
+        assert.equal(execFileSync('unzip', ['-p', args[3], 'SKILL.md'], { encoding: 'utf8' }).trim(),
+          git(origin, 'show', `${tag}:plugins/fulcrum-ai-toolkit/SKILL.md`));
+      }
       releases.get(tag).assets = [{
         name: path.basename(args[3]), size: fs.statSync(args[3]).size
       }];
@@ -230,7 +243,7 @@ test('release checkout must not contain uncommitted tracked edits', (t) => {
 test('branch protection failures do not leave a tag or publish a release', (t) => {
   const { origin, introduction, releases, run } = fixture(t);
   const hook = path.join(origin, 'hooks/pre-receive');
-  fs.writeFileSync(hook, '#!/bin/sh\necho "Bot push is blocked" >&2\nexit 1\n', { mode: 0o755 });
+  fs.writeFileSync(hook, '#!/usr/bin/env node\nprocess.stderr.write("Bot push is blocked\\n");\nprocess.exit(1);\n', { mode: 0o755 });
   assert.throws(() => run(), /Cannot push release checkpoint[\s\S]*Bot push is blocked/);
   assert.equal(git(origin, 'rev-parse', 'main'), introduction);
   assert.equal(git(origin, 'tag'), '');
@@ -241,16 +254,19 @@ test('a merge racing the atomic push is retried without a stray tag or missed re
   const { root, checkout, author, origin, releases, run } = fixture(t);
   const marker = path.join(root, 'raced');
   const hook = path.join(checkout, '.git/hooks/pre-push');
-  fs.writeFileSync(hook, `#!/bin/sh
-set -eu
-if [ ! -f "${marker}" ]; then
-  touch "${marker}"
-  unset GIT_DIR GIT_WORK_TREE
-  echo race > "${author}/racing.txt"
-  git -C "${author}" add racing.txt
-  git -C "${author}" commit -m "Concurrent main update"
-  git -C "${author}" push origin main
-fi
+  fs.writeFileSync(hook, `#!/usr/bin/env node
+const fs = require('node:fs');
+const { execFileSync } = require('node:child_process');
+if (!fs.existsSync(${JSON.stringify(marker)})) {
+  fs.writeFileSync(${JSON.stringify(marker)}, '');
+  const env = { ...process.env };
+  delete env.GIT_DIR;
+  delete env.GIT_WORK_TREE;
+  fs.writeFileSync(${JSON.stringify(path.join(author, 'racing.txt'))}, 'race\\n');
+  execFileSync('git', ['-C', ${JSON.stringify(author)}, 'add', 'racing.txt'], { env });
+  execFileSync('git', ['-C', ${JSON.stringify(author)}, 'commit', '-m', 'Concurrent main update'], { env });
+  execFileSync('git', ['-C', ${JSON.stringify(author)}, 'push', 'origin', 'main'], { env });
+}
 `, { mode: 0o755 });
   run();
   assert.deepEqual([...releases.keys()], ['v0.1.4', 'v0.1.5']);
