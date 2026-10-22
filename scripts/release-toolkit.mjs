@@ -27,14 +27,27 @@ function git(root, ...args) {
   }).trim();
 }
 
+function parsePatchVersion(version, context) {
+  if (typeof version !== 'string') {
+    throw new Error(`${context}: version must be a string`);
+  }
+  if (version.includes('-') || version.includes('+')) {
+    throw new Error(`${context}: prerelease/build metadata is not supported for automated patch releases (${version})`);
+  }
+  const parts = version.match(SEMVER);
+  if (!parts) {
+    throw new Error(`${context}: invalid toolkit version ${version}`);
+  }
+  return parts;
+}
+
 export function bumpPluginVersion(root) {
   const documents = VERSION_FILES.map((relativePath) => {
     const text = fs.readFileSync(path.join(root, relativePath), 'utf8');
     return { relativePath, text, document: JSON.parse(text) };
   });
   const version = documents[0].document.version;
-  const parts = typeof version === 'string' && version.match(SEMVER);
-  if (!parts) throw new Error(`Invalid toolkit version: ${version}`);
+  const parts = parsePatchVersion(version, MANIFEST);
   const nextVersion = `${parts[1]}.${parts[2]}.${BigInt(parts[3]) + 1n}`;
 
   // Validate every file before writing, preserving each manifest's formatting.
@@ -83,8 +96,8 @@ function releaseState(root) {
       continue;
     }
     const version = JSON.parse(git(root, 'show', `${commit}:${MANIFEST}`)).version;
-    if (!SEMVER.test(version) || message.split('\n')[0] !== `chore(release): v${version}` ||
-        !sources.delete(source)) {
+    parsePatchVersion(version, `${commit}:${MANIFEST}`);
+    if (message.split('\n')[0] !== `chore(release): v${version}` || !sources.delete(source)) {
       throw new Error(`Invalid or duplicate release checkpoint: ${commit}`);
     }
     checkpoints.push({ commit, tag: `v${version}`, source });
@@ -97,8 +110,9 @@ function publish(root, repository, checkpoint, existing, github) {
   if (git(root, 'rev-parse', `${tag}^{commit}`) !== commit) {
     throw new Error(`${tag} does not point to release commit ${commit}`);
   }
+  const assets = existing?.assets ?? [];
   if (existing && !existing.draft &&
-      existing.assets.some((asset) => asset.name === ASSET && asset.size > 0)) {
+      assets.some((asset) => asset.name === ASSET && asset.size > 0)) {
     console.log(`Release ${tag} is already complete.`);
     return;
   }
@@ -183,7 +197,7 @@ if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.me
   try {
     releaseToolkit();
   } catch (error) {
-    console.error(error.message);
+    console.error(error?.stack ?? error?.message ?? String(error));
     process.exitCode = 1;
   }
 }

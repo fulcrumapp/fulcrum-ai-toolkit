@@ -145,7 +145,9 @@ test('invalid or mismatched manifest versions fail before writing any files', (t
   assert.throws(() => bumpPluginVersion(checkout), /versions must match/);
   assert.equal(fs.readFileSync(target, 'utf8'), before);
   write(checkout, manifest, before.replace('"0.1.3"', '"01.1.3"'));
-  assert.throws(() => bumpPluginVersion(checkout), /Invalid toolkit version/);
+  assert.throws(() => bumpPluginVersion(checkout), /invalid toolkit version/i);
+  write(checkout, manifest, before.replace('"0.1.3"', '"0.1.3-alpha.1"'));
+  assert.throws(() => bumpPluginVersion(checkout), /prerelease\/build metadata is not supported/i);
 });
 
 test('each mainline merge gets one aligned tagged release, including replaced pending runs', (t) => {
@@ -223,6 +225,14 @@ test('a published release missing its bundle is repaired without a new version',
   assert.equal(git(origin, 'rev-parse', 'main'), checkpoint);
   assert.equal(releases.get('v0.1.4').assets.length, 1);
   assert.equal(calls.some((args) => args[1] === 'create'), false);
+});
+
+test('release repair tolerates missing assets arrays from API responses', (t) => {
+  const { releases, run } = fixture(t);
+  run();
+  releases.get('v0.1.4').assets = null;
+  assert.doesNotThrow(() => run());
+  assert.equal(releases.get('v0.1.4').assets.length, 1);
 });
 
 test('a tag moved away from its checkpoint is not published or silently accepted', (t) => {
