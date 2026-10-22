@@ -428,7 +428,7 @@ Plugin configs are included for multiple AI platforms:
 | Codex | `plugins/fulcrum-ai-toolkit/.codex-plugin/plugin.json` |
 | Hermes | Shared `skills/` directory; root `plugin.json` for hosts supporting Agent Plugins v1 |
 | Gemini | `plugins/fulcrum-ai-toolkit/gemini-extension.json` |
-| MCP | `plugins/fulcrum-ai-toolkit/mcp.json`; configure a tenant-specific server separately |
+| MCP | Empty `plugins/fulcrum-ai-toolkit/mcp.json`; configure a tenant-specific server separately |
 
 All hosts discover or reference the package's shared `skills/` directory; they
 do not maintain separate copies of skill content. GitHub Copilot marketplace

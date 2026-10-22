@@ -549,13 +549,18 @@ if (agentMcp) {
 }
 
 const mcpPath = `${PLUGIN_RELATIVE_PATH}/mcp.json`;
-const mcpManifest = jsonDocuments[mcpPath];
-if (!mcpManifest) {
+const mcpFilePath = path.join(PLUGIN_DIR, 'mcp.json');
+if (!fs.existsSync(mcpFilePath)) {
   failures.push(`${mcpPath}: required manifest is missing`);
-} else {
-  const mcpServers = mcpManifest.mcpServers;
-  if (!mcpServers || typeof mcpServers !== 'object' || Array.isArray(mcpServers) || Object.keys(mcpServers).length !== 0) {
-    failures.push(`${mcpPath}: mcpServers must be an empty object; users must explicitly select their tenant endpoint`);
+} else if (mcpPath in jsonDocuments) {
+  const mcpManifest = jsonDocuments[mcpPath];
+  if (mcpManifest === null || typeof mcpManifest !== 'object' || Array.isArray(mcpManifest)) {
+    failures.push(`${mcpPath}: manifest must be a JSON object`);
+  } else {
+    const mcpServers = mcpManifest.mcpServers;
+    if (!mcpServers || typeof mcpServers !== 'object' || Array.isArray(mcpServers) || Object.keys(mcpServers).length !== 0) {
+      failures.push(`${mcpPath}: mcpServers must be an empty object; users must explicitly select their tenant endpoint`);
+    }
   }
 }
 if (fs.existsSync(path.join(PLUGIN_DIR, '.mcp.json'))) {
