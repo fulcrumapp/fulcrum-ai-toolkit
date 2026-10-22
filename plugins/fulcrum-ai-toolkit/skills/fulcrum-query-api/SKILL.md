@@ -1,7 +1,7 @@
 ---
 name: fulcrum-query-api
 metadata:
-  version: "1.2.2"
+  version: "1.2.1"
 description: Discover, model, execute, and validate safe read-only Fulcrum queries through Query MCP. Use for system, app, repeatable, link, and media tables; metadata discovery; parameterization; and documented PostgreSQL/PostGIS analysis.
 ---
 

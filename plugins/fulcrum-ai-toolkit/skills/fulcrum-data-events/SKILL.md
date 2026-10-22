@@ -1,7 +1,7 @@
 ---
 name: fulcrum-data-events
 metadata:
-  version: "1.1.1"
+  version: "1.1.0"
 description: Use when writing, reviewing, persisting, or debugging Fulcrum Data Event JavaScript. Defers current hooks and signatures to App MCP knowledge, stores the single script through form get/update operations, and covers patterns, constraints, lifecycle, offline behavior, and security.
 ---
 
@@ -134,7 +134,7 @@ the dependent field shows its full designed option list until the controlling
 field is touched.
 
 ### Load reference data
-`LOADRECORDS()` takes an options object and an asynchronous callback; it does not return records directly. For a separate lookup form, configure its explicit form ID rather than using `FORM().id`, which identifies the app containing this script. See
+`LOADRECORDS()` takes an options object and an asynchronous callback; it does not return records directly. See
 [`examples/load-reference-records.js`](examples/load-reference-records.js).
 
 > **Verify availability:** For `LOADRECORDS()` and `LOADFILE()`, follow the sibling [Plan And Licensing Check](../fulcrum-product-knowledge/resources/plan-and-licensing-reference.md). Check [current pricing](https://www.fulcrumapp.com/pricing/), the function's public documentation, and the organization's permissions/configuration. Do not infer access or failure behavior from a plan name. If access is unresolved, flag the dependency and offer a fallback that does not depend on it.
@@ -198,7 +198,7 @@ size/update-frequency trade-offs, not an automatic app-score deduction or cap;
 follow [the shared guidance](../fulcrum-performance-review/SKILL.md#reference-file-sync-warning).
 
 ### Session state with STORAGE
-`STORAGE()` returns a local-storage-like object with `getItem`, `setItem`, `removeItem`, and `clear` methods. Values must be strings, so serialize objects with `JSON.stringify()`. The store is device-wide and persistent, so scope every key with `FORM().id` and a saved `RECORDID()`, keep the payload to an explicit bounded allowlist, and clear it on lifecycle exits. The example expires persistent entries after 30 minutes without a context reload to bound abandoned sessions. This is record-scoped rather than concurrent-editor-scoped; `STORAGE()` has no session identifier or atomic compare-and-delete operation, so a new edit opened within that window cannot be distinguished from context recreation. Use a host-specific session store when exact session isolation is required. `RECORDID()` is null until a new record has been saved; the example persists baselines for records that already have an identifier, while a newly created record remains in ordinary script state because `save-record` runs before its identifier is available for re-keying. See
+`STORAGE()` returns a local-storage-like object with `getItem`, `setItem`, `removeItem`, and `clear` methods. Values must be strings, so serialize objects with `JSON.stringify()`. The store is device-wide and persistent, so a bare key such as `baseline` is still there when the next record opens. Scope every key with `FORM().id` and the record it belongs to, and remove it on `cancel-record` and `unload-record`. `RECORDID()` is null until a new record has been saved, so it cannot separate one unsaved record from the next on its own: give an unsaved record a nonce generated once per editing session, so a session that crashed before its cleanup ran leaves a key the next session never computes. See
 [`examples/storage-session-state.js`](examples/storage-session-state.js).
 
 ### Validate before save
@@ -242,7 +242,7 @@ Any trigger that needs the record's GPS location must guard against an empty geo
 Do not hardcode field name arrays when the platform provides dynamic alternatives. See
 [`examples/field-names-bulk-readonly.js`](examples/field-names-bulk-readonly.js).
 
-`DATANAMES()` returns the data names available in the current form scope. This is the correct approach for bulk read-only, bulk hide, or bulk clear operations.
+`FIELD_NAMES()` returns the data names of all fields in the current form scope. Inside a repeatable event, it returns fields within that repeatable. This is the correct approach for bulk read-only, bulk hide, or bulk clear operations.
 
 ### Hardcoded IDs
 Compare a literal identifier with runtime discovery in
@@ -289,7 +289,7 @@ Before writing custom JavaScript logic, call `fulcrum_expressions_list_functions
 
 | Task | Built-in | Instead of |
 |------|----------|-----------|
-| Get all field names | `DATANAMES()` | Hardcoded array |
+| Get all field names | `FIELD_NAMES()` | Hardcoded array |
 | Find nearest record by geometry | `GEOMETRY_NEAREST(records, point)` | Custom distance loop |
 | Format a date | `FORMAT(date, 'YYYY-MM-DD')` | Manual string construction |
 | User's full name | `USERFULLNAME()` | Custom user lookup |
@@ -309,9 +309,9 @@ for event-specific APIs.
 
 ## Platform Constraints
 
-- **No server execution** — Data events run on-device. Ordinary script state
-  lasts for the current record-editor session; `STORAGE()` is the explicit
-  device-persistent exception and must use scoped keys with lifecycle cleanup.
+- **No server execution** — Data events run on-device. Ordinary script state is
+  ephemeral; `STORAGE()` is the explicit device-persistent exception and must
+  use scoped keys with lifecycle cleanup.
 - **No module imports** — No `require()`, no `import`. All code is a single script.
 - **Callback-based async, no async/await** — `REQUEST()`, `LOADRECORDS()`, and callback-based `LOADFILE()` work asynchronously. `validate-record`, `validate-repeatable`, and `save-record` cannot perform asynchronous work.
 - **Single script per form** — All event handlers share one script. Naming collisions are possible.
@@ -334,7 +334,7 @@ for event-specific APIs.
 - [ ] If using `LOADRECORDS()` or `LOADFILE()` — eligibility and organization access verified against current sources; unresolved dependencies are not presented as available
 - [ ] If using REQUEST() on web — confirmed target API supports CORS or middleware proxy is in place
 - [ ] Any location-dependent trigger uses `change-geometry` and guards against empty geometry
-- [ ] Bulk field operations use `DATANAMES()` rather than hardcoded field name arrays
+- [ ] Bulk field operations use `FIELD_NAMES()` rather than hardcoded field name arrays
 - [ ] Built-in expression functions checked before writing custom logic that might duplicate them
 - [ ] When App MCP is available, current functions were checked with `fulcrum_expressions_data_events_reference` or the relevant expression knowledge tool
 - [ ] The form's existing `script` was fetched and preserved before `fulcrum_forms_update`

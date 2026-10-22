@@ -3,8 +3,7 @@
 // LOADFILE({ name, form_name | form_id, variable }, callback) reads a Reference
 // File attached to a form. `name` is required; `form_name` or `form_id` selects
 // the owning form; `variable` names the loaded module on the callback data.
-// Verify availability against current pricing, the public function
-// documentation, and the organization's permissions/configuration.
+// Requires an Elite plan or Developer Pack.
 
 ON('load-record', function (event) {
   LOADFILE({

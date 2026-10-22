@@ -1,8 +1,9 @@
 ---
 name: fulcrum-solution-document
 metadata:
-  version: "1.0.1"
+  version: "1.0.0"
 description: "User-invoked workflow to document a completed Fulcrum app, extension, workflow, report, or integration. Produce an audience-appropriate one-pager, review it for privacy, and prepare optional share formats for a destination chosen by the user. Run only when someone requests documentation, review, handoff, or sharing."
+disable-model-invocation: true
 ---
 
 ## Reasoning-effort preamble
@@ -25,8 +26,7 @@ audience and ownership model; an internal product review is not a prerequisite.
 
 ## Invocation And Consent
 
-This remains a manual workflow, even in hosts that may offer automatic skill
-invocation.
+This is a manual workflow, even in hosts that ignore `disable-model-invocation`.
 Do not launch an interview or create, save, overwrite, or share a document
 merely because an app was built or another skill ran. Obtain the user's
 request for the action first. Use existing context and ask only for missing

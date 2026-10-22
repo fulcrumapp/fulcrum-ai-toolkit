@@ -5,9 +5,8 @@
 
 Every runnable snippet lives in [`../examples/`](../examples/README.md) as a
 separate `.js` file so it can be linted, diffed, and pasted without extracting
-it from prose. Anti-pattern contrasts in those files are comment-only, leaving
-the preferred block runnable. Each file carries a `// Source:` comment naming
-its public documentation.
+it from prose. Each file carries a `// Source:` comment naming its public
+documentation.
 
 ## Index
 
@@ -24,7 +23,7 @@ its public documentation.
 | Cascade choices with `SETCHOICES()` | [`cascading-choices.js`](../examples/cascading-choices.js) |
 | Load reference records asynchronously | [`load-reference-records.js`](../examples/load-reference-records.js) |
 | Share helpers across apps with `LOADFILE()` | [`loadfile-shared-helpers.js`](../examples/loadfile-shared-helpers.js) |
-| Cache a bounded form-and-record baseline in persistent storage | [`storage-session-state.js`](../examples/storage-session-state.js) |
+| Cache session state with `STORAGE()` | [`storage-session-state.js`](../examples/storage-session-state.js) |
 | Require a photo before save | [`validate-record-photo-required.js`](../examples/validate-record-photo-required.js) |
 | Guard location-dependent triggers | [`geometry-trigger-guard.js`](../examples/geometry-trigger-guard.js) |
 | Replace hardcoded field lists | [`field-names-bulk-readonly.js`](../examples/field-names-bulk-readonly.js) |

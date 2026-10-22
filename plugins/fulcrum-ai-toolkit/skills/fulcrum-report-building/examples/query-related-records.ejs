@@ -6,46 +6,25 @@
   QUERY(sql, options) returns a result object; the row objects are on `rows`.
   The Query API is read-only and accepts one complete SQL string with no
   server-side bind parameters, so every interpolated value must be encoded
-  where it enters the statement. A missing or empty site ID is rejected before
-  string conversion, and a present ID is rejected if it contains a character
-  outside letters, digits,
-  underscores, and hyphens; it is never silently normalized into a different
-  identifier. Invalid values render a bounded error row without running the
-  query. The encoder in the SQL gap then preserves each validated value, and
-  `('' + value)` converts without naming `String`, which is an ordinary binding
-  a template could rebind.
+  where it enters the statement. The filter below sits in the gap itself, so
+  what reaches SQL is letters, digits, underscores, and hyphens — none of which
+  can close the quote around them. `('' + value)` converts without naming
+  `String`, which is an ordinary binding a template could rebind.
 
   A <tr> is only valid inside a table, so the rows are wrapped in one here and
   an empty result gets its own spanning row.
-
-  This example intentionally caps the rendered result with SQL LIMIT 100. A
-  response at that self-imposed query limit is treated as potentially partial
-  because the endpoint does not return a count. Narrow the filter or issue
-  additional queries with SQL LIMIT/OFFSET or keyset pagination when the
-  complete related-record set is required.
 %>
 
 <% const siteIdField = record.formValues.find('site_id'); %>
-<% const rawSiteId = siteIdField ? siteIdField.value : null; %>
-<% const missingSiteId = rawSiteId == null || rawSiteId === ''; %>
-<% const siteIdValue = missingSiteId ? '' : '' + rawSiteId; %>
-<% const siteIdError = missingSiteId
-     ? 'site_id is required.'
-     : /^[A-Za-z0-9_-]+$/.test(siteIdValue)
-       ? null
-       : 'site_id must contain only letters, digits, underscores, or hyphens.'; %>
-<% const MAX_ROWS = 100; %>
-<% const relatedInspections = siteIdError ? { rows: [] } : QUERY(
-     `SELECT inspector_name, inspection_date, status
-      FROM "Site Inspections"
-      WHERE site_id = '${('' + siteIdValue).replace(/[^A-Za-z0-9_-]/g, '')}'
-      ORDER BY _created_at DESC
-      LIMIT 100`,
-     { format: 'json' }
-   ); %>
-<% const resultRows = relatedInspections.rows; %>
-<% const hasMoreRows = resultRows.length === MAX_ROWS; %>
-<% const visibleRows = hasMoreRows ? resultRows.slice(0, MAX_ROWS) : resultRows; %>
+<% const siteId = siteIdField ? siteIdField.value : ''; %>
+<% const relatedInspections = QUERY(
+  `SELECT inspector_name, inspection_date, status
+   FROM "Site Inspections"
+   WHERE site_id = '${('' + siteId).replace(/[^A-Za-z0-9_-]/g, '')}'
+   ORDER BY _created_at DESC
+   LIMIT 100`,
+  { format: 'json' }
+); %>
 
 <table class="report-table">
   <thead>
@@ -56,31 +35,18 @@
     </tr>
   </thead>
   <tbody>
-    <% if (siteIdError) { %>
-      <tr>
-        <td colspan="3" class="report-error"><%= siteIdError %> No query was run.</td>
-      </tr>
-    <% } else if (visibleRows.length === 0) { %>
+    <% if (relatedInspections.rows.length === 0) { %>
       <tr>
         <td colspan="3">No related inspections.</td>
       </tr>
     <% } else { %>
-      <% visibleRows.forEach(function (row) { %>
+      <% relatedInspections.rows.forEach(function (row) { %>
         <tr>
           <td><%= row.inspector_name %></td>
           <td><%= row.inspection_date %></td>
           <td><%= row.status %></td>
         </tr>
       <% }); %>
-      <% if (hasMoreRows) { %>
-        <tr>
-          <td colspan="3" class="report-warning">
-            Showing up to 100 related inspections. Because this query requests
-            LIMIT 100, this result may be partial; narrow the filter or use SQL
-            LIMIT/OFFSET or keyset pagination for a complete result.
-          </td>
-        </tr>
-      <% } %>
     <% } %>
   </tbody>
 </table>
