@@ -116,7 +116,7 @@ export function bumpPluginVersion(root) {
     let count = 0;
     let contents;
     if (relativePath !== MARKETPLACE) {
-      const versionPattern = new RegExp(`(^\\s{2}"version"\\s*:\\s*")${escapeRegExp(version)}(")`, 'm');
+      const versionPattern = new RegExp(`(^\\s*"version"\\s*:\\s*")${escapeRegExp(version)}(")`, 'm');
       contents = text.replace(versionPattern, (_, before, after) => {
         count += 1;
         return `${before}${nextVersion}${after}`;

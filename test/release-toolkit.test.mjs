@@ -152,6 +152,18 @@ test('patch bump ignores unrelated nested version keys', (t) => {
   assert.equal(updated.nested.version, '0.1.3');
 });
 
+test('patch bump handles non-two-space JSON indentation', (t) => {
+  const { checkout } = fixture(t);
+  const target = '.claude-plugin/plugin.json';
+  const original = JSON.parse(fs.readFileSync(path.join(checkout, target), 'utf8'));
+  write(checkout, target, `${JSON.stringify(original, null, 4)}\n`);
+
+  assert.equal(bumpPluginVersion(checkout), '0.1.4');
+
+  const updated = JSON.parse(fs.readFileSync(path.join(checkout, target), 'utf8'));
+  assert.equal(updated.version, '0.1.4');
+});
+
 test('invalid or mismatched manifest versions fail before writing any files', (t) => {
   const { checkout } = fixture(t);
   const target = path.join(checkout, manifest);

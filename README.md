@@ -244,7 +244,7 @@ catch-up, version commits include the latest mainline content rather than
 reconstructing historical snapshots. Reruns and manual dispatch resume incomplete
 releases without incrementing again for an already processed commit.
 
-The workflow needs `contents: write`, `gh`, `zip`, and permission to push version
+The workflow needs `contents: write`, `git`, `gh`, `zip`, and permission to push version
 commits and tags. If branch rules block bot pushes, it fails explicitly; use an
 automatically maintained release PR instead of weakening branch protection.
 Skill versions remain author-selected and independently enforced by CI; plugin
