@@ -118,22 +118,29 @@ function publish(root, repository, checkpoint, existing, github) {
   }
 
   git(root, 'checkout', '--detach', commit);
-  execFileSync(process.execPath, ['scripts/build-m365-bundle.mjs'], {
-    cwd: root, stdio: 'inherit'
-  });
   const assetPath = path.join(root, ASSET);
-  if (!fs.existsSync(assetPath) || fs.statSync(assetPath).size === 0) {
-    throw new Error(`Missing or empty ${ASSET}`);
+  if (fs.existsSync(assetPath)) {
+    fs.unlinkSync(assetPath);
   }
-  if (!existing) {
-    github([
-      'release', 'create', tag, '--repo', repository, '--verify-tag', '--draft',
-      '--title', tag, '--generate-notes'
-    ]);
+  try {
+    execFileSync(process.execPath, ['scripts/build-m365-bundle.mjs'], {
+      cwd: root, stdio: 'inherit'
+    });
+    if (!fs.existsSync(assetPath) || fs.statSync(assetPath).size === 0) {
+      throw new Error(`Missing or empty ${ASSET}`);
+    }
+    if (!existing) {
+      github([
+        'release', 'create', tag, '--repo', repository, '--verify-tag', '--draft',
+        '--title', tag, '--generate-notes'
+      ]);
+    }
+    github(['release', 'upload', tag, assetPath, '--repo', repository, '--clobber']);
+    github(['release', 'edit', tag, '--repo', repository, '--draft=false']);
+    console.log(`Published ${tag} from ${commit}.`);
+  } finally {
+    git(root, 'reset', '--hard', '--quiet');
   }
-  github(['release', 'upload', tag, assetPath, '--repo', repository, '--clobber']);
-  github(['release', 'edit', tag, '--repo', repository, '--draft=false']);
-  console.log(`Published ${tag} from ${commit}.`);
 }
 
 export function releaseToolkit({
