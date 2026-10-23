@@ -77,6 +77,10 @@ function cleanupReleaseArtifacts(root) {
   fs.rmSync(path.join(root, '.m365-bundle-stage'), { recursive: true, force: true });
 }
 
+function fetchMainAndTags(root) {
+  git(root, 'fetch', '--force', '--prune', '--prune-tags', 'origin', 'main', '--tags');
+}
+
 export function bumpPluginVersion(root) {
   const documents = VERSION_FILES.map((relativePath) => {
     const text = fs.readFileSync(path.join(root, relativePath), 'utf8');
@@ -110,13 +114,33 @@ export function bumpPluginVersion(root) {
       throw new Error(`${relativePath}: versions must match ${version}`);
     }
     let count = 0;
-    const versionPattern = new RegExp(`("version"\\s*:\\s*")${escapeRegExp(version)}(")`, 'g');
-    const contents = text.replace(versionPattern, (_, before, after) => {
-      count += 1;
-      return `${before}${nextVersion}${after}`;
-    });
-    if (count !== versions.length) {
-      throw new Error(`${relativePath}: unexpected version fields`);
+    let contents;
+    if (relativePath !== MARKETPLACE) {
+      const versionPattern = new RegExp(`(^\\s{2}"version"\\s*:\\s*")${escapeRegExp(version)}(")`, 'm');
+      contents = text.replace(versionPattern, (_, before, after) => {
+        count += 1;
+        return `${before}${nextVersion}${after}`;
+      });
+    } else {
+      const replacements = [
+        new RegExp(`("metadata"\\s*:\\s*\\{[\\s\\S]*?"version"\\s*:\\s*")${escapeRegExp(version)}(")`),
+        new RegExp(`("plugins"\\s*:\\s*\\[\\s*\\{[\\s\\S]*?"version"\\s*:\\s*")${escapeRegExp(version)}(")`)
+      ];
+      contents = text;
+      for (const pattern of replacements) {
+        contents = contents.replace(pattern, (_, before, after) => {
+          count += 1;
+          return `${before}${nextVersion}${after}`;
+        });
+      }
+    }
+    if (count !== versions.length) throw new Error(`${relativePath}: unexpected version fields`);
+
+    const written = JSON.parse(contents);
+    if (relativePath !== MARKETPLACE) {
+      if (written?.version !== nextVersion) throw new Error(`${relativePath}: failed to update version`);
+    } else if (written?.metadata?.version !== nextVersion || written?.plugins?.[0]?.version !== nextVersion) {
+      throw new Error(`${relativePath}: failed to update marketplace versions`);
     }
     return { relativePath, contents };
   });
@@ -224,7 +248,7 @@ export function releaseToolkit({
 
   try {
     for (;;) {
-      git(root, 'fetch', 'origin', 'main', '--tags');
+      fetchMainAndTags(root);
       const { pending, checkpoints } = releaseState(root);
       for (const checkpoint of checkpoints) {
         if (completed.has(checkpoint.commit)) continue;
@@ -252,7 +276,7 @@ export function releaseToolkit({
       );
       if (push.error) throw push.error;
       if (push.status !== 0) {
-        git(root, 'fetch', 'origin', 'main');
+        fetchMainAndTags(root);
         if (git(root, 'ls-remote', '--tags', 'origin', `refs/tags/${tag}`)) {
           throw new Error(
             `Cannot push release checkpoint: remote tag ${tag} already exists or is protected.\n${push.stderr}`
