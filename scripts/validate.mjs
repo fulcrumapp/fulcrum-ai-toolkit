@@ -548,12 +548,25 @@ if (agentMcp) {
   }
 }
 
-for (const name of ['mcp.json', '.mcp.json']) {
-  const relativePath = `${PLUGIN_RELATIVE_PATH}/${name}`;
-  const servers = jsonDocuments[relativePath]?.mcpServers;
-  if (!servers || typeof servers !== 'object' || Array.isArray(servers) || Object.keys(servers).length !== 0) {
-    failures.push(`${relativePath}: keep mcpServers empty; users must explicitly select their tenant endpoint`);
+const mcpFilePath = path.join(PLUGIN_DIR, 'mcp.json');
+const mcpPath = repoRelativePath(mcpFilePath);
+if (!fs.existsSync(mcpFilePath)) {
+  failures.push(`${mcpPath}: required manifest is missing`);
+} else if (!Object.prototype.hasOwnProperty.call(jsonDocuments, mcpPath)) {
+  failures.push(`${mcpPath}: manifest must be valid JSON and included in validation`);
+} else {
+  const mcpManifest = jsonDocuments[mcpPath];
+  if (mcpManifest === null || typeof mcpManifest !== 'object' || Array.isArray(mcpManifest)) {
+    failures.push(`${mcpPath}: manifest must be a JSON object`);
+  } else {
+    const mcpServers = mcpManifest.mcpServers;
+    if (!mcpServers || typeof mcpServers !== 'object' || Array.isArray(mcpServers) || Object.keys(mcpServers).length !== 0) {
+      failures.push(`${mcpPath}: mcpServers must be an empty object; users must explicitly select their tenant endpoint`);
+    }
   }
+}
+if (fs.existsSync(path.join(PLUGIN_DIR, '.mcp.json'))) {
+  failures.push(`${PLUGIN_RELATIVE_PATH}/.mcp.json: remove the redundant duplicate; use mcp.json`);
 }
 
 const setupPath = path.join(SKILLS_DIR, 'fulcrum-app-builder', 'resources', 'mcp-setup.md');
