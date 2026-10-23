@@ -305,6 +305,15 @@ test('a tag moved away from its checkpoint is not published or silently accepted
   assert.throws(() => run(), /does not point to release commit/);
 });
 
+test('stale local release tag is refreshed from origin before publish checks', (t) => {
+  const { origin, checkout, introduction, run } = fixture(t);
+  run();
+  const remoteTagCommit = git(origin, 'rev-parse', 'v0.1.4');
+  git(checkout, 'tag', '--force', 'v0.1.4', introduction);
+  run();
+  assert.equal(git(checkout, 'rev-parse', 'v0.1.4'), remoteTagCommit);
+});
+
 test('release checkout must not contain uncommitted tracked edits', (t) => {
   const { checkout, origin, introduction, run } = fixture(t);
   write(checkout, manifest, '{}\n');

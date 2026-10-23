@@ -71,7 +71,19 @@ function tagRefExists(root, tag) {
 function remoteTagCommit(root, tag) {
   const output = git(root, 'ls-remote', '--tags', 'origin', `refs/tags/${tag}`);
   if (!output) return null;
-  return output.split(/\s+/)[0];
+  let direct = null;
+  let peeled = null;
+  for (const line of output.split('\n')) {
+    const [sha, ref] = line.trim().split(/\s+/);
+    if (!sha || !ref) continue;
+    if (ref === `refs/tags/${tag}`) direct = sha;
+    if (ref === `refs/tags/${tag}^{}`) peeled = sha;
+  }
+  return peeled ?? direct;
+}
+
+function fetchTagRef(root, tag) {
+  git(root, 'fetch', 'origin', `+refs/tags/${tag}:refs/tags/${tag}`);
 }
 
 function cleanupReleaseArtifacts(root) {
@@ -85,7 +97,7 @@ function fetchMainAndTags(root) {
     git(root, 'fetch', '--force', '--prune', '--prune-tags', 'origin', 'main', '--tags');
     return;
   }
-  git(root, 'fetch', 'origin', 'main', '--tags');
+  git(root, 'fetch', 'origin', 'main');
 }
 
 function replaceTopLevelStringProperty(text, key, expectedValue, nextValue, context) {
@@ -259,6 +271,7 @@ function publish(root, repository, checkpoint, existing, github) {
   if (remoteCommit !== commit) {
     throw new Error(`${tag} does not point to release commit ${commit} on origin`);
   }
+  fetchTagRef(root, tag);
   if (!tagRefExists(root, tag)) {
     throw new Error(`Missing local tag ${tag} for release checkpoint commit ${commit}`);
   }
