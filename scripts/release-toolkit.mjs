@@ -81,6 +81,74 @@ function fetchMainAndTags(root) {
   git(root, 'fetch', '--force', '--prune', '--prune-tags', 'origin', 'main', '--tags');
 }
 
+function replaceTopLevelStringProperty(text, key, expectedValue, nextValue, context) {
+  let depth = 0;
+  let inString = false;
+  let escaped = false;
+  let stringStart = -1;
+  let replaced = false;
+
+  for (let i = 0; i < text.length; i += 1) {
+    const character = text[i];
+    if (inString) {
+      if (escaped) {
+        escaped = false;
+        continue;
+      }
+      if (character === '\\') {
+        escaped = true;
+        continue;
+      }
+      if (character !== '"') continue;
+      inString = false;
+      const token = text.slice(stringStart + 1, i);
+      if (depth !== 1 || token !== key) continue;
+
+      let cursor = i + 1;
+      while (cursor < text.length && /\s/.test(text[cursor])) cursor += 1;
+      if (text[cursor] !== ':') continue;
+      cursor += 1;
+      while (cursor < text.length && /\s/.test(text[cursor])) cursor += 1;
+      if (text[cursor] !== '"') {
+        throw new Error(`${context}: ${key} must be a string`);
+      }
+      const valueStart = cursor + 1;
+      cursor += 1;
+      let valueEscaped = false;
+      while (cursor < text.length) {
+        const valueCharacter = text[cursor];
+        if (valueEscaped) {
+          valueEscaped = false;
+        } else if (valueCharacter === '\\') {
+          valueEscaped = true;
+        } else if (valueCharacter === '"') {
+          break;
+        }
+        cursor += 1;
+      }
+      if (cursor >= text.length) throw new Error(`${context}: unterminated string for ${key}`);
+      const valueEnd = cursor;
+      const currentValue = text.slice(valueStart, valueEnd);
+      if (currentValue !== expectedValue) continue;
+      if (replaced) throw new Error(`${context}: duplicate top-level ${key}`);
+
+      text = `${text.slice(0, valueStart)}${nextValue}${text.slice(valueEnd)}`;
+      i = valueStart + nextValue.length;
+      replaced = true;
+    } else if (character === '"') {
+      inString = true;
+      stringStart = i;
+    } else if (character === '{') {
+      depth += 1;
+    } else if (character === '}') {
+      depth -= 1;
+    }
+  }
+
+  if (!replaced) throw new Error(`${context}: top-level ${key}=${expectedValue} not found`);
+  return text;
+}
+
 export function bumpPluginVersion(root) {
   const documents = VERSION_FILES.map((relativePath) => {
     const text = fs.readFileSync(path.join(root, relativePath), 'utf8');
@@ -116,11 +184,8 @@ export function bumpPluginVersion(root) {
     let count = 0;
     let contents;
     if (relativePath !== MARKETPLACE) {
-      const versionPattern = new RegExp(`(^\\s*"version"\\s*:\\s*")${escapeRegExp(version)}(")`, 'm');
-      contents = text.replace(versionPattern, (_, before, after) => {
-        count += 1;
-        return `${before}${nextVersion}${after}`;
-      });
+      contents = replaceTopLevelStringProperty(text, 'version', version, nextVersion, relativePath);
+      count = 1;
     } else {
       const replacements = [
         new RegExp(`("metadata"\\s*:\\s*\\{[\\s\\S]*?"version"\\s*:\\s*")${escapeRegExp(version)}(")`),

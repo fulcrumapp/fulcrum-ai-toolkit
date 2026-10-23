@@ -164,6 +164,20 @@ test('patch bump handles non-two-space JSON indentation', (t) => {
   assert.equal(updated.version, '0.1.4');
 });
 
+test('patch bump updates top-level version when nested version appears first', (t) => {
+  const { checkout } = fixture(t);
+  const target = '.claude-plugin/plugin.json';
+  const original = JSON.parse(fs.readFileSync(path.join(checkout, target), 'utf8'));
+  const reordered = { nested: { version: '0.1.3' }, ...original };
+  write(checkout, target, `${JSON.stringify(reordered, null, 2)}\n`);
+
+  assert.equal(bumpPluginVersion(checkout), '0.1.4');
+
+  const updated = JSON.parse(fs.readFileSync(path.join(checkout, target), 'utf8'));
+  assert.equal(updated.version, '0.1.4');
+  assert.equal(updated.nested.version, '0.1.3');
+});
+
 test('invalid or mismatched manifest versions fail before writing any files', (t) => {
   const { checkout } = fixture(t);
   const target = path.join(checkout, manifest);
