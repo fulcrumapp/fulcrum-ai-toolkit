@@ -4,9 +4,10 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import test from 'node:test';
+import { fileURLToPath } from 'node:url';
 import { bumpPluginVersion, releaseToolkit, VERSION_FILES } from '../scripts/release-toolkit.mjs';
 
-const repoRoot = path.resolve(import.meta.dirname, '..');
+const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const manifest = VERSION_FILES[0];
 
 function hasCommand(command) {
@@ -156,6 +157,7 @@ test('each mainline merge gets one aligned tagged release, including replaced pe
   const second = addMerge(author, 'second-feature');
   run();
   assert.deepEqual([...releases.keys()], ['v0.1.4', 'v0.1.5', 'v0.1.6']);
+  assert.equal(git(checkout, 'symbolic-ref', '--quiet', 'HEAD'), 'refs/heads/main');
   for (const [index, source] of [introduction, first, second].entries()) {
     const version = `0.1.${index + 4}`;
     const tag = `v${version}`;
@@ -174,6 +176,7 @@ test('each mainline merge gets one aligned tagged release, including replaced pe
   run();
   assert.equal(git(origin, 'rev-parse', 'main'), tip);
   assert.deepEqual(calls.map((args) => args[0]), ['api']);
+  assert.equal(git(checkout, 'symbolic-ref', '--quiet', 'HEAD'), 'refs/heads/main');
   assert.equal(git(checkout, 'status', '--porcelain', '--untracked-files=no'), '');
 });
 

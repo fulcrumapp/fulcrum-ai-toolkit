@@ -27,6 +27,14 @@ function git(root, ...args) {
   }).trim();
 }
 
+function checkoutRef(root, branch, head) {
+  if (branch) {
+    git(root, 'checkout', '--quiet', branch);
+  } else {
+    git(root, 'checkout', '--quiet', '--detach', head);
+  }
+}
+
 function parsePatchVersion(version, context) {
   if (typeof version !== 'string') {
     throw new Error(`${context}: version must be a string`);
@@ -154,49 +162,60 @@ export function releaseToolkit({
   if (git(root, 'status', '--porcelain', '--untracked-files=no')) {
     throw new Error('Release checkout has uncommitted tracked changes');
   }
+  const startHead = git(root, 'rev-parse', '--verify', 'HEAD');
+  let startBranch = null;
+  try {
+    startBranch = git(root, 'symbolic-ref', '--quiet', '--short', 'HEAD');
+  } catch {
+    startBranch = null;
+  }
   const releases = new Map(JSON.parse(github([
     'api', '--paginate', '--slurp', `repos/${repository}/releases?per_page=100`
   ])).flat().map((release) => [release.tag_name, release]));
   const completed = new Set();
   let pushConflicts = 0;
 
-  for (;;) {
-    git(root, 'fetch', 'origin', 'main', '--tags');
-    const { pending, checkpoints } = releaseState(root);
-    for (const checkpoint of checkpoints) {
-      if (completed.has(checkpoint.commit)) continue;
-      publish(root, repository, checkpoint, releases.get(checkpoint.tag), github);
-      completed.add(checkpoint.commit);
-    }
-    if (pending.length === 0) return;
-
-    git(root, 'checkout', '--detach', 'origin/main');
-    const base = git(root, 'rev-parse', 'HEAD');
-    const version = bumpPluginVersion(root);
-    const tag = `v${version}`;
-    git(root, 'add', '--', ...VERSION_FILES);
-    git(
-      root, '-c', 'user.name=github-actions[bot]',
-      '-c', 'user.email=41898282+github-actions[bot]@users.noreply.github.com',
-      'commit', '-m', `chore(release): ${tag}`,
-      '-m', `${SOURCE_TRAILER}: ${pending[0]}`
-    );
-    const commit = git(root, 'rev-parse', 'HEAD');
-    // Publish both refs atomically; a concurrent merge must never leave a stray tag.
-    const push = spawnSync(
-      'git', ['push', '--atomic', 'origin', `${commit}:refs/heads/main`, `${commit}:refs/tags/${tag}`],
-      { cwd: root, encoding: 'utf8' }
-    );
-    if (push.error) throw push.error;
-    if (push.status !== 0) {
-      git(root, 'fetch', 'origin', 'main');
-      if (git(root, 'rev-parse', 'origin/main') === base || ++pushConflicts >= 5) {
-        throw new Error(
-          `Cannot push release checkpoint. Check main branch rules and contents:write permission.\n${push.stderr}`
-        );
+  try {
+    for (;;) {
+      git(root, 'fetch', 'origin', 'main', '--tags');
+      const { pending, checkpoints } = releaseState(root);
+      for (const checkpoint of checkpoints) {
+        if (completed.has(checkpoint.commit)) continue;
+        publish(root, repository, checkpoint, releases.get(checkpoint.tag), github);
+        completed.add(checkpoint.commit);
       }
-      console.warn('Main advanced during the release push; retrying from the new tip.');
+      if (pending.length === 0) return;
+
+      git(root, 'checkout', '--detach', 'origin/main');
+      const base = git(root, 'rev-parse', 'HEAD');
+      const version = bumpPluginVersion(root);
+      const tag = `v${version}`;
+      git(root, 'add', '--', ...VERSION_FILES);
+      git(
+        root, '-c', 'user.name=github-actions[bot]',
+        '-c', 'user.email=41898282+github-actions[bot]@users.noreply.github.com',
+        'commit', '-m', `chore(release): ${tag}`,
+        '-m', `${SOURCE_TRAILER}: ${pending[0]}`
+      );
+      const commit = git(root, 'rev-parse', 'HEAD');
+      // Publish both refs atomically; a concurrent merge must never leave a stray tag.
+      const push = spawnSync(
+        'git', ['push', '--atomic', 'origin', `${commit}:refs/heads/main`, `${commit}:refs/tags/${tag}`],
+        { cwd: root, encoding: 'utf8' }
+      );
+      if (push.error) throw push.error;
+      if (push.status !== 0) {
+        git(root, 'fetch', 'origin', 'main');
+        if (git(root, 'rev-parse', 'origin/main') === base || ++pushConflicts >= 5) {
+          throw new Error(
+            `Cannot push release checkpoint. Check main branch rules and contents:write permission.\n${push.stderr}`
+          );
+        }
+        console.warn('Main advanced during the release push; retrying from the new tip.');
+      }
     }
+  } finally {
+    checkoutRef(root, startBranch, startHead);
   }
 }
 
