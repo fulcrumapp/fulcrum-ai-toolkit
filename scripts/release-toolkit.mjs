@@ -293,8 +293,8 @@ export function releaseToolkit({
   if (!/^[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+$/.test(repository || '')) {
     throw new Error('GITHUB_REPOSITORY must be owner/repository');
   }
-  if (git(root, 'status', '--porcelain', '--untracked-files=no')) {
-    throw new Error('Release checkout has uncommitted tracked changes');
+  if (git(root, 'status', '--porcelain')) {
+    throw new Error('Release checkout has uncommitted changes');
   }
   const startHead = git(root, 'rev-parse', '--verify', 'HEAD');
   let startBranch = null;

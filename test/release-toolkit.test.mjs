@@ -308,7 +308,14 @@ test('a tag moved away from its checkpoint is not published or silently accepted
 test('release checkout must not contain uncommitted tracked edits', (t) => {
   const { checkout, origin, introduction, run } = fixture(t);
   write(checkout, manifest, '{}\n');
-  assert.throws(() => run(), /uncommitted tracked changes/);
+  assert.throws(() => run(), /uncommitted changes/);
+  assert.equal(git(origin, 'rev-parse', 'main'), introduction);
+});
+
+test('release checkout must not contain untracked files', (t) => {
+  const { checkout, origin, introduction, run } = fixture(t);
+  write(checkout, 'stray-artifact.txt', 'stray\n');
+  assert.throws(() => run(), /uncommitted changes/);
   assert.equal(git(origin, 'rev-parse', 'main'), introduction);
 });
 
