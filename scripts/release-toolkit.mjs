@@ -27,6 +27,16 @@ function git(root, ...args) {
   }).trim();
 }
 
+function runGitHubCli(root, args) {
+  try {
+    return execFileSync('gh', args, { cwd: root, encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] });
+  } catch (error) {
+    const stderr = error?.stderr?.toString().trim();
+    const details = stderr ? `\n${stderr}` : '';
+    throw new Error(`gh ${args.join(' ')} failed.${details}`);
+  }
+}
+
 function checkoutRef(root, branch, head) {
   if (branch) {
     git(root, 'checkout', '--quiet', branch);
@@ -186,7 +196,7 @@ function publish(root, repository, checkpoint, existing, github) {
 export function releaseToolkit({
   root = ROOT,
   repository = process.env.GITHUB_REPOSITORY,
-  github = (args) => execFileSync('gh', args, { cwd: root, encoding: 'utf8' })
+  github = (args) => runGitHubCli(root, args)
 } = {}) {
   if (!/^[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+$/.test(repository || '')) {
     throw new Error('GITHUB_REPOSITORY must be owner/repository');

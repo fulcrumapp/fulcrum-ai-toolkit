@@ -10,16 +10,19 @@ import { bumpPluginVersion, releaseToolkit, VERSION_FILES } from '../scripts/rel
 const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const manifest = VERSION_FILES[0];
 
-function hasCommand(command) {
+function hasCommand(command, args = ['--version']) {
   try {
-    execFileSync(command, ['--version'], { stdio: 'ignore' });
+    execFileSync(command, args, { stdio: 'ignore' });
     return true;
   } catch {
     return false;
   }
 }
 
-const hasUnzip = hasCommand('unzip');
+const hasUnzip = hasCommand('unzip', ['-v']);
+function requireUnzip() {
+  assert.ok(hasUnzip, 'release-toolkit tests require `unzip` to validate bundle contents');
+}
 
 function git(root, ...args) {
   const gitDir = root.endsWith('.git') ? ['--git-dir', root] : [];
@@ -79,12 +82,11 @@ function fixture(t) {
       releases.set(tag, { tag_name: tag, draft: true, assets: [] });
     } else if (action === 'upload') {
       assert.equal(git(checkout, 'rev-parse', 'HEAD'), git(origin, 'rev-parse', `${tag}^{commit}`));
-      if (hasUnzip) {
-        const entries = execFileSync('unzip', ['-l', args[3]], { encoding: 'utf8' });
-        assert.match(entries, /SKILL\.md/);
-        assert.equal(execFileSync('unzip', ['-p', args[3], 'SKILL.md'], { encoding: 'utf8' }).trim(),
-          git(origin, 'show', `${tag}:plugins/fulcrum-ai-toolkit/SKILL.md`));
-      }
+      requireUnzip();
+      const entries = execFileSync('unzip', ['-l', args[3]], { encoding: 'utf8' });
+      assert.match(entries, /SKILL\.md/);
+      assert.equal(execFileSync('unzip', ['-p', args[3], 'SKILL.md'], { encoding: 'utf8' }).trim(),
+        git(origin, 'show', `${tag}:plugins/fulcrum-ai-toolkit/SKILL.md`));
       releases.get(tag).assets = [{
         name: path.basename(args[3]), size: fs.statSync(args[3]).size
       }];
