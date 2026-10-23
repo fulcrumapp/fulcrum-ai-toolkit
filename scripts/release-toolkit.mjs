@@ -68,6 +68,12 @@ function tagRefExists(root, tag) {
   return probe.status === 0;
 }
 
+function remoteTagCommit(root, tag) {
+  const output = git(root, 'ls-remote', '--tags', 'origin', `refs/tags/${tag}`);
+  if (!output) return null;
+  return output.split(/\s+/)[0];
+}
+
 function cleanupReleaseArtifacts(root) {
   fs.rmSync(path.join(root, ASSET), { force: true });
   fs.rmSync(path.join(root, '.m365-bundle-stage'), { recursive: true, force: true });
@@ -246,8 +252,15 @@ function releaseState(root) {
 
 function publish(root, repository, checkpoint, existing, github) {
   const { commit, tag } = checkpoint;
+  const remoteCommit = remoteTagCommit(root, tag);
+  if (!remoteCommit) {
+    throw new Error(`Missing remote tag ${tag} for release checkpoint commit ${commit}`);
+  }
+  if (remoteCommit !== commit) {
+    throw new Error(`${tag} does not point to release commit ${commit} on origin`);
+  }
   if (!tagRefExists(root, tag)) {
-    throw new Error(`Missing tag ${tag} for release checkpoint commit ${commit}`);
+    throw new Error(`Missing local tag ${tag} for release checkpoint commit ${commit}`);
   }
   if (git(root, 'rev-parse', `${tag}^{commit}`) !== commit) {
     throw new Error(`${tag} does not point to release commit ${commit}`);

@@ -33,6 +33,7 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
+          command -v git
           command -v gh
           command -v zip
           node scripts/release-toolkit.mjs
