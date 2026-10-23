@@ -353,6 +353,19 @@ test('release checkout must not contain untracked files', (t) => {
   assert.equal(git(origin, 'rev-parse', 'main'), introduction);
 });
 
+test('publish cleanup fails when residual untracked artifacts remain', (t) => {
+  const { checkout, run, github } = fixture(t);
+  assert.throws(
+    () => run((args) => {
+      if (args[0] === 'release' && args[1] === 'upload') {
+        write(checkout, 'leftover-artifact.txt', 'leftover\n');
+      }
+      return github(args);
+    }),
+    /Release build left unexpected workspace changes:[\s\S]*leftover-artifact\.txt/
+  );
+});
+
 test('branch protection failures do not leave a tag or publish a release', (t) => {
   const { origin, introduction, releases, run } = fixture(t);
   const hook = path.join(origin, 'hooks/pre-receive');

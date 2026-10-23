@@ -312,6 +312,10 @@ function publish(root, repository, checkpoint, existing, github) {
   } finally {
     cleanupReleaseArtifacts(root);
     git(root, 'reset', '--hard', '--quiet');
+    const residual = git(root, 'status', '--porcelain');
+    if (residual) {
+      throw new Error(`Release build left unexpected workspace changes:\n${residual}`);
+    }
   }
 }
 
