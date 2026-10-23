@@ -31,9 +31,11 @@ function runGitHubCli(root, args) {
   try {
     return execFileSync('gh', args, { cwd: root, encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] });
   } catch (error) {
+    const status = Number.isInteger(error?.status) ? ` (exit ${error.status})` : '';
+    const stdout = error?.stdout?.toString().trim();
     const stderr = error?.stderr?.toString().trim();
-    const details = stderr ? `\n${stderr}` : '';
-    throw new Error(`gh ${args.join(' ')} failed.${details}`);
+    const details = [stdout, stderr].filter(Boolean).join('\n');
+    throw new Error(`gh ${args.join(' ')} failed${status}.${details ? `\n${details}` : ''}`);
   }
 }
 
