@@ -21,10 +21,6 @@ const ASSET = 'fulcrum-ai-toolkit-m365.zip';
 const SOURCE_TRAILER = 'Toolkit-Release-Source';
 const SEMVER = /^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)$/;
 
-function escapeRegExp(value) {
-  return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-}
-
 function git(root, ...args) {
   return execFileSync('git', args, {
     cwd: root, encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe']
@@ -78,7 +74,12 @@ function cleanupReleaseArtifacts(root) {
 }
 
 function fetchMainAndTags(root) {
-  git(root, 'fetch', '--force', '--prune', '--prune-tags', 'origin', 'main', '--tags');
+  const inGitHubActions = process.env.GITHUB_ACTIONS === 'true';
+  if (inGitHubActions) {
+    git(root, 'fetch', '--force', '--prune', '--prune-tags', 'origin', 'main', '--tags');
+    return;
+  }
+  git(root, 'fetch', 'origin', 'main', '--tags');
 }
 
 function replaceTopLevelStringProperty(text, key, expectedValue, nextValue, context) {
@@ -187,17 +188,12 @@ export function bumpPluginVersion(root) {
       contents = replaceTopLevelStringProperty(text, 'version', version, nextVersion, relativePath);
       count = 1;
     } else {
-      const replacements = [
-        new RegExp(`("metadata"\\s*:\\s*\\{[\\s\\S]*?"version"\\s*:\\s*")${escapeRegExp(version)}(")`),
-        new RegExp(`("plugins"\\s*:\\s*\\[\\s*\\{[\\s\\S]*?"version"\\s*:\\s*")${escapeRegExp(version)}(")`)
-      ];
-      contents = text;
-      for (const pattern of replacements) {
-        contents = contents.replace(pattern, (_, before, after) => {
-          count += 1;
-          return `${before}${nextVersion}${after}`;
-        });
-      }
+      const updated = JSON.parse(text);
+      updated.metadata.version = nextVersion;
+      updated.plugins[0].version = nextVersion;
+      const lineEnding = text.includes('\r\n') ? '\r\n' : '\n';
+      contents = `${JSON.stringify(updated, null, 2)}${lineEnding}`;
+      count = 2;
     }
     if (count !== versions.length) throw new Error(`${relativePath}: unexpected version fields`);
 

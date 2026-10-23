@@ -178,6 +178,23 @@ test('patch bump updates top-level version when nested version appears first', (
   assert.equal(updated.nested.version, '0.1.3');
 });
 
+test('patch bump updates only marketplace target version paths', (t) => {
+  const { checkout } = fixture(t);
+  const target = '.github/plugin/marketplace.json';
+  const original = JSON.parse(fs.readFileSync(path.join(checkout, target), 'utf8'));
+  original.metadata.nested = { version: '0.1.3' };
+  original.plugins[0].nested = { version: '0.1.3' };
+  write(checkout, target, `${JSON.stringify(original, null, 2)}\n`);
+
+  assert.equal(bumpPluginVersion(checkout), '0.1.4');
+
+  const updated = JSON.parse(fs.readFileSync(path.join(checkout, target), 'utf8'));
+  assert.equal(updated.metadata.version, '0.1.4');
+  assert.equal(updated.plugins[0].version, '0.1.4');
+  assert.equal(updated.metadata.nested.version, '0.1.3');
+  assert.equal(updated.plugins[0].nested.version, '0.1.3');
+});
+
 test('invalid or mismatched manifest versions fail before writing any files', (t) => {
   const { checkout } = fixture(t);
   const target = path.join(checkout, manifest);
