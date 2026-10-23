@@ -270,6 +270,31 @@ test('a new merge after a failed publication is released only after the interrup
   assert.ok([...releases.values()].every((release) => !release.draft));
 });
 
+test('non-release commits with trailer-like lines do not break release state', (t) => {
+  const { origin, author, run } = fixture(t);
+  git(author, 'pull', '--ff-only', 'origin', 'main');
+  write(author, 'trailer-note.txt', 'note\n');
+  git(author, 'add', 'trailer-note.txt');
+  git(
+    author,
+    'commit',
+    '-m',
+    'docs: mention trailer text',
+    '-m',
+    'Toolkit-Release-Source: 1111111111111111111111111111111111111111'
+  );
+  const source = git(author, 'rev-parse', 'HEAD');
+  git(author, 'push', 'origin', 'main');
+
+  run();
+
+  const checkpoint = git(origin, 'rev-parse', 'v0.1.5');
+  assert.match(
+    git(origin, 'show', '-s', '--format=%B', checkpoint),
+    new RegExp(`Toolkit-Release-Source: ${source}`)
+  );
+});
+
 test('GitHub API errors fail visibly without creating a version commit', (t) => {
   const { origin, introduction, run } = fixture(t);
   assert.throws(() => run(() => { throw new Error('API permission denied'); }), /API permission denied/);

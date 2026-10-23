@@ -247,14 +247,16 @@ function releaseState(root) {
   const checkpoints = [];
   for (const commit of history.slice(introductionIndex)) {
     const message = git(root, 'show', '-s', '--format=%B', commit);
+    const subject = message.split('\n')[0];
+    const isReleaseSubject = /^chore\(release\): v/.test(subject);
     const source = message.match(new RegExp(`^${SOURCE_TRAILER}: ([a-f0-9]{40})$`, 'm'))?.[1];
-    if (!source) {
+    if (!source || !isReleaseSubject) {
       sources.add(commit);
       continue;
     }
     const version = JSON.parse(git(root, 'show', `${commit}:${MANIFEST}`)).version;
     parsePatchVersion(version, `${commit}:${MANIFEST}`);
-    if (message.split('\n')[0] !== `chore(release): v${version}` || !sources.delete(source)) {
+    if (subject !== `chore(release): v${version}` || !sources.delete(source)) {
       throw new Error(`Invalid or duplicate release checkpoint: ${commit}`);
     }
     checkpoints.push({ commit, tag: `v${version}`, source });
