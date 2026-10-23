@@ -376,8 +376,9 @@ export function releaseToolkit({
           );
         }
         if (git(root, 'rev-parse', 'origin/main') === base || ++pushConflicts >= 5) {
+          const status = Number.isInteger(push.status) ? ` (exit ${push.status})` : '';
           throw new Error(
-            `Cannot push release checkpoint. Check main branch rules and contents:write permission.\n${push.stderr}`
+            `Cannot push release checkpoint${status}. Main did not advance; check push permissions, branch rules, credentials, and network connectivity.\n${push.stderr}`
           );
         }
         console.warn('Main advanced during the release push; retrying from the new tip.');
