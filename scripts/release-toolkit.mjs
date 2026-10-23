@@ -21,6 +21,10 @@ const ASSET = 'fulcrum-ai-toolkit-m365.zip';
 const SOURCE_TRAILER = 'Toolkit-Release-Source';
 const SEMVER = /^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)$/;
 
+function escapeRegExp(value) {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
 function git(root, ...args) {
   return execFileSync('git', args, {
     cwd: root, encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe']
@@ -106,7 +110,8 @@ export function bumpPluginVersion(root) {
       throw new Error(`${relativePath}: versions must match ${version}`);
     }
     let count = 0;
-    const contents = text.replace(/("version"\s*:\s*")[^"]*(")/g, (_, before, after) => {
+    const versionPattern = new RegExp(`("version"\\s*:\\s*")${escapeRegExp(version)}(")`, 'g');
+    const contents = text.replace(versionPattern, (_, before, after) => {
       count += 1;
       return `${before}${nextVersion}${after}`;
     });
@@ -137,7 +142,7 @@ function releaseState(root) {
   const checkpoints = [];
   for (const commit of history.slice(introductionIndex)) {
     const message = git(root, 'show', '-s', '--format=%B', commit);
-    const source = message.match(/^Toolkit-Release-Source: ([a-f0-9]{40})$/m)?.[1];
+    const source = message.match(new RegExp(`^${SOURCE_TRAILER}: ([a-f0-9]{40})$`, 'm'))?.[1];
     if (!source) {
       sources.add(commit);
       continue;
