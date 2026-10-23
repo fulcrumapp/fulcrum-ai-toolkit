@@ -159,7 +159,9 @@ export function bumpPluginVersion(root) {
   const parts = parsePatchVersion(version, MANIFEST);
   const nextVersion = `${parts[1]}.${parts[2]}.${BigInt(parts[3]) + 1n}`;
 
-  // Validate every file before writing, preserving each manifest's formatting.
+  // Validate every file before writing. Non-marketplace manifests retain their
+  // original formatting; marketplace is rewritten from parsed JSON to target
+  // exact version paths safely.
   const updates = documents.map(({ relativePath, text, document }) => {
     const versions = (() => {
       if (relativePath !== MARKETPLACE) {
