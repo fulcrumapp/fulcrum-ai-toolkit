@@ -58,6 +58,11 @@ function tagRefExists(root, tag) {
   return probe.status === 0;
 }
 
+function cleanupReleaseArtifacts(root) {
+  fs.rmSync(path.join(root, ASSET), { force: true });
+  fs.rmSync(path.join(root, '.m365-bundle-stage'), { recursive: true, force: true });
+}
+
 export function bumpPluginVersion(root) {
   const documents = VERSION_FILES.map((relativePath) => {
     const text = fs.readFileSync(path.join(root, relativePath), 'utf8');
@@ -70,7 +75,12 @@ export function bumpPluginVersion(root) {
   // Validate every file before writing, preserving each manifest's formatting.
   const updates = documents.map(({ relativePath, text, document }) => {
     const versions = (() => {
-      if (relativePath !== MARKETPLACE) return [document.version];
+      if (relativePath !== MARKETPLACE) {
+        if (typeof document?.version !== 'string') {
+          throw new Error(`${relativePath}: version must be a string`);
+        }
+        return [document.version];
+      }
       const metadataVersion = document?.metadata?.version;
       const plugins = document?.plugins;
       if (!Array.isArray(plugins) || plugins.length !== 1) {
@@ -143,15 +153,14 @@ function publish(root, repository, checkpoint, existing, github) {
   const assets = existing?.assets ?? [];
   if (existing && !existing.draft &&
       assets.some((asset) => asset.name === ASSET && asset.size > 0)) {
+    cleanupReleaseArtifacts(root);
     console.log(`Release ${tag} is already complete.`);
     return;
   }
 
   git(root, 'checkout', '--detach', commit);
   const assetPath = path.join(root, ASSET);
-  if (fs.existsSync(assetPath)) {
-    fs.unlinkSync(assetPath);
-  }
+  cleanupReleaseArtifacts(root);
   try {
     execFileSync(process.execPath, ['scripts/build-m365-bundle.mjs'], {
       cwd: root, stdio: 'inherit'
@@ -169,8 +178,7 @@ function publish(root, repository, checkpoint, existing, github) {
     github(['release', 'edit', tag, '--repo', repository, '--draft=false']);
     console.log(`Published ${tag} from ${commit}.`);
   } finally {
-    fs.rmSync(assetPath, { force: true });
-    fs.rmSync(path.join(root, '.m365-bundle-stage'), { recursive: true, force: true });
+    cleanupReleaseArtifacts(root);
     git(root, 'reset', '--hard', '--quiet');
   }
 }
