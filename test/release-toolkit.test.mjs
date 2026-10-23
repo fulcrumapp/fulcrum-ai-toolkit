@@ -80,7 +80,7 @@ function fixture(t) {
     } else if (action === 'upload') {
       assert.equal(git(checkout, 'rev-parse', 'HEAD'), git(origin, 'rev-parse', `${tag}^{commit}`));
       if (hasUnzip) {
-        const entries = execFileSync('unzip', ['-Z1', args[3]], { encoding: 'utf8' });
+        const entries = execFileSync('unzip', ['-l', args[3]], { encoding: 'utf8' });
         assert.match(entries, /SKILL\.md/);
         assert.equal(execFileSync('unzip', ['-p', args[3], 'SKILL.md'], { encoding: 'utf8' }).trim(),
           git(origin, 'show', `${tag}:plugins/fulcrum-ai-toolkit/SKILL.md`));

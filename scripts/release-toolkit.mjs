@@ -49,6 +49,15 @@ function parsePatchVersion(version, context) {
   return parts;
 }
 
+function tagRefExists(root, tag) {
+  const probe = spawnSync('git', ['show-ref', '--verify', '--quiet', `refs/tags/${tag}`], {
+    cwd: root,
+    stdio: 'ignore'
+  });
+  if (probe.error) throw probe.error;
+  return probe.status === 0;
+}
+
 export function bumpPluginVersion(root) {
   const documents = VERSION_FILES.map((relativePath) => {
     const text = fs.readFileSync(path.join(root, relativePath), 'utf8');
@@ -60,9 +69,19 @@ export function bumpPluginVersion(root) {
 
   // Validate every file before writing, preserving each manifest's formatting.
   const updates = documents.map(({ relativePath, text, document }) => {
-    const versions = relativePath === MARKETPLACE
-      ? [document.metadata?.version, document.plugins?.[0]?.version]
-      : [document.version];
+    const versions = (() => {
+      if (relativePath !== MARKETPLACE) return [document.version];
+      const metadataVersion = document?.metadata?.version;
+      const plugins = document?.plugins;
+      if (!Array.isArray(plugins) || plugins.length !== 1) {
+        throw new Error(`${relativePath}: plugins must be an array with exactly one entry`);
+      }
+      const pluginVersion = plugins[0]?.version;
+      if (typeof metadataVersion !== 'string' || typeof pluginVersion !== 'string') {
+        throw new Error(`${relativePath}: metadata.version and plugins[0].version must be strings`);
+      }
+      return [metadataVersion, pluginVersion];
+    })();
     if (versions.some((value) => value !== version)) {
       throw new Error(`${relativePath}: versions must match ${version}`);
     }
@@ -115,6 +134,9 @@ function releaseState(root) {
 
 function publish(root, repository, checkpoint, existing, github) {
   const { commit, tag } = checkpoint;
+  if (!tagRefExists(root, tag)) {
+    throw new Error(`Missing tag ${tag} for release checkpoint commit ${commit}`);
+  }
   if (git(root, 'rev-parse', `${tag}^{commit}`) !== commit) {
     throw new Error(`${tag} does not point to release commit ${commit}`);
   }
@@ -147,6 +169,8 @@ function publish(root, repository, checkpoint, existing, github) {
     github(['release', 'edit', tag, '--repo', repository, '--draft=false']);
     console.log(`Published ${tag} from ${commit}.`);
   } finally {
+    fs.rmSync(assetPath, { force: true });
+    fs.rmSync(path.join(root, '.m365-bundle-stage'), { recursive: true, force: true });
     git(root, 'reset', '--hard', '--quiet');
   }
 }
@@ -206,6 +230,11 @@ export function releaseToolkit({
       if (push.error) throw push.error;
       if (push.status !== 0) {
         git(root, 'fetch', 'origin', 'main');
+        if (git(root, 'ls-remote', '--tags', 'origin', `refs/tags/${tag}`)) {
+          throw new Error(
+            `Cannot push release checkpoint: remote tag ${tag} already exists or is protected.\n${push.stderr}`
+          );
+        }
         if (git(root, 'rev-parse', 'origin/main') === base || ++pushConflicts >= 5) {
           throw new Error(
             `Cannot push release checkpoint. Check main branch rules and contents:write permission.\n${push.stderr}`
