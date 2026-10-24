@@ -96,7 +96,7 @@ function cleanupReleaseArtifacts(root) {
 function fetchMainAndTags(root) {
   const inGitHubActions = process.env.GITHUB_ACTIONS === 'true';
   if (inGitHubActions) {
-    git(root, 'fetch', '--force', '--prune', '--prune-tags', 'origin', 'main', '--tags');
+    git(root, 'fetch', '--force', '--prune', '--prune-tags', '--tags', 'origin', 'main');
     return;
   }
   git(root, 'fetch', 'origin', 'main');
