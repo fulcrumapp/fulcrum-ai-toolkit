@@ -312,6 +312,16 @@ test('invalid GitHub API JSON fails with actionable diagnostics and no release c
   assert.equal(git(origin, 'tag'), '');
 });
 
+test('unexpected GitHub API JSON shape fails visibly without creating a version commit', (t) => {
+  const { origin, introduction, run } = fixture(t);
+  assert.throws(
+    () => run((args) => (args[0] === 'api' ? '{"message":"bad credentials"}' : '')),
+    /Unexpected GitHub releases API response shape: expected JSON array/
+  );
+  assert.equal(git(origin, 'rev-parse', 'main'), introduction);
+  assert.equal(git(origin, 'tag'), '');
+});
+
 test('a published release missing its bundle is repaired without a new version', (t) => {
   const { origin, releases, calls, run } = fixture(t);
   run();

@@ -331,14 +331,25 @@ function publish(root, repository, checkpoint, existing, github) {
 }
 
 function parseReleasesResponse(output) {
+  let parsed;
   try {
-    return JSON.parse(output);
+    parsed = JSON.parse(output);
   } catch (error) {
     const preview = String(output ?? '').trim().slice(0, 500) || '<empty>';
     throw new Error(
       `Failed to parse GitHub releases API response as JSON.\nResponse preview:\n${preview}\nParse error: ${error.message}`
     );
   }
+  if (!Array.isArray(parsed)) {
+    throw new Error(`Unexpected GitHub releases API response shape: expected JSON array, got ${typeof parsed}`);
+  }
+  const releases = parsed.flat();
+  for (const release of releases) {
+    if (!release || typeof release !== 'object' || typeof release.tag_name !== 'string') {
+      throw new Error('Unexpected GitHub releases API response shape: each release must be an object with string tag_name');
+    }
+  }
+  return releases;
 }
 
 export function releaseToolkit({
@@ -362,7 +373,7 @@ export function releaseToolkit({
   }
   const releases = new Map(parseReleasesResponse(github([
     'api', '--paginate', '--slurp', `repos/${repository}/releases?per_page=100`
-  ])).flat().map((release) => [release.tag_name, release]));
+  ])).map((release) => [release.tag_name, release]));
   const completed = new Set();
   let pushConflicts = 0;
 
