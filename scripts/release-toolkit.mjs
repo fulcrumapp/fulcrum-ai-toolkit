@@ -314,7 +314,18 @@ function publish(root, repository, checkpoint, existing, github) {
     git(root, 'reset', '--hard', '--quiet');
     const residual = git(root, 'status', '--porcelain');
     if (residual) {
-      throw new Error(`Release build left unexpected workspace changes:\n${residual}`);
+      try {
+        git(root, 'clean', '-fd', '--quiet');
+      } catch {
+        // Keep the original residual output as the primary diagnostic.
+      }
+      const afterCleanup = git(root, 'status', '--porcelain');
+      if (afterCleanup) {
+        throw new Error(
+          `Release build left unexpected workspace changes:\n${residual}\nCleanup attempt also left changes:\n${afterCleanup}`
+        );
+      }
+      throw new Error(`Release build left unexpected workspace changes:\n${residual}\nWorkspace was cleaned for reruns.`);
     }
   }
 }
@@ -327,8 +338,9 @@ export function releaseToolkit({
   if (!/^[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+$/.test(repository || '')) {
     throw new Error('GITHUB_REPOSITORY must be owner/repository');
   }
-  if (git(root, 'status', '--porcelain')) {
-    throw new Error('Release checkout has uncommitted changes');
+  const dirty = git(root, 'status', '--porcelain');
+  if (dirty) {
+    throw new Error(`Release checkout has uncommitted changes:\n${dirty}`);
   }
   const startHead = git(root, 'rev-parse', '--verify', 'HEAD');
   let startBranch = null;
