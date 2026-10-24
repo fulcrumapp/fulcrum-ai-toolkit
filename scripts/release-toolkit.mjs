@@ -330,6 +330,17 @@ function publish(root, repository, checkpoint, existing, github) {
   }
 }
 
+function parseReleasesResponse(output) {
+  try {
+    return JSON.parse(output);
+  } catch (error) {
+    const preview = String(output ?? '').trim().slice(0, 500) || '<empty>';
+    throw new Error(
+      `Failed to parse GitHub releases API response as JSON.\nResponse preview:\n${preview}\nParse error: ${error.message}`
+    );
+  }
+}
+
 export function releaseToolkit({
   root = ROOT,
   repository = process.env.GITHUB_REPOSITORY,
@@ -349,7 +360,7 @@ export function releaseToolkit({
   } catch {
     startBranch = null;
   }
-  const releases = new Map(JSON.parse(github([
+  const releases = new Map(parseReleasesResponse(github([
     'api', '--paginate', '--slurp', `repos/${repository}/releases?per_page=100`
   ])).flat().map((release) => [release.tag_name, release]));
   const completed = new Set();

@@ -302,6 +302,16 @@ test('GitHub API errors fail visibly without creating a version commit', (t) => 
   assert.equal(git(origin, 'tag'), '');
 });
 
+test('invalid GitHub API JSON fails with actionable diagnostics and no release commit', (t) => {
+  const { origin, introduction, run } = fixture(t);
+  assert.throws(
+    () => run((args) => (args[0] === 'api' ? 'warning: upstream transient failure' : '')),
+    /Failed to parse GitHub releases API response as JSON[\s\S]*Response preview:[\s\S]*warning: upstream transient failure/
+  );
+  assert.equal(git(origin, 'rev-parse', 'main'), introduction);
+  assert.equal(git(origin, 'tag'), '');
+});
+
 test('a published release missing its bundle is repaired without a new version', (t) => {
   const { origin, releases, calls, run } = fixture(t);
   run();
