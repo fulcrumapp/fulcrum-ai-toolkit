@@ -71,7 +71,14 @@ function tagRefExists(root, tag) {
 }
 
 function remoteTagCommit(root, tag) {
-  const output = git(root, 'ls-remote', '--tags', 'origin', `refs/tags/${tag}`);
+  const output = git(
+    root,
+    'ls-remote',
+    '--tags',
+    'origin',
+    `refs/tags/${tag}`,
+    `refs/tags/${tag}^{}`
+  );
   if (!output) return null;
   let direct = null;
   let peeled = null;

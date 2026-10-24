@@ -389,6 +389,16 @@ test('stale local release tag is refreshed from origin before publish checks', (
   assert.equal(git(checkout, 'rev-parse', 'v0.1.4'), remoteTagCommit);
 });
 
+test('annotated remote release tags are accepted by publish checks', (t) => {
+  const { origin, author, run } = fixture(t);
+  run();
+  const releaseCommit = git(origin, 'rev-parse', 'v0.1.4');
+  git(author, 'pull', '--ff-only', 'origin', 'main');
+  git(author, 'tag', '-fa', 'v0.1.4', releaseCommit, '-m', 'annotated release tag');
+  git(author, 'push', '--force', 'origin', 'refs/tags/v0.1.4');
+  assert.doesNotThrow(() => run());
+});
+
 test('release checkout must not contain uncommitted tracked edits', (t) => {
   const { checkout, origin, introduction, run } = fixture(t);
   write(checkout, manifest, '{}\n');
