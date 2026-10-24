@@ -376,7 +376,7 @@ test('branch protection failures do not leave a tag or publish a release', (t) =
   assert.equal(releases.size, 0);
 });
 
-test('push failure diagnostics preserve original error when ls-remote probe fails', (t) => {
+test('push failure diagnostics preserve original error when ls-remote probe fails', { concurrency: false }, (t) => {
   const { origin, run } = fixture(t);
   const hook = path.join(origin, 'hooks/pre-receive');
   fs.writeFileSync(hook, '#!/usr/bin/env node\nprocess.stderr.write("Bot push is blocked\\n");\nprocess.exit(1);\n', { mode: 0o755 });
@@ -395,14 +395,14 @@ exec "${realGit}" "$@"
 
   const originalPath = process.env.PATH;
   process.env.PATH = `${fakeBin}:${originalPath}`;
-  t.after(() => {
+  try {
+    assert.throws(
+      () => run(),
+      /Cannot push release checkpoint[\s\S]*Bot push is blocked[\s\S]*Tag probe failed while handling push error: ls-remote probe failed/
+    );
+  } finally {
     process.env.PATH = originalPath;
-  });
-
-  assert.throws(
-    () => run(),
-    /Cannot push release checkpoint[\s\S]*Bot push is blocked[\s\S]*Tag probe failed while handling push error: ls-remote probe failed/
-  );
+  }
 });
 
 test('a merge racing the atomic push is retried without a stray tag or missed release', (t) => {
