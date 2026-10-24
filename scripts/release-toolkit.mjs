@@ -374,15 +374,25 @@ export function releaseToolkit({
       if (push.error) throw push.error;
       if (push.status !== 0) {
         fetchMainAndTags(root);
-        if (git(root, 'ls-remote', '--tags', 'origin', `refs/tags/${tag}`)) {
+        let remoteTagProbeFailed = null;
+        let remoteTagExists = false;
+        try {
+          remoteTagExists = Boolean(git(root, 'ls-remote', '--tags', 'origin', `refs/tags/${tag}`));
+        } catch (error) {
+          remoteTagProbeFailed = error?.stderr?.toString().trim() ?? error?.message ?? String(error);
+        }
+        if (remoteTagExists) {
           throw new Error(
             `Cannot push release checkpoint: remote tag ${tag} already exists or is protected.\n${push.stderr}`
           );
         }
         if (git(root, 'rev-parse', 'origin/main') === base || ++pushConflicts >= 5) {
           const status = Number.isInteger(push.status) ? ` (exit ${push.status})` : '';
+          const probeNote = remoteTagProbeFailed
+            ? `\nTag probe failed while handling push error: ${remoteTagProbeFailed}`
+            : '';
           throw new Error(
-            `Cannot push release checkpoint${status}. Main did not advance; check push permissions, branch rules, credentials, and network connectivity.\n${push.stderr}`
+            `Cannot push release checkpoint${status}. Main did not advance; check push permissions, branch rules, credentials, and network connectivity.\n${push.stderr}${probeNote}`
           );
         }
         console.warn('Main advanced during the release push; retrying from the new tip.');
