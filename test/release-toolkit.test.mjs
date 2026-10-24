@@ -19,6 +19,27 @@ function hasCommand(command, args = ['--version']) {
   }
 }
 
+function resolveCommandPath(command) {
+  const pathEntries = (process.env.PATH ?? '')
+    .split(path.delimiter)
+    .filter(Boolean);
+  const windowsExts = process.platform === 'win32'
+    ? (process.env.PATHEXT ?? '.EXE;.CMD;.BAT;.COM').split(';').filter(Boolean)
+    : [''];
+  for (const entry of pathEntries) {
+    for (const extension of windowsExts) {
+      const candidate = path.join(entry, process.platform === 'win32' ? `${command}${extension}` : command);
+      try {
+        fs.accessSync(candidate, fs.constants.X_OK);
+        return candidate;
+      } catch {
+        // Continue scanning PATH.
+      }
+    }
+  }
+  throw new Error(`Unable to resolve ${command} on PATH`);
+}
+
 const hasUnzip = hasCommand('unzip', ['-v']);
 function requireUnzip() {
   assert.ok(hasUnzip, 'release-toolkit tests require `unzip` to validate bundle contents');
@@ -295,6 +316,15 @@ test('non-release commits with trailer-like lines do not break release state', (
   );
 });
 
+test('release-style checkpoints missing source trailers are rejected', (t) => {
+  const { author, run } = fixture(t);
+  git(author, 'pull', '--ff-only', 'origin', 'main');
+  const version = JSON.parse(fs.readFileSync(path.join(author, manifest), 'utf8')).version;
+  git(author, 'commit', '--allow-empty', '-m', `chore(release): v${version}`);
+  git(author, 'push', 'origin', 'main');
+  assert.throws(() => run(), /Invalid release checkpoint missing source trailer/);
+});
+
 test('GitHub API errors fail visibly without creating a version commit', (t) => {
   const { origin, introduction, run } = fixture(t);
   assert.throws(() => run(() => { throw new Error('API permission denied'); }), /API permission denied/);
@@ -403,7 +433,7 @@ test('push failure diagnostics preserve original error when ls-remote probe fail
 
   const fakeBin = fs.mkdtempSync(path.join(os.tmpdir(), 'toolkit-release-git-bin-'));
   t.after(() => fs.rmSync(fakeBin, { recursive: true, force: true }));
-  const realGit = execFileSync('which', ['git'], { encoding: 'utf8' }).trim();
+  const realGit = resolveCommandPath('git');
   const shim = path.join(fakeBin, 'git');
   fs.writeFileSync(shim, `#!/bin/sh
 if [ "$1" = "ls-remote" ]; then

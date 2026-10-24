@@ -251,7 +251,11 @@ function releaseState(root) {
     const message = git(root, 'show', '-s', '--format=%B', commit);
     const subject = message.split('\n')[0];
     const isReleaseSubject = /^chore\(release\): v/.test(subject);
-    const source = message.match(new RegExp(`^${SOURCE_TRAILER}: ([a-f0-9]{40})$`, 'm'))?.[1];
+    const trailerValue = message.match(new RegExp(`^${SOURCE_TRAILER}:\\s*(.+)$`, 'm'))?.[1]?.trim() ?? null;
+    const source = trailerValue && /^[a-f0-9]{40}$/.test(trailerValue) ? trailerValue : null;
+    if (isReleaseSubject && !source) {
+      throw new Error(`Invalid release checkpoint missing source trailer: ${commit}`);
+    }
     if (!source || !isReleaseSubject) {
       sources.add(commit);
       continue;
