@@ -230,9 +230,25 @@ In CI, GitHub Actions also validates the Claude plugin marketplace using Anthrop
 The toolkit version is defined in
 [`plugins/fulcrum-ai-toolkit/plugin.json`](plugins/fulcrum-ai-toolkit/plugin.json).
 The repository validator requires every host manifest and marketplace entry to
-match it. After a version bump is merged to `main`, the release workflow creates
-the corresponding `v<version>` tag and GitHub Release. Re-running the workflow
-is safe when that release already exists.
+match it. On each push to `main`, the [release workflow](.github/workflows/release.yml)
+automatically increments the plugin patch version, updates all versioned host
+manifests, and commits the changes as `github-actions[bot]`. The version commit
+and its `v<version>` tag are pushed atomically. The Microsoft 365 bundle is built
+from that commit and attached before the GitHub Release is published.
+
+Release runs are serialized. Each bot commit records the source mainline commit
+in a `Toolkit-Release-Source` trailer; bot commits do not cause another increment.
+The workflow catches up on mainline commits since this automation was introduced,
+including those whose pending workflow run was replaced by a newer push. During
+catch-up, version commits include the latest mainline content rather than
+reconstructing historical snapshots. Reruns and manual dispatch resume incomplete
+releases without incrementing again for an already processed commit.
+
+The workflow needs `contents: write`, `git`, `gh`, `zip`, and permission to push version
+commits and tags. If branch rules block bot pushes, it fails explicitly; use an
+automatically maintained release PR instead of weakening branch protection.
+Skill versions remain author-selected and independently enforced by CI; plugin
+releases do not modify them.
 
 Validation never runs anything this repository authors. HTML is parsed, its
 inline scripts and styles are parsed, a report template is compiled to source by
