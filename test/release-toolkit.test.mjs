@@ -76,10 +76,13 @@ function fixture(t, bot = 'release-bot') {
     if (args[0] === 'release') {
       const [, action, tag] = args;
       if (action === 'create') releases.set(tag, { tag_name: tag, author: { login: bot }, draft: true, assets: [] });
-      else if (action === 'upload') releases.get(tag).assets = [{
-        name: path.basename(args[3]), size: fs.statSync(args[3]).size,
-        digest: `sha256:${createHash('sha256').update(fs.readFileSync(args[3])).digest('hex')}`
-      }];
+      else if (action === 'upload') {
+        const contents = fs.readFileSync(args[3]);
+        releases.get(tag).assets = [{
+          name: path.basename(args[3]), size: contents.length,
+          digest: `sha256:${createHash('sha256').update(contents).digest('hex')}`
+        }];
+      }
       else if (action === 'edit') releases.get(tag).draft = false;
       else assert.fail(args.join(' '));
       return '';
@@ -443,6 +446,14 @@ test('retries queue failure without creating another PR', (t) => {
 test('refuses a conflicting existing asset instead of overwriting it', (t) => {
   const f = fixture(t); f.run(); f.mergeRelease(); f.run();
   f.releases.get('v0.1.4').assets[0].digest = 'sha256:bad';
+  const before = f.calls.length;
+  assert.throws(() => f.run(), /Conflicting or unverifiable asset/);
+  assert.equal(f.calls.slice(before).some((args) => args[0] === 'release' && args[1] === 'upload'), false);
+});
+
+test('refuses an existing asset with a mismatched size even when its digest matches', (t) => {
+  const f = fixture(t); f.run(); f.mergeRelease(); f.run();
+  f.releases.get('v0.1.4').assets[0].size += 1;
   const before = f.calls.length;
   assert.throws(() => f.run(), /Conflicting or unverifiable asset/);
   assert.equal(f.calls.slice(before).some((args) => args[0] === 'release' && args[1] === 'upload'), false);

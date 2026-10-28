@@ -444,12 +444,13 @@ function publish(root, repository, checkpoint, existing, github, login) {
   try {
     execFileSync(process.execPath, ['scripts/build-m365-bundle.mjs'], { cwd: root, stdio: 'inherit' });
     const asset = deterministicBundle(root);
-    if (!fs.existsSync(asset) || !fs.statSync(asset).size) throw new Error(`Missing or empty ${ASSET}`);
+    const contents = fs.readFileSync(asset);
+    if (!contents.length) throw new Error(`Empty ${ASSET}`);
     if (existing && !Array.isArray(existing.assets)) throw new Error(`Invalid assets for ${tag}`);
     const matching = (existing?.assets ?? []).filter((item) => item?.name === ASSET);
     if (matching.length > 1) throw new Error(`Conflicting assets for ${tag}`);
-    const digest = `sha256:${createHash('sha256').update(fs.readFileSync(asset)).digest('hex')}`;
-    if (matching.length && (matching[0].digest !== digest || matching[0].size !== fs.statSync(asset).size)) {
+    const digest = `sha256:${createHash('sha256').update(contents).digest('hex')}`;
+    if (matching.length && (matching[0].digest !== digest || matching[0].size !== contents.length)) {
       throw new Error(`Conflicting or unverifiable asset for ${tag}`);
     }
     if (!existing) {
