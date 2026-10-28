@@ -27,9 +27,14 @@ function git(root, ...args) {
   }).trim();
 }
 
-function runGitHubCli(root, args) {
+function runGitHubCli(root, args, env = undefined) {
   try {
-    return execFileSync('gh', args, { cwd: root, encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] });
+    return execFileSync('gh', args, {
+      cwd: root,
+      encoding: 'utf8',
+      stdio: ['ignore', 'pipe', 'pipe'],
+      env: env ? { ...process.env, ...env } : process.env
+    });
   } catch (error) {
     const status = Number.isInteger(error?.status) ? ` (exit ${error.status})` : '';
     const stdout = error?.stdout?.toString().trim();
@@ -472,12 +477,13 @@ function publish(root, repository, checkpoint, existing, github, login) {
 
 export function releaseToolkit({
   root = ROOT, repository = process.env.GITHUB_REPOSITORY,
-  github = (args) => runGitHubCli(root, args),
+  github,
   token = process.env.GH_TOKEN, login = process.env.TOOLKIT_RELEASE_BOT_LOGIN,
   rollout = process.env.TOOLKIT_RELEASE_ROLLOUT_PR
 } = {}) {
   if (!/^[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+$/.test(repository || '')) throw new Error('GITHUB_REPOSITORY must be owner/repository');
   if (!token || !token.trim()) throw new Error('GH_TOKEN is required (supply the release App installation token)');
+  const githubClient = github ?? ((args) => runGitHubCli(root, args, { GH_TOKEN: token }));
   if (!/^[A-Za-z0-9](?:[A-Za-z0-9-]*[A-Za-z0-9])?(?:\[bot\])?$/.test(login || '')) throw new Error('TOOLKIT_RELEASE_BOT_LOGIN is required');
   if (!/^[1-9][0-9]*$/.test(String(rollout || '')) || !Number.isSafeInteger(Number(rollout))) throw new Error('TOOLKIT_RELEASE_ROLLOUT_PR must be a positive PR number');
   const dirty = git(root, 'status', '--porcelain');
@@ -487,22 +493,22 @@ export function releaseToolkit({
   try { startBranch = git(root, 'symbolic-ref', '--quiet', '--short', 'HEAD'); } catch { /* detached */ }
   try {
     fetchMainAndTags(root);
-    const prs = pages(github, `repos/${repository}/pulls?state=all&per_page=100`).map((pr) => parsePr(pr, repository));
+    const prs = pages(githubClient, `repos/${repository}/pulls?state=all&per_page=100`).map((pr) => parsePr(pr, repository));
     const state = releaseState(root, prs, Number(rollout), login, repository);
     // The trusted workflow must derive the login from the same App that
     // minted GH_TOKEN; this read only confirms the token can access the repo.
-    verifyInstallationAccess(github, repository);
-    const rules = pages(github, `repos/${repository}/rules/branches/main?per_page=100`);
+    verifyInstallationAccess(githubClient, repository);
+    const rules = pages(githubClient, `repos/${repository}/rules/branches/main?per_page=100`);
     if (!rules.some((rule) => rule?.type === 'merge_queue')) {
       throw new Error('Main does not have an effective merge queue rule; refusing to merge');
     }
-    const releases = pages(github, `repos/${repository}/releases?per_page=100`);
+    const releases = pages(githubClient, `repos/${repository}/releases?per_page=100`);
     const byTag = new Map();
     for (const release of releases) {
       if (!release || typeof release.tag_name !== 'string' || byTag.has(release.tag_name)) throw new Error('Invalid or duplicate release response');
       byTag.set(release.tag_name, release);
     }
-    for (const checkpoint of state.checkpoints) publish(root, repository, checkpoint, byTag.get(checkpoint.tag), github, login);
+    for (const checkpoint of state.checkpoints) publish(root, repository, checkpoint, byTag.get(checkpoint.tag), githubClient, login);
     let head = remoteBranch(root);
     if (head) {
       git(root, 'fetch', 'origin', `refs/heads/${RELEASE_BRANCH}`);
@@ -547,15 +553,15 @@ export function releaseToolkit({
     }
     let number = state.active?.number;
     if (!number) {
-      github(['pr', 'create', '--repo', repository, '--base', 'main', '--head', RELEASE_BRANCH, '--title', 'chore(release): automated toolkit release', '--body', 'Automated toolkit release.']);
+      githubClient(['pr', 'create', '--repo', repository, '--base', 'main', '--head', RELEASE_BRANCH, '--title', 'chore(release): automated toolkit release', '--body', 'Automated toolkit release.']);
       // Creation can succeed even if its response is lost. Discover the PR by
       // trusted identity and exact head on every retry.
-      const updated = pages(github, `repos/${repository}/pulls?state=open&per_page=100`).map((pr) => parsePr(pr, repository));
+      const updated = pages(githubClient, `repos/${repository}/pulls?state=open&per_page=100`).map((pr) => parsePr(pr, repository));
       const matches = updated.filter((pr) => pr.trustedBranch && pr.base.ref === 'main' && pr.user.login.toLowerCase() === login.toLowerCase() && pr.head.sha === head);
       if (matches.length !== 1) throw new Error('Could not uniquely verify created release PR');
       number = matches[0].number;
     }
-    github(['pr', 'merge', String(number), '--repo', repository, '--auto', '--match-head-commit', head]);
+    githubClient(['pr', 'merge', String(number), '--repo', repository, '--auto', '--match-head-commit', head]);
   } finally {
     checkoutRef(root, startBranch, startHead);
   }
