@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { execFileSync } from 'node:child_process';
+import { createHash } from 'node:crypto';
 import fs from 'node:fs';
-import os from 'node:os';
 import path from 'node:path';
 import test from 'node:test';
 import { fileURLToPath } from 'node:url';
@@ -9,143 +9,104 @@ import { bumpPluginVersion, releaseToolkit, VERSION_FILES } from '../scripts/rel
 
 const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const manifest = VERSION_FILES[0];
-
-function hasCommand(command, args = ['--version']) {
-  try {
-    execFileSync(command, args, { stdio: 'ignore' });
-    return true;
-  } catch {
-    return false;
-  }
-}
-
-function resolveCommandPath(command) {
-  const pathEntries = (process.env.PATH ?? '')
-    .split(path.delimiter)
-    .filter(Boolean);
-  const windowsExts = process.platform === 'win32'
-    ? (process.env.PATHEXT ?? '.EXE;.CMD;.BAT;.COM').split(';').filter(Boolean)
-    : [''];
-  for (const entry of pathEntries) {
-    for (const extension of windowsExts) {
-      const candidate = path.join(entry, process.platform === 'win32' ? `${command}${extension}` : command);
-      try {
-        fs.accessSync(candidate, fs.constants.X_OK);
-        return candidate;
-      } catch {
-        // Continue scanning PATH.
-      }
-    }
-  }
-  throw new Error(`Unable to resolve ${command} on PATH`);
-}
-
-const hasUnzip = hasCommand('unzip', ['-v']);
-function requireUnzip() {
-  assert.ok(hasUnzip, 'release-toolkit tests require `unzip` to validate bundle contents');
-}
-
 function git(root, ...args) {
   const gitDir = root.endsWith('.git') ? ['--git-dir', root] : [];
-  return execFileSync('git', [...gitDir, ...args], {
-    cwd: root, encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe']
-  }).trim();
+  return execFileSync('git', [...gitDir, ...args], { cwd: root, encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] }).trim();
 }
-
-function write(root, relativePath, contents) {
-  const target = path.join(root, relativePath);
+function write(root, file, contents) {
+  const target = path.join(root, file);
   fs.mkdirSync(path.dirname(target), { recursive: true });
   fs.writeFileSync(target, contents);
 }
-
-function fixture(t) {
-  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'toolkit-release-'));
+function fixture(t, bot = 'release-bot') {
+  const root = fs.mkdtempSync(path.join(repoRoot, '.release-test-'));
   t.after(() => fs.rmSync(root, { recursive: true, force: true }));
   const origin = path.join(root, 'origin.git');
   const author = path.join(root, 'author');
   const checkout = path.join(root, 'checkout');
   git(root, 'init', '--bare', '--initial-branch=main', origin);
   git(root, 'clone', origin, author);
-  git(author, 'config', 'user.name', 'Release Test');
-  git(author, 'config', 'user.email', 'release-test@example.invalid');
-  for (const relativePath of VERSION_FILES) {
-    write(author, relativePath, fs.readFileSync(path.join(repoRoot, relativePath), 'utf8')
-      .replace(/("version"\s*:\s*")[^"]*(")/g, (_, before, after) => `${before}0.1.3${after}`));
+  git(author, 'config', 'user.name', 'Test');
+  git(author, 'config', 'user.email', 'test@example.invalid');
+  for (const file of VERSION_FILES) {
+    write(author, file, fs.readFileSync(path.join(repoRoot, file), 'utf8')
+      .replace(/("version"\s*:\s*")[^"]*(")/g, (_, a, b) => `${a}0.1.3${b}`));
   }
   write(author, '.gitignore', '.m365-bundle-stage/\nfulcrum-ai-toolkit-m365.zip\n');
   write(author, 'plugins/fulcrum-ai-toolkit/SKILL.md', '# Fixture toolkit\n');
   write(author, 'plugins/fulcrum-ai-toolkit/LICENSE', 'Fixture license\n');
-  write(author, 'plugins/fulcrum-ai-toolkit/skills/example/SKILL.md',
-    '---\nname: example\nmetadata:\n  version: "1.2.3"\n---\n# Example\n');
-  write(author, 'scripts/build-m365-bundle.mjs',
-    fs.readFileSync(path.join(repoRoot, 'scripts/build-m365-bundle.mjs'), 'utf8'));
-  git(author, 'add', '.');
-  git(author, 'commit', '-m', 'Existing toolkit');
-  git(author, 'checkout', '-b', 'automation');
-  write(author, 'scripts/release-toolkit.mjs', '// Automation introduction fixture\n');
-  git(author, 'add', '.');
-  git(author, 'commit', '-m', 'Implement release automation');
-  git(author, 'checkout', 'main');
-  git(author, 'merge', '--no-ff', 'automation', '-m', 'Merge release automation');
-  const introduction = git(author, 'rev-parse', 'HEAD');
-  git(author, 'push', 'origin', 'main');
+  write(author, 'plugins/fulcrum-ai-toolkit/skills/example/SKILL.md', '---\nname: example\nmetadata:\n  version: "1.2.3"\n---\n# Example\n');
+  write(author, 'scripts/build-m365-bundle.mjs', fs.readFileSync(path.join(repoRoot, 'scripts/build-m365-bundle.mjs'), 'utf8'));
+  git(author, 'add', '.'); git(author, 'commit', '-m', 'Initial'); git(author, 'push', 'origin', 'main');
   git(root, 'clone', origin, checkout);
-  const releases = new Map();
-  const calls = [];
+  const prs = []; const releases = new Map(); const calls = [];
+  let next = 1;
+  function record(sha, name, number = next++) {
+    const pr = { number, state: 'closed', merged_at: '2026-01-01T00:00:00Z', merge_commit_sha: sha,
+      user: { login: 'developer' }, head: { ref: name, sha, repo: { full_name: 'example/toolkit' } }, base: { ref: 'main' } };
+    prs.push(pr); return pr;
+  }
+  function addMerge(name) {
+    git(author, 'pull', '--ff-only', 'origin', 'main');
+    write(author, `${name}.txt`, `${name}\n`); git(author, 'add', '.'); git(author, 'commit', '-m', name);
+    git(author, 'push', 'origin', 'main');
+    return record(git(author, 'rev-parse', 'HEAD'), name);
+  }
+  const rollout = addMerge('rollout');
   const github = (args) => {
     calls.push(args);
-    if (args[0] === 'api') return JSON.stringify([[...releases.values()]]);
-    const [, action, tag] = args;
-    if (action === 'create') {
-      assert.equal(releases.has(tag), false);
-      assert.ok(args.includes('--verify-tag'));
-      assert.ok(args.includes('--draft'));
-      releases.set(tag, { tag_name: tag, draft: true, assets: [] });
-    } else if (action === 'upload') {
-      assert.equal(git(checkout, 'rev-parse', 'HEAD'), git(origin, 'rev-parse', `${tag}^{commit}`));
-      requireUnzip();
-      const entries = execFileSync('unzip', ['-l', args[3]], { encoding: 'utf8' });
-      assert.match(entries, /SKILL\.md/);
-      assert.equal(execFileSync('unzip', ['-p', args[3], 'SKILL.md'], { encoding: 'utf8' }).trim(),
-        git(origin, 'show', `${tag}:plugins/fulcrum-ai-toolkit/SKILL.md`));
-      releases.get(tag).assets = [{
-        name: path.basename(args[3]), size: fs.statSync(args[3]).size
+    if (args[0] === 'api' && args.at(-1) === 'installation/repositories?per_page=100') {
+      return JSON.stringify([{ repositories: [{ full_name: 'example/toolkit' }] }]);
+    }
+    if (args[0] === 'api' && args.at(-1).includes('/pulls?')) {
+      return JSON.stringify([args.at(-1).includes('state=open') ? prs.filter((pr) => pr.state === 'open') : prs]);
+    }
+    if (args[0] === 'api' && args.at(-1).includes('/releases?')) return JSON.stringify([[...releases.values()]]);
+    if (args[0] === 'api' && args.at(-1).includes('/releases/tags/')) {
+      return JSON.stringify(releases.get(args.at(-1).split('/').at(-1)));
+    }
+    if (args[0] === 'api' && args.at(-1).includes('/rules/branches/main?')) return JSON.stringify([[{ type: 'merge_queue' }]]);
+    if (args[0] === 'pr' && args[1] === 'create') {
+      const sha = git(origin, 'rev-parse', 'refs/heads/toolkit-release/queue');
+      prs.push({ number: next++, state: 'open', merged_at: null, merge_commit_sha: null,
+        user: { login: bot }, head: { ref: 'toolkit-release/queue', sha, repo: { full_name: 'example/toolkit' } }, base: { ref: 'main' } });
+      return '';
+    }
+    if (args[0] === 'pr' && args[1] === 'merge') return '';
+    if (args[0] === 'release') {
+      const [, action, tag] = args;
+      if (action === 'create') releases.set(tag, { tag_name: tag, author: { login: bot }, draft: true, assets: [] });
+      else if (action === 'upload') releases.get(tag).assets = [{
+        name: path.basename(args[3]), size: fs.statSync(args[3]).size,
+        digest: `sha256:${createHash('sha256').update(fs.readFileSync(args[3])).digest('hex')}`
       }];
-    } else if (action === 'edit') {
-      releases.get(tag).draft = false;
-    } else {
-      assert.fail(`Unexpected gh command: ${args.join(' ')}`);
+      else if (action === 'edit') releases.get(tag).draft = false;
+      else assert.fail(args.join(' '));
+      return '';
     }
-    return '';
+    assert.fail(args.join(' '));
   };
-  const run = (override = github) => releaseToolkit({
-    root: checkout, repository: 'example/toolkit', github: override
-  });
-  return { root, origin, author, checkout, introduction, releases, calls, github, run };
-}
-
-function addMerge(author, name) {
-  git(author, 'pull', '--ff-only', 'origin', 'main');
-  git(author, 'checkout', '-b', name);
-  write(author, `${name}.txt`, `${name}\n`);
-  git(author, 'add', '.');
-  git(author, 'commit', '-m', `Implement ${name}`);
-  git(author, 'checkout', 'main');
-  git(author, 'merge', '--no-ff', name, '-m', `Merge ${name}`);
-  git(author, 'push', 'origin', 'main');
-  return git(author, 'rev-parse', 'HEAD');
-}
-
-function assertAligned(root, ref, version) {
-  for (const relativePath of VERSION_FILES) {
-    const document = JSON.parse(git(root, 'show', `${ref}:${relativePath}`));
-    if (relativePath === '.github/plugin/marketplace.json') {
-      assert.equal(document.metadata.version, version);
-      assert.equal(document.plugins[0].version, version);
-    } else {
-      assert.equal(document.version, version);
-    }
+  const run = (override = github, options = {}) => releaseToolkit({ root: checkout, repository: 'example/toolkit',
+    github: override, token: 'fixture', login: bot, rollout: String(rollout.number), ...options });
+  function mergeRelease(groupChanges) {
+    const pr = prs.find((item) => item.state === 'open' && item.user.login === bot);
+    assert.ok(pr);
+    const sha = git(origin, 'rev-parse', 'refs/heads/toolkit-release/queue');
+    pr.head.sha = sha;
+    git(origin, 'update-ref', `refs/pull/${pr.number}/head`, sha);
+    git(author, 'pull', '--ff-only', 'origin', 'main');
+    git(author, 'fetch', 'origin', 'refs/heads/toolkit-release/queue');
+    if (groupChanges) {
+      git(author, 'merge', '--no-ff', '--no-commit', 'FETCH_HEAD');
+      groupChanges(author);
+      git(author, 'add', '.');
+      git(author, 'commit', '-m', 'Merge release group');
+    } else git(author, 'merge', '--no-ff', 'FETCH_HEAD', '-m', 'Merge release');
+    git(author, 'push', 'origin', 'main');
+    pr.state = 'closed'; pr.merged_at = '2026-01-01T00:00:00Z'; pr.merge_commit_sha = git(author, 'rev-parse', 'HEAD');
+    return pr;
   }
+  return { root, origin, author, checkout, prs, releases, calls, github, run, addMerge, mergeRelease, record };
 }
 
 test('patch bump aligns every host version without touching skill versions or formatting', (t) => {
@@ -231,260 +192,325 @@ test('invalid or mismatched manifest versions fail before writing any files', (t
   assert.throws(() => bumpPluginVersion(checkout), /prerelease\/build metadata is not supported/i);
 });
 
-test('each mainline merge gets one aligned tagged release, including replaced pending runs', (t) => {
-  const { author, origin, checkout, introduction, releases, calls, run } = fixture(t);
-  const first = addMerge(author, 'first-feature');
-  const second = addMerge(author, 'second-feature');
-  run();
-  assert.deepEqual([...releases.keys()], ['v0.1.4', 'v0.1.5', 'v0.1.6']);
-  assert.equal(git(checkout, 'symbolic-ref', '--quiet', 'HEAD'), 'refs/heads/main');
-  for (const [index, source] of [introduction, first, second].entries()) {
-    const version = `0.1.${index + 4}`;
-    const tag = `v${version}`;
-    const commit = git(origin, 'rev-parse', `${tag}^{commit}`);
-    assertAligned(origin, commit, version);
-    assert.match(git(origin, 'show', '-s', '--format=%B', commit),
-      new RegExp(`Toolkit-Release-Source: ${source}`));
-    assert.equal(git(origin, 'show', '-s', '--format=%an', commit), 'github-actions[bot]');
-    assert.equal(releases.get(tag).draft, false);
-    assert.equal(releases.get(tag).assets.length, 1);
-    assert.equal(git(origin, 'show', `${commit}:plugins/fulcrum-ai-toolkit/skills/example/SKILL.md`)
-      .includes('version: "1.2.3"'), true);
+test('releases each pending PR independently without pushing main', (t) => {
+  const f = fixture(t); const source = f.addMerge('feature'); f.addMerge('second-feature');
+  const main = git(f.origin, 'rev-parse', 'main');
+  f.run();
+  assert.equal(git(f.origin, 'rev-parse', 'main'), main);
+  assert.equal(f.prs.filter((pr) => pr.state === 'open').length, 1);
+  assert.ok(f.calls.some((args) => args[0] === 'pr' && args[1] === 'merge' && args.includes('--auto')));
+  f.run();
+  assert.equal(f.prs.filter((pr) => pr.state === 'open').length, 1);
+  for (const [index, sourceNumber] of [1, source.number, source.number + 1].entries()) {
+    const active = f.prs.find((pr) => pr.state === 'open');
+    assert.match(git(f.origin, 'show', '-s', '--format=%B', active.head.sha),
+      new RegExp(`Toolkit-Release-Source-PR: ${sourceNumber}(?:\\n|$)`));
+    const pr = f.mergeRelease(); f.run();
+    assert.equal(git(f.origin, 'rev-parse', `v0.1.${index + 4}`), pr.merge_commit_sha);
+    assert.equal(f.releases.get(`v0.1.${index + 4}`).draft, false);
   }
-  const tip = git(origin, 'rev-parse', 'main');
-  calls.length = 0;
-  run();
-  assert.equal(git(origin, 'rev-parse', 'main'), tip);
-  assert.deepEqual(calls.map((args) => args[0]), ['api']);
-  assert.equal(git(checkout, 'symbolic-ref', '--quiet', 'HEAD'), 'refs/heads/main');
-  assert.equal(git(checkout, 'status', '--porcelain', '--untracked-files=no'), '');
+  f.run();
+  assert.equal(f.prs.filter((item) => item.state === 'open').length, 0);
 });
 
-for (const failure of ['create', 'upload', 'edit']) {
-  test(`reruns resume a failed release ${failure} without another patch bump`, (t) => {
-    const { origin, releases, github, run } = fixture(t);
-    assert.throws(() => run((args) => {
-      if (args[0] === 'release' && args[1] === failure) throw new Error('GitHub unavailable');
-      return github(args);
-    }), /GitHub unavailable/);
-    const checkpoint = git(origin, 'rev-parse', 'main');
-    assertAligned(origin, checkpoint, '0.1.4');
-    run();
-    assert.equal(git(origin, 'rev-parse', 'main'), checkpoint);
-    assert.deepEqual([...releases.keys()], ['v0.1.4']);
-    assert.equal(releases.get('v0.1.4').draft, false);
-    assert.ok(releases.get('v0.1.4').assets[0].size > 0);
+test('new sources after candidate base are released in the next batch', (t) => {
+  const f = fixture(t); f.run(); f.addMerge('later'); f.mergeRelease(); f.run();
+  assert.equal(f.prs.filter((pr) => pr.state === 'open').length, 1);
+  f.mergeRelease(); f.run();
+  assert.deepEqual([...f.releases.keys()], ['v0.1.4', 'v0.1.5']);
+});
+
+test('orders sources sharing a merge-group commit and releases each once', (t) => {
+  const f = fixture(t);
+  const first = f.addMerge('group');
+  const second = f.record(first.merge_commit_sha, 'group-other');
+  f.prs.reverse();
+  f.run();
+  for (const source of [1, first.number, second.number]) {
+    const active = f.prs.find((pr) => pr.state === 'open');
+    assert.match(git(f.origin, 'show', '-s', '--format=%B', active.head.sha),
+      new RegExp(`Toolkit-Release-Source-PR: ${source}(?:\\n|$)`));
+    f.mergeRelease(); f.run();
+  }
+  assert.deepEqual([...f.releases.keys()], ['v0.1.4', 'v0.1.5', 'v0.1.6']);
+});
+
+test('rollout boundary excludes earlier PRs sharing its merge commit', (t) => {
+  const f = fixture(t);
+  const rollout = f.prs[0];
+  const earlier = f.record(rollout.merge_commit_sha, 'earlier', 40);
+  earlier.merged_at = '2025-12-31T23:59:59Z';
+  const later = f.record(rollout.merge_commit_sha, 'later', 41);
+  later.merged_at = '2026-01-01T00:00:01Z';
+  f.run(); f.mergeRelease(); f.run();
+  const active = f.prs.find((pr) => pr.state === 'open');
+  assert.match(git(f.origin, 'show', '-s', '--format=%B', active.head.sha),
+    /Toolkit-Release-Source-PR: 41(?:\n|$)/);
+  f.mergeRelease(); f.run();
+  assert.equal(f.releases.size, 2);
+});
+
+test('a release grouped with another PR validates manifests and queues that source separately', (t) => {
+  const f = fixture(t); f.run();
+  const pr = f.mergeRelease((author) => {
+    write(author, 'other-feature.txt', 'new feature\n');
+    const file = '.claude-plugin/plugin.json';
+    const document = JSON.parse(fs.readFileSync(path.join(author, file), 'utf8'));
+    document.groupedChange = true;
+    write(author, file, `${JSON.stringify(document, null, 2)}\n`);
+  });
+  const source = f.record(pr.merge_commit_sha, 'grouped-feature');
+  f.run();
+  assert.equal(f.releases.get('v0.1.4').draft, false);
+  const next = f.prs.find((item) => item.state === 'open');
+  assert.match(git(f.origin, 'show', '-s', '--format=%B', next.head.sha),
+    new RegExp(`Toolkit-Release-Source-PR: ${source.number}(?:\\n|$)`));
+  f.mergeRelease(); f.run();
+  assert.deepEqual([...f.releases.keys()], ['v0.1.4', 'v0.1.5']);
+});
+
+test('rejects a grouped merge with conflicting manifest versions', (t) => {
+  const f = fixture(t); f.run();
+  const pr = f.mergeRelease((author) => {
+    const file = '.claude-plugin/plugin.json';
+    const document = JSON.parse(fs.readFileSync(path.join(author, file), 'utf8'));
+    document.version = '9.9.9';
+    write(author, file, `${JSON.stringify(document, null, 2)}\n`);
+  });
+  f.record(pr.merge_commit_sha, 'conflicting-feature');
+  assert.throws(() => f.run(), /conflicting version/);
+  assert.equal(f.releases.size, 0);
+});
+
+test('installation reconciliation uses read-only identity context without user or reactions', (t) => {
+  const bot = 'release-app[bot]'; const f = fixture(t, bot);
+  f.run(); f.mergeRelease(); f.run();
+  assert.equal(f.releases.get('v0.1.4').draft, false);
+  assert.ok(f.calls.some((args) => args.at(-1) === 'installation/repositories?per_page=100'));
+  assert.equal(f.calls.some((args) => args[0] === 'api' &&
+    (args.includes('user') || args.some((arg) => arg.includes('/reactions')) || args.includes('POST'))), false);
+});
+
+test('rejects inaccessible or malformed installation repository responses', (t) => {
+  const f = fixture(t, 'release-app[bot]');
+  for (const response of ['[]', '[{}]', '[{"repositories":[{"full_name":"other/repo"}]}]']) {
+    assert.throws(() => f.run((args) => args.at(-1) === 'installation/repositories?per_page=100'
+      ? response : f.github(args)), /installation access/);
+  }
+  assert.equal(f.calls.some((args) => args[0] === 'pr' || args[0] === 'release'), false);
+});
+
+test('installation context cannot bypass a PR author mismatch', (t) => {
+  const bot = 'release-app[bot]'; const f = fixture(t, bot);
+  const github = (args) => {
+    const result = f.github(args);
+    if (args[0] === 'pr' && args[1] === 'create') f.prs.at(-1).user.login = 'attacker';
+    return result;
+  };
+  assert.throws(() => f.run(github), /Could not uniquely verify/);
+  assert.equal(f.calls.some((args) => args[0] === 'pr' && args[1] === 'merge'), false);
+});
+
+test('rejects a merged release PR by a different author', (t) => {
+  const f = fixture(t); f.run(); const pr = f.mergeRelease();
+  pr.user.login = 'attacker';
+  assert.throws(() => f.run(), /untrusted author/);
+  assert.equal(f.releases.size, 0);
+});
+
+test('rejects an existing release by a different author', (t) => {
+  const f = fixture(t); f.run(); f.mergeRelease();
+  f.releases.set('v0.1.4', { tag_name: 'v0.1.4', author: { login: 'attacker' }, draft: true, assets: [] });
+  assert.throws(() => f.run(), /Conflicting release/);
+  assert.equal(f.calls.some((args) => args[0] === 'release'), false);
+});
+
+test('verifies a newly created release author before uploading', (t) => {
+  const f = fixture(t); f.run(); f.mergeRelease();
+  assert.throws(() => f.run((args) => {
+    const result = f.github(args);
+    if (args[0] === 'release' && args[1] === 'create') {
+      f.releases.get('v0.1.4').author.login = 'attacker';
+    }
+    return result;
+  }), /Conflicting release/);
+  assert.equal(f.calls.some((args) => args[0] === 'release' && ['upload', 'edit'].includes(args[1])), false);
+});
+
+test('rejects a merged release that reuses a processed source PR', (t) => {
+  const f = fixture(t); f.addMerge('second'); f.run(); f.mergeRelease(); f.run();
+  const active = f.prs.find((pr) => pr.state === 'open');
+  git(f.author, 'fetch', 'origin', 'refs/heads/toolkit-release/queue');
+  git(f.author, 'checkout', '--detach', 'FETCH_HEAD');
+  const base = git(f.author, 'rev-parse', 'HEAD^');
+  const subject = git(f.author, 'show', '-s', '--format=%s', 'HEAD');
+  git(f.author, 'commit', '--amend', '-m', subject,
+    '-m', `Toolkit-Release-Base: ${base}\nToolkit-Release-Source-PR: 1`);
+  git(f.author, 'push', '--force', 'origin', 'HEAD:refs/heads/toolkit-release/queue');
+  active.head.sha = git(f.author, 'rev-parse', 'HEAD');
+  git(f.author, 'checkout', 'main');
+  f.mergeRelease();
+  assert.throws(() => f.run(), /invalid or already processed source PR #1/);
+  assert.equal(f.releases.size, 1);
+});
+
+for (const stage of ['create', 'upload', 'edit']) {
+  test(`publication resumes after ${stage} failure`, (t) => {
+    const f = fixture(t); f.run(); f.mergeRelease();
+    assert.throws(() => f.run((args) => {
+      if (args[0] === 'release' && args[1] === stage) throw new Error('injected failure');
+      return f.github(args);
+    }), /injected failure/);
+    f.run(); assert.equal(f.releases.get('v0.1.4').draft, false);
+    assert.equal(f.prs.filter((pr) => pr.state === 'open').length, 0);
   });
 }
 
-test('a new merge after a failed publication is released only after the interrupted release resumes', (t) => {
-  const { origin, author, github, releases, run } = fixture(t);
-  assert.throws(() => run((args) => {
-    if (args[1] === 'upload') throw new Error('Upload interrupted');
-    return github(args);
-  }), /Upload interrupted/);
-  const checkpoint = git(origin, 'rev-parse', 'main');
-  addMerge(author, 'later-feature');
-  run();
-  assert.equal(git(origin, 'rev-parse', 'v0.1.4'), checkpoint);
-  assert.deepEqual([...releases.keys()], ['v0.1.4', 'v0.1.5']);
-  assert.ok([...releases.values()].every((release) => !release.draft));
+test('publish restores tracked build changes and reports leftover untracked files', (t) => {
+  const f = fixture(t); f.run(); f.mergeRelease();
+  assert.throws(() => f.run((args) => {
+    const result = f.github(args);
+    if (args[0] === 'release' && args[1] === 'upload') {
+      write(f.checkout, manifest, '{}\n');
+      write(f.checkout, 'unexpected-artifact.txt', 'leftover\n');
+    }
+    return result;
+  }), /Release build left unexpected workspace changes:[\s\S]*unexpected-artifact\.txt/);
+  assert.equal(git(f.checkout, 'status', '--porcelain', '--untracked-files=no'), '');
+  assert.equal(fs.readFileSync(path.join(f.checkout, 'unexpected-artifact.txt'), 'utf8'), 'leftover\n');
 });
 
-test('non-release commits with trailer-like lines do not break release state', (t) => {
-  const { origin, author, run } = fixture(t);
-  git(author, 'pull', '--ff-only', 'origin', 'main');
-  write(author, 'trailer-note.txt', 'note\n');
-  git(author, 'add', 'trailer-note.txt');
-  git(
-    author,
-    'commit',
-    '-m',
-    'docs: mention trailer text',
-    '-m',
-    'Toolkit-Release-Source: 1111111111111111111111111111111111111111'
-  );
-  const source = git(author, 'rev-parse', 'HEAD');
-  git(author, 'push', 'origin', 'main');
-
-  run();
-
-  const checkpoint = git(origin, 'rev-parse', 'v0.1.5');
-  assert.match(
-    git(origin, 'show', '-s', '--format=%B', checkpoint),
-    new RegExp(`Toolkit-Release-Source: ${source}`)
-  );
+test('recovers orphan branch after PR creation failure', (t) => {
+  const f = fixture(t);
+  assert.throws(() => f.run((args) => {
+    if (args[0] === 'pr' && args[1] === 'create') throw new Error('interrupted');
+    return f.github(args);
+  }), /interrupted/);
+  const head = git(f.origin, 'rev-parse', 'refs/heads/toolkit-release/queue');
+  f.run(); assert.equal(git(f.origin, 'rev-parse', 'refs/heads/toolkit-release/queue'), head);
+  assert.equal(f.prs.filter((pr) => pr.state === 'open').length, 1);
 });
 
-test('release-style checkpoints missing source trailers are rejected', (t) => {
-  const { author, run } = fixture(t);
-  git(author, 'pull', '--ff-only', 'origin', 'main');
-  const version = JSON.parse(fs.readFileSync(path.join(author, manifest), 'utf8')).version;
-  git(author, 'commit', '--allow-empty', '-m', `chore(release): v${version}`);
-  git(author, 'push', 'origin', 'main');
-  assert.throws(() => run(), /Invalid release checkpoint missing source trailer/);
+test('recovers when PR creation succeeds but its response is lost', (t) => {
+  const f = fixture(t);
+  assert.throws(() => f.run((args) => {
+    const result = f.github(args);
+    if (args[0] === 'pr' && args[1] === 'create') throw new Error('lost response');
+    return result;
+  }), /lost response/);
+  f.run();
+  assert.equal(f.prs.filter((pr) => pr.state === 'open').length, 1);
 });
 
-test('GitHub API errors fail visibly without creating a version commit', (t) => {
-  const { origin, introduction, run } = fixture(t);
-  assert.throws(() => run(() => { throw new Error('API permission denied'); }), /API permission denied/);
-  assert.equal(git(origin, 'rev-parse', 'main'), introduction);
-  assert.equal(git(origin, 'tag'), '');
+test('refreshes a stale release candidate after a manual version change', (t) => {
+  const f = fixture(t); f.run();
+  const old = git(f.origin, 'rev-parse', 'refs/heads/toolkit-release/queue');
+  git(f.author, 'pull', '--ff-only', 'origin', 'main');
+  bumpPluginVersion(f.author);
+  git(f.author, 'add', '--', ...VERSION_FILES);
+  git(f.author, 'commit', '-m', 'Manual version bump');
+  git(f.author, 'push', 'origin', 'main');
+  const sha = git(f.author, 'rev-parse', 'HEAD');
+  f.prs.push({ number: 20, state: 'closed', merged_at: '2026-01-01T00:00:00Z', merge_commit_sha: sha,
+    user: { login: 'developer' }, head: { ref: 'manual', sha, repo: { full_name: 'example/toolkit' } }, base: { ref: 'main' } });
+  f.run();
+  const updated = git(f.origin, 'rev-parse', 'refs/heads/toolkit-release/queue');
+  assert.notEqual(updated, old);
+  assert.equal(JSON.parse(git(f.origin, 'show', `${updated}:${manifest}`)).version, '0.1.5');
+  assert.ok(f.calls.some((args) => args[0] === 'pr' && args[1] === 'merge' &&
+    args.includes('--match-head-commit') && args.includes(updated)));
+  f.mergeRelease(); f.run();
+  assert.equal(f.releases.get('v0.1.5').draft, false);
 });
 
-test('invalid GitHub API JSON fails with actionable diagnostics and no release commit', (t) => {
-  const { origin, introduction, run } = fixture(t);
-  assert.throws(
-    () => run((args) => (args[0] === 'api' ? 'warning: upstream transient failure' : '')),
-    /Failed to parse GitHub releases API response as JSON[\s\S]*Response preview:[\s\S]*warning: upstream transient failure/
-  );
-  assert.equal(git(origin, 'rev-parse', 'main'), introduction);
-  assert.equal(git(origin, 'tag'), '');
+test('does not queue without an effective merge queue rule', (t) => {
+  const f = fixture(t);
+  assert.throws(() => f.run((args) => args.at(-1)?.includes('/rules/branches/main?')
+    ? '[[]]' : f.github(args)), /merge queue rule/);
+  assert.equal(f.calls.some((args) => args[0] === 'pr'), false);
 });
 
-test('unexpected GitHub API JSON shape fails visibly without creating a version commit', (t) => {
-  const { origin, introduction, run } = fixture(t);
-  assert.throws(
-    () => run((args) => (args[0] === 'api' ? '{"message":"bad credentials"}' : '')),
-    /Unexpected GitHub releases API response shape: expected JSON array/
-  );
-  assert.equal(git(origin, 'rev-parse', 'main'), introduction);
-  assert.equal(git(origin, 'tag'), '');
+test('retries queue failure without creating another PR', (t) => {
+  const f = fixture(t);
+  assert.throws(() => f.run((args) => {
+    if (args[0] === 'pr' && args[1] === 'merge') throw new Error('queue unavailable');
+    return f.github(args);
+  }), /queue unavailable/);
+  f.run();
+  assert.equal(f.prs.filter((pr) => pr.state === 'open').length, 1);
 });
 
-test('a published release missing its bundle is repaired without a new version', (t) => {
-  const { origin, releases, calls, run } = fixture(t);
-  run();
-  const checkpoint = git(origin, 'rev-parse', 'main');
-  releases.get('v0.1.4').assets = [];
-  calls.length = 0;
-  run();
-  assert.equal(git(origin, 'rev-parse', 'main'), checkpoint);
-  assert.equal(releases.get('v0.1.4').assets.length, 1);
-  assert.equal(calls.some((args) => args[1] === 'create'), false);
+test('refuses a conflicting existing asset instead of overwriting it', (t) => {
+  const f = fixture(t); f.run(); f.mergeRelease(); f.run();
+  f.releases.get('v0.1.4').assets[0].digest = 'sha256:bad';
+  const before = f.calls.length;
+  assert.throws(() => f.run(), /Conflicting or unverifiable asset/);
+  assert.equal(f.calls.slice(before).some((args) => args[0] === 'release' && args[1] === 'upload'), false);
 });
 
-test('release repair tolerates missing assets arrays from API responses', (t) => {
-  const { releases, run } = fixture(t);
-  run();
-  releases.get('v0.1.4').assets = null;
-  assert.doesNotThrow(() => run());
-  assert.equal(releases.get('v0.1.4').assets.length, 1);
+test('fails closed on malformed configuration and tag conflicts', (t) => {
+  const f = fixture(t);
+  assert.throws(() => f.run(f.github, { token: '' }), /GH_TOKEN/);
+  assert.throws(() => f.run(f.github, { rollout: '' }), /ROLLOUT/);
+  f.run(); const pr = f.mergeRelease();
+  git(f.origin, 'update-ref', 'refs/tags/v0.1.4', `${pr.merge_commit_sha}^1`);
+  assert.throws(() => f.run(), /Conflicting remote tag/);
 });
 
-test('a tag moved away from its checkpoint is not published or silently accepted', (t) => {
-  const { origin, checkout, introduction, run } = fixture(t);
-  run();
-  git(origin, 'update-ref', 'refs/tags/v0.1.4', introduction);
-  git(checkout, 'tag', '--force', 'v0.1.4', introduction);
-  assert.throws(() => run(), /does not point to release commit/);
+test('accepts an annotated remote tag pointing to the release commit', (t) => {
+  const f = fixture(t); f.run(); const pr = f.mergeRelease();
+  git(f.author, 'tag', '-a', 'v0.1.4', pr.merge_commit_sha, '-m', 'Release v0.1.4');
+  git(f.author, 'push', 'origin', 'refs/tags/v0.1.4');
+  f.run();
+  assert.equal(f.releases.get('v0.1.4').draft, false);
 });
 
-test('stale local release tag is refreshed from origin before publish checks', (t) => {
-  const { origin, checkout, introduction, run } = fixture(t);
-  run();
-  const remoteTagCommit = git(origin, 'rev-parse', 'v0.1.4');
-  git(checkout, 'tag', '--force', 'v0.1.4', introduction);
-  run();
-  assert.equal(git(checkout, 'rev-parse', 'v0.1.4'), remoteTagCommit);
+test('untrusted release-like PR is processed as a source', (t) => {
+  const f = fixture(t); const pr = f.addMerge('pretend-release');
+  pr.head.ref = 'toolkit-release/queue'; pr.head.repo.full_name = 'attacker/fork'; pr.user.login = 'attacker';
+  f.run(); f.mergeRelease(); f.run();
+  f.mergeRelease(); f.run();
+  assert.equal(f.releases.size, 2);
 });
 
-test('annotated remote release tags are accepted by publish checks', (t) => {
-  const { origin, author, run } = fixture(t);
-  run();
-  const releaseCommit = git(origin, 'rev-parse', 'v0.1.4');
-  git(author, 'pull', '--ff-only', 'origin', 'main');
-  git(author, 'tag', '-fa', 'v0.1.4', releaseCommit, '-m', 'annotated release tag');
-  git(author, 'push', '--force', 'origin', 'refs/tags/v0.1.4');
-  assert.doesNotThrow(() => run());
+test('refuses an active PR by an untrusted author', (t) => {
+  const f = fixture(t); f.run(); f.prs.find((p) => p.state === 'open').user.login = 'attacker';
+  assert.throws(() => f.run(), /untrusted author/);
 });
 
-test('release checkout must not contain uncommitted tracked edits', (t) => {
-  const { checkout, origin, introduction, run } = fixture(t);
-  write(checkout, manifest, '{}\n');
-  assert.throws(() => run(), /uncommitted changes/);
-  assert.equal(git(origin, 'rev-parse', 'main'), introduction);
+test('fails closed if a bot release PR loses its head repository identity', (t) => {
+  const f = fixture(t); f.run(); f.mergeRelease();
+  f.prs.find((pr) => pr.user.login === 'release-bot').head.repo = null;
+  assert.throws(() => f.run(), /Cannot verify release branch repository/);
+  assert.equal(f.releases.size, 0);
 });
 
-test('release checkout must not contain untracked files', (t) => {
-  const { checkout, origin, introduction, run } = fixture(t);
-  write(checkout, 'stray-artifact.txt', 'stray\n');
-  assert.throws(() => run(), /uncommitted changes/);
-  assert.equal(git(origin, 'rev-parse', 'main'), introduction);
+test('refuses to publish a release merged with a stale manifest', (t) => {
+  const f = fixture(t); f.run();
+  git(f.author, 'pull', '--ff-only', 'origin', 'main');
+  bumpPluginVersion(f.author);
+  git(f.author, 'add', '--', ...VERSION_FILES); git(f.author, 'commit', '-m', 'Concurrent manual version');
+  git(f.author, 'push', 'origin', 'main');
+  const sha = git(f.author, 'rev-parse', 'HEAD');
+  f.prs.push({ number: 20, state: 'closed', merged_at: '2026-01-01T00:00:00Z', merge_commit_sha: sha,
+    user: { login: 'developer' }, head: { ref: 'manual', sha, repo: { full_name: 'example/toolkit' } }, base: { ref: 'main' } });
+  // Model an externally accepted squash merge with a version equal to its
+  // parent, so no release manifest diff survived the merge.
+  const pr = f.prs.find((item) => item.state === 'open');
+  git(f.origin, 'update-ref', `refs/pull/${pr.number}/head`, pr.head.sha);
+  git(f.author, 'commit', '--allow-empty', '-m', 'Merged stale release');
+  git(f.author, 'push', 'origin', 'main');
+  pr.state = 'closed'; pr.merged_at = '2026-01-01T00:00:00Z'; pr.merge_commit_sha = git(f.author, 'rev-parse', 'HEAD');
+  assert.throws(() => f.run(), /unexpected files/);
+  assert.equal(f.releases.size, 0);
 });
 
-test('publish cleanup fails when residual untracked artifacts remain', (t) => {
-  const { checkout, run, github } = fixture(t);
-  assert.throws(
-    () => run((args) => {
-      if (args[0] === 'release' && args[1] === 'upload') {
-        write(checkout, 'leftover-artifact.txt', 'leftover\n');
-      }
-      return github(args);
-    }),
-    /Release build left unexpected workspace changes:[\s\S]*leftover-artifact\.txt/
-  );
-});
-
-test('branch protection failures do not leave a tag or publish a release', (t) => {
-  const { origin, introduction, releases, run } = fixture(t);
-  const hook = path.join(origin, 'hooks/pre-receive');
-  fs.writeFileSync(hook, '#!/usr/bin/env node\nprocess.stderr.write("Bot push is blocked\\n");\nprocess.exit(1);\n', { mode: 0o755 });
-  assert.throws(() => run(), /Cannot push release checkpoint[\s\S]*Bot push is blocked/);
-  assert.equal(git(origin, 'rev-parse', 'main'), introduction);
-  assert.equal(git(origin, 'tag'), '');
-  assert.equal(releases.size, 0);
-});
-
-test('push failure diagnostics preserve original error when ls-remote probe fails', { concurrency: false }, (t) => {
-  const { origin, run } = fixture(t);
-  const hook = path.join(origin, 'hooks/pre-receive');
-  fs.writeFileSync(hook, '#!/usr/bin/env node\nprocess.stderr.write("Bot push is blocked\\n");\nprocess.exit(1);\n', { mode: 0o755 });
-
-  const fakeBin = fs.mkdtempSync(path.join(os.tmpdir(), 'toolkit-release-git-bin-'));
-  t.after(() => fs.rmSync(fakeBin, { recursive: true, force: true }));
-  const realGit = resolveCommandPath('git');
-  const shim = path.join(fakeBin, 'git');
-  fs.writeFileSync(shim, `#!/bin/sh
-if [ "$1" = "ls-remote" ]; then
-  echo "ls-remote probe failed" >&2
-  exit 1
-fi
-exec "${realGit}" "$@"
-`, { mode: 0o755 });
-
-  const originalPath = process.env.PATH;
-  process.env.PATH = `${fakeBin}:${originalPath}`;
-  try {
-    assert.throws(
-      () => run(),
-      /Cannot push release checkpoint[\s\S]*Bot push is blocked[\s\S]*Tag probe failed while handling push error: ls-remote probe failed/
-    );
-  } finally {
-    process.env.PATH = originalPath;
-  }
-});
-
-test('a merge racing the atomic push is retried without a stray tag or missed release', (t) => {
-  const { root, checkout, author, origin, releases, run } = fixture(t);
-  const marker = path.join(root, 'raced');
-  const hook = path.join(checkout, '.git/hooks/pre-push');
-  fs.writeFileSync(hook, `#!/usr/bin/env node
-const fs = require('node:fs');
-const { execFileSync } = require('node:child_process');
-if (!fs.existsSync(${JSON.stringify(marker)})) {
-  fs.writeFileSync(${JSON.stringify(marker)}, '');
-  const env = { ...process.env };
-  delete env.GIT_DIR;
-  delete env.GIT_WORK_TREE;
-  fs.writeFileSync(${JSON.stringify(path.join(author, 'racing.txt'))}, 'race\\n');
-  execFileSync('git', ['-C', ${JSON.stringify(author)}, 'add', 'racing.txt'], { env });
-  execFileSync('git', ['-C', ${JSON.stringify(author)}, 'commit', '-m', 'Concurrent main update'], { env });
-  execFileSync('git', ['-C', ${JSON.stringify(author)}, 'push', 'origin', 'main'], { env });
-}
-`, { mode: 0o755 });
-  run();
-  assert.deepEqual([...releases.keys()], ['v0.1.4', 'v0.1.5']);
-  assert.equal(git(origin, 'show', 'main:racing.txt'), 'race');
-  assertAligned(origin, 'main', '0.1.5');
+test('refuses release commit containing unrelated changes', (t) => {
+  const f = fixture(t); f.run();
+  git(f.author, 'fetch', 'origin', 'refs/heads/toolkit-release/queue');
+  git(f.author, 'checkout', '--detach', 'FETCH_HEAD');
+  write(f.author, 'injected.txt', 'bad\n'); git(f.author, 'add', '.'); git(f.author, 'commit', '--amend', '--no-edit');
+  git(f.author, 'push', '--force', 'origin', 'HEAD:refs/heads/toolkit-release/queue');
+  f.prs.find((p) => p.state === 'open').head.sha = git(f.author, 'rev-parse', 'HEAD');
+  assert.throws(() => f.run(), /unexpected files/);
 });
