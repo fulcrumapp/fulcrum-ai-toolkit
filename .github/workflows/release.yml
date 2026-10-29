@@ -56,7 +56,7 @@ jobs:
           TOOLKIT_RELEASE_BOT_LOGIN: ${{ format('{0}[bot]', steps.release-app.outputs.app-slug) }}
         run: |
           set -euo pipefail
-          command -v git
-          command -v gh
-          command -v zip
+          command -v git >/dev/null || { echo "::error::Missing required tool: git"; exit 1; }
+          command -v gh >/dev/null || { echo "::error::Missing required tool: gh"; exit 1; }
+          command -v zip >/dev/null || { echo "::error::Missing required tool: zip"; exit 1; }
           node scripts/release-toolkit.mjs
