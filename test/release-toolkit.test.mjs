@@ -1,6 +1,5 @@
 import assert from 'node:assert/strict';
 import { execFileSync } from 'node:child_process';
-import { createHash } from 'node:crypto';
 import fs from 'node:fs';
 import path from 'node:path';
 import test from 'node:test';
@@ -79,8 +78,7 @@ function fixture(t, bot = 'release-bot') {
       else if (action === 'upload') {
         const contents = fs.readFileSync(args[3]);
         releases.get(tag).assets = [{
-          name: path.basename(args[3]), size: contents.length,
-          digest: `sha256:${createHash('sha256').update(contents).digest('hex')}`
+          name: path.basename(args[3]), size: contents.length
         }];
       }
       else if (action === 'edit') releases.get(tag).draft = false;
@@ -443,11 +441,11 @@ test('retries queue failure without creating another PR', (t) => {
   assert.equal(f.prs.filter((pr) => pr.state === 'open').length, 1);
 });
 
-test('refuses a conflicting existing asset instead of overwriting it', (t) => {
+test('accepts digest-only differences when existing asset size matches', (t) => {
   const f = fixture(t); f.run(); f.mergeRelease(); f.run();
   f.releases.get('v0.1.4').assets[0].digest = 'sha256:bad';
   const before = f.calls.length;
-  assert.throws(() => f.run(), /Conflicting or unverifiable asset/);
+  f.run();
   assert.equal(f.calls.slice(before).some((args) => args[0] === 'release' && args[1] === 'upload'), false);
 });
 

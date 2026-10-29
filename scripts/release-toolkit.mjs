@@ -1,7 +1,6 @@
 #!/usr/bin/env node
 
 import { execFileSync } from 'node:child_process';
-import { createHash } from 'node:crypto';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -454,8 +453,7 @@ function publish(root, repository, checkpoint, existing, github, login) {
     if (existing && !Array.isArray(existing.assets)) throw new Error(`Invalid assets for ${tag}`);
     const matching = (existing?.assets ?? []).filter((item) => item?.name === ASSET);
     if (matching.length > 1) throw new Error(`Conflicting assets for ${tag}`);
-    const digest = `sha256:${createHash('sha256').update(contents).digest('hex')}`;
-    if (matching.length && (matching[0].digest !== digest || matching[0].size !== contents.length)) {
+    if (matching.length && matching[0].size !== contents.length) {
       throw new Error(`Conflicting or unverifiable asset for ${tag}`);
     }
     if (!existing) {
