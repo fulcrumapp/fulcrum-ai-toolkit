@@ -20,6 +20,7 @@ test('merge queue validation compares skill versions with the merge group base',
   const step = workflow.jobs.validate.steps.find(
     (candidate) => candidate.run === 'node scripts/validate-skill-version-bumps.mjs'
   );
+  assert.ok(step, 'Missing validate-skill-version-bumps step');
   assert.match(step.if, /github\.event_name == 'merge_group'/);
   assert.match(step.env.FULCRUM_SKILL_VERSION_BASE, /github\.event\.merge_group\.base_sha/);
 });
@@ -34,6 +35,7 @@ test('release reconciliation uses trusted main and a separately configured ident
   assert.match(job.if, /github\.event\.pull_request\.base\.ref == 'main'/);
   assert.equal(job.env.TOOLKIT_RELEASE_ROLLOUT_PR, '${{ vars.TOOLKIT_RELEASE_ROLLOUT_PR }}');
   const app = job.steps.find((step) => step.id === 'release-app');
+  assert.ok(app, 'Missing release-app token step');
   assert.match(app.uses, /^actions\/create-github-app-token@[0-9a-f]{40}$/);
   assert.equal(app.with['client-id'], '${{ vars.TOOLKIT_RELEASE_APP_CLIENT_ID }}');
   assert.equal(app.with['private-key'], '${{ secrets.TOOLKIT_RELEASE_APP_PRIVATE_KEY }}');
@@ -41,9 +43,11 @@ test('release reconciliation uses trusted main and a separately configured ident
   assert.equal(app.with['permission-pull-requests'], 'write');
   assert.equal(app.with['permission-merge-queues'], 'write');
   const checkout = job.steps.find((step) => step.uses?.startsWith('actions/checkout@'));
+  assert.ok(checkout, 'Missing actions/checkout step');
   assert.equal(checkout.with.ref, 'main');
   assert.equal(checkout.with.token, '${{ steps.release-app.outputs.token }}');
   const reconciliation = job.steps.find((step) => step.run?.includes('node scripts/release-toolkit.mjs'));
+  assert.ok(reconciliation, 'Missing release reconciliation step');
   assert.equal(reconciliation.env.GH_TOKEN, '${{ steps.release-app.outputs.token }}');
   assert.match(reconciliation.env.TOOLKIT_RELEASE_BOT_LOGIN, /steps\.release-app\.outputs\.app-slug/);
 });
