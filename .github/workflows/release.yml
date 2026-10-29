@@ -55,6 +55,7 @@ jobs:
           GH_TOKEN: ${{ steps.release-app.outputs.token }}
           TOOLKIT_RELEASE_BOT_LOGIN: ${{ format('{0}[bot]', steps.release-app.outputs.app-slug) }}
         run: |
+          set -euo pipefail
           command -v git
           command -v gh
           command -v zip
