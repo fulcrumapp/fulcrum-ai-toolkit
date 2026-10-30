@@ -78,6 +78,9 @@ code block remains anywhere under `plugins/fulcrum-ai-toolkit/skills/`.
 
 Every block carries a stable identifier, the source document it came from, and
 its ordinal within that document.
+CI enforces this inventory through the format-validator discovery checks in
+`tools/format-validator/validate-formats.mjs`, so inventory or mapping drift
+fails validation.
 
 ### fulcrum-data-events — 18 blocks
 

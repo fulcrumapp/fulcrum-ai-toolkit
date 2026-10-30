@@ -1,7 +1,7 @@
 ---
 name: fulcrum-app-builder
 metadata:
-  version: "1.2.1"
+  version: "1.2.2"
 description: Retrieve a live inventory of existing Fulcrum apps, or guide app creation and updates. Use when a user asks to list, show, browse, or find apps in their organization, wants to build an app, add or change fields, or asks whether a Fulcrum app can support a workflow. For an inventory, use live read-only metadata and report exact names, IDs, scope, and completeness; never invent app names. For building, explain capabilities and limits, ask focused discovery questions, and propose a plain-English schema for approval. Use Fulcrum App MCP by default when available; otherwise provide an approved implementation handoff, not a live inventory.
 ---
 

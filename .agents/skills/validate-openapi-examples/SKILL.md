@@ -21,7 +21,10 @@ API OpenAPI document.
    specific, durable explanation. Never exclude a file merely to make validation pass.
 4. Run `npm run validate` in `tools/format-validator`.
    Unmapped JSON examples fail inventory validation so new examples cannot
-   silently bypass this check.
+   silently bypass this check. Inventory validation is the discovery-and-mapping
+   check in `tools/format-validator/validate-formats.mjs` against
+   `SCHEMA_MAPPINGS` and `NON_OPENAPI_JSON` in
+   `tools/format-validator/lib/schema-contract.mjs`.
 
 Schema loading defaults to the checked-in subset. Override with
 `OPENAPI_SPEC_PATH`. Network fetch of the official spec is opt-in via

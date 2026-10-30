@@ -63,6 +63,9 @@ through the environment of the agent process. Set `FULCRUM_APP_MCP_URL` to
 exactly the endpoint selected above, with no default. Environment-variable
 names are conventions for the examples below, not server requirements.
 An environment variable only works if the host process can read it.
+The toolkit ships with package-level `mcp.json` and `.mcp.json` entries that
+declare no servers by default, so installation alone does not choose a tenant
+or transmit a token until the consuming host adds a configured server entry.
 
 ## Configure The Host
 

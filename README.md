@@ -230,6 +230,9 @@ In CI, GitHub Actions also validates the Claude plugin marketplace using Anthrop
 
 The toolkit version is defined in
 [`plugins/fulcrum-ai-toolkit/plugin.json`](plugins/fulcrum-ai-toolkit/plugin.json).
+`node scripts/validate.mjs` enforces the required manifest alignment against
+that canonical version, including host descriptors and Copilot marketplace
+entries.
 After a version bump is merged to `main`, the release workflow creates
 the corresponding `v<version>` tag and GitHub Release. Re-running the workflow
 is safe when that release already exists.
