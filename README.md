@@ -217,7 +217,8 @@ required approval/performance instructions; they do not prove host skill
 activation, live app-list accuracy, an agent's live app assessment, or runtime
 performance.
 The changed-skill version validator compares every modified skill directory,
-including supporting files, against the supplied base revision.
+including supporting files, against the supplied base revision. Merge queue
+validation uses the merge group's base commit for that comparison.
 Structural and schema validation for externalized examples and assets runs via
 `tools/format-validator` using Ajv and pinned parsers.
 Entrypoint tests also require consistent effort guidance in every directly
@@ -230,9 +231,34 @@ In CI, GitHub Actions also validates the Claude plugin marketplace using Anthrop
 The toolkit version is defined in
 [`plugins/fulcrum-ai-toolkit/plugin.json`](plugins/fulcrum-ai-toolkit/plugin.json).
 The repository validator requires every host manifest and marketplace entry to
-match it. After a version bump is merged to `main`, the release workflow creates
-the corresponding `v<version>` tag and GitHub Release. Re-running the workflow
-is safe when that release already exists.
+match it. The [release workflow](.github/workflows/release.yml) reconciles
+eligible merged pull requests, prepares a release pull request with the next
+plugin patch version, and sends it through the existing merge queue. After the
+release PR merges, the matching `v<version>` tag and GitHub Release point to
+the merged commit, and the Microsoft 365 bundle is built from that commit.
+
+Release runs are serialized. A scheduled run and manual dispatch recover missed
+events or interrupted publication. On retry, existing bundle assets must match
+the rebuilt bundle's size and digest; if GitHub provides no digest, the workflow
+downloads and compares the asset instead. Unverifiable or conflicting assets
+stop publication. Catch-up releases can include later mainline changes; they do
+not reconstruct historical snapshots. Skill versions remain author-selected and
+independently enforced by CI.
+
+Before enabling automated releases, repository administrators must configure:
+
+- The `TOOLKIT_RELEASE_APP_CLIENT_ID` Actions variable for an approved GitHub App.
+- The `TOOLKIT_RELEASE_APP_PRIVATE_KEY` Actions secret for that app.
+- The `TOOLKIT_RELEASE_ROLLOUT_PR` Actions variable with the merged pull request
+  number at the release automation rollout boundary.
+
+Verify that identity can create and update release branches and PRs, satisfy the
+applicable review policy, enter the merge queue without bypassing it, and create
+tags and releases. It must also trigger the required checks for its PRs. These
+permissions and the credential's availability have not been verified by this
+change. Each run creates a short-lived installation token for this repository.
+The runner needs `git`, `gh`, and `zip`. Configuration or permission failures
+must remain visible; do not fall back to direct pushes to `main`.
 
 Validation never runs anything this repository authors. HTML is parsed, its
 inline scripts and styles are parsed, a report template is compiled to source by
