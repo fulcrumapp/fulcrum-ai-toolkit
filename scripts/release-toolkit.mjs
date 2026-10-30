@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 
 import { execFileSync } from 'node:child_process';
+import { createHash } from 'node:crypto';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -26,11 +27,12 @@ function git(root, ...args) {
   }).trim();
 }
 
-function runGitHubCli(root, args, env = undefined) {
+function runGitHubCli(root, args, env = undefined, { binary = false } = {}) {
   try {
     return execFileSync('gh', args, {
       cwd: root,
-      encoding: 'utf8',
+      encoding: binary ? 'buffer' : 'utf8',
+      maxBuffer: binary ? 128 * 1024 * 1024 : 1024 * 1024,
       stdio: ['ignore', 'pipe', 'pipe'],
       env: env ? { ...process.env, ...env } : process.env
     });
@@ -453,8 +455,20 @@ function publish(root, repository, checkpoint, existing, github, login) {
     if (existing && !Array.isArray(existing.assets)) throw new Error(`Invalid assets for ${tag}`);
     const matching = (existing?.assets ?? []).filter((item) => item?.name === ASSET);
     if (matching.length > 1) throw new Error(`Conflicting assets for ${tag}`);
-    if (matching.length && matching[0].size !== contents.length) {
-      throw new Error(`Conflicting or unverifiable asset for ${tag}`);
+    if (matching.length) {
+      const current = matching[0];
+      const digest = `sha256:${createHash('sha256').update(contents).digest('hex')}`;
+      if (current.size !== contents.length) throw new Error(`Conflicting or unverifiable asset for ${tag}`);
+      if (current.digest == null) {
+        if (!Number.isSafeInteger(current.id) || current.id <= 0) throw new Error(`Missing asset ID for ${tag}`);
+        const downloaded = github(['api', '-H', 'Accept: application/octet-stream',
+          `repos/${repository}/releases/assets/${current.id}`], { binary: true });
+        if (!Buffer.isBuffer(downloaded) || !downloaded.equals(contents)) {
+          throw new Error(`Conflicting or unverifiable asset for ${tag}`);
+        }
+      } else if (current.digest !== digest) {
+        throw new Error(`Conflicting or unverifiable asset for ${tag}`);
+      }
     }
     if (!existing) {
       github(['release', 'create', tag, '--repo', repository, '--verify-tag', '--draft', '--title', tag, '--generate-notes']);
@@ -481,7 +495,7 @@ export function releaseToolkit({
 } = {}) {
   if (!/^[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+$/.test(repository || '')) throw new Error('GITHUB_REPOSITORY must be owner/repository');
   if (!token || !token.trim()) throw new Error('GH_TOKEN is required (supply the release App installation token)');
-  const githubClient = github ?? ((args) => runGitHubCli(root, args, { GH_TOKEN: token }));
+  const githubClient = github ?? ((args, options) => runGitHubCli(root, args, { GH_TOKEN: token }, options));
   if (!/^[A-Za-z0-9](?:[A-Za-z0-9-]*[A-Za-z0-9])?(?:\[bot\])?$/.test(login || '')) throw new Error('TOOLKIT_RELEASE_BOT_LOGIN is required');
   if (!/^[1-9][0-9]*$/.test(String(rollout || '')) || !Number.isSafeInteger(Number(rollout))) throw new Error('TOOLKIT_RELEASE_ROLLOUT_PR must be a positive PR number');
   const dirty = git(root, 'status', '--porcelain');

@@ -238,9 +238,12 @@ release PR merges, the matching `v<version>` tag and GitHub Release point to
 the merged commit, and the Microsoft 365 bundle is built from that commit.
 
 Release runs are serialized. A scheduled run and manual dispatch recover missed
-events or interrupted publication. Catch-up releases can include later mainline
-changes; they do not reconstruct historical snapshots. Skill versions remain
-author-selected and independently enforced by CI.
+events or interrupted publication. On retry, existing bundle assets must match
+the rebuilt bundle's size and digest; if GitHub provides no digest, the workflow
+downloads and compares the asset instead. Unverifiable or conflicting assets
+stop publication. Catch-up releases can include later mainline changes; they do
+not reconstruct historical snapshots. Skill versions remain author-selected and
+independently enforced by CI.
 
 Before enabling automated releases, repository administrators must configure:
 

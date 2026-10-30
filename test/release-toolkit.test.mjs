@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
 import { execFileSync } from 'node:child_process';
+import { createHash } from 'node:crypto';
 import fs from 'node:fs';
 import path from 'node:path';
 import test from 'node:test';
@@ -38,7 +39,7 @@ function fixture(t, bot = 'release-bot') {
   write(author, 'scripts/build-m365-bundle.mjs', fs.readFileSync(path.join(repoRoot, 'scripts/build-m365-bundle.mjs'), 'utf8'));
   git(author, 'add', '.'); git(author, 'commit', '-m', 'Initial'); git(author, 'push', 'origin', 'main');
   git(root, 'clone', origin, checkout);
-  const prs = []; const releases = new Map(); const calls = [];
+  const prs = []; const releases = new Map(); const assets = new Map(); const calls = [];
   let next = 1;
   function record(sha, name, number = next++) {
     const pr = { number, state: 'closed', merged_at: '2026-01-01T00:00:00Z', merge_commit_sha: sha,
@@ -64,6 +65,11 @@ function fixture(t, bot = 'release-bot') {
     if (args[0] === 'api' && args.at(-1).includes('/releases/tags/')) {
       return JSON.stringify(releases.get(args.at(-1).split('/').at(-1)));
     }
+    if (args[0] === 'api' && args.at(-1).includes('/releases/assets/')) {
+      const contents = assets.get(Number(args.at(-1).split('/').at(-1)));
+      if (!contents) throw new Error('Asset download failed');
+      return contents;
+    }
     if (args[0] === 'api' && args.at(-1).includes('/rules/branches/main?')) return JSON.stringify([[{ type: 'merge_queue' }]]);
     if (args[0] === 'pr' && args[1] === 'create') {
       const sha = git(origin, 'rev-parse', 'refs/heads/toolkit-release/queue');
@@ -77,8 +83,11 @@ function fixture(t, bot = 'release-bot') {
       if (action === 'create') releases.set(tag, { tag_name: tag, author: { login: bot }, draft: true, assets: [] });
       else if (action === 'upload') {
         const contents = fs.readFileSync(args[3]);
+        const id = assets.size + 1;
+        assets.set(id, contents);
         releases.get(tag).assets = [{
-          name: path.basename(args[3]), size: contents.length
+          id, name: path.basename(args[3]), size: contents.length,
+          digest: `sha256:${createHash('sha256').update(contents).digest('hex')}`
         }];
       }
       else if (action === 'edit') releases.get(tag).draft = false;
@@ -107,7 +116,7 @@ function fixture(t, bot = 'release-bot') {
     pr.state = 'closed'; pr.merged_at = '2026-01-01T00:00:00Z'; pr.merge_commit_sha = git(author, 'rev-parse', 'HEAD');
     return pr;
   }
-  return { root, origin, author, checkout, prs, releases, calls, github, run, addMerge, mergeRelease, record };
+  return { root, origin, author, checkout, prs, releases, assets, calls, github, run, addMerge, mergeRelease, record };
 }
 
 test('patch bump aligns every host version without touching skill versions or formatting', (t) => {
@@ -441,12 +450,28 @@ test('retries queue failure without creating another PR', (t) => {
   assert.equal(f.prs.filter((pr) => pr.state === 'open').length, 1);
 });
 
-test('accepts digest-only differences when existing asset size matches', (t) => {
+test('rejects a conflicting digest when existing asset size matches', (t) => {
   const f = fixture(t); f.run(); f.mergeRelease(); f.run();
   f.releases.get('v0.1.4').assets[0].digest = 'sha256:bad';
   const before = f.calls.length;
-  f.run();
+  assert.throws(() => f.run(), /Conflicting or unverifiable asset/);
   assert.equal(f.calls.slice(before).some((args) => args[0] === 'release' && args[1] === 'upload'), false);
+});
+
+test('downloads and verifies an asset when its digest is unavailable', (t) => {
+  const f = fixture(t); f.run(); f.mergeRelease(); f.run();
+  const asset = f.releases.get('v0.1.4').assets[0];
+  delete asset.digest;
+  f.run();
+  assert.ok(f.calls.some((args) => args.at(-1) === `repos/example/toolkit/releases/assets/${asset.id}`));
+  const changed = Buffer.from(f.assets.get(asset.id));
+  changed[0] ^= 1;
+  f.assets.set(asset.id, changed);
+  assert.throws(() => f.run(), /Conflicting or unverifiable asset/);
+  f.assets.delete(asset.id);
+  assert.throws(() => f.run(), /Asset download failed/);
+  delete asset.id;
+  assert.throws(() => f.run(), /Missing asset ID/);
 });
 
 test('refuses an existing asset with a mismatched size even when its digest matches', (t) => {
