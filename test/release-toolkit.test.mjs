@@ -301,6 +301,29 @@ test('installation reconciliation uses read-only identity context without user o
     (args.includes('user') || args.some((arg) => arg.includes('/reactions')) || args.includes('POST'))), false);
 });
 
+test('default GitHub client accepts paginated output larger than 1 MiB', (t) => {
+  const f = fixture(t);
+  const bin = path.join(f.root, 'bin');
+  const gh = path.join(bin, 'gh');
+  write(f.root, 'bin/gh', `#!/usr/bin/env node
+const prs = ${JSON.stringify([f.prs])};
+if (process.argv.at(-1).includes('/pulls?')) {
+  process.stdout.write(' '.repeat(1024 * 1024 + 1) + JSON.stringify(prs));
+} else {
+  process.stdout.write('[{}]');
+}
+`);
+  fs.chmodSync(gh, 0o755);
+  const previousPath = process.env.PATH;
+  try {
+    process.env.PATH = `${bin}${path.delimiter}${previousPath}`;
+    assert.throws(() => releaseToolkit({ root: f.checkout, repository: 'example/toolkit',
+      token: 'fixture', login: 'release-bot', rollout: '1' }), /Cannot verify installation access/);
+  } finally {
+    process.env.PATH = previousPath;
+  }
+});
+
 test('rejects inaccessible or malformed installation repository responses', (t) => {
   const f = fixture(t, 'release-app[bot]');
   for (const response of ['[]', '[{}]', '[{"repositories":[{"full_name":"other/repo"}]}]']) {
@@ -510,6 +533,11 @@ test('untrusted release-like PR is processed as a source', (t) => {
 test('refuses an active PR by an untrusted author', (t) => {
   const f = fixture(t); f.run(); f.prs.find((p) => p.state === 'open').user.login = 'attacker';
   assert.throws(() => f.run(), /untrusted author/);
+});
+
+test('refuses an active release-branch PR targeting another base', (t) => {
+  const f = fixture(t); f.run(); f.prs.find((p) => p.state === 'open').base.ref = 'other';
+  assert.throws(() => f.run(), /Conflicting or multiple active release PRs/);
 });
 
 test('fails closed if a bot release PR loses its head repository identity', (t) => {

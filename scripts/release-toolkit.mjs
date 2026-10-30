@@ -32,7 +32,7 @@ function runGitHubCli(root, args, env = undefined, { binary = false } = {}) {
     return execFileSync('gh', args, {
       cwd: root,
       encoding: binary ? 'buffer' : 'utf8',
-      maxBuffer: binary ? 128 * 1024 * 1024 : 1024 * 1024,
+      maxBuffer: 128 * 1024 * 1024,
       stdio: ['ignore', 'pipe', 'pipe'],
       env: env ? { ...process.env, ...env } : process.env
     });
