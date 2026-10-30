@@ -1,7 +1,7 @@
 ---
 name: fulcrum-data-events
 metadata:
-  version: "1.1.0"
+  version: "1.1.3"
 description: Use when writing, reviewing, persisting, or debugging Fulcrum Data Event JavaScript. Defers current hooks and signatures to App MCP knowledge, stores the single script through form get/update operations, and covers patterns, constraints, lifecycle, offline behavior, and security.
 ---
 
@@ -323,6 +323,7 @@ for event-specific APIs.
 
 - [ ] Every authored, modified, or reviewed script has a performance evaluation with workload assumptions, advice, and explicit unmeasured risks
 - [ ] Field-change logic listens on `ON('change', 'field', ...)` rather than treating `edit-record` as a change event, and any rule that must also hold when a record opens is applied from `new-record` and `edit-record` as well
+- [ ] Location/geometry logic uses `ON('change-geometry', ...)` when driven by map updates, includes empty-geometry guards, and keeps open-time behavior in `new-record` / `edit-record` when required
 - [ ] All field data names are verified against the live form — wrong names can fail silently
 - [ ] `LOADRECORDS()` and `REQUEST()` are treated as asynchronous callback APIs
 - [ ] No hardcoded IDs — all resources discovered at runtime
@@ -333,7 +334,6 @@ for event-specific APIs.
 - [ ] Any CDN library references use locked version numbers — no `latest` or unversioned URLs
 - [ ] If using `LOADRECORDS()` or `LOADFILE()` — eligibility and organization access verified against current sources; unresolved dependencies are not presented as available
 - [ ] If using REQUEST() on web — confirmed target API supports CORS or middleware proxy is in place
-- [ ] Any location-dependent trigger uses `change-geometry` and guards against empty geometry
 - [ ] Bulk field operations use `FIELD_NAMES()` rather than hardcoded field name arrays
 - [ ] Built-in expression functions checked before writing custom logic that might duplicate them
 - [ ] When App MCP is available, current functions were checked with `fulcrum_expressions_data_events_reference` or the relevant expression knowledge tool

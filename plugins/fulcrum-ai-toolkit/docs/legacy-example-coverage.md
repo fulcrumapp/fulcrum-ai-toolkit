@@ -77,10 +77,13 @@ Layer 4 removed all 49 fenced blocks from the distributable skills. No fenced
 code block remains anywhere under `plugins/fulcrum-ai-toolkit/skills/`.
 
 Every block carries a stable identifier, the source document it came from, and
-its ordinal within that document. The identifier set, the source-and-ordinal
-set, and the target set are all exact: `test/data/example-block-inventory.json`
-records them independently, so adding, dropping, renumbering, or duplicating a
-row fails the suite.
+its ordinal within that document.
+CI enforces this inventory through the format-validator discovery checks in
+`tools/format-validator/validate-formats.mjs`, so inventory or mapping drift
+fails validation.
+The authoritative mappings and exemptions are `SCHEMA_MAPPINGS` and
+`NON_OPENAPI_JSON` in `tools/format-validator/lib/schema-contract.mjs`, and
+this document remains the canonical block inventory for contributor edits.
 
 ### fulcrum-data-events — 18 blocks
 

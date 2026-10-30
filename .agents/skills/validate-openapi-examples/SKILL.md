@@ -20,12 +20,15 @@ API OpenAPI document.
    `NON_OPENAPI_JSON` in `tools/format-validator/lib/schema-contract.mjs` with a
    specific, durable explanation. Never exclude a file merely to make validation pass.
 4. Run `npm run validate` in `tools/format-validator`.
-
-The validator treats documented OpenAPI properties as a closed set for example
-files, including nested objects and array items. This catches misspelled or
-retired properties even where the source schema does not declare
-`additionalProperties: false`. Unmapped JSON examples fail inventory
-validation so new examples cannot silently bypass this check.
+   Unmapped JSON examples fail inventory validation so new examples cannot
+   silently bypass this check. Inventory validation is the discovery-and-mapping
+   check in `tools/format-validator/validate-formats.mjs` against
+   `SCHEMA_MAPPINGS` and `NON_OPENAPI_JSON` in
+   `tools/format-validator/lib/schema-contract.mjs`.
+   Schema validation is separate: mapped files are validated against the
+   vendored OpenAPI component schemas, and `checkClosedSet` in
+   `tools/format-validator/lib/schema-contract.mjs` rejects undocumented
+   properties unless the schema explicitly allows `additionalProperties`.
 
 Schema loading defaults to the checked-in subset. Override with
 `OPENAPI_SPEC_PATH`. Network fetch of the official spec is opt-in via

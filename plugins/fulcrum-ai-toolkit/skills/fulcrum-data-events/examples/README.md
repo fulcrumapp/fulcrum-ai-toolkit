@@ -43,9 +43,12 @@ which owns both writes and requires approval before upload.
 
 Calculation fields use Fulcrum expression syntax, not Data Event JavaScript.
 See [`calculation-field-expressions.txt`](../../fulcrum-app-design/assets/calculation-field-expressions.txt)
-in `fulcrum-app-design`. Use a `change` handler plus `SETVALUE()`, as in
-[`set-field-values-on-status-change.js`](set-field-values-on-status-change.js),
-when the logic is too complex for an expression.
+in `fulcrum-app-design`.
+When logic cannot be expressed safely in a calculation expression (for example,
+stateful side effects or external callbacks), implement it in an event handler
+such as `ON('change', 'field_data_name', ...)` and write through `SETVALUE()`;
+use the global `ON('change', ...)` form only when a field-scoped handler is not
+practical.
 
 ## Data loading and shared code
 

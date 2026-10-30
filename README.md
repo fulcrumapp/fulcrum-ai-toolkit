@@ -216,8 +216,9 @@ safeguards, the rubric inventory, sibling links, worked scoring arithmetic, and
 required approval/performance instructions; they do not prove host skill
 activation, live app-list accuracy, an agent's live app assessment, or runtime
 performance.
-The changed-skill version validator compares every modified skill directory,
-including supporting files, against the supplied base revision.
+The changed-skill version validator selects directories from the committed
+`BASE...HEAD` diff and compares their current version metadata against the
+supplied base revision.
 Structural and schema validation for externalized examples and assets runs via
 `tools/format-validator` using Ajv and pinned parsers.
 Entrypoint tests also require consistent effort guidance in every directly
@@ -229,8 +230,10 @@ In CI, GitHub Actions also validates the Claude plugin marketplace using Anthrop
 
 The toolkit version is defined in
 [`plugins/fulcrum-ai-toolkit/plugin.json`](plugins/fulcrum-ai-toolkit/plugin.json).
-The repository validator requires every host manifest and marketplace entry to
-match it. After a version bump is merged to `main`, the release workflow creates
+`node scripts/validate.mjs` enforces the required manifest alignment against
+that canonical version, including host descriptors and required marketplace
+entries.
+After a version bump is merged to `main`, the release workflow creates
 the corresponding `v<version>` tag and GitHub Release. Re-running the workflow
 is safe when that release already exists.
 
@@ -285,10 +288,7 @@ lists each one by path, pins it by SHA-256, and declares whether it is a whole
 document or a fragment, so adding, renaming, or editing a template requires a
 visible inventory update in the same change. Each template must also compile and
 parse, and must use neither a raw output tag nor an EJS output internal, both
-checked as the literal text they are. The date-range example carries per-file
-assertions for the table wrapper that was reviewed by hand: its `<table>`,
-`<thead>`, and `<tbody>` open before its row branches and close after them, and
-each branch writes a complete row. These are checks on this repository's
+checked as the literal text they are. These are checks on this repository's
 examples; they generalize to nothing else. Bypass probes for the SQL and
 `QUERY()` contracts run on every invocation, on the same code paths the
 repository's own files take. These static checks do not establish host skill
