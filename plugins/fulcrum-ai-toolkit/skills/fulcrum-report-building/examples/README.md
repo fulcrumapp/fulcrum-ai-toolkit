@@ -44,7 +44,7 @@ template.
 
 | File | What it holds |
 | --- | --- |
-| [`ejs-tag-types.ejs`](../assets/ejs-tag-types.ejs) | The three EJS tag forms. |
+| [`ejs-tag-types.ejs`](../assets/ejs-tag-types.ejs) | The two EJS tag forms. |
 | [`report-print-layout.css`](../assets/report-print-layout.css) | A starting print stylesheet with page-break control. |
 | [`report-queries.sql`](../../fulcrum-query-api/assets/report-queries.sql) | Read-only SQL shapes used by report queries. |
 

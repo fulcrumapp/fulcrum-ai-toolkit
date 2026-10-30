@@ -2,7 +2,7 @@
 name: fulcrum-skill-versioning
 description: Use before every change to a Fulcrum AI Toolkit skill or its supporting resources, examples, or assets—not just during release work. Identify each affected skill and increment its SemVer version in the same change.
 metadata:
-  version: "1.1.0"
+  version: "1.1.1"
 ---
 
 ## Reasoning-effort preamble
@@ -46,11 +46,14 @@ usual.
 
 1. Before editing, read the current `metadata.version` for each skill you expect
    to change and choose the appropriate SemVer increment. Use the pull
-   request's base ref or the base revision supplied by the task. List all
-   changed files under the toolkit's distributable skill directory:
+   request's base ref or the base revision supplied by the task. List committed,
+   tracked worktree, and untracked changes under the toolkit's distributable
+   skill directory:
 
    ```bash
    git diff --name-only BASE...HEAD -- plugins/fulcrum-ai-toolkit/skills/
+   git diff --name-only HEAD -- plugins/fulcrum-ai-toolkit/skills/
+   git ls-files --others --exclude-standard -- plugins/fulcrum-ai-toolkit/skills/
    ```
 
 2. Group the changed paths by their immediate skill directory. Inspect every
@@ -67,13 +70,15 @@ usual.
    FULCRUM_SKILL_VERSION_BASE="<base-ref>" node scripts/validate-skill-version-bumps.mjs
    ```
 
-   The version validator checks all files in each changed skill directory
-   against the selected base. Existing skills without a prior version are
+   The version validator selects skill directories from the committed
+   `BASE...HEAD` diff and compares their current `metadata.version` with the
+   selected base. Existing skills without a prior version are
    accepted as a one-time migration baseline; once a base version exists, every
    change must increase it.
 
-5. Confirm the diff includes a version increment for every changed skill and
-   no unrelated version changes before delivery.
+5. For uncommitted edits, compare every changed skill's current
+   `metadata.version` with the selected base; confirm the diff includes each
+   required version increment and no unrelated version changes before delivery.
 
 ## References
 

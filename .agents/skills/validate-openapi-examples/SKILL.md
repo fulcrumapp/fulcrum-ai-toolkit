@@ -21,10 +21,7 @@ API OpenAPI document.
    specific, durable explanation. Never exclude a file merely to make validation pass.
 4. Run `npm run validate` in `tools/format-validator`.
 
-The validator treats documented OpenAPI properties as a closed set for example
-files, including nested objects and array items. This catches misspelled or
-retired properties even where the source schema does not declare
-`additionalProperties: false`. Unmapped JSON examples fail inventory
+Unmapped JSON examples fail inventory
 validation so new examples cannot silently bypass this check.
 
 Schema loading defaults to the checked-in subset. Override with
