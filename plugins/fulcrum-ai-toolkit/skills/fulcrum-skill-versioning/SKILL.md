@@ -2,7 +2,7 @@
 name: fulcrum-skill-versioning
 description: Use before every change to a Fulcrum AI Toolkit skill or its supporting resources, examples, or assets—not just during release work. Identify each affected skill and increment its SemVer version in the same change.
 metadata:
-  version: "1.1.4"
+  version: "1.1.5"
 ---
 
 ## Reasoning-effort preamble
@@ -52,7 +52,7 @@ usual.
    skill directory:
 
    ```bash
-   git diff --name-only BASE...HEAD -- plugins/fulcrum-ai-toolkit/skills/
+   git diff --name-only <base-ref>...HEAD -- plugins/fulcrum-ai-toolkit/skills/
    git diff --name-only --cached -- plugins/fulcrum-ai-toolkit/skills/
    git diff --name-only -- plugins/fulcrum-ai-toolkit/skills/
    git ls-files --others --exclude-standard -- plugins/fulcrum-ai-toolkit/skills/
