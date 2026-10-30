@@ -25,6 +25,10 @@ API OpenAPI document.
    check in `tools/format-validator/validate-formats.mjs` against
    `SCHEMA_MAPPINGS` and `NON_OPENAPI_JSON` in
    `tools/format-validator/lib/schema-contract.mjs`.
+   Schema validation is separate: mapped files are validated against the
+   vendored OpenAPI component schemas, and `checkClosedSet` in
+   `tools/format-validator/lib/schema-contract.mjs` rejects undocumented
+   properties unless the schema explicitly allows `additionalProperties`.
 
 Schema loading defaults to the checked-in subset. Override with
 `OPENAPI_SPEC_PATH`. Network fetch of the official spec is opt-in via

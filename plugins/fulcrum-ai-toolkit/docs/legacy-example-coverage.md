@@ -81,6 +81,9 @@ its ordinal within that document.
 CI enforces this inventory through the format-validator discovery checks in
 `tools/format-validator/validate-formats.mjs`, so inventory or mapping drift
 fails validation.
+The authoritative mappings and exemptions are `SCHEMA_MAPPINGS` and
+`NON_OPENAPI_JSON` in `tools/format-validator/lib/schema-contract.mjs`, and
+this document remains the canonical block inventory for contributor edits.
 
 ### fulcrum-data-events — 18 blocks
 
