@@ -93,7 +93,8 @@ For Copilot Studio agents:
 
 ### Update the toolkit
 
-Download the latest release asset and upload it in your agent's skill settings.
+Download `fulcrum-ai-toolkit-m365.zip` from the latest release and upload it in
+your agent's skill settings.
 In Agent Builder, reopen **Configure > Skills** and upload the updated ZIP.
 In Copilot Studio, select the existing skill, open its three-dot menu, and
 choose **Replace**.

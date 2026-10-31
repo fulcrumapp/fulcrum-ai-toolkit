@@ -52,7 +52,8 @@ expand **Assets**, and download `fulcrum-ai-toolkit-m365.zip`. Upload the comple
 ZIP without extracting it. Do not upload GitHub's **Source code (zip)** or
 **Source code (tar.gz)** archive, or any
 ZIP created by zipping the repository folder.
-For exact upload screens in Agent Builder and Copilot Studio, see
+For detailed download and upload rules plus exact Agent Builder/Copilot Studio
+screens, see
 [Host installation guide](plugins/fulcrum-ai-toolkit/docs/host-installation.md#microsoft-365-copilot).
 
 To build the bundle locally instead, run from the repository root:
