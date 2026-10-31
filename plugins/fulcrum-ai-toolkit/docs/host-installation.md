@@ -84,7 +84,7 @@ or a ZIP of the repository.
 
 ### Copilot Studio
 
-For agents using this repository's GitHub Copilot harness (the Copilot plugin runtime used with these skills):
+For agents built in Copilot Studio and configured to run through the GitHub Copilot harness:
 
 1. Open your agent in Copilot Studio.
 2. Select **Build > Skills > Add skill > Upload a skill** and upload the ZIP.
