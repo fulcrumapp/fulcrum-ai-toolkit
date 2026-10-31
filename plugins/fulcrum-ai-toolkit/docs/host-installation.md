@@ -74,8 +74,9 @@ uploading individual skills and assuming their siblings remain available.
 
 Open the [latest release](https://github.com/fulcrumapp/fulcrum-ai-toolkit/releases/latest),
 expand **Assets**, and download `fulcrum-ai-toolkit-m365.zip`. Upload the
-complete ZIP without extracting it; do not use GitHub's **Source code** ZIP
-or a ZIP of the repository.
+complete ZIP without extracting it; do not use GitHub's
+**Source code (zip)** or **Source code (tar.gz)** archive, or a ZIP of the
+repository.
 Before uploading, you can confirm the ZIP contains `SKILL.md` at the archive root.
 
 ### Agent Builder
