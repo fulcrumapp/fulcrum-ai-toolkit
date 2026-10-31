@@ -76,6 +76,7 @@ Open the [latest release](https://github.com/fulcrumapp/fulcrum-ai-toolkit/relea
 expand **Assets**, and download `fulcrum-ai-toolkit-m365.zip`. Upload the
 complete ZIP without extracting it; do not use GitHub's **Source code** ZIP
 or a ZIP of the repository.
+Before uploading, you can confirm the ZIP contains `SKILL.md` at the archive root.
 
 ### Agent Builder
 
@@ -92,6 +93,7 @@ For Copilot Studio agents:
 ### Update the toolkit
 
 Download the latest release asset and upload it in your agent's skill settings.
+In Agent Builder, reopen **Configure > Skills** and upload the updated ZIP.
 In Copilot Studio, select the existing skill, open its three-dot menu, and
 choose **Replace**.
 

@@ -51,6 +51,8 @@ For Microsoft 365 Copilot's skill upload, open the
 expand **Assets**, and download `fulcrum-ai-toolkit-m365.zip`. Upload the complete
 ZIP without extracting it. Do not upload GitHub's **Source code** ZIP or any
 ZIP created by zipping the repository folder.
+For exact upload screens in Agent Builder and Copilot Studio, see
+[Host installation guide](plugins/fulcrum-ai-toolkit/docs/host-installation.md#microsoft-365-copilot).
 
 To build the bundle locally instead, run from the repository root:
 
