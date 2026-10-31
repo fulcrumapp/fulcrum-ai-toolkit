@@ -58,7 +58,7 @@ To build the bundle locally instead, run from the repository root:
 node scripts/build-m365-bundle.mjs
 ```
 
-That ZIP (the release asset or a locally built bundle) includes a bundle-level `SKILL.md` with
+The `fulcrum-ai-toolkit-m365.zip` bundle (from the release asset or built locally) includes a bundle-level `SKILL.md` with
 the required YAML `name` and `description` fields, preserves sibling skill
 references, and converts `.js`, `.ejs`, `.css`, `.sql`, and `LICENSE` into Markdown
 files accepted by the current Microsoft 365 skill-upload contract.
