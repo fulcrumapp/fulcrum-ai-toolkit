@@ -77,12 +77,25 @@ expand **Assets**, and download `fulcrum-ai-toolkit-m365.zip`. Upload the
 complete ZIP without extracting it; do not use GitHub's **Source code** ZIP
 or a ZIP of the repository.
 
-For Microsoft 365 Copilot Agent Builder, open your agent and select
-**Configure > Skills > Add**, then upload the ZIP. For Copilot Studio agents
-using the GitHub Copilot harness, select **Build > Skills > Add skill >
-Upload a skill**. To update the toolkit, download the latest release asset
-and upload it in your agent's skill settings. In Copilot Studio, select the
-existing skill, open its three-dot menu, and choose **Replace**.
+### Agent Builder
+
+1. Open your agent in Microsoft 365 Copilot Agent Builder.
+2. Select **Configure > Skills > Add** and upload the ZIP.
+
+### Copilot Studio
+
+For agents using the GitHub Copilot harness:
+
+1. Open your agent in Copilot Studio.
+2. Select **Build > Skills > Add skill > Upload a skill** and upload the ZIP.
+
+### Update the toolkit
+
+Download the latest release asset and upload it in your agent's skill settings.
+In Copilot Studio, select the existing skill, open its three-dot menu, and
+choose **Replace**.
+
+### Build the bundle locally
 
 Microsoft 365 Copilot requires `SKILL.md` at the archive root. To build the
 staged bundle locally instead, run from the repository root:
