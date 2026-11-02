@@ -72,8 +72,9 @@ uploading individual skills and assuming their siblings remain available.
 
 ## Microsoft 365 Copilot
 
-Download
-[`fulcrum-ai-toolkit-m365.zip`](https://github.com/fulcrumapp/fulcrum-ai-toolkit/releases/latest/download/fulcrum-ai-toolkit-m365.zip).
+### Download
+
+Download [`fulcrum-ai-toolkit-m365.zip`][m365-bundle-zip].
 Upload the complete ZIP without extracting it; do not use GitHub's
 **Source code (zip)** or **Source code (tar.gz)** archive, or a ZIP of the
 repository.
@@ -94,7 +95,7 @@ For Copilot Studio agents:
 ### Update the toolkit
 
 Download the latest
-[`fulcrum-ai-toolkit-m365.zip`](https://github.com/fulcrumapp/fulcrum-ai-toolkit/releases/latest/download/fulcrum-ai-toolkit-m365.zip)
+[`fulcrum-ai-toolkit-m365.zip`][m365-bundle-zip]
 and upload it in your agent's skill settings.
 In Agent Builder, reopen **Configure > Skills** and upload the updated ZIP.
 In Copilot Studio, select the existing skill, open its three-dot menu, and
@@ -137,3 +138,5 @@ current authentication. Guidance and manual handoffs remain available.
 - [Hermes Agent Plugins support](https://hermes-agent.nousresearch.com/docs/developer-guide/plugins#portable-agent-plugins-v1-packages)
 - [Claude account skill packaging](https://claude.com/docs/skills/how-to#packaging-your-skill)
 - [Vercel skills loader](https://github.com/vercel-labs/skills)
+
+[m365-bundle-zip]: https://github.com/fulcrumapp/fulcrum-ai-toolkit/releases/latest/download/fulcrum-ai-toolkit-m365.zip
