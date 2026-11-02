@@ -46,10 +46,10 @@ For a standalone skills loader, install the complete collection:
 npx skills@latest add https://github.com/fulcrumapp/fulcrum-ai-toolkit/tree/main/plugins/fulcrum-ai-toolkit/skills --skill '*'
 ```
 
-For Microsoft 365 Copilot's skill upload, open the
-[latest release](https://github.com/fulcrumapp/fulcrum-ai-toolkit/releases/latest),
-expand **Assets**, and download `fulcrum-ai-toolkit-m365.zip`. Upload the complete
-ZIP without extracting it. Do not upload GitHub's **Source code (zip)** or
+For Microsoft 365 Copilot's skill upload, download
+[`fulcrum-ai-toolkit-m365.zip`](https://github.com/fulcrumapp/fulcrum-ai-toolkit/releases/latest/download/fulcrum-ai-toolkit-m365.zip).
+Upload the complete ZIP without extracting it. Do not upload GitHub's
+**Source code (zip)** or
 **Source code (tar.gz)** archive, or any
 ZIP created by zipping the repository folder.
 For detailed download and upload rules plus exact Agent Builder/Copilot Studio

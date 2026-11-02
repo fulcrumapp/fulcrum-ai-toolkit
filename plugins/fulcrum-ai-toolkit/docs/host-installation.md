@@ -72,9 +72,9 @@ uploading individual skills and assuming their siblings remain available.
 
 ## Microsoft 365 Copilot
 
-Open the [latest release](https://github.com/fulcrumapp/fulcrum-ai-toolkit/releases/latest),
-expand **Assets**, and download `fulcrum-ai-toolkit-m365.zip`. Upload the
-complete ZIP without extracting it; do not use GitHub's
+Download
+[`fulcrum-ai-toolkit-m365.zip`](https://github.com/fulcrumapp/fulcrum-ai-toolkit/releases/latest/download/fulcrum-ai-toolkit-m365.zip).
+Upload the complete ZIP without extracting it; do not use GitHub's
 **Source code (zip)** or **Source code (tar.gz)** archive, or a ZIP of the
 repository.
 Before uploading, you can confirm the ZIP contains `SKILL.md` at the archive root.
@@ -93,8 +93,9 @@ For Copilot Studio agents:
 
 ### Update the toolkit
 
-Download `fulcrum-ai-toolkit-m365.zip` from the latest release and upload it in
-your agent's skill settings.
+Download the latest
+[`fulcrum-ai-toolkit-m365.zip`](https://github.com/fulcrumapp/fulcrum-ai-toolkit/releases/latest/download/fulcrum-ai-toolkit-m365.zip)
+and upload it in your agent's skill settings.
 In Agent Builder, reopen **Configure > Skills** and upload the updated ZIP.
 In Copilot Studio, select the existing skill, open its three-dot menu, and
 choose **Replace**.
