@@ -72,8 +72,39 @@ uploading individual skills and assuming their siblings remain available.
 
 ## Microsoft 365 Copilot
 
-Microsoft 365 Copilot requires uploading a ZIP with `SKILL.md` at the archive
-root. Build the staged bundle from the repository root:
+### Download
+
+Download [`fulcrum-ai-toolkit-m365.zip`][m365-bundle-zip].
+Upload the complete ZIP without extracting it; do not use GitHub's
+**Source code (zip)** or **Source code (tar.gz)** archive, or a ZIP of the
+repository.
+Before uploading, you can confirm the ZIP contains `SKILL.md` at the archive root.
+
+### Agent Builder
+
+1. Open your agent in Microsoft 365 Copilot Agent Builder.
+2. Select **Configure > Skills > Add** and upload the ZIP.
+
+### Copilot Studio
+
+For Copilot Studio agents:
+
+1. Open your agent in Copilot Studio.
+2. Select **Build > Skills > Add skill > Upload a skill** and upload the ZIP.
+
+### Update the toolkit
+
+Download the latest
+[`fulcrum-ai-toolkit-m365.zip`][m365-bundle-zip]
+and upload it in your agent's skill settings.
+In Agent Builder, reopen **Configure > Skills** and upload the updated ZIP.
+In Copilot Studio, select the existing skill, open its three-dot menu, and
+choose **Replace**.
+
+### Build the bundle locally
+
+Microsoft 365 Copilot requires `SKILL.md` at the archive root. To build the
+staged bundle locally instead, run from the repository root:
 
 ```bash
 node scripts/build-m365-bundle.mjs
@@ -107,3 +138,5 @@ current authentication. Guidance and manual handoffs remain available.
 - [Hermes Agent Plugins support](https://hermes-agent.nousresearch.com/docs/developer-guide/plugins#portable-agent-plugins-v1-packages)
 - [Claude account skill packaging](https://claude.com/docs/skills/how-to#packaging-your-skill)
 - [Vercel skills loader](https://github.com/vercel-labs/skills)
+
+[m365-bundle-zip]: https://github.com/fulcrumapp/fulcrum-ai-toolkit/releases/latest/download/fulcrum-ai-toolkit-m365.zip
