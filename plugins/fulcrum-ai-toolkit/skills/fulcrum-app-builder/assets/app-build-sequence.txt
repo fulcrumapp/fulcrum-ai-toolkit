@@ -39,7 +39,7 @@ Step 2  fulcrum_schema_build_field(...)
         top-level and nested element must keep a concrete type returned by the
         builder, such as TextField, Section, or Repeatable.
 
-Step 3  fulcrum_schema_build_form(name=..., elements=[...all built fields...])
+Step 3  step3BuiltForm = fulcrum_schema_build_form(name=..., elements=[...all built fields...])
         Assemble the API-ready payload from the exact field objects returned by
         Step 2. Do not reconstruct fields from tool-schema model names.
 

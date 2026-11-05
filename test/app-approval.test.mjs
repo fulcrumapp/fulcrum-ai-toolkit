@@ -26,7 +26,7 @@ test('calculated-field guidance rejects invalid display styles before a live wri
   }
   assert.match(styles, /Preserve existing field keys and unrequested settings/);
   assert.match(styles, /successful `fulcrum_forms_validate` response does not override an invalid display style/);
-  assertInOrder(sequence, ['Check the returned CalculatedField display.style', 'Step 3 fulcrum_schema_build_form']);
+  assertInOrder(sequence, ['Check the returned CalculatedField display.style', 'Step 3 step3BuiltForm = fulcrum_schema_build_form']);
 });
 
 function assertInOrder(text, fragments) {
@@ -48,11 +48,10 @@ test('new-form validation passes the built form as a structured object', () => {
 
   const step4Line = sequenceRaw.match(/^\s*Step\s+4\b[^\n]*$/m)?.[0];
   assert.ok(step4Line, 'Step 4 line must exist');
-  const step4Args = step4Line.match(/^\s*Step\s+4\s+fulcrum_forms_validate\(([^)]*?)\)\s*$/)?.[1];
-  assert.ok(step4Args, 'Step 4 must call fulcrum_forms_validate(...)');
-  assert.match(step4Args, /\bform\s*=/);
-  assert.doesNotMatch(step4Args, /\bname\s*=/);
-  assert.doesNotMatch(step4Args, /\belements\s*=/);
+  assert.match(step4Line, /^\s*Step\s+4\s+fulcrum_forms_validate\(/);
+  assert.match(step4Line, /\bform\s*=/);
+  assert.doesNotMatch(step4Line, /\bname\s*=/);
+  assert.doesNotMatch(step4Line, /\belements\s*=/);
   assert.match(step4Line, /(?:fulcrum_schema_build_form|step3BuiltForm|Step 3)/);
 });
 
