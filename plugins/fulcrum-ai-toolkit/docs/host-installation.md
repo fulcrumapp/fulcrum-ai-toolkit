@@ -6,7 +6,7 @@ directories and their supporting files together, and retain the package
 `LICENSE`. Do not flatten the directories or upload only one `SKILL.md`.
 
 These are alpha installation targets. Host versions, administrator policy,
-skill discovery, and support for token-authenticated remote MCP vary.
+skill discovery, and remote MCP authentication support vary.
 Installing skills does not connect a Fulcrum tenant.
 
 ## Claude Code, Codex, And Copilot CLI
@@ -123,9 +123,11 @@ attaches it to versioned releases.
 ## Connect Separately
 
 Use the [regional App MCP setup guide](../skills/fulcrum-app-builder/resources/mcp-setup.md).
-A host must support remote HTTP MCP with a configured Bearer header to use
-the current service. An OAuth-only connector UI is not compatible with its
-current authentication. Guidance and manual handoffs remain available.
+A host must support remote HTTP MCP and a compatible authentication method.
+Prefer OAuth sign-in and consent where supported; an organization API token
+in a configured Bearer header remains an alternative. Check the host's current
+capabilities rather than assuming every client supports OAuth. Guidance and
+manual handoffs remain available without a connector.
 
 ## References
 

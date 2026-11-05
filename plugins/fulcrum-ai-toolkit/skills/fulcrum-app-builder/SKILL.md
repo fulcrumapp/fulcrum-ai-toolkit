@@ -1,7 +1,7 @@
 ---
 name: fulcrum-app-builder
 metadata:
-  version: "1.2.0"
+  version: "1.3.0"
 description: Retrieve a live inventory of existing Fulcrum apps, or guide app creation and updates. Use when a user asks to list, show, browse, or find apps in their organization, wants to build an app, add or change fields, or asks whether a Fulcrum app can support a workflow. For an inventory, use live read-only metadata and report exact names, IDs, scope, and completeness; never invent app names. For building, explain capabilities and limits, ask focused discovery questions, and propose a plain-English schema for approval. Use Fulcrum App MCP by default when available; otherwise provide an approved implementation handoff, not a live inventory.
 ---
 
@@ -43,10 +43,10 @@ then use the build workflow below for the proposed mutation and its approval.
 Determine whether the current host has Fulcrum App MCP registered. This toolkit packages guidance only; it does not bundle the server or credentials.
 
 For setup, use the [regional MCP guide](resources/mcp-setup.md). Confirm the
-tenant instance and intended organization before connecting. Hosted App MCP
-uses the organization's existing opaque API token as a Bearer credential;
-OAuth login is not supported. Never assume the US endpoint, probe other
-regions with the token, or request a token in chat. Preserve an existing
+tenant instance and intended organization before connecting. Prefer OAuth
+sign-in and consent when the host supports it; an organization API token
+remains a supported alternative. Never assume the US endpoint, probe other
+regions with credentials, or request credentials in chat. Preserve an existing
 approved connector configuration rather than registering a duplicate.
 
 When App MCP is available, inspect its live tool schemas and use it by default for:
