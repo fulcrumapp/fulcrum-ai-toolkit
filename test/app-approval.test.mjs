@@ -50,6 +50,8 @@ test('new-form validation passes the built form as a structured object', () => {
   assert.ok(step4Line, 'Step 4 line must exist');
   assert.match(step4Line, /^\s*Step\s+4\s+fulcrum_forms_validate\(/);
   assert.match(step4Line, /\bform\s*=/);
+  assert.doesNotMatch(step4Line, /\bform\s*=\s*JSON\.stringify\s*\(/);
+  assert.doesNotMatch(step4Line, /\bform\s*=\s*["']\s*[\[{]/);
   assert.doesNotMatch(step4Line, /\bname\s*=/);
   assert.doesNotMatch(step4Line, /\belements\s*=/);
   assert.match(step4Line, /(?:fulcrum_schema_build_form|step3BuiltForm|Step 3)/);
