@@ -46,7 +46,7 @@ test('new-form validation passes the built form as a structured object', () => {
     'complete payload as a structured object, not a JSON string',
     'Step 7 fulcrum_forms_create'
   ]);
-  assert.doesNotMatch(sequence, /fulcrum_forms_validate\(name=/);
+  assert.doesNotMatch(sequence, /fulcrum_forms_validate\(\s*name\s*=/);
 });
 
 test('every create/edit confirmation includes scoring, advice, and an informed choice', () => {
