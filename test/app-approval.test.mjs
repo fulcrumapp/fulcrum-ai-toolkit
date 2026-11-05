@@ -39,13 +39,16 @@ function assertInOrder(text, fragments) {
 }
 
 test('new-form validation passes the built form as a structured object', () => {
-  const sequence = compact(read('fulcrum-app-builder/assets/app-build-sequence.txt'));
+  const sequenceRaw = read('fulcrum-app-builder/assets/app-build-sequence.txt');
+  const sequence = compact(sequenceRaw);
   assertInOrder(sequence, [
     'fulcrum_schema_build_form(',
     'fulcrum_forms_validate('
   ]);
 
-  const step4Args = sequence.match(/Step 4\s+fulcrum_forms_validate\(([^)]*)\)/)?.[1];
+  const step4Line = sequenceRaw.split('\n').find((line) => line.startsWith('Step 4'));
+  assert.ok(step4Line, 'Step 4 line must exist');
+  const step4Args = step4Line.match(/^Step 4\s+fulcrum_forms_validate\((.*)\)\s*$/)?.[1];
   assert.ok(step4Args, 'Step 4 must call fulcrum_forms_validate(...)');
   assert.match(step4Args, /\bform\s*=/);
   assert.doesNotMatch(step4Args, /\bname\s*=/);
