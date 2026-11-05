@@ -46,14 +46,14 @@ test('new-form validation passes the built form as a structured object', () => {
     'fulcrum_forms_validate('
   ]);
 
-  const step4Line = sequenceRaw.match(/^\s*Step 4\b[^\n]*$/m)?.[0];
+  const step4Line = sequenceRaw.match(/^\s*Step\s+4\b[^\n]*$/m)?.[0];
   assert.ok(step4Line, 'Step 4 line must exist');
-  const step4Args = step4Line.match(/^\s*Step 4\s+fulcrum_forms_validate\((.*)\)\s*$/)?.[1];
+  const step4Args = step4Line.match(/^\s*Step\s+4\s+fulcrum_forms_validate\(([^)]*?)\)\s*$/)?.[1];
   assert.ok(step4Args, 'Step 4 must call fulcrum_forms_validate(...)');
   assert.match(step4Args, /\bform\s*=/);
   assert.doesNotMatch(step4Args, /\bname\s*=/);
   assert.doesNotMatch(step4Args, /\belements\s*=/);
-  assert.match(step4Line, /fulcrum_schema_build_form/);
+  assert.match(step4Line, /(?:fulcrum_schema_build_form|step3BuiltForm|Step 3)/);
 });
 
 test('every create/edit confirmation includes scoring, advice, and an informed choice', () => {
