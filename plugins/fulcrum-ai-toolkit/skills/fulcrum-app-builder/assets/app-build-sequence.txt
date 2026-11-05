@@ -48,8 +48,8 @@ Step 4  fulcrum_forms_validate(form=<result of fulcrum_schema_build_form from St
         children of Sections and Repeatables, has a concrete type reported by
         fulcrum_schema_field_types(). Stop and rebuild any element whose type
         is missing, non-string, generic, or unsupported. Then validate the
-        complete payload as a structured object, not a JSON string, before any
-        creation side effect.
+        complete payload as a structured object (never JSON.stringify output or
+        quoted JSON text), before any creation side effect.
 
 Step 5  Performance review and approval gate (no live writes)
         Run fulcrum-performance-review on every authored/generated code
