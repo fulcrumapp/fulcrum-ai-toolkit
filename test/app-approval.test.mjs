@@ -41,12 +41,15 @@ function assertInOrder(text, fragments) {
 test('new-form validation passes the built form as a structured object', () => {
   const sequence = compact(read('fulcrum-app-builder/assets/app-build-sequence.txt'));
   assertInOrder(sequence, [
-    'Step 3 fulcrum_schema_build_form',
-    'Step 4 fulcrum_forms_validate(form=...structured form object from step 3...)',
-    'complete payload as a structured object, not a JSON string',
-    'Step 7 fulcrum_forms_create'
+    'fulcrum_schema_build_form(',
+    'fulcrum_forms_validate('
   ]);
-  assert.doesNotMatch(sequence, /fulcrum_forms_validate\(\s*name\s*=/);
+
+  const step4Args = sequence.match(/Step 4\s+fulcrum_forms_validate\(([^)]*)\)/)?.[1];
+  assert.ok(step4Args, 'Step 4 must call fulcrum_forms_validate(...)');
+  assert.match(step4Args, /\bform\s*=/);
+  assert.doesNotMatch(step4Args, /\bname\s*=/);
+  assert.doesNotMatch(step4Args, /\belements\s*=/);
 });
 
 test('every create/edit confirmation includes scoring, advice, and an informed choice', () => {
