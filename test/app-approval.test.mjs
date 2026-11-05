@@ -51,6 +51,7 @@ test('new-form validation passes the built form as a structured object', () => {
   assert.match(step4Line, /^\s*Step\s+4\s+fulcrum_forms_validate\(/);
   assert.match(step4Line, /\bform\s*=/);
   assert.doesNotMatch(step4Line, /\bform\s*=\s*JSON\.stringify\s*\(/);
+  assert.doesNotMatch(step4Line, /\bform\s*=\s*["']/);
   assert.doesNotMatch(step4Line, /\bform\s*=\s*["']\s*[\[{]/);
   assert.doesNotMatch(step4Line, /\bname\s*=/);
   assert.doesNotMatch(step4Line, /\belements\s*=/);
