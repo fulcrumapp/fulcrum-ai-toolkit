@@ -38,6 +38,17 @@ function assertInOrder(text, fragments) {
   }
 }
 
+test('new-form validation passes the built form as a structured object', () => {
+  const sequence = compact(read('fulcrum-app-builder/assets/app-build-sequence.txt'));
+  assertInOrder(sequence, [
+    'Step 3 fulcrum_schema_build_form',
+    'Step 4 fulcrum_forms_validate(form=...structured form object from step 3...)',
+    'complete payload as a structured object, not a JSON string',
+    'Step 7 fulcrum_forms_create'
+  ]);
+  assert.doesNotMatch(sequence, /fulcrum_forms_validate\(name=/);
+});
+
 test('every create/edit confirmation includes scoring, advice, and an informed choice', () => {
   assert.match(approval, /every.*design-confirmation prompt for creation or editing/);
   assert.match(approval, /new apps, edits, reapproval, and connector-independent handoffs/);
