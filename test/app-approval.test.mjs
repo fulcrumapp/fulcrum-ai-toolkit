@@ -26,7 +26,7 @@ test('calculated-field guidance rejects invalid display styles before a live wri
   }
   assert.match(styles, /Preserve existing field keys and unrequested settings/);
   assert.match(styles, /successful `fulcrum_forms_validate` response does not override an invalid display style/);
-  assertInOrder(sequence, ['Check the returned CalculatedField display.style', 'Step 3 fulcrum_schema_build_form']);
+  assertInOrder(sequence, ['Check the returned CalculatedField display.style', 'Step 3 builtForm = fulcrum_schema_build_form']);
 });
 
 function assertInOrder(text, fragments) {
@@ -37,6 +37,30 @@ function assertInOrder(text, fragments) {
     offset = index + fragment.length;
   }
 }
+
+test('new-form validation passes the built form as a structured object', () => {
+  const sequenceRaw = read('fulcrum-app-builder/assets/app-build-sequence.txt');
+  const sequence = compact(sequenceRaw);
+  assertInOrder(sequence, [
+    'fulcrum_schema_build_form(',
+    'fulcrum_forms_validate('
+  ]);
+
+  const step4Line = sequenceRaw.match(/^\s*Step\s+4\b[^\n]*$/m)?.[0];
+  assert.ok(step4Line, 'Step 4 line must exist');
+  assert.match(step4Line, /^\s*Step\s+4\s+fulcrum_forms_validate\(/);
+  const step3Line = sequenceRaw.match(/^\s*Step\s+3\b[^\n]*$/m)?.[0];
+  assert.ok(step3Line, 'Step 3 line must exist');
+  const builtFormIdentifier = step3Line.match(/^\s*Step\s+3\s+([A-Za-z_][A-Za-z0-9_]*)\s*=\s*fulcrum_schema_build_form\(/)?.[1];
+  assert.ok(builtFormIdentifier, 'Step 3 must assign fulcrum_schema_build_form(...) to an identifier');
+  assert.match(step4Line, /\bform\s*=/);
+  assert.match(step4Line, new RegExp(`\\bform\\s*=\\s*${builtFormIdentifier}\\b`));
+  assert.doesNotMatch(step4Line, /\bform\s*=\s*JSON\.stringify\s*\(/);
+  assert.doesNotMatch(step4Line, /\bform\s*=\s*["']/);
+  assert.doesNotMatch(step4Line, /\bform\s*=\s*["']\s*[\[{]/);
+  assert.doesNotMatch(step4Line, /\bname\s*=/);
+  assert.doesNotMatch(step4Line, /\belements\s*=/);
+});
 
 test('every create/edit confirmation includes scoring, advice, and an informed choice', () => {
   assert.match(approval, /every.*design-confirmation prompt for creation or editing/);
