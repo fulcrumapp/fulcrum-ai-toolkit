@@ -2,7 +2,7 @@
 name: fulcrum-skill-versioning
 description: Use before every change to a Fulcrum AI Toolkit skill or its supporting resources, examples, or assets—not just during release work. Identify each affected skill and increment its SemVer version in the same change.
 metadata:
-  version: "1.1.0"
+  version: "1.1.1"
 ---
 
 ## Reasoning-effort preamble
@@ -46,11 +46,15 @@ usual.
 
 1. Before editing, read the current `metadata.version` for each skill you expect
    to change and choose the appropriate SemVer increment. Use the pull
-   request's base ref or the base revision supplied by the task. List all
-   changed files under the toolkit's distributable skill directory:
+   request's base ref or the base revision supplied by the task. List committed,
+   staged, unstaged, and untracked changes under the toolkit's distributable
+   skill directory:
 
    ```bash
-   git diff --name-only BASE...HEAD -- plugins/fulcrum-ai-toolkit/skills/
+   git diff --name-only <base-ref>...HEAD -- plugins/fulcrum-ai-toolkit/skills/
+   git diff --name-only --cached -- plugins/fulcrum-ai-toolkit/skills/
+   git diff --name-only -- plugins/fulcrum-ai-toolkit/skills/
+   git ls-files --others --exclude-standard -- plugins/fulcrum-ai-toolkit/skills/
    ```
 
 2. Group the changed paths by their immediate skill directory. Inspect every
