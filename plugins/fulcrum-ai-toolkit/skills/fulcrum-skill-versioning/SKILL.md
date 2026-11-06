@@ -71,10 +71,11 @@ usual.
    FULCRUM_SKILL_VERSION_BASE="<base-ref>" node scripts/validate-skill-version-bumps.mjs
    ```
 
-   The version validator checks all files in each changed skill directory
-   against the selected base. Existing skills without a prior version are
-   accepted as a one-time migration baseline; once a base version exists, every
-   change must increase it.
+   For uncommitted skill edits, compare each affected skill's current
+   `metadata.version` with the selected base; the validator selects directories
+   from committed `<base-ref>...HEAD` paths. Existing skills without a prior
+   version are accepted as a one-time migration baseline; once a base version
+   exists, every change must increase it.
 
 5. Confirm the diff includes a version increment for every changed skill and
    no unrelated version changes before delivery.
