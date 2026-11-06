@@ -73,8 +73,7 @@ and stays out of this package.
 
 ## Externalized current blocks
 
-Layer 4 removed all 49 fenced blocks from the distributable skills. No fenced
-code block remains anywhere under `plugins/fulcrum-ai-toolkit/skills/`.
+Layer 4 removed all 49 fenced blocks from the distributable skills.
 
 Every block carries a stable identifier, the source document it came from, and
 its ordinal within that document. The identifier set, the source-and-ordinal
