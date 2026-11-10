@@ -36,6 +36,7 @@ const DEFAULT_BUNDLE_ENTRYPOINTS = [
 const BUNDLE_ENTRYPOINTS = resolveBundleEntrypoints(process.env.FULCRUM_VALIDATE_BUNDLE_ENTRYPOINTS);
 
 const EXPECTED_SKILLS = [
+  'create-flow',
   'fulcrum-access-management',
   'fulcrum-app-builder',
   'fulcrum-app-design',

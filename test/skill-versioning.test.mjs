@@ -120,6 +120,22 @@ test('rejects a new skill that does not start at version 1.0.0', (t) => {
   assert.match(result.stderr, /new skills must start at 1\.0\.0; found 1\.0\.1/);
 });
 
+test('preserves the external create-flow version when importing it', (t) => {
+  const { root } = createRepository(t, null);
+  addSkill(root, 'create-flow', '1.0.0');
+  runGit(root, ['add', '.']);
+  runGit(root, ['commit', '-m', 'Import skill with reset version']);
+  const reset = runValidator(root);
+  assert.equal(reset.status, 1);
+  assert.match(reset.stderr, /imported skill version must increase above 1\.1\.0/);
+
+  addSkill(root, 'create-flow', '2.0.0');
+  runGit(root, ['add', '.']);
+  runGit(root, ['commit', '-m', 'Preserve imported version']);
+  const updated = runValidator(root);
+  assert.equal(updated.status, 0, updated.stderr);
+});
+
 test('preserves a moved skill version but rejects resetting it', (t) => {
   const oldSkillPath = 'plugins/legacy-toolkit/skills/example-skill/SKILL.md';
   const oldResourcePath = 'plugins/legacy-toolkit/skills/example-skill/resources/example.md';
