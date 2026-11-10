@@ -4,6 +4,7 @@ import test from 'node:test';
 import vm from 'node:vm';
 
 const skill = fs.readFileSync(new URL('../plugins/fulcrum-ai-toolkit/skills/create-flow/SKILL.md', import.meta.url), 'utf8');
+const normalizedSkill = skill.replace(/\s+/g, ' ');
 
 test('FLOW guidance preserves discovery, platform and host capability boundaries', () => {
   for (const requirement of [
@@ -12,11 +13,11 @@ test('FLOW guidance preserves discovery, platform and host capability boundaries
     'not currently supported or verified on iOS',
     'does not pass a JavaScript completion callback',
     'JSON serialization drops it',
-    'end the\nresponse',
+    'end the response',
     'decision cases and default',
     'approval',
   ]) {
-    assert.ok(skill.includes(requirement), `Missing FLOW safeguard: ${requirement}`);
+    assert.ok(normalizedSkill.includes(requirement), `Missing FLOW safeguard: ${requirement}`);
   }
 });
 
@@ -60,13 +61,13 @@ test('grouped option strings are JavaScript values, not JSON syntax', () => {
     "op: ('gt')",
     "kind: ('single_choice')",
   ]) {
-    assert.ok(skill.includes(fragment), `Missing option example: ${fragment}`);
+    assert.ok(normalizedSkill.includes(fragment), `Missing option example: ${fragment}`);
     const evaluated = vm.runInNewContext(`({ ${fragment} })`);
     const parsed = JSON.parse(JSON.stringify(evaluated));
     assert.equal(Object.values(parsed)[0], fragment.match(/'([^']+)'/)[1]);
   }
   assert.throws(() => JSON.parse('{"kind":("function")}'), SyntaxError);
-  assert.ok(skill.includes('Node `kind`\nand prompt `kind` are different fields'));
+  assert.ok(normalizedSkill.includes('Node `kind` and prompt `kind` are different fields'));
 });
 
 test('editor literal assertions preserve the selected runtime value', () => {
@@ -76,12 +77,12 @@ test('editor literal assertions preserve the selected runtime value', () => {
     "function: /** @type {'js'} */ ('js')",
     'schema_version: /** @type {1} */ (1)',
   ]) {
-    assert.ok(skill.replace(/\n/g, ' ').includes(fragment), `Missing literal assertion: ${fragment}`);
+    assert.ok(normalizedSkill.includes(fragment), `Missing literal assertion: ${fragment}`);
     const evaluated = vm.runInNewContext(`({ ${fragment} })`);
     const parsed = JSON.parse(JSON.stringify(evaluated));
     const expected = fragment.includes('{1}') ? 1 : fragment.match(/'([^']+)'/)[1];
     assert.equal(Object.values(parsed)[0], expected);
   }
-  assert.ok(skill.includes('Parentheses alone do not prevent'));
-  assert.ok(skill.includes('rather than deleting the assignment'));
+  assert.ok(normalizedSkill.includes('Parentheses alone do not prevent'));
+  assert.ok(normalizedSkill.includes('rather than deleting the assignment'));
 });

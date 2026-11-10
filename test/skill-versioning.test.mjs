@@ -121,13 +121,20 @@ test('rejects a new skill that does not start at version 1.0.0', (t) => {
 });
 
 test('preserves the external create-flow version when importing it', (t) => {
-  const { root } = createRepository(t, null);
+  const { root } = createRepository(t, '1.0.0');
   addSkill(root, 'create-flow', '1.0.0');
   runGit(root, ['add', '.']);
   runGit(root, ['commit', '-m', 'Import skill with reset version']);
   const reset = runValidator(root);
   assert.equal(reset.status, 1);
   assert.match(reset.stderr, /imported skill version must increase above 1\.1\.0/);
+
+  addSkill(root, 'create-flow', 'invalid');
+  runGit(root, ['add', '.']);
+  runGit(root, ['commit', '-m', 'Import skill with invalid version']);
+  const invalid = runValidator(root);
+  assert.equal(invalid.status, 1);
+  assert.match(invalid.stderr, /metadata\.version must be stable SemVer/);
 
   addSkill(root, 'create-flow', '2.0.0');
   runGit(root, ['add', '.']);
