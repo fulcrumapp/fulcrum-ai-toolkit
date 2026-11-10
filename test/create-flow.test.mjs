@@ -68,3 +68,20 @@ test('grouped option strings are JavaScript values, not JSON syntax', () => {
   assert.throws(() => JSON.parse('{"kind":("function")}'), SyntaxError);
   assert.ok(skill.includes('Node `kind`\nand prompt `kind` are different fields'));
 });
+
+test('editor literal assertions preserve the selected runtime value', () => {
+  for (const fragment of [
+    "kind: /** @type {'function'} */ ('function')",
+    "op: /** @type {'gt'} */ ('gt')",
+    "function: /** @type {'js'} */ ('js')",
+    'schema_version: /** @type {1} */ (1)',
+  ]) {
+    assert.ok(skill.replace(/\n/g, ' ').includes(fragment), `Missing literal assertion: ${fragment}`);
+    const evaluated = vm.runInNewContext(`({ ${fragment} })`);
+    const parsed = JSON.parse(JSON.stringify(evaluated));
+    const expected = fragment.includes('{1}') ? 1 : fragment.match(/'([^']+)'/)[1];
+    assert.equal(Object.values(parsed)[0], expected);
+  }
+  assert.ok(skill.includes('Parentheses alone do not prevent'));
+  assert.ok(skill.includes('rather than deleting the assignment'));
+});

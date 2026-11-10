@@ -2,7 +2,7 @@
 name: create-flow
 description: Author or debug Fulcrum Android FLOW data events and graphs, including editor, record, voice, and photo tools. Verify the target build and discover app metadata through an authorized Fulcrum App MCP connection.
 metadata:
-  version: "2.0.1"
+  version: "2.0.2"
 ---
 
 ## Reasoning-effort preamble
@@ -99,9 +99,24 @@ supported value; do not write a list of alternatives into a scalar field.
 
 These are JavaScript object expressions, not JSON. `FLOW(options)` on the
 inspected Android host serializes their evaluated values to JSON. If providing
-JSON directly, use quoted strings such as `"kind": "function"` without
-parentheses, single quotes, or trailing commas. Do not copy JavaScript
-grouping into JSON or assume every option exists on every build.
+or inspecting a wire JSON document, use quoted strings such as
+`"kind": "function"` without parentheses, single quotes, or trailing commas.
+Pass an options **object** to `FLOW()`, not a JSON string; do not copy
+JavaScript grouping into wire JSON or assume every option exists on every build.
+
+Parentheses alone do not prevent an editor from widening a literal to
+`string`. If the Data Events editor reports that a value is not assignable to
+a literal union, preserve its actual literal type with a JavaScript JSDoc
+assertion, for example `kind: /** @type {'function'} */ ('function')` or
+`op: /** @type {'gt'} */ ('gt')`. Apply the same pattern to the actual
+diagnostic and chosen value for other literal-valued fields, such as node
+`kind`, `function: /** @type {'js'} */ ('js')`, or `schema_version:
+/** @type {1} */ (1)`. It is an editor type annotation, not a runtime
+conversion or feature gate; do not add a cast to hide a genuinely invalid
+option. Inline objects may already be contextually typed and need no assertion.
+If the editor rejects a valid runtime field such as `assign`, check its
+declaration and deployed version rather than deleting the assignment and
+silently changing the graph's behavior.
 
 - Use `schema_version: 1` and 1–50 nodes. The first is entry; every later node
   must be reachable. IDs match `^[a-z][a-z0-9-]{0,63}$`: `read_editor` is
@@ -265,3 +280,4 @@ Do not claim device performance or full dependency review without evidence.
 - [Android FLOW hook, inspected development revision](https://github.com/fulcrumapp/fulcrum-android/blob/e12894dff35d66e0e22f9b8a0e2d877ed0460df8/app/src/main/java/com/spatialnetworks/fulcrum/app/flow/FlowDataEventHooks.kt)
 - [Android JavaScript evaluator, inspected development revision](https://github.com/fulcrumapp/fulcrum-android/blob/e12894dff35d66e0e22f9b8a0e2d877ed0460df8/app/src/main/java/com/spatialnetworks/fulcrum/app/flow/J2V8FlowJavaScriptRuntime.kt)
 - [Android device graph examples, inspected development revision](https://github.com/fulcrumapp/fulcrum-android/blob/e12894dff35d66e0e22f9b8a0e2d877ed0460df8/app/src/androidTest/java/com/spatialnetworks/fulcrum/app/flow/FlowDataEventExecutorDeviceTest.kt)
+- [Expressions FLOW declarations](https://github.com/fulcrumapp/fulcrum-expressions/blob/a48e39ebb564ea8b05f0f3aee049cca32d99b5ab/ts/functions/FLOW.ts)
