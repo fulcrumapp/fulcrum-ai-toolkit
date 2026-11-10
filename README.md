@@ -96,10 +96,11 @@ endpoint from the **tenant's Fulcrum instance**, not your physical location.
 There is no automatic region fallback.
 
 Follow the [regional MCP setup guide](plugins/fulcrum-ai-toolkit/skills/fulcrum-app-builder/resources/mcp-setup.md)
-to choose the endpoint and configure your agent. Authentication uses your
-existing Fulcrum organization API token in an `Authorization: Bearer` header;
-OAuth login is not supported. Keep the opaque token in the host's secret store
-or an environment variable, never in this repository or a chat message.
+to choose the endpoint and configure your agent. Prefer OAuth sign-in and
+consent when your client supports it. An existing Fulcrum organization API
+token in an `Authorization: Bearer` header remains a supported alternative.
+Keep credentials in the host's secret store or environment, never in this
+repository or a chat message.
 
 The toolkit installs guidance skills only. It does not register a server or
 bundle credentials; its MCP manifests intentionally contain no servers.

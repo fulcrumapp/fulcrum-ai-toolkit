@@ -1,7 +1,7 @@
 ---
 name: fulcrum-product-knowledge
 metadata:
-  version: "1.2.0"
+  version: "1.3.0"
 description: Route Fulcrum organization app-list requests and cross-cutting platform questions to the owning portable workflow or current public source. Use for live app inventories, capability boundaries, plan checks, public AI capabilities, offline constraints, and App MCP scope.
 ---
 
@@ -40,7 +40,7 @@ answer a focused domain question from this router when an owning skill exists.
 | Discovery, feasibility, expectations, or pre-build requirements | [`fulcrum-discovery`](../fulcrum-discovery/SKILL.md) |
 | Goal and deliverable definition | [`fulcrum-app-goal`](../fulcrum-app-goal/SKILL.md) |
 | Approved schema construction or App MCP orchestration | [`fulcrum-app-builder`](../fulcrum-app-builder/SKILL.md) |
-| Hosted App MCP connection, tenant region, or API-token setup | [Regional MCP setup](../fulcrum-app-builder/resources/mcp-setup.md) |
+| Hosted App MCP connection, tenant region, OAuth, or API-token setup | [Regional MCP setup](../fulcrum-app-builder/resources/mcp-setup.md) |
 | Data Event runtime behavior or code | [`fulcrum-data-events`](../fulcrum-data-events/SKILL.md) |
 | Custom in-record UI | [`fulcrum-app-extensions`](../fulcrum-app-extensions/SKILL.md) |
 | Report Template design or rendering | [`fulcrum-report-building`](../fulcrum-report-building/SKILL.md) |
@@ -89,9 +89,10 @@ unregistered tool or claim an action ran when no authorized connector is
 available.
 
 Connection setup must select the tenant's US, Australian, European, or Canadian
-instance explicitly and use its organization API token as a Bearer credential.
-OAuth login is not supported. Never default an unknown tenant to the US or
-try credentials against other regions after a failure.
+instance explicitly and confirm the intended organization. Prefer OAuth for
+compatible clients; an organization API token remains a supported alternative.
+Never default an unknown tenant to the US or try credentials against other
+regions after a failure.
 
 > Connector authority: Live installed Fulcrum MCP gateway schemas define the
 > connector contract and take precedence over toolkit prose.

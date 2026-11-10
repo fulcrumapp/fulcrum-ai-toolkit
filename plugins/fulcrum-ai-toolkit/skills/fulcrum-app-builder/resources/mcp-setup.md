@@ -35,34 +35,47 @@ endpoint.
 > describes the corresponding Fulcrum instance domains and REST distinction.
 
 If the region is unknown, ask the organization administrator and stop at
-guidance. Never try the same token against multiple regions to discover its
+guidance. Never try credentials against multiple regions to discover their
 tenant. A connection failure is not permission to switch regions.
 
-## Authenticate With An Organization API Token
+## Choose Authentication
 
-Use the existing opaque Fulcrum API token for the intended organization on
-the selected instance. Fulcrum MCP expects the token in the `Authorization`
-header with the `Bearer` scheme. It does not support OAuth login.
+Prefer OAuth when the host supports OAuth for remote HTTP MCP and is compatible
+with the service. Configure the selected endpoint without a static
+authorization header, start the host's connection or sign-in flow, and sign in
+to the selected Fulcrum instance with the intended account. Review and consent
+to the requested access in the host's authorization flow. Confirm the intended
+organization before live work; a successful sign-in alone does not establish
+which organization's resources are in use.
 
-Manage tokens in the selected instance's Fulcrum API settings. Choose the
-least-privileged authorized account appropriate to the work; the token carries
-that account's access within its organization. Do not request broader access
-just to make a failed operation succeed.
+Host OAuth support varies by client, version, and policy. Follow the host's
+current instructions; metadata discovery alone does not prove that a client
+can complete the flow. Do not replace or remove an existing working token
+configuration merely to enable OAuth.
+
+An opaque organization API token is a supported alternative when OAuth is
+unavailable or the existing configuration should be retained. Manage tokens
+in the selected instance's Fulcrum API settings. For either method, choose
+the least-privileged authorized account appropriate to the work. The API
+token carries that account's access within its organization. Do not request
+broader access just to make a failed operation succeed.
 
 > Source: [Fulcrum API authentication](https://docs.fulcrumapp.com/reference/rest-api-auth)
-> documents organization-specific API tokens and their access. The hosted
-> [App MCP endpoint](https://mcp.fulcrumapp.com) requires Bearer authentication.
+> documents organization-specific API tokens and their access.
 
-The token is the same kind used by the REST API, but the header differs:
+For the API-token alternative, the token is the same kind used by the REST API,
+but the header differs:
 REST documents `X-ApiToken`; App MCP uses `Authorization: Bearer <token>`.
 Do not send the token in a query parameter, decode it as a JWT, paste it into
 chat, or commit it to a repository.
 
-Store the token in the client's secret store or supply `FULCRUM_API_TOKEN`
-through the environment of the agent process. Set `FULCRUM_APP_MCP_URL` to
-exactly the endpoint selected above, with no default. Environment-variable
-names are conventions for the examples below, not server requirements.
-An environment variable only works if the host process can read it.
+Never paste OAuth credentials, authorization codes, or tokens into chat or
+commit them to a repository. Let the host manage OAuth credentials securely.
+For API-token authentication, store the token in the client's secret store or
+supply `FULCRUM_API_TOKEN` through the environment of the agent process. Set
+`FULCRUM_APP_MCP_URL` to exactly the endpoint selected above, with no default.
+Environment-variable names are conventions for the examples below, not server
+requirements. An environment variable only works if the host process can read it.
 
 ## Configure The Host
 
@@ -71,10 +84,19 @@ servers and settings; get approval before changing a user's configuration.
 The toolkit's `mcp.json` and `.mcp.json` intentionally register no servers, so
 installing the bundle cannot select a tenant or transmit a token.
 
+For OAuth, configure only the selected endpoint in the host's remote MCP
+settings, with no static authorization header, then use its supported sign-in
+action and complete Fulcrum login and consent. The client must support the
+service's OAuth flow; if sign-in fails, report the failure rather than claiming
+the connection succeeded. If the host is incompatible, use the API-token
+alternative only when it supports a secure authorization header, or continue
+with a connector-free handoff.
+
 ### Claude Code
 
-After selecting the instance, merge this server entry into the consuming
-project's `.mcp.json` if project-scoped configuration is desired:
+For the API-token alternative, after selecting the instance, merge this server
+entry into the consuming project's `.mcp.json` if project-scoped configuration
+is desired:
 
 ```json
 {
@@ -93,12 +115,14 @@ project's `.mcp.json` if project-scoped configuration is desired:
 Keep the `${...}` references literal in the file; Claude resolves them from
 its environment. Supply both variables before starting the client and approve
 the project server when prompted. Do not replace the token reference with a
-literal secret or invoke an OAuth login flow.
+literal secret. For OAuth, omit the `headers` block and use the host's sign-in
+flow if supported.
 
 ### Codex
 
-With the selected URL and token supplied to the client environment, register
-the server without putting the token in a command argument:
+For the API-token alternative, with the selected URL and token supplied to the
+client environment, register the server without putting the token in a command
+argument:
 
 ```bash
 codex mcp add fulcrum-app \
@@ -107,25 +131,27 @@ codex mcp add fulcrum-app \
 ```
 
 Codex stores the URL and the token's environment-variable name, not its value.
-Keep `FULCRUM_API_TOKEN` available when running Codex. Do not use
-`codex mcp login` for this service; that command is for OAuth servers.
+Keep `FULCRUM_API_TOKEN` available when running Codex. For OAuth, register the
+selected URL without `--bearer-token-env-var`, then use
+`codex mcp login fulcrum-app` if supported by the installed version.
 
 ### Other Hosts
 
-In Copilot, Cursor, Gemini, Hermes, or another MCP client, configure the same
-selected endpoint and Bearer header through that host's documented remote
-MCP settings. Use its own secret-input or environment-reference syntax;
-Claude's `${...}` JSON expansion is not a portable MCP feature.
+In Copilot, Cursor, Gemini, Hermes, or another MCP client, configure the
+selected endpoint through that host's documented remote MCP settings. Use its
+OAuth sign-in if compatible; for the API-token alternative, use its own
+secret-input or environment-reference syntax for the Bearer header. Claude's
+`${...}` JSON expansion is not a portable MCP feature.
 
-If a host only offers OAuth connectors, cannot provide an authorization
-header securely, or cannot connect to remote HTTP MCP, use a compatible host
-or continue with the connector-free handoff. Do not add a public credential
-proxy or claim that installing skills alone enables live actions.
+If neither authentication method works securely or the host cannot connect to
+remote HTTP MCP, use a compatible host or continue with the connector-free
+handoff. Do not add a public credential proxy or claim that installing skills
+alone enables live actions.
 
 ## Confirm Before Live Work
 
 1. Review the selected endpoint and intended organization with the user
-   without displaying the token.
+   without displaying credentials.
 2. Check the host's MCP connection status and inspect the registered tool
    schemas. A reachable URL or HTTP 401 alone does not prove a working
    authenticated connection.
@@ -136,15 +162,16 @@ proxy or claim that installing skills alone enables live actions.
 4. Obtain schema/change approval before mutation and separate explicit
    confirmation for destructive changes.
 
-For 401, check the token source and Bearer header. For 403, check the account's
-permissions. For transport failures, check the exact endpoint, transport, and
-host support. Keep all diagnostics redacted. Never automatically change
+For 401, check the OAuth sign-in and consent or the API-token source and Bearer
+header, as appropriate. For 403, check the account's permissions. For transport
+failures, check the exact endpoint, transport, and host support. Keep all
+diagnostics redacted. Never automatically change
 regions, broaden permissions, retry destructive operations, or report a
 successful connection after a failure.
 
-When working with multiple organizations, keep token/endpoint configurations
-distinct and confirm which one the active connector uses. Account location
-and organization identity are separate decisions.
+When working with multiple organizations, keep credential/endpoint
+configurations distinct and confirm which one the active connector uses.
+Account location and organization identity are separate decisions.
 
 ## References
 
