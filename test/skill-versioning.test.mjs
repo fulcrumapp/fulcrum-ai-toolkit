@@ -120,7 +120,7 @@ test('rejects a new skill that does not start at version 1.0.0', (t) => {
   assert.match(result.stderr, /new skills must start at 1\.0\.0; found 1\.0\.1/);
 });
 
-test('preserves the external create-flow version when importing it', (t) => {
+test('requires a valid create-flow version above the imported baseline', (t) => {
   const { root } = createRepository(t, '1.0.0');
   addSkill(root, 'create-flow', '1.0.0');
   runGit(root, ['add', '.']);
@@ -128,6 +128,13 @@ test('preserves the external create-flow version when importing it', (t) => {
   const reset = runValidator(root);
   assert.equal(reset.status, 1);
   assert.match(reset.stderr, /imported skill version must increase above 1\.1\.0/);
+
+  addSkill(root, 'create-flow', '1.1.0');
+  runGit(root, ['add', '.']);
+  runGit(root, ['commit', '-m', 'Import skill without version bump']);
+  const unchanged = runValidator(root);
+  assert.equal(unchanged.status, 1);
+  assert.match(unchanged.stderr, /imported skill version must increase above 1\.1\.0/);
 
   addSkill(root, 'create-flow', 'invalid');
   runGit(root, ['add', '.']);

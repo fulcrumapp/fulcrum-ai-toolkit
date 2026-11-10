@@ -5,6 +5,7 @@ import vm from 'node:vm';
 
 const skill = fs.readFileSync(new URL('../plugins/fulcrum-ai-toolkit/skills/create-flow/SKILL.md', import.meta.url), 'utf8');
 const normalizedSkill = skill.replace(/\s+/g, ' ');
+const vmOptions = { timeout: 1000 };
 
 test('FLOW guidance preserves discovery, platform and host capability boundaries', () => {
   for (const requirement of [
@@ -22,7 +23,8 @@ test('FLOW guidance preserves discovery, platform and host capability boundaries
 });
 
 test('read-only scaffold serializes to a reachable Android expression graph', () => {
-  const snippet = skill.match(/```javascript\n([\s\S]*?)\n```/)?.[1];
+  const scaffold = skill.split(/^## Read-only scaffold\s*$/m)[1]?.split(/^## /m)[0];
+  const snippet = scaffold?.match(/```javascript\r?\n([\s\S]*?)\r?\n```/)?.[1];
   assert.ok(snippet, 'Missing FLOW scaffold');
   let graph;
   vm.runInNewContext(snippet, {
@@ -34,7 +36,7 @@ test('read-only scaffold serializes to a reachable Android expression graph', ()
       assert.equal(args.length, 1, 'Android host does not deliver a JS callback');
       graph = JSON.parse(JSON.stringify(args[0]));
     },
-  });
+  }, vmOptions);
   assert.equal(graph.schema_version, 1);
   assert.equal(graph.nodes[0].function, 'editor_read');
   const ids = new Set(graph.nodes.map((node) => node.id));
@@ -46,7 +48,7 @@ test('read-only scaffold serializes to a reachable Android expression graph', ()
     if (node.function === 'js') {
       assert.equal(typeof node.input.expression, 'string');
       assert.equal(node.input.run, undefined);
-      assert.equal(vm.runInNewContext(node.input.expression).editor_read_error, true);
+      assert.equal(vm.runInNewContext(node.input.expression, {}, vmOptions).editor_read_error, true);
     }
   }
   assert.equal(graph.nodes[0].on_error, graph.nodes[1].id);
@@ -62,7 +64,7 @@ test('grouped option strings are JavaScript values, not JSON syntax', () => {
     "kind: ('single_choice')",
   ]) {
     assert.ok(normalizedSkill.includes(fragment), `Missing option example: ${fragment}`);
-    const evaluated = vm.runInNewContext(`({ ${fragment} })`);
+    const evaluated = vm.runInNewContext(`({ ${fragment} })`, {}, vmOptions);
     const parsed = JSON.parse(JSON.stringify(evaluated));
     assert.equal(Object.values(parsed)[0], fragment.match(/'([^']+)'/)[1]);
   }
@@ -78,7 +80,7 @@ test('editor literal assertions preserve the selected runtime value', () => {
     'schema_version: /** @type {1} */ (1)',
   ]) {
     assert.ok(normalizedSkill.includes(fragment), `Missing literal assertion: ${fragment}`);
-    const evaluated = vm.runInNewContext(`({ ${fragment} })`);
+    const evaluated = vm.runInNewContext(`({ ${fragment} })`, {}, vmOptions);
     const parsed = JSON.parse(JSON.stringify(evaluated));
     const expected = fragment.includes('{1}') ? 1 : fragment.match(/'([^']+)'/)[1];
     assert.equal(Object.values(parsed)[0], expected);
