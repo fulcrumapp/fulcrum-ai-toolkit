@@ -50,3 +50,21 @@ test('read-only scaffold serializes to a reachable Android expression graph', ()
   }
   assert.equal(graph.nodes[0].on_error, graph.nodes[1].id);
 });
+
+test('grouped option strings are JavaScript values, not JSON syntax', () => {
+  for (const fragment of [
+    "kind: ('function')",
+    "kind: ('agentic')",
+    "kind: ('decision')",
+    "function: ('editor_read')",
+    "op: ('gt')",
+    "kind: ('single_choice')",
+  ]) {
+    assert.ok(skill.includes(fragment), `Missing option example: ${fragment}`);
+    const evaluated = vm.runInNewContext(`({ ${fragment} })`);
+    const parsed = JSON.parse(JSON.stringify(evaluated));
+    assert.equal(Object.values(parsed)[0], fragment.match(/'([^']+)'/)[1]);
+  }
+  assert.throws(() => JSON.parse('{"kind":("function")}'), SyntaxError);
+  assert.ok(skill.includes('Node `kind`\nand prompt `kind` are different fields'));
+});

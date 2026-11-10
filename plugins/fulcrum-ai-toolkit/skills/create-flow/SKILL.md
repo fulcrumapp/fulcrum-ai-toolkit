@@ -2,7 +2,7 @@
 name: create-flow
 description: Author or debug Fulcrum Android FLOW data events and graphs, including editor, record, voice, and photo tools. Verify the target build and discover app metadata through an authorized Fulcrum App MCP connection.
 metadata:
-  version: "2.0.0"
+  version: "2.0.1"
 ---
 
 ## Reasoning-effort preamble
@@ -83,6 +83,25 @@ Prefer small nodes, each doing one operation: a direct function node for a
 tool call, a decision node for a branch, and a `js` node for a transformation.
 Chain with `next`; use `on_error` for failure rather than swallowing errors.
 Do not split a transformation into meaningless pass-through nodes.
+
+### Choosing option values
+
+In a JavaScript data event, `kind: ('function')` is valid and equivalent to
+`kind: 'function'`: parentheses only group the chosen string. They do not
+present a selection, supply alternatives, or change the value sent to FLOW.
+The same applies to other option-valued fields: for example,
+`kind: ('agentic')`, `kind: ('decision')`, `function: ('editor_read')`,
+`op: ('gt')`, or an `ask_user` input `kind: ('single_choice')`. Node `kind`
+and prompt `kind` are different fields with different allowed values. The
+node kind is `agentic`, not `agent`; a function name and a decision operator
+must be valid for their respective field and target build. Choose **one**
+supported value; do not write a list of alternatives into a scalar field.
+
+These are JavaScript object expressions, not JSON. `FLOW(options)` on the
+inspected Android host serializes their evaluated values to JSON. If providing
+JSON directly, use quoted strings such as `"kind": "function"` without
+parentheses, single quotes, or trailing commas. Do not copy JavaScript
+grouping into JSON or assume every option exists on every build.
 
 - Use `schema_version: 1` and 1–50 nodes. The first is entry; every later node
   must be reachable. IDs match `^[a-z][a-z0-9-]{0,63}$`: `read_editor` is
@@ -198,15 +217,15 @@ ON('load-record', function () {
     nodes: [
       {
         id: 'read-editor',
-        kind: 'function',
-        function: 'editor_read',
+        kind: ('function'),
+        function: ('editor_read'),
         input: {},
         on_error: 'failed-read',
       },
       {
         id: 'failed-read',
-        kind: 'function',
-        function: 'js',
+        kind: ('function'),
+        function: ('js'),
         input: { expression: '({ editor_read_error: true })' },
       },
     ],
