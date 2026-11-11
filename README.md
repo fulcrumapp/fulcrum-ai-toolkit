@@ -325,6 +325,7 @@ activation, an authenticated MCP connection, or successful live app creation.
 | `fulcrum-safety` | Flag missing safety steps in field workflows | Model-invoked |
 | `fulcrum-skill-versioning` | SemVer for every changed toolkit skill and its supporting files | Model-invoked |
 | `fulcrum-data-events` | Data event patterns, anti-patterns, and platform constraints | Model-invoked |
+| `create-flow` | Android FLOW graph authoring and build-specific host constraints; iOS unsupported | Model-invoked |
 | `fulcrum-workflow-decomposition` | Break monolithic apps into composable, maintainable pieces | Model-invoked |
 | `fulcrum-app-extensions` | App extension anatomy, FS bridge API, offline support, picker anti-pattern | Model-invoked |
 | `fulcrum-report-building` | Report template authoring — EJS tags, repeatables, parameters, debugging | Model-invoked |
