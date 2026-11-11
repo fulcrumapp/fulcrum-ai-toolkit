@@ -2,7 +2,7 @@
 name: create-flow
 description: Author or debug Fulcrum Android FLOW data events and graphs, including editor, record, voice, and photo tools. Verify the target build and discover app metadata through an authorized Fulcrum App MCP connection.
 metadata:
-  version: "2.1.0"
+  version: "2.2.0"
 ---
 
 ## Reasoning-effort preamble
@@ -64,6 +64,27 @@ host. An uncommitted or differently versioned implementation does not change
 the installed build. Use `input.run` or a callback only when the exact target
 build's serialization, invocation, and completion behavior have been verified;
 do not mix `run` and `expression`.
+
+## Complete data events
+
+When the user requests a complete data event, author the JavaScript handler
+and its `FLOW(options)` graph together, not just the graph. Use the requested
+lifecycle events: for a new or reopened record, register the shared handler
+with `ON('new-record', handler)` and `ON('edit-record', handler)` respectively.
+`edit-record` runs when an existing record opens, not on each field change.
+Do not also register the same work on `load-record` unless duplicate launches
+are intended and handled. Match each trigger and error path to the requested
+behavior and verified host capabilities.
+
+Read the current form script and its dependencies before composing the full
+script; preserve unrelated handlers and follow the
+[`fulcrum-data-events`](../fulcrum-data-events/SKILL.md) and
+[`fulcrum-app-editing`](../fulcrum-app-editing/SKILL.md) approval and
+freshness gates before any live write. If the existing script or required host
+capabilities are unavailable, clearly identify the missing information and
+do not present an unintegrated snippet as the complete live script. A FLOW
+started by a lifecycle handler remains asynchronous: do not claim that it
+blocks editing or saving without a separately verified host mechanism.
 
 ## Scopes and graph
 

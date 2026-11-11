@@ -41,6 +41,25 @@ test('schema-driven voice guidance distinguishes authoring discovery from runtim
   }
 });
 
+test('complete data events include requested lifecycle hooks without bypassing live-script safeguards', () => {
+  const section = skill.split(/^## Complete data events\s*$/m)[1]?.split(/^## /m)[0];
+  assert.ok(section, 'Missing complete data event guidance');
+  const guidance = section.replace(/\s+/g, ' ');
+  for (const requirement of [
+    'JavaScript handler and its `FLOW(options)` graph together',
+    "ON('new-record', handler)",
+    "ON('edit-record', handler)",
+    'not on each field change',
+    'duplicate launches',
+    'preserve unrelated handlers',
+    'approval and freshness gates',
+    'do not present an unintegrated snippet as the complete live script',
+    'do not claim that it blocks editing or saving',
+  ]) {
+    assert.ok(guidance.includes(requirement), `Missing complete data event safeguard: ${requirement}`);
+  }
+});
+
 test('read-only scaffold serializes to a reachable Android expression graph', () => {
   const scaffold = skill.split(/^## Read-only scaffold\s*$/m)[1]?.split(/^## /m)[0];
   const snippet = scaffold?.match(/```javascript\r?\n([\s\S]*?)\r?\n```/)?.[1];
