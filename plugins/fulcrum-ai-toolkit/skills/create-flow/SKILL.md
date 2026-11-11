@@ -2,7 +2,7 @@
 name: create-flow
 description: Author or debug Fulcrum Android FLOW data events and graphs, including editor, record, voice, and photo tools. Verify the target build and discover app metadata through an authorized Fulcrum App MCP connection.
 metadata:
-  version: "2.2.0"
+  version: "2.3.0"
 ---
 
 ## Reasoning-effort preamble
@@ -112,6 +112,17 @@ not schema. Use another app's schema during a run only if a schema lookup tool
 and its permissions are verified on the target build. Otherwise explain the
 limitation and use a freshly verified schema for authoring, rechecking it before
 deployment and whenever the form changes. Never invent a schema lookup tool.
+
+The shared KMP catalog defines `app_get_schema_tool` with `input.app_id`.
+Its result includes `schema_version`, `fields`, and `required_fields`; fields
+include their keys, labels, types, required flags, and available choice
+labels and values. These choices are permitted answers, not answers already
+saved in a record. The catalog definition alone does not register a handler:
+the inspected Android FLOW host registers editor, record search/create/update,
+photo, voice, and prompt tools, not this schema tool. Verify that a target
+host actually registers it before adding a function node. Also verify the
+returned schema covers the form's applicable conditional and repeatable
+requirements; do not treat an incomplete schema as a completed safety check.
 
 On a build with `voice_assistant`, ask one applicable field question at a time
 using its actual label, type, and allowed choices. Not all required fields are
@@ -325,5 +336,7 @@ Do not claim device performance or full dependency review without evidence.
 
 - [Android FLOW hook, inspected development revision](https://github.com/fulcrumapp/fulcrum-android/blob/e12894dff35d66e0e22f9b8a0e2d877ed0460df8/app/src/main/java/com/spatialnetworks/fulcrum/app/flow/FlowDataEventHooks.kt)
 - [Android JavaScript evaluator, inspected development revision](https://github.com/fulcrumapp/fulcrum-android/blob/e12894dff35d66e0e22f9b8a0e2d877ed0460df8/app/src/main/java/com/spatialnetworks/fulcrum/app/flow/J2V8FlowJavaScriptRuntime.kt)
+- [Android FLOW registry, inspected development revision](https://github.com/fulcrumapp/fulcrum-android/blob/843974789e8cdb3a67d7c606e941cfa21f389877/app/src/main/java/com/spatialnetworks/fulcrum/app/flow/FlowDataEventHooks.kt)
+- [Shared app schema tool contract](https://github.com/fulcrumapp/kmp/blob/307d55cc7f9c0d2713e46747617c145370d698bf/agent/src/commonMain/kotlin/com/fulcrumapp/kmp/agent/tools/AppScopedToolContract.kt)
 - [Android device graph examples, inspected development revision](https://github.com/fulcrumapp/fulcrum-android/blob/e12894dff35d66e0e22f9b8a0e2d877ed0460df8/app/src/androidTest/java/com/spatialnetworks/fulcrum/app/flow/FlowDataEventExecutorDeviceTest.kt)
 - [Expressions FLOW declarations](https://github.com/fulcrumapp/fulcrum-expressions/blob/a48e39ebb564ea8b05f0f3aee049cca32d99b5ab/ts/functions/FLOW.ts)
