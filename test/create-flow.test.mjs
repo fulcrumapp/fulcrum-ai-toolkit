@@ -22,6 +22,60 @@ test('FLOW guidance preserves discovery, platform and host capability boundaries
   }
 });
 
+test('diagram guidance omits termination-only paths without hiding meaningful handling', () => {
+  const section = skill.split(/^## Required diagram\s*$/m)[1]?.split(/^## /m)[0];
+  assert.ok(section, 'Missing diagram guidance');
+  const guidance = section.replace(/\s+/g, ' ');
+  for (const requirement of [
+    'decision cases and default',
+    'meaningful handled error routes',
+    'Omit abort and cancellation paths that only terminate the run',
+    'including implicit aborts',
+    'unless the user explicitly asks to see them',
+    'verified additional functionality',
+    'performs cleanup before termination',
+    'when the user explicitly requests them',
+    'Keep other workflow branches and handled error routes visible',
+    'omissions do not change runtime behavior',
+    'explain consequential termination behavior in prose',
+    'never invent handling',
+  ]) {
+    assert.ok(guidance.includes(requirement), `Missing diagram safeguard: ${requirement}`);
+  }
+});
+
+test('expanded Android tools remain build-aware and distinguish permission from write approval', () => {
+  const section = skill.split(/^## Tools and availability\s*$/m)[1]?.split(/^## /m)[0];
+  assert.ok(section, 'Missing tool availability guidance');
+  const guidance = section.replace(/\s+/g, ' ');
+  for (const requirement of [
+    'uncommitted Android development implementation',
+    'search_records',
+    'find_nearest_records',
+    'current_location_tool',
+    'navigate_to_record',
+    'photo_capture_tool',
+    'chat_photo_analyze_tool',
+    'record_add_attachment_tool',
+    'not available in an installed build until',
+    'function-node-only',
+    'debug glasses `capture_camera` tool and `navigate_to_activity` are not registered',
+    '`(0, 0)` requests device GPS rather than literal coordinates',
+    'omission defaults to the pole-inspection app',
+    'first photo field',
+    'photo context is isolated per FLOW run',
+    '{recordId, navigated}',
+    'error-first `FLOW(options, function(error, state) { ... })` callback',
+    'Direct function-node record writes and attachments execute without an additional confirmation',
+    'agentic confirmation follows a separate policy',
+    'OS permission is not authorization to modify records',
+    'cancel the initiating FLOW',
+    'do not assume this combined tool provides an attachment reference',
+  ]) {
+    assert.ok(guidance.includes(requirement), `Missing tool safeguard: ${requirement}`);
+  }
+});
+
 test('schema-driven voice guidance distinguishes authoring discovery from runtime access', () => {
   const section = skill.split(/^### Schema-driven questions\s*$/m)[1]?.split(/^## /m)[0];
   assert.ok(section, 'Missing schema-driven question guidance');

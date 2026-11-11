@@ -2,7 +2,7 @@
 name: create-flow
 description: Author or debug Fulcrum Android FLOW data events and graphs, including editor, record, voice, and photo tools. Verify the target build and discover app metadata through an authorized Fulcrum App MCP connection.
 metadata:
-  version: "2.3.0"
+  version: "3.0.0"
 ---
 
 ## Reasoning-effort preamble
@@ -200,9 +200,18 @@ silently changing the graph's behavior.
 Whenever presenting an authored or revised FLOW graph or script, **end the
 response** with a Mermaid flowchart, including proposed graphs for approval.
 Derive it from the actual graph: include every node ID and kind, entry,
-transitions, decision cases and default, error paths, and terminal outcomes.
-Show implicit `end` and `abort` where applicable, distinguishing terminal
-markers from nodes. Identify manual steps outside FLOW, and do not imply
+transitions, decision cases and default, meaningful handled error routes, and
+terminal outcomes, subject to the omission below. Show implicit `end` where
+applicable, distinguishing terminal markers from nodes.
+
+Omit abort and cancellation paths that only terminate the run, including
+implicit aborts, unless the user explicitly asks to see them. Show those paths
+when they have verified additional functionality, such as a handled route that
+performs cleanup before termination, or when the user explicitly requests
+them. Keep other workflow branches and handled error routes visible. Diagram
+omissions do not change runtime behavior: explain consequential termination
+behavior in prose when needed, and never invent handling or imply that an
+omitted path succeeds. Identify manual steps outside FLOW, and do not imply
 unimplemented behavior. Label proposals as such.
 
 ## Agentic nodes
@@ -238,6 +247,48 @@ every build contains them:
 | `voice_assistant` | Function tool, not an agent tool; requires the voice host. |
 | `photo_analyze_tool` | Function tool, not an agent tool; requires the photo host. Pass empty `input`. |
 
+An **uncommitted Android development implementation**, using KMP agent
+1.0.97, additionally registers the following direct function tools. Treat
+these as proposed capabilities, not available in an installed build until its
+registry, exact input and output contracts, and permissions are verified:
+
+| Tool | Development input and result |
+| --- | --- |
+| `search_records` | `{query, form_id?, limit?, ranking_profile?}`; returns `status` and record summaries. Limit is 1–50. |
+| `find_nearest_records` | `{latitude, longitude, radius_meters, limit?, form_id?}`; returns `status` and record summaries with `distance_meters`. Latitude and longitude are required; `(0, 0)` requests device GPS rather than literal coordinates. Radius is 1–100000 meters; limit is 1–50. Always specify `form_id`: omission defaults to the pole-inspection app. |
+| `current_location_tool` | `{}`; returns `latitude`, `longitude`, `accuracy_meters`, and `captured_at`. |
+| `navigate_to_record` | `{recordId}`; returns `{recordId, navigated}`. A false `navigated` is not success; a foreground navigation host is required. |
+| `photo_capture_tool` | `{idempotency_key}`; returns `{photo_id, local_uri}`. Requires an active account, foreground camera host and device camera. |
+| `chat_photo_analyze_tool` | `{photo_id}`; returns `{findings, confidence}`. Requires a photo captured in the same FLOW run, plus available media and model. This alias is function-node-only. |
+| `record_add_attachment_tool` | `{app_id, record_id, photo_id, idempotency_key}`; returns `{attachment_id, record_id}`. Requires a photo from the same run and an authorized writable existing record. It attaches to the **first photo field**; it cannot select a specific field. |
+
+Supplied strings must be nonblank. Search and nearest also require the Android
+agent-search feature and a searchable FTS index at invocation. The photo
+context is isolated per FLOW run and cleaned up when it ends; it does not
+read chat or other runs' photos. Agentic exposure additionally depends on
+canonical metadata and a result contract; do not assume a direct tool is an
+agent tool. The debug glasses `capture_camera` tool and
+`navigate_to_activity` are not registered in this implementation. Do not
+infer that every chat tool is available in FLOW.
+
+In that implementation, location requests Android location permission and
+offers recovery through settings; photo capture uses Android's camera
+permission flow. These prompts and navigation have not been verified on a
+device. Navigating away can stop the editor and cancel the initiating FLOW
+before its next node or completion callback. Direct function-node record
+writes and attachments execute without an additional confirmation; agentic
+confirmation follows a separate policy. OS permission is not authorization
+to modify records: obtain the user's approval for the intended workflow
+before deploying it, and verify account authorization.
+
+The same uncommitted implementation supports an asynchronous error-first
+`FLOW(options, function(error, state) { ... })` callback delivered at most
+once. Success provides `(null, finalStateObject)`; failure provides
+`({message, code}, null)`. Stop or replacement can cancel the run; an engine
+cancellation can also be reported as `flow_failed`. Do not rely on this
+callback on the older inspected host or any build whose callback and lifecycle
+behavior have not been independently verified.
+
 Voice and photo hosts were merged in
 [`fulcrum-android#4411`](https://github.com/fulcrumapp/fulcrum-android/pull/4411)
 and [`fulcrum-android#4413`](https://github.com/fulcrumapp/fulcrum-android/pull/4413);
@@ -257,9 +308,11 @@ is not an answer. Do not add a separate speech service or use
 
 `photo_analyze_tool` succeeds with `{ findings, confidence }`; findings are
 visible facts, not a fixed checklist. The host keeps the captured file on
-success and deletes it on failure or cancellation. Do not attach it to the
-record, pass `camera`, download a model on demand, or route through
-`PoleInspectionChatModule`.
+success and deletes it on failure or cancellation. Its result does not attach
+the photo to the record. Use a separate attachment tool only when its
+availability and inputs are verified; do not assume this combined tool
+provides an attachment reference. Do not pass `camera`, download a model on
+demand, or route through `PoleInspectionChatModule`.
 
 ### Interactive prompts
 
@@ -324,8 +377,8 @@ Do not claim device performance or full dependency review without evidence.
   completion callback, or a return value. Never block synchronous save or
   validation on FLOW.
 - Distinguish persisted record writes from editor-only changes. Check voice,
-  photo, and `ask_user` host availability; never turn cancellation into an
-  answer or a photo into a record attachment.
+  photo, attachment, location, navigation, and `ask_user` host availability;
+  never turn cancellation into an answer or assume a photo was attached.
 - Review the existing script, dependencies, permissions, lifecycle, side
   effects, and performance; obtain required approvals before a live write.
   Do not commit local debug scripts unless requested. A device database patch
