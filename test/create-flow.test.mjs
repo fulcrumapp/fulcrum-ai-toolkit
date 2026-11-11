@@ -22,6 +22,25 @@ test('FLOW guidance preserves discovery, platform and host capability boundaries
   }
 });
 
+test('schema-driven voice guidance distinguishes authoring discovery from runtime access', () => {
+  const section = skill.split(/^### Schema-driven questions\s*$/m)[1]?.split(/^## /m)[0];
+  assert.ok(section, 'Missing schema-driven question guidance');
+  for (const requirement of [
+    'authoring-time connection, not automatically a tool',
+    'currently open form',
+    'not an arbitrary second app',
+    'only if a schema lookup tool',
+    'one applicable field question at a time',
+    'Not all required fields are',
+    'confirm unclear speech',
+    'No, cancellation, a missing response',
+    'self-reported',
+    'capabilities are verified separately',
+  ]) {
+    assert.ok(section.replace(/\s+/g, ' ').includes(requirement), `Missing schema or voice safeguard: ${requirement}`);
+  }
+});
+
 test('read-only scaffold serializes to a reachable Android expression graph', () => {
   const scaffold = skill.split(/^## Read-only scaffold\s*$/m)[1]?.split(/^## /m)[0];
   const snippet = scaffold?.match(/```javascript\r?\n([\s\S]*?)\r?\n```/)?.[1];

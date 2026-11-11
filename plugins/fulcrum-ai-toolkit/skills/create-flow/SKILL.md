@@ -2,7 +2,7 @@
 name: create-flow
 description: Author or debug Fulcrum Android FLOW data events and graphs, including editor, record, voice, and photo tools. Verify the target build and discover app metadata through an authorized Fulcrum App MCP connection.
 metadata:
-  version: "2.0.2"
+  version: "2.1.0"
 ---
 
 ## Reasoning-effort preamble
@@ -78,6 +78,31 @@ The handler and a FLOW `js` node do not share `form`:
 When a node needs a verified schema ID or key, capture it in the handler and
 embed it as a `JSON.stringify` literal in the expression. Verify target field
 identity and type; never overwrite an arbitrary field.
+
+### Schema-driven questions
+
+For a workflow that asks about required fields, inspect the target app's
+current schema and its field labels, types, choices, required rules, conditional
+visibility, and repeatables. Use authorized App MCP discovery before authoring
+when available; it is an authoring-time connection, not automatically a tool
+inside FLOW. At runtime, `$$runtime.form` describes the currently open form,
+not an arbitrary second app; the `form` passed to a `js` node contains values,
+not schema. Use another app's schema during a run only if a schema lookup tool
+and its permissions are verified on the target build. Otherwise explain the
+limitation and use a freshly verified schema for authoring, rechecking it before
+deployment and whenever the form changes. Never invent a schema lookup tool.
+
+On a build with `voice_assistant`, ask one applicable field question at a time
+using its actual label, type, and allowed choices. Not all required fields are
+yes/no questions. Preserve the user's explicit answer; confirm unclear speech
+instead of guessing, and honor the typed fallback. For safety equipment, record
+only an unambiguous affirmative as Yes. No, cancellation, a missing response,
+or a lookup failure must not be treated as a completed safety check. A spoken
+answer is self-reported, not proof that equipment is present or safe.
+Do not claim the inspection is blocked, navigated, or exited unless those host
+capabilities are verified separately. Check voice availability and the
+applicable schema on the installed build; do not promise every Android build
+supports this workflow.
 
 Prefer small nodes, each doing one operation: a direct function node for a
 tool call, a decision node for a branch, and a `js` node for a transformation.
