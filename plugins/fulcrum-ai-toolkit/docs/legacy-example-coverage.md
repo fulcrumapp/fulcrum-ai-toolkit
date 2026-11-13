@@ -108,11 +108,10 @@ C02, C03, and C06 are rewrites because the originals registered no
 initialization: a `change` handler alone leaves a dependent field's
 visibility and a cascaded option list untouched when a record is opened,
 and `STORAGE()` is device-wide, so an unscoped key carried one record's
-baseline into the next. Each now applies an idempotent function on
-`new-record`, on `edit-record`, and on change, and the storage example
-scopes its key to the record and clears it on `cancel-record` and
-`unload-record`. C10 and C11 are rewrites because the originals embedded a
-literal-looking identifier and a credential-shaped string; both now use
+baseline into the next. The storage example scopes its key to the record
+and clears it on `cancel-record` and `unload-record`. C10 and C11 are rewrites
+because the originals embedded a literal-looking identifier and a
+credential-shaped string; both now use
 neutral placeholders, and C11 adds the middleware alternative. C18 is a
 rewrite because visibility now uses documented `SETHIDDEN()` rather than an
 unsupported `SETFORMATTRIBUTES({ hidden: ... })` shape. C15 and C16
