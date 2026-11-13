@@ -87,7 +87,7 @@ Step 9  Final production reconciliation: fulcrum_forms_get(id=...)
 
 Step 10 Final record-count recheck (no live writes)
         Immediately after Step 9 and before updating, rerun the record-count
-        check required by ../fulcrum-app-editing/SKILL.md. If the count, form
+        check required by ../../fulcrum-app-editing/SKILL.md. If the count, form
         identity, or production/sandbox classification differs from the
         approved baseline, stop and reconcile through that skill.
 
