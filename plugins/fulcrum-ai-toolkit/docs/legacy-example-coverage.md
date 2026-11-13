@@ -73,8 +73,7 @@ and stays out of this package.
 
 ## Externalized current blocks
 
-Layer 4 removed all 49 fenced blocks from the distributable skills. No fenced
-code block remains anywhere under `plugins/fulcrum-ai-toolkit/skills/`.
+Layer 4 removed all 49 fenced blocks from the distributable skills.
 
 Every block carries a stable identifier, the source document it came from, and
 its ordinal within that document. The identifier set, the source-and-ordinal
@@ -109,11 +108,10 @@ C02, C03, and C06 are rewrites because the originals registered no
 initialization: a `change` handler alone leaves a dependent field's
 visibility and a cascaded option list untouched when a record is opened,
 and `STORAGE()` is device-wide, so an unscoped key carried one record's
-baseline into the next. Each now applies an idempotent function on
-`new-record`, on `edit-record`, and on change, and the storage example
-scopes its key to the record and clears it on `cancel-record` and
-`unload-record`. C10 and C11 are rewrites because the originals embedded a
-literal-looking identifier and a credential-shaped string; both now use
+baseline into the next. The storage example scopes its key to the record
+and clears it on `cancel-record` and `unload-record`. C10 and C11 are rewrites
+because the originals embedded a literal-looking identifier and a
+credential-shaped string; both now use
 neutral placeholders, and C11 adds the middleware alternative. C18 is a
 rewrite because visibility now uses documented `SETHIDDEN()` rather than an
 unsupported `SETFORMATTRIBUTES({ hidden: ... })` shape. C15 and C16
@@ -159,9 +157,8 @@ the read-before-update step; C28 adds explicit message and origin handling.
 | C40 | `fulcrum-report-building/SKILL.md` | 12 | Sanitizing `$params` for SQL | `externalized` | [`sanitize-params-for-sql.ejs`](../skills/fulcrum-report-building/examples/sanitize-params-for-sql.ejs) |
 | C41 | `fulcrum-report-building/resources/report-template-reference.md` | 1 | `QUERY()` rows iteration | `externalized` | [`query-rows-iteration.ejs`](../skills/fulcrum-report-building/examples/query-rows-iteration.ejs) |
 
-C33 and C34 bound their result sets, select named columns, and encode the
-interpolated record value. C36 is a rewrite because a shape test alone
-accepted non-calendar dates such as `2024-02-31` and a reversed range, and
+C33 and C34 encode the interpolated record value. C36 is a rewrite because a
+shape test alone accepted non-calendar dates such as `2024-02-31` and a reversed range, and
 because `BETWEEN` dropped same-day readings after midnight on the end day;
 it now round-trips each day through a real date and queries a half-open
 interval. A print stylesheet,
