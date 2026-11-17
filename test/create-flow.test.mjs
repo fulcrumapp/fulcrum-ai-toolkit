@@ -14,7 +14,7 @@ test('FLOW guidance preserves discovery, platform and host capability boundaries
     'not currently supported or verified on iOS',
     'does not pass a JavaScript completion callback',
     'JSON serialization drops it',
-    'end the response',
+    'detailed Mermaid flowchart at the end of the response',
     'decision cases and default',
     'approval',
   ]) {
@@ -22,16 +22,38 @@ test('FLOW guidance preserves discovery, platform and host capability boundaries
   }
 });
 
-test('diagram guidance omits termination-only paths without hiding meaningful handling', () => {
+test('unsupported requests are explained without inventing working steps', () => {
+  const section = skill.split(/^## Unsupported requests\s*$/m)[1]?.split(/^## /m)[0];
+  assert.ok(section, 'Missing unsupported request guidance');
+  const guidance = section.replace(/\s+/g, ' ');
+  for (const requirement of [
+    'tell the user plainly what cannot be done',
+    'availability is unknown',
+    'say it is unverified',
+    'do not call it impossible',
+    'ending a FLOW is not the same as closing or discarding a record editor',
+    'contact the Fulcrum team',
+    'Do not imply that a request has been submitted',
+    "obtain the user's agreement",
+    'one connected diagram',
+    'do not insert an unsupported action into an executable graph',
+  ]) {
+    assert.ok(guidance.includes(requirement), `Missing unsupported request safeguard: ${requirement}`);
+  }
+});
+
+test('diagram guidance separates compact grouping from the complete graph', () => {
   const section = skill.split(/^## Required diagram\s*$/m)[1]?.split(/^## /m)[0];
   assert.ok(section, 'Missing diagram guidance');
   const guidance = section.replace(/\s+/g, ' ');
   for (const requirement of [
     'decision cases and default',
-    'meaningful handled error routes',
+    'two views of the same graph',
+    'visually group related steps',
+    'without merging executable nodes',
+    'meaningful decisions and handled error routes',
     'Omit abort and cancellation paths that only terminate the run',
     'including implicit aborts',
-    'unless the user explicitly asks to see them',
     'verified additional functionality',
     'performs cleanup before termination',
     'when the user explicitly requests them',
@@ -39,8 +61,39 @@ test('diagram guidance omits termination-only paths without hiding meaningful ha
     'omissions do not change runtime behavior',
     'explain consequential termination behavior in prose',
     'never invent handling',
+    'every node ID and kind',
+    'explicit and implicit error and cancellation outcomes',
+    'unhandled aborts',
+    'same workflow',
+    'expandable',
+    'read-only or editable',
   ]) {
     assert.ok(guidance.includes(requirement), `Missing diagram safeguard: ${requirement}`);
+  }
+});
+
+test('interactive authoring discovers the app, confirms the trigger, and proposes safe destinations', () => {
+  const section = skill.split(/^## Interactive authoring\s*$/m)[1]?.split(/^## /m)[0];
+  assert.ok(section, 'Missing interactive authoring guidance');
+  const guidance = section.replace(/\s+/g, ' ');
+  for (const requirement of [
+    'ask one focused question at a time',
+    'which app needs it',
+    'authorized read-only discovery',
+    "selected app's current schema",
+    'what the user wants the initial FLOW to do',
+    'Ask when it should run',
+    'Recommend a verified lifecycle or field event',
+    'confirm the choice when it is unclear',
+    'identify a suitable existing field',
+    'propose an appropriate new field',
+    'do not assume one exists or change the schema',
+    'Respect an explicit read-only request',
+    'same current graph and composed handler',
+    'preserving prior decisions',
+    'Present both diagram views',
+  ]) {
+    assert.ok(guidance.includes(requirement), `Missing authoring workflow: ${requirement}`);
   }
 });
 
@@ -76,7 +129,42 @@ test('expanded Android tools remain build-aware and distinguish permission from 
   }
 });
 
-test('schema-driven voice guidance distinguishes authoring discovery from runtime access', () => {
+test('FLCRM-23901 tool contracts remain branch-specific and separate older candidates', () => {
+  const section = skill.split(/^### FLCRM-23901 Android branch\s*$/m)[1]?.split(/^### |^## /m)[0];
+  assert.ok(section, 'Missing FLCRM-23901 branch guidance');
+  const guidance = section.replace(/\s+/g, ' ');
+  for (const requirement of [
+    '01a5c86311cff3db9b806ee17d7f597d3090fb3a',
+    'branch-local contracts',
+    'not evidence that the PR has been merged',
+    'photo_capture_tool',
+    "camera: 'front' \\| 'back'",
+    'returns `{photo_id}`',
+    'photo_analyze_tool',
+    'findings` an array',
+    'does not capture another photo',
+    'flow_record_add_attachment_tool',
+    '{attachment_id, record_id, queued: true}',
+    'repeatable fields are not supported',
+    'flow_saved_record_add_attachment_tool',
+    'rejects the currently open record',
+    'record_navigate_tool',
+    '{destination_id, navigated}',
+    'app_id` is ignored, not a scope check',
+    'flow_find_nearest_records',
+    'searches across apps',
+    'idempotency key for each FLOW invocation',
+    'do not assume a retry across invocations is deduplicated',
+    'queued: true',
+    'not processed or saved',
+    'do not substitute `editor_attach_photo`',
+    'does not pass a JavaScript completion callback',
+  ]) {
+    assert.ok(guidance.includes(requirement), `Missing branch contract: ${requirement}`);
+  }
+});
+
+test('schema-driven question guidance distinguishes authoring discovery from runtime access', () => {
   const section = skill.split(/^### Schema-driven questions\s*$/m)[1]?.split(/^## /m)[0];
   assert.ok(section, 'Missing schema-driven question guidance');
   for (const requirement of [
@@ -97,6 +185,110 @@ test('schema-driven voice guidance distinguishes authoring discovery from runtim
     'capabilities are verified separately',
   ]) {
     assert.ok(section.replace(/\s+/g, ' ').includes(requirement), `Missing schema or voice safeguard: ${requirement}`);
+  }
+});
+
+test('requested answers and suggestions update verified editor fields safely', () => {
+  const section = skill.split(/^### Updating the current editor\s*$/m)[1]?.split(/^### |^## /m)[0];
+  assert.ok(section, 'Missing current-editor update guidance');
+  const guidance = section.replace(/\s+/g, ' ');
+  for (const requirement of [
+    'default to updating that field in the open editor',
+    'unless the user requests read-only behavior',
+    'Include explicit editor updates in the graph',
+    'keeping values only in FLOW state or showing them in an alert does not update fields',
+    'each destination field\'s key, type, and stored value format',
+    'brakes, tires, or lights are not working',
+    'Do not guess choice values',
+    'ambiguous, missing, or cancelled answers',
+    'validated typed identifier',
+    'carry the actual generated output',
+    'only when the meaning is unambiguous',
+    'review and correct before saving',
+    'avoid overwriting intervening user edits',
+    'handle update failures explicitly',
+    'not the saved record',
+    'navigation may cancel the current FLOW',
+  ]) {
+    assert.ok(guidance.includes(requirement), `Missing editor update safeguard: ${requirement}`);
+  }
+});
+
+test('interactive questions default to ask_user unless voice is explicitly requested', () => {
+  const section = skill.split(/^### Interactive prompts\s*$/m)[1]?.split(/^## /m)[0];
+  assert.ok(section, 'Missing interactive prompt guidance');
+  const guidance = section.replace(/\s+/g, ' ');
+  for (const requirement of [
+    'Default to `ask_user` for user-facing questions',
+    '`text` for free-form typed input',
+    'appropriate choice or confirmation kind',
+    'Use `voice_assistant` only when the user explicitly requests voice or speech',
+    'including for spoken messages',
+    'do not silently substitute voice',
+    'Apply the same default to schema-driven questions',
+    'explicit voice request still requires a verified voice host',
+  ]) {
+    assert.ok(guidance.includes(requirement), `Missing interaction default: ${requirement}`);
+  }
+});
+
+test('camera selection and capture approval remain build-aware', () => {
+  const section = skill.split(/^### Voice and photo\s*$/m)[1]?.split(/^### |^## /m)[0];
+  assert.ok(section, 'Missing voice and photo guidance');
+  const guidance = section.replace(/\s+/g, ' ');
+  for (const requirement of [
+    "input: { camera: 'back' }",
+    'Verify the target build before passing `camera`',
+    'fall back to the front camera',
+    'does not confirm which camera was used',
+    'Capture is automatic and headless',
+    'capture only after an affirmative answer',
+    "without the user's agreement",
+  ]) {
+    assert.ok(guidance.includes(requirement), `Missing camera safeguard: ${requirement}`);
+  }
+});
+
+test('photo attachment guidance protects unsaved editor lifecycle', () => {
+  const section = skill.split(/^### Voice and photo\s*$/m)[1]?.split(/^### |^## /m)[0];
+  assert.ok(section, 'Missing voice and photo guidance');
+  const guidance = section.replace(/\s+/g, ' ');
+  for (const requirement of [
+    '`photo_capture_tool` followed by `chat_photo_analyze_tool`',
+    'targets a persisted record and saves it immediately',
+    'not an attachment operation for an unsaved editor',
+    'a captured ID alone does not establish that the attachment row exists',
+    'Replacing a photo field can also remove existing photos',
+    'existing-photo preservation',
+    'save/cancel lifecycle',
+    'Do not silently substitute a second capture',
+  ]) {
+    assert.ok(guidance.includes(requirement), `Missing unsaved-photo safeguard: ${requirement}`);
+  }
+});
+
+test('new editor photo attachment remains candidate-scoped and asynchronous', () => {
+  const section = skill.split(/^### Voice and photo\s*$/m)[1]?.split(/^### |^## /m)[0];
+  assert.ok(section, 'Missing voice and photo guidance');
+  const guidance = section.replace(/\s+/g, ' ');
+  for (const requirement of [
+    'A newer isolated Android candidate implements `editor_attach_photo`',
+    '{photo_id, field_key}',
+    'same FLOW run and account',
+    '{photo_id, queued: true}',
+    'processing can still fail',
+    'record is not saved',
+    'preserves existing photos',
+    'end-to-end processing, save, and cancellation',
+    'capture once and analyze that same capture',
+    'queue it for the verified photo field before analysis',
+    'source-file cleanup',
+    'Do not fabricate findings or confidence',
+    'retry may still fail',
+    'retry already performed by the host',
+    'unverified-result continuation',
+  ]) {
+    assert.ok(guidance.includes(requirement), `Missing candidate-photo safeguard: ${requirement}`);
   }
 });
 
@@ -149,6 +341,30 @@ test('read-only scaffold serializes to a reachable Android expression graph', ()
     }
   }
   assert.equal(graph.nodes[0].on_error, graph.nodes[1].id);
+});
+
+test('function-shaped JS expressions remain strings and invoke the function', () => {
+  const section = skill.split(/^## Target build and invocation\s*$/m)[1]?.split(/^## /m)[0];
+  assert.ok(section, 'Missing target build guidance');
+  const guidance = section.replace(/\s+/g, ' ');
+  assert.ok(guidance.includes('declaration alone does not establish the Android bridge'));
+  assert.ok(guidance.includes('parser rejects `input.run`'));
+  const snippet = section.match(/```javascript\r?\n([\s\S]*?)\r?\n```/)?.[1];
+  assert.ok(snippet, 'Missing function expression example');
+  const nodeInput = vm.runInNewContext(`({ ${snippet} })`, {}, vmOptions).input;
+  const wireInput = JSON.parse(JSON.stringify(nodeInput));
+  assert.equal(typeof wireInput.expression, 'string');
+  assert.equal(vm.runInNewContext(wireInput.expression, { state: { records: [{}] } }, vmOptions).found, true);
+  assert.equal(vm.runInNewContext(wireInput.expression, { state: { records: [] } }, vmOptions).found, false);
+  assert.deepEqual(JSON.parse(JSON.stringify({ run: () => ({ found: true }) })), {});
+  const example = [...section.matchAll(/```javascript\r?\n([\s\S]*?)\r?\n```/g)][1]?.[1];
+  assert.ok(example, 'Missing authored-function helper');
+  const input = vm.runInNewContext(`${example}\ninput`, {}, vmOptions);
+  const expression = JSON.parse(JSON.stringify(input)).expression;
+  assert.equal(typeof expression, 'string');
+  assert.equal(vm.runInNewContext(expression, { state: { records: [{}] } }, vmOptions).found, true);
+  assert.equal(vm.runInNewContext(expression, { state: { records: [] } }, vmOptions).found, false);
+  assert.ok(guidance.includes('Do not rely on handler closures'));
 });
 
 test('grouped option strings are JavaScript values, not JSON syntax', () => {

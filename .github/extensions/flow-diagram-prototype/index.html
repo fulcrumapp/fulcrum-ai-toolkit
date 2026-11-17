@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>FLOW diagram prototype</title>
+  <link rel="stylesheet" href="style.css">
+  <script src="ui.js" type="module"></script>
+</head>
+<body>
+  <header>
+    <div class="eyebrow">FULCRUM · PROTOTYPE</div>
+    <h1>Build a FLOW visually</h1>
+    <p>Edit a simple bicycle-inspection sequence. This preview does not run or deploy a FLOW.</p>
+    <div class="notice">Prototype: simple functions, non-interactive agents and one-condition decisions. Agents require a compatible build and installed model. Answers are not saved to a record.</div>
+  </header>
+  <section class="flow-overview" aria-labelledby="flow-view-title">
+    <div class="section-header"><div><h2 id="flow-view-title">FLOW branches</h2><p>New record only. Select an editable step to change it below.</p></div></div>
+    <p class="concept-note">The diagram omits input preparation, validation and error routes for clarity; invalid input or lookup failure notifies the user and ends the FLOW. The fixed lookup is included in the JSON but is not editable here. Replace VERIFIED_APP_UUID and VERIFIED_STORED_BIKE_FIELD_KEY before use. Local lookup cannot guarantee uniqueness or exclude the current record. END does not close the editor.</p>
+    <div class="flow-scroll"><div id="flow-view"></div></div>
+  </section>
+  <main>
+    <section aria-labelledby="diagram-title">
+      <div class="section-header"><div><h2 id="diagram-title">Edit steps</h2><p>Function and agentic steps follow this order; decisions follow their selected targets.</p></div><button id="add">+ Add step</button></div>
+      <div class="endpoint">START</div>
+      <div id="nodes" aria-live="polite"></div>
+      <div class="endpoint">END</div>
+      <div class="actions"><button id="save" class="primary">Save diagram</button><button id="reload" class="secondary">Reload saved</button></div>
+      <p id="status" role="status"></p>
+    </section>
+    <details class="preview">
+      <summary>Show FLOW JSON</summary>
+      <div class="preview-content">
+        <div class="section-header"><div><h2>FLOW graph</h2><p>Generated from the steps above.</p></div><button id="copy" class="secondary">Copy JSON</button></div>
+        <pre id="graph"></pre>
+        <p class="footnote">This JSON is a FLOW graph, not a complete data event. Verify the app ID, stored bike field key, Android build, enabled tools, permissions and all target fields before use.</p>
+      </div>
+    </details>
+  </main>
+</body>
+</html>
