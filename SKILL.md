@@ -27,6 +27,8 @@ request and follow its instructions:
   `plugins/fulcrum-ai-toolkit/skills/fulcrum-app-extensions/SKILL.md`, and
   `plugins/fulcrum-ai-toolkit/skills/fulcrum-integration-patterns/SKILL.md`
   for automation and external integrations
+- `plugins/fulcrum-ai-toolkit/skills/create-flow/SKILL.md` for Android FLOW
+  data-event graphs and build-specific host constraints
 - `plugins/fulcrum-ai-toolkit/skills/fulcrum-gis-mapping/SKILL.md` for mapping
   workflows and geospatial behavior
 - `plugins/fulcrum-ai-toolkit/skills/fulcrum-query-api/SKILL.md` for Query

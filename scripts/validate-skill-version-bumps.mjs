@@ -20,6 +20,8 @@ const SCRIPT_DIR = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(process.env.FULCRUM_SKILL_VERSION_ROOT || path.join(SCRIPT_DIR, '..'));
 const BASE_REF = process.env.FULCRUM_SKILL_VERSION_BASE;
 const SKILLS_PREFIX = 'plugins/fulcrum-ai-toolkit/skills/';
+// Imported from an independently versioned skill outside this repository.
+const IMPORTED_SKILL_BASELINES = new Map([['create-flow', '1.1.0']]);
 
 if (!BASE_REF) {
   console.error('Set FULCRUM_SKILL_VERSION_BASE to the comparison base revision.');
@@ -190,7 +192,10 @@ for (const skillName of [...changedSkillNames].sort()) {
     continue;
   }
   if (basePathResult.stdout.length === 0) {
-    if (current.version !== '1.0.0') {
+    const importedBaseline = IMPORTED_SKILL_BASELINES.get(skillName);
+    if (importedBaseline && compareSemver(current.version, importedBaseline) <= 0) {
+      failures.push(`${skillPath}: imported skill version must increase above ${importedBaseline}; found ${current.version}`);
+    } else if (!importedBaseline && current.version !== '1.0.0') {
       failures.push(`${skillPath}: new skills must start at 1.0.0; found ${current.version}`);
     }
     continue;

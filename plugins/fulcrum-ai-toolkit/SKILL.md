@@ -22,6 +22,8 @@ focused skill that best matches the request and follow its instructions:
 - `skills/fulcrum-data-events/SKILL.md`, `skills/fulcrum-report-building/SKILL.md`,
   `skills/fulcrum-app-extensions/SKILL.md`, and
   `skills/fulcrum-integration-patterns/SKILL.md` for automation and custom logic
+- `skills/create-flow/SKILL.md` for Android FLOW data-event graphs and
+  build-specific host constraints
 - `skills/fulcrum-gis-mapping/SKILL.md` for mapping workflows and geospatial
   behavior
 - `skills/fulcrum-query-api/SKILL.md` for Query tables and read-only SQL
