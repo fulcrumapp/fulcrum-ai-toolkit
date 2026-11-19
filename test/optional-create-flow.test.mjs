@@ -7,8 +7,8 @@ import { fileURLToPath } from 'node:url';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const skillDir = path.join(root, 'optional-skills/create-flow');
-const require = createRequire(import.meta.url);
-const YAML = require('../tools/format-validator/node_modules/yaml');
+const require = createRequire(new URL('../tools/format-validator/package.json', import.meta.url));
+const YAML = require('yaml');
 
 test('optional create-flow requires explicit invocation and retains its companion files', () => {
   const text = fs.readFileSync(path.join(skillDir, 'SKILL.md'), 'utf8');
