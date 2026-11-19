@@ -12,7 +12,7 @@ const YAML = require('../tools/format-validator/node_modules/yaml');
 
 test('optional create-flow requires explicit invocation and retains its companion files', () => {
   const text = fs.readFileSync(path.join(skillDir, 'SKILL.md'), 'utf8');
-  const frontmatter = text.match(/^---\n([\s\S]*?)\n---\n/);
+  const frontmatter = text.match(/^---\r?\n([\s\S]*?)\r?\n---(?:\r?\n|$)/);
   assert.ok(frontmatter);
   const metadata = YAML.parse(frontmatter[1]);
   assert.equal(metadata.name, 'create-flow');
