@@ -87,6 +87,15 @@ marketplace metadata, not the distributable skills.
 See [host installation details](plugins/fulcrum-ai-toolkit/docs/host-installation.md)
 for Cursor, Gemini, Hermes, and the different Claude Desktop surfaces.
 
+### Optional experimental skill
+
+[`create-flow`](optional-skills/create-flow/README.md) is a separate, opt-in
+skill for authoring Fulcrum FLOWs. It is not included in the default plugin or
+Microsoft 365 bundle. Install or use it only deliberately, following its
+instructions.
+
+> **This is experimental, do not use unless you are completely sure what you doing**
+
 ## Connect Fulcrum MCP
 
 The hosted Fulcrum MCP service is a federated gateway for App MCP and Query MCP.
