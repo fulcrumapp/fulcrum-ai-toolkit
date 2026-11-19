@@ -17,6 +17,7 @@ test('M365 bundle stages root entrypoint, converts resources, rewrites links, an
   t.after(() => fs.rmSync(root, { recursive: true, force: true }));
 
   const packagePath = path.join(root, 'plugins', 'fulcrum-ai-toolkit');
+  writeFixture(root, 'optional-skills/create-flow/SKILL.md', '# Optional skill\n');
   writeFixture(
     packagePath,
     'SKILL.md',
@@ -64,6 +65,7 @@ test('M365 bundle stages root entrypoint, converts resources, rewrites links, an
   assert.ok(firstArchiveEntries.includes('SKILL.md'));
   assert.ok(firstArchiveEntries.includes('skills/example/template-ejs.md'));
   assert.ok(firstArchiveEntries.includes('skills/example/helper-js.md'));
+  assert.equal(firstArchiveEntries.some((entry) => entry.includes('create-flow')), false);
   assert.equal(firstArchiveEntries.some((entry) => entry.endsWith('.js')), false);
 
   writeFixture(stagePath, 'stale-build-artifact.txt', 'must be removed on rebuild');
