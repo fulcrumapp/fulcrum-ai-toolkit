@@ -373,7 +373,7 @@ the Agent Skills standard. On other hosts, invocation behavior may differ.
 Contextual discovery still asks the user to choose a quick check-in or full
 interview, and explicit approval remains required before an external send.
 
-Both bundle entrypoints and all 18 directly loaded focused skills include a
+Both bundle entrypoints and all 20 directly loaded focused skills include a
 reasoning-effort preamble recommending **high** when supported, with **medium**
 for bounded lookup/formatting requests. This is guidance, not a runtime
 configuration: skill text does not itself change a host's effort setting.
