@@ -228,8 +228,8 @@ safeguards, the rubric inventory, sibling links, worked scoring arithmetic, and
 required approval/performance instructions; they do not prove host skill
 activation, live app-list accuracy, an agent's live app assessment, or runtime
 performance.
-The changed-skill version validator compares every modified skill directory,
-including supporting files, against the supplied base revision.
+The changed-skill version validator selects skill directories with committed
+changes against the supplied base revision, including supporting-file changes.
 Structural and schema validation for externalized examples and assets runs via
 `tools/format-validator` using Ajv and pinned parsers.
 Entrypoint tests also require consistent effort guidance in every directly
@@ -297,10 +297,7 @@ lists each one by path, pins it by SHA-256, and declares whether it is a whole
 document or a fragment, so adding, renaming, or editing a template requires a
 visible inventory update in the same change. Each template must also compile and
 parse, and must use neither a raw output tag nor an EJS output internal, both
-checked as the literal text they are. The date-range example carries per-file
-assertions for the table wrapper that was reviewed by hand: its `<table>`,
-`<thead>`, and `<tbody>` open before its row branches and close after them, and
-each branch writes a complete row. These are checks on this repository's
+checked as the literal text they are. These are checks on this repository's
 examples; they generalize to nothing else. Bypass probes for the SQL and
 `QUERY()` contracts run on every invocation, on the same code paths the
 repository's own files take. These static checks do not establish host skill
@@ -376,7 +373,7 @@ the Agent Skills standard. On other hosts, invocation behavior may differ.
 Contextual discovery still asks the user to choose a quick check-in or full
 interview, and explicit approval remains required before an external send.
 
-Both bundle entrypoints and all 18 directly loaded focused skills include a
+Both bundle entrypoints and all 20 directly loaded focused skills include a
 reasoning-effort preamble recommending **high** when supported, with **medium**
 for bounded lookup/formatting requests. This is guidance, not a runtime
 configuration: skill text does not itself change a host's effort setting.
@@ -424,7 +421,8 @@ and `metadata.version`) plus a Markdown body. Use a quoted stable
 SemVer value (`MAJOR.MINOR.PATCH`) for `metadata.version`. Increment the
 version for every change to a skill directory, including its resources,
 examples, and assets, in the same change—not only when preparing a release.
-The repository validator checks changes against the selected base revision.
+The changed-skill version validator checks changes against the selected
+base revision.
 Host-specific invocation fields and sidecars supplement the portable content;
 unsupported hosts may ignore them.
 

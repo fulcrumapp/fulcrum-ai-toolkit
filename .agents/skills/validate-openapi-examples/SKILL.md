@@ -22,7 +22,8 @@ API OpenAPI document.
 4. Run `npm run validate` in `tools/format-validator`.
 
 The validator treats documented OpenAPI properties as a closed set for example
-files, including nested objects and array items. This catches misspelled or
+files, including nested objects and array items, unless the object schema
+explicitly sets `additionalProperties: true`. This catches misspelled or
 retired properties even where the source schema does not declare
 `additionalProperties: false`. Unmapped JSON examples fail inventory
 validation so new examples cannot silently bypass this check.

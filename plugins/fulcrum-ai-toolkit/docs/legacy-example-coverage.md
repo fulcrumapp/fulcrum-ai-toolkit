@@ -73,8 +73,7 @@ and stays out of this package.
 
 ## Externalized current blocks
 
-Layer 4 removed all 49 fenced blocks from the distributable skills. No fenced
-code block remains anywhere under `plugins/fulcrum-ai-toolkit/skills/`.
+Layer 4 removed all 49 fenced blocks from the distributable skills.
 
 Every block carries a stable identifier, the source document it came from, and
 its ordinal within that document. The identifier set, the source-and-ordinal
@@ -159,8 +158,7 @@ the read-before-update step; C28 adds explicit message and origin handling.
 | C40 | `fulcrum-report-building/SKILL.md` | 12 | Sanitizing `$params` for SQL | `externalized` | [`sanitize-params-for-sql.ejs`](../skills/fulcrum-report-building/examples/sanitize-params-for-sql.ejs) |
 | C41 | `fulcrum-report-building/resources/report-template-reference.md` | 1 | `QUERY()` rows iteration | `externalized` | [`query-rows-iteration.ejs`](../skills/fulcrum-report-building/examples/query-rows-iteration.ejs) |
 
-C33 and C34 bound their result sets, select named columns, and encode the
-interpolated record value. C36 is a rewrite because a shape test alone
+C36 is a rewrite because a shape test alone
 accepted non-calendar dates such as `2024-02-31` and a reversed range, and
 because `BETWEEN` dropped same-day readings after midnight on the end day;
 it now round-trips each day through a real date and queries a half-open
