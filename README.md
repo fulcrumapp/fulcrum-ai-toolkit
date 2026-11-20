@@ -228,8 +228,8 @@ safeguards, the rubric inventory, sibling links, worked scoring arithmetic, and
 required approval/performance instructions; they do not prove host skill
 activation, live app-list accuracy, an agent's live app assessment, or runtime
 performance.
-The changed-skill version validator compares every modified skill directory,
-including supporting files, against the supplied base revision.
+The changed-skill version validator selects skill directories with committed
+changes against the supplied base revision, including supporting-file changes.
 Structural and schema validation for externalized examples and assets runs via
 `tools/format-validator` using Ajv and pinned parsers.
 Entrypoint tests also require consistent effort guidance in every directly
