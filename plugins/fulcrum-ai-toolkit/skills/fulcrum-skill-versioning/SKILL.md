@@ -2,7 +2,7 @@
 name: fulcrum-skill-versioning
 description: Use before every change to a Fulcrum AI Toolkit skill or its supporting resources, examples, or assets—not just during release work. Identify each affected skill and increment its SemVer version in the same change.
 metadata:
-  version: "1.1.1"
+  version: "1.1.2"
 ---
 
 ## Reasoning-effort preamble
@@ -71,8 +71,10 @@ usual.
    FULCRUM_SKILL_VERSION_BASE="<base-ref>" node scripts/validate-skill-version-bumps.mjs
    ```
 
-   The version validator checks all files in each changed skill directory
-   against the selected base. Existing skills without a prior version are
+   The version validator selects skill directories from committed
+   `<base-ref>...HEAD` changes; manually compare versions against the same base
+   revision for skill changes present only in staged, unstaged, or untracked
+   files. Existing skills without a prior version are
    accepted as a one-time migration baseline; once a base version exists, every
    change must increase it.
 
