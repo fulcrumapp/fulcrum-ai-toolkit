@@ -24,7 +24,7 @@ Step 4  fulcrum_forms_get(id=...)
         Files and all attached/loaded dependencies before composing the change.
 
 Step 5  Existing-form editing gate (no live writes)
-        Complete the entry gate from ../fulcrum-app-editing/SKILL.md, including
+        Complete the entry gate from ../../fulcrum-app-editing/SKILL.md, including
         Query MCP record detection, production or sandbox classification,
         data-impact analysis, and dependency inventory. Do not start the
         production clone flow yet: the proposed extension script must be
