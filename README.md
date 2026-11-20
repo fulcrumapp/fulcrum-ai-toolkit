@@ -421,7 +421,8 @@ and `metadata.version`) plus a Markdown body. Use a quoted stable
 SemVer value (`MAJOR.MINOR.PATCH`) for `metadata.version`. Increment the
 version for every change to a skill directory, including its resources,
 examples, and assets, in the same change—not only when preparing a release.
-The repository validator checks changes against the selected base revision.
+The changed-skill version validator checks changes against the selected
+base revision.
 Host-specific invocation fields and sidecars supplement the portable content;
 unsupported hosts may ignore them.
 
